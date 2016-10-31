@@ -1,22 +1,6 @@
-# Enable C++ support
-language: cpp
-
-os: 
-  - linux
-  
-# Build/test only on the master branch.
-branches:
-  only:
-    - master
-
-# Compiler selection
-compiler:
-  - clang
-  - gcc
-# Build steps
-script:
-  - mkdir build
-  - cd build
-  - cmake ../src
-  - make
-  - make test
+build_linux:
+   stage: build
+   script:
+      - cmake ../src
+      - make
+      - ctest
