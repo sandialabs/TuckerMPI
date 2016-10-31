@@ -1,0 +1,984 @@
+/** \copyright
+ * Copyright (2016) Sandia Corporation. Under the terms of Contract
+ * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
+ * certain rights in this software.
+ * \n\n
+ * BSD 2-Clause License
+ * \n\n
+ * Copyright (c) 2016, Sandia Corporation
+ * All rights reserved.
+ * \n\n
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * \n\n
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ * \n\n
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * .
+ * \n
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @file
+ * \brief Contains functions relevant to computing a %Tucker decomposition.
+ *
+ * @author Alicia Klinvex
+ */
+
+#include "Tucker.hpp"
+#include <algorithm>
+#include <limits>
+#include <fstream>
+#include <cmath>
+#include <cassert>
+#include <chrono>
+
+/** \namespace Tucker \brief Contains the data structures and functions
+ * necessary for a sequential tucker decomposition
+ */
+namespace Tucker {
+
+/** \example Tucker_gram_test_file.cpp
+ * \example Tucker_gram_test_nofile.cpp
+ */
+Matrix* computeGram(const Tensor* Y, const int n)
+{
+  if(Y == 0) {
+    throw std::runtime_error("Tucker::computeGram(const Tensor* Y, const int n): Y is a null pointer");
+  }
+  if(Y->getNumElements() == 0) {
+    throw std::runtime_error("Tucker::computeGram(const Tensor* Y, const int n): Y->getNumElements() == 0");
+  }
+  if(n < 0 || n >= Y->N()) {
+    std::ostringstream oss;
+    oss << "Tucker::computeGram(const Tensor* Y, const int n): n = "
+        << n << " is not in the range [0," << Y->N() << ")";
+    throw std::runtime_error(oss.str());
+  }
+
+  // Allocate memory for the Gram matrix
+  int nrows = Y->size(n);
+  Matrix* S;
+  try {
+    S = new Matrix(nrows,nrows);
+  }
+  catch(std::exception& e) {
+    std::cout << "Exception: " << e.what() << std::endl;
+  }
+
+  computeGram(Y, n, S->data(), nrows);
+
+  return S;
+}
+
+
+void computeGram(const Tensor* Y, const int n, double* gram,
+    const int stride)
+{
+  if(Y == 0) {
+    throw std::runtime_error("Tucker::computeGram(const Tensor* Y, const int n, double* gram, const int stride): Y is a null pointer");
+  }
+  if(gram == 0) {
+    throw std::runtime_error("Tucker::computeGram(const Tensor* Y, const int n, double* gram, const int stride): gram is a null pointer");
+  }
+  if(Y->getNumElements() == 0) {
+    throw std::runtime_error("Tucker::computeGram(const Tensor* Y, const int n, double* gram, const int stride): Y->getNumElements() == 0");
+  }
+  if(stride < 1) {
+    std::ostringstream oss;
+    oss << "Tucker::computeGram(const Tensor* Y, const int n, double* gram, "
+        << "const int stride): stride = " << stride << " < 1";
+    throw std::runtime_error(oss.str());
+  }
+  if(n < 0 || n >= Y->N()) {
+    std::ostringstream oss;
+    oss << "Tucker::computeGram(const Tensor* Y, const int n, double* gram, "
+        << "const int stride): n = " << n << " is not in the range [0,"
+        << Y->N() << ")";
+    throw std::runtime_error(oss.str());
+  }
+
+  int nrows = Y->size(n);
+
+  // n = 0 is a special case
+  // Y_0 is stored column major
+  if(n == 0)
+  {
+    // Compute number of columns of Y_n
+    // Technically, we could divide the total number of entries by n,
+    // but that seems like a bad decision
+    int ncols =1;
+    for(int i=0; i<Y->N(); i++) {
+      if(i != n) {
+        ncols *= Y->size(i);
+      }
+    }
+
+    // Call symmetric rank-k update
+    // call dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+    // C := alpha*A*A' + beta*C
+    char uplo = 'U';
+    char trans = 'N';
+    double alpha = 1;
+    double beta = 0;
+    dsyrk_(&uplo, &trans, &nrows, &ncols, &alpha,
+        Y->data(), &nrows, &beta, gram, &stride);
+  }
+  else
+  {
+    int ncols = 1;
+    int nmats = 1;
+
+    // Count the number of columns
+    for(int i=0; i<n; i++) {
+      ncols *= Y->size(i);
+    }
+
+    // Count the number of matrices
+    for(int i=n+1; i<Y->N(); i++) {
+      nmats *= Y->size(i);
+    }
+
+    // For each matrix...
+    for(int i=0; i<nmats; i++) {
+      // Call symmetric rank-k update
+      // call dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+      // C := alpha*A*A' + beta*C
+      char uplo = 'U';
+      char trans = 'T';
+      double alpha = 1;
+      double beta;
+      if(i==0)
+        beta = 0;
+      else
+        beta = 1;
+      dsyrk_(&uplo, &trans, &nrows, &ncols, &alpha,
+          Y->data()+i*nrows*ncols, &ncols, &beta,
+          gram, &stride);
+    }
+  }
+}
+
+/// \example Tucker_eig_test.cpp
+void computeEigenpairs(Matrix* G, double*& eigenvalues,
+    const bool flipSign)
+{
+  if(G == 0) {
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, const bool flipSign): G is a null pointer");
+  }
+  if(G->getNumElements() == 0) {
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, const bool flipSign): G has no entries");
+  }
+
+  int nrows = G->nrows();
+  eigenvalues = safe_new<double>(nrows);
+
+  // Compute the leading eigenvectors of S
+  // call dsyev(jobz, uplo, n, a, lda, w, work, lwork, info)
+  char jobz = 'V';
+  char uplo = 'U';
+  int lwork = 8*nrows;
+  double* work = safe_new<double>(lwork);
+  int info;
+  dsyev_(&jobz, &uplo, &nrows, G->data(), &nrows,
+      eigenvalues, work, &lwork, &info);
+
+  // Check the error code
+  if(info != 0)
+    std::cerr << "Error: invalid error code returned by dsyev (" << info << ")\n";
+
+  // The user will expect the eigenvalues to be sorted in descending order
+  // LAPACK gives us the eigenvalues in ascending order
+  for(int esubs=0; esubs<nrows-esubs-1; esubs++) {
+    double temp = eigenvalues[esubs];
+    eigenvalues[esubs] = eigenvalues[nrows-esubs-1];
+    eigenvalues[nrows-esubs-1] = temp;
+  }
+
+  // Sort the eigenvectors too
+  double* Gptr = G->data();
+  const int ONE = 1;
+  for(int esubs=0; esubs<nrows-esubs-1; esubs++) {
+    dswap_(&nrows, Gptr+esubs*nrows, &ONE,
+        Gptr+(nrows-esubs-1)*nrows, &ONE);
+  }
+
+  // Flip the sign if necessary
+  if(flipSign)
+  {
+    for(int c=0; c<nrows; c++)
+    {
+      int maxIndex=0;
+      double maxVal = std::abs(Gptr[c*nrows]);
+      for(int r=1; r<nrows; r++)
+      {
+        double testVal = std::abs(Gptr[c*nrows+r]);
+        if(testVal > maxVal) {
+          maxIndex = r;
+          maxVal = testVal;
+        }
+      }
+
+      if(Gptr[c*nrows+maxIndex] < 0) {
+        const double NEGONE = -1;
+        dscal_(&nrows, &NEGONE, Gptr+c*nrows, &ONE);
+      }
+    }
+  }
+
+  delete[] work;
+}
+
+void computeEigenpairs(Matrix* G, double*& eigenvalues,
+    Matrix*& eigenvectors, const int numEvecs, const bool flipSign)
+{
+  if(G == 0) {
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G is a null pointer");
+  }
+  if(G->getNumElements() == 0) {
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G has no entries");
+  }
+  if(numEvecs < 1) {
+    std::ostringstream oss;
+    oss << "Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, "
+        << "Matrix*& eigenvectors, const int numEvecs, "
+        << "const bool flipSign): numEvecs = " << numEvecs << " < 1";
+    throw std::runtime_error(oss.str());
+  }
+  if(numEvecs > G->nrows()) {
+    std::ostringstream oss;
+    oss << "Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, "
+        << "Matrix*& eigenvectors, const int numEvecs, "
+        << "const bool flipSign): numEvecs = " << numEvecs
+        << " > G->nrows() = " << G->nrows();
+    throw std::runtime_error(oss.str());
+  }
+
+  computeEigenpairs(G, eigenvalues, flipSign);
+
+  // Allocate memory for eigenvectors
+  int numRows = G->nrows();
+  try {
+    eigenvectors = new Matrix(numRows,numEvecs);
+  }
+  catch(std::exception& e) {
+    std::cout << "Exception: " << e.what() << std::endl;
+  }
+
+  // Copy appropriate eigenvectors
+  int nToCopy = numRows*numEvecs;
+  const int ONE = 1;
+  dcopy_(&nToCopy, G->data(), &ONE, eigenvectors->data(), &ONE);
+}
+
+
+void computeEigenpairs(Matrix* G, double*& eigenvalues,
+    Matrix*& eigenvectors, const double thresh, const bool flipSign)
+{
+  if(G == 0) {
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G is a null pointer");
+  }
+  if(G->getNumElements() == 0) {
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G has no entries");
+  }
+  if(thresh < 0) {
+    std::ostringstream oss;
+    oss << "Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, "
+        << "Matrix*& eigenvectors, const int numEvecs, "
+        << "const bool flipSign): thresh = " << thresh << " < 0";
+    throw std::runtime_error(oss.str());
+  }
+
+  computeEigenpairs(G, eigenvalues, flipSign);
+
+  // Compute number of things to copy
+  int nrows = G->nrows();
+  int numEvecs=nrows;
+  double sum = 0;
+  for(int i=nrows-1; i>=0; i--) {
+    sum += eigenvalues[i];
+    if(sum > thresh) {
+      break;
+    }
+    numEvecs--;
+  }
+
+  // Allocate memory for eigenvectors
+  int numRows = G->nrows();
+  try {
+    eigenvectors = new Matrix(numRows,numEvecs);
+  }
+  catch(std::exception& e) {
+    std::cout << "Exception: " << e.what() << std::endl;
+  }
+
+  // Copy appropriate eigenvectors
+  int nToCopy = numRows*numEvecs;
+  const int ONE = 1;
+  dcopy_(&nToCopy, G->data(), &ONE, eigenvectors->data(), &ONE);
+}
+
+
+const struct TuckerTensor* STHOSVD(const Tensor* X,
+    const double epsilon, bool flipSign)
+{
+  if(X == 0) {
+    throw std::runtime_error("Tucker::STHOSVD(const Tensor* X, const double epsilon, bool flipSign): X is a null pointer");
+  }
+  if(X->getNumElements() == 0) {
+    throw std::runtime_error("Tucker::STHOSVD(const Tensor* X, const double epsilon, bool flipSign): X has no entries");
+  }
+  if(epsilon < 0) {
+    std::ostringstream oss;
+    oss << "Tucker::STHOSVD(const Tensor* const X, const double epsilon, "
+        << "bool flipSign): epsilon = " << epsilon << " < 0";
+    throw std::runtime_error(oss.str());
+  }
+
+  int ndims = X->N();
+
+  // Create a struct to store the factorization
+  struct TuckerTensor* factorization;
+  try {
+    factorization = new struct TuckerTensor(ndims);
+  }
+  catch(std::exception& e) {
+    std::cout << "Exception: " << e.what() << std::endl;
+  }
+  factorization->total_timer_.start();
+
+  double tensorNorm = X->norm2();
+  double thresh = epsilon*epsilon*tensorNorm/X->N();
+
+  const Tensor* Y = X;
+
+  // For each dimension...
+  for(int n=0; n<X->N(); n++)
+  {
+    // Compute the Gram matrix
+    // S = Y_n*Y_n'
+    factorization->gram_timer_[n].start();
+    Matrix* S = computeGram(Y,n);
+    factorization->gram_timer_[n].stop();
+
+    // Compute the leading eigenvectors of S
+    // call dsyev(jobz, uplo, n, a, lda, w, work, lwork, info)
+    factorization->eigen_timer_[n].start();
+    computeEigenpairs(S, factorization->eigenvalues[n],
+        factorization->U[n], thresh, flipSign);
+    factorization->eigen_timer_[n].stop();
+
+    // Free the Gram matrix
+    delete S;
+
+    // Perform the tensor times matrix multiplication
+    factorization->ttm_timer_[n].start();
+    Tensor* temp = ttm(Y,n,factorization->U[n],true);
+    factorization->ttm_timer_[n].stop();
+    if(n > 0) {
+      delete Y;
+    }
+    Y = temp;
+  }
+
+  factorization->G = const_cast<Tensor*>(Y);
+  factorization->total_timer_.stop();
+  return factorization;
+}
+
+
+const struct TuckerTensor* STHOSVD(const Tensor* X,
+    const SizeArray* reducedI, bool flipSign)
+{
+  if(X == 0) {
+    throw std::runtime_error("Tucker::STHOSVD(const Tensor* X, const SizeArray* reducedI, bool flipSign): X is a null pointer");
+  }
+  if(X->getNumElements() == 0) {
+    throw std::runtime_error("Tucker::STHOSVD(const Tensor* X, const SizeArray* reducedI, bool flipSign): X has no entries");
+  }
+  if(X->N() != reducedI->size()) {
+    std::ostringstream oss;
+    oss << "Tucker::STHOSVD(const Tensor* X, const SizeArray* reducedI, "
+        << "bool flipSign): X->N() = " << X->N()
+        << " != reducedI->size() = " << reducedI->size();
+    throw std::runtime_error(oss.str());
+  }
+  for(int i=0; i<reducedI->size(); i++) {
+    if((*reducedI)[i] <= 0) {
+      std::ostringstream oss;
+      oss << "Tucker::STHOSVD(const Tensor* X, const SizeArray* reducedI, "
+      << "bool flipSign): reducedI[" << i << "] = " << (*reducedI)[i]
+      << " <= 0";
+      throw std::runtime_error(oss.str());
+    }
+    if((*reducedI)[i] > X->size(i)) {
+      std::ostringstream oss;
+      oss << "Tucker::STHOSVD(const Tensor* X, const SizeArray* reducedI, "
+      << "bool flipSign): reducedI[" << i << "] = " << (*reducedI)[i]
+      << " > X->size(" << i << ") = " << X->size(i);
+      throw std::runtime_error(oss.str());
+    }
+  }
+
+  // Create a struct to store the factorization
+  struct TuckerTensor* factorization;
+  try {
+    factorization = new struct TuckerTensor(X->N());
+  }
+  catch(std::exception& e) {
+    std::cout << "Exception: " << e.what() << std::endl;
+  }
+  factorization->total_timer_.start();
+
+  const Tensor* Y = X;
+
+  // For each dimension...
+  for(int n=0; n<X->N(); n++)
+  {
+    // Compute the Gram matrix
+    // S = Y_n*Y_n'
+    factorization->gram_timer_[n].start();
+    Matrix* S = computeGram(Y,n);
+    factorization->gram_timer_[n].stop();
+
+    // Compute the leading eigenvectors of S
+    // call dsyev(jobz, uplo, n, a, lda, w, work, lwork, info)
+    factorization->eigen_timer_[n].start();
+    computeEigenpairs(S, factorization->eigenvalues[n],
+        factorization->U[n], (*reducedI)[n], flipSign);
+    factorization->eigen_timer_[n].stop();
+
+    delete S;
+
+    // Perform the tensor times matrix multiplication
+    factorization->ttm_timer_[n].start();
+    Tensor* temp = ttm(Y,n,factorization->U[n],true);
+    factorization->ttm_timer_[n].stop();
+    if(n > 0) {
+      delete Y;
+    }
+    Y = temp;
+  }
+
+  factorization->G = const_cast<Tensor*>(Y);
+  factorization->total_timer_.stop();
+  return factorization;
+}
+
+
+Tensor* ttm(const Tensor* X, const int n,
+    const Matrix* U, bool Utransp)
+{
+  if(X == 0) {
+    throw std::runtime_error("Tucker::ttm(const Tensor* X, const int n, const Matrix* U, bool Utransp): X is a null pointer");
+  }
+  if(X->getNumElements() == 0) {
+    throw std::runtime_error("Tucker::ttm(const Tensor* X, const int n, const Matrix* U, bool Utransp): X has no entries");
+  }
+  if(U == 0) {
+    throw std::runtime_error("Tucker::ttm(const Tensor* X, const int n, const Matrix* U, bool Utransp): U is a null pointer");
+  }
+  if(U->getNumElements() == 0) {
+    throw std::runtime_error("Tucker::ttm(const Tensor* X, const int n, const Matrix* U, bool Utransp): U has no entries");
+  }
+  if(n < 0 || n >= X->N()) {
+    std::ostringstream oss;
+    oss << "Tucker::ttm(const Tensor* X, const int n, const Matrix* U, "
+        << "bool Utransp): n = " << n << " is not in the range [0,"
+        << X->N() << ")";
+    throw std::runtime_error(oss.str());
+  }
+  if(!Utransp && U->ncols() != X->size(n)) {
+    std::ostringstream oss;
+    // TODO: amk Oct 17 2016 Finish adding exceptions to this file
+  }
+
+  // Compute the number of rows for the resulting "matrix"
+  int nrows;
+  if(Utransp)
+    nrows = U->ncols();
+  else
+    nrows = U->nrows();
+
+  // Allocate space for the new tensor
+  SizeArray I(X->N());
+  for(int i=0; i<I.size(); i++) {
+    if(i != n) {
+      I[i] = X->size(i);
+    }
+    else {
+      I[i] = nrows;
+    }
+  }
+  Tensor* Y;
+  try {
+    Y = new Tensor(I);
+  }
+  catch(std::exception& e) {
+    std::cout << "Exception: " << e.what() << std::endl;
+  }
+
+  // Call TTM
+  ttm(X, n, U, Y, Utransp);
+
+  // Return the tensor
+  return Y;
+}
+
+
+Tensor* ttm(const Tensor* const X, const int n,
+    const double* const Uptr, const int dimU,
+    const int strideU, bool Utransp)
+{
+  // Allocate space for the new tensor
+  SizeArray I(X->N());
+  for(int i=0; i<I.size(); i++) {
+    if(i != n) {
+      I[i] = X->size(i);
+    }
+    else {
+      I[i] = dimU;
+    }
+  }
+  Tensor* Y;
+  try {
+    Y = new Tensor(I);
+  }
+  catch(std::exception& e) {
+    std::cout << "Exception: " << e.what() << std::endl;
+  }
+
+  // Call TTM
+  ttm(X, n, Uptr, strideU, Y, Utransp);
+
+  // Return the tensor
+  return Y;
+}
+
+
+void ttm(const Tensor* const X, const int n,
+    const Matrix* const U, Tensor* Y, bool Utransp)
+{
+  // Check that the input is valid
+  assert(U != 0);
+  if(Utransp) {
+    assert(U->nrows() == X->size(n));
+    assert(U->ncols() == Y->size(n));
+  }
+  else {
+    assert(U->ncols() == X->size(n));
+    assert(U->nrows() == Y->size(n));
+  }
+  ttm(X, n, U->data(), U->nrows(), Y, Utransp);
+}
+
+
+void ttm(const Tensor* const X, const int n,
+    const double* const Uptr, const int strideU,
+    Tensor* Y, bool Utransp)
+{
+  // Check that the input is valid
+  assert(X != 0);
+  assert(Uptr != 0);
+  assert(Y != 0);
+  assert(n >= 0 && n < X->N());
+  for(int i=0; i<X->N(); i++) {
+    if(i != n) {
+      assert(X->size(i) == Y->size(i));
+    }
+  }
+
+  // Obtain the number of rows and columns of U
+  int Unrows, Uncols;
+  if(Utransp) {
+    Unrows = X->size(n);
+    Uncols = Y->size(n);
+  }
+  else {
+    Uncols = X->size(n);
+    Unrows = Y->size(n);
+  }
+
+  // n = 0 is a special case
+  // Y_0 is stored column major
+  if(n == 0)
+  {
+    // Compute number of columns of Y_n
+    // Technically, we could divide the total number of entries by n,
+    // but that seems like a bad decision
+    int ncols = X->size().prod(1,X->N()-1);
+
+    // Call matrix matrix multiply
+    // call dgemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
+    // C := alpha*op( A )*op( B ) + beta*C
+    // A, B and C are matrices, with op( A ) an m by k matrix,
+    // op( B ) a k by n matrix and C an m by n matrix.
+    char transa;
+    char transb = 'N';
+    int m = Y->size(n);
+    int blas_n = ncols;
+    int k = X->size(n);
+    int lda = strideU;
+    int ldb = k;
+    int ldc = m;
+    double alpha = 1;
+    double beta = 0;
+
+    if(Utransp) {
+      transa = 'T';
+    } else {
+      transa = 'N';
+    }
+    dgemm_(&transa, &transb, &m, &blas_n, &k, &alpha, Uptr,
+        &lda, X->data(), &ldb, &beta, Y->data(), &ldc);
+  }
+  else
+  {
+    // Count the number of columns
+    int ncols = X->size().prod(0,n-1);
+
+    // Count the number of matrices
+    int nmats = X->size().prod(n+1,X->N()-1,1);
+
+    // For each matrix...
+    for(int i=0; i<nmats; i++) {
+      // Call matrix matrix multiply
+      // call dgemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
+      // C := alpha*op( A )*op( B ) + beta*C
+      // A, B and C are matrices, with op( A ) an m by k matrix,
+      // op( B ) a k by n matrix and C an m by n matrix.
+      char transa = 'N';
+      char transb;
+      int m = ncols;
+      int blas_n = Y->size(n);
+      int k;
+      int lda = ncols;
+      int ldb = strideU;
+      int ldc = ncols;
+      double alpha = 1;
+      double beta = 0;
+      if(Utransp) {
+        transb = 'N';
+        k = Unrows;
+      } else {
+        transb = 'T';
+        k = Uncols;
+      }
+      dgemm_(&transa, &transb, &m, &blas_n, &k, &alpha,
+          X->data()+i*k*m, &lda, Uptr, &ldb, &beta,
+          Y->data()+i*m*blas_n, &ldc);
+    }
+  }
+}
+
+
+MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metrics)
+{
+  // If there are no slices, calling this function was a bad idea
+  int numSlices = Y->size(mode);
+  if(numSlices <= 0) {
+    std::ostringstream oss;
+    oss << "Tucker::computeSliceMetrics(const Tensor* Y, const int mode, const int metrics): "
+        << "numSlices = " << numSlices << " <= 0";
+    throw std::runtime_error(oss.str());
+  }
+
+  // Allocate memory for the result
+  MetricData* result = new MetricData(metrics, numSlices);
+
+  // Initialize the result
+  double* delta;
+  int* nArray;
+  if((metrics & MEAN) || (metrics & VARIANCE)) {
+    delta = Tucker::safe_new<double>(numSlices);
+    nArray = Tucker::safe_new<int>(numSlices);
+  }
+  for(int i=0; i<numSlices; i++) {
+    if(metrics & MIN) {
+      result->getMinData()[i] = std::numeric_limits<double>::max();
+    }
+    if(metrics & MAX) {
+      result->getMaxData()[i] = std::numeric_limits<double>::lowest();
+    }
+    if(metrics & SUM) {
+      result->getSumData()[i] = 0;
+    }
+    if((metrics & MEAN) || (metrics & VARIANCE)) {
+      result->getMeanData()[i] = 0;
+      nArray[i] = 0;
+    }
+    if(metrics & VARIANCE) {
+      result->getVarianceData()[i] = 0;
+    }
+  }
+
+  if(Y->getNumElements() == 0)
+    return result;
+
+  // Compute the result
+  int ndims = Y->N();
+  int numContig = Y->size().prod(0,mode-1,1); // Number of contiguous elements in a slice
+  int numSetsContig = Y->size().prod(mode+1,ndims-1,1); // Number of sets of contiguous elements per slice
+  int distBetweenSets = Y->size().prod(0,mode); // Distance between sets of contiguous elements
+
+  const double* dataPtr;
+  int slice, i, c;
+  #pragma omp parallel for default(shared) private(slice,i,c,dataPtr)
+  for(slice=0; slice<numSlices; slice++)
+  {
+    dataPtr = Y->data() + slice*numContig;
+    for(c=0; c<numSetsContig; c++)
+    {
+      for(i=0; i<numContig; i++)
+      {
+        if(metrics & MIN) {
+          result->getMinData()[slice] = std::min(result->getMinData()[slice],dataPtr[i]);
+        }
+        if(metrics & MAX) {
+          result->getMaxData()[slice] = std::max(result->getMaxData()[slice],dataPtr[i]);
+        }
+        if(metrics & SUM) {
+          result->getSumData()[slice] += dataPtr[i];
+        }
+        if((metrics & MEAN) || (metrics & VARIANCE)) {
+          delta[slice] = dataPtr[i] - result->getMeanData()[slice];
+          nArray[slice]++;
+          result->getMeanData()[slice] += (delta[slice]/nArray[slice]);
+        }
+        if(metrics & VARIANCE) {
+          result->getVarianceData()[slice] +=
+              (delta[slice]*(dataPtr[i]-result->getMeanData()[slice]));
+        }
+      }
+      dataPtr += distBetweenSets;
+    }
+  }
+
+  if((metrics & MEAN) || (metrics & VARIANCE)) {
+    delete[] delta;
+    delete[] nArray;
+  }
+  if(metrics & VARIANCE) {
+    int sizeOfSlice = numContig*numSetsContig;
+    for(int i=0; i<numSlices; i++) {
+      result->getVarianceData()[i] /= sizeOfSlice;
+    }
+  }
+
+  return result;
+}
+
+
+// Shift is applied before scale
+// We divide by scaleVals, not multiply
+void transformSlices(Tensor* Y, int mode, const double* scales, const double* shifts)
+{
+  // If the tensor has no entries, no transformation is necessary
+  int numEntries = Y->getNumElements();
+  if(numEntries == 0)
+    return;
+
+  // Get the raw data from the tensor
+  double* data = Y->data();
+
+  // Compute the result
+  int ndims = Y->N();
+  int numSlices = Y->size(mode);
+  int numContig = Y->size().prod(0,mode-1,1); // Number of contiguous elements in a slice
+  int numSetsContig = Y->size().prod(mode+1,ndims-1,1); // Number of sets of contiguous elements per slice
+  int distBetweenSets = Y->size().prod(0,mode); // Distance between sets of contiguous elements
+
+  double* dataPtr;
+  int slice, i, c;
+  #pragma omp parallel for default(shared) private(slice,i,c,dataPtr)
+  for(slice=0; slice<numSlices; slice++)
+  {
+    dataPtr = Y->data() + slice*numContig;
+    for(c=0; c<numSetsContig; c++)
+    {
+      for(i=0; i<numContig; i++)
+        dataPtr[i] = (dataPtr[i] + shifts[slice]) / scales[slice];
+      dataPtr += distBetweenSets;
+    }
+  }
+}
+
+
+void normalizeTensorMinMax(Tensor* Y, int mode)
+{
+  MetricData* metrics = computeSliceMetrics(Y, mode, MAX+MIN);
+  int sizeOfModeDim = Y->size(mode);
+  double* scales = safe_new<double>(sizeOfModeDim);
+  double* shifts = safe_new<double>(sizeOfModeDim);
+  for(int i=0; i<sizeOfModeDim; i++) {
+    scales[i] = metrics->getMaxData()[i] - metrics->getMinData()[i];
+    shifts[i] = -metrics->getMinData()[i];
+  }
+  transformSlices(Y,mode,scales,shifts);
+  delete[] scales;
+  delete[] shifts;
+  delete metrics;
+}
+
+void normalizeTensorStandardCentering(Tensor* Y, int mode)
+{
+  MetricData* metrics = computeSliceMetrics(Y, mode, MEAN+VARIANCE);
+  int sizeOfModeDim = Y->size(mode);
+  double* scales = safe_new<double>(sizeOfModeDim);
+  double* shifts = safe_new<double>(sizeOfModeDim);
+  for(int i=0; i<sizeOfModeDim; i++) {
+    scales[i] = sqrt(metrics->getVarianceData()[i]);
+    shifts[i] = -metrics->getMeanData()[i];
+
+    std::cout << shifts[i] << " " << scales[i] << std::endl;
+    if(scales[i] < 1e-10) {
+      std::cout << "Slice " << i
+          << " is below the cutoff. True value is: "
+          << scales[i] << std::endl;
+      scales[i] = 1;
+    }
+  }
+  transformSlices(Y,mode,scales,shifts);
+  delete[] scales;
+  delete[] shifts;
+  delete metrics;
+}
+
+
+Tensor* importTensor(const char* filename)
+{
+  // Open file
+  std::ifstream ifs;
+  ifs.open(filename);
+  assert(ifs.is_open());
+
+  // Read the type of object
+  // If the type is not "tensor", that's bad
+  std::string tensorStr;
+  ifs >> tensorStr;
+  assert(tensorStr == "tensor");
+
+  // Read the number of dimensions
+  int ndims;
+  ifs >> ndims;
+
+  // Create a SizeArray of that length
+  SizeArray sz(ndims);
+
+  // Read the dimensions
+  for(int i=0; i<ndims; i++) {
+    ifs >> sz[i];
+  }
+
+  // Create a tensor using that SizeArray
+  Tensor* t;
+  try {
+    t = new Tensor(sz);
+  }
+  catch(std::exception& e) {
+    std::cout << "Exception: " << e.what() << std::endl;
+  }
+
+  // Read the entries of the tensor
+  size_t numEntries = sz.prod();
+  double * data = t->data();
+  for(size_t i=0; i<numEntries; i++) {
+    ifs >> data[i];
+  }
+
+  // Close the file
+  ifs.close();
+
+  // Return the tensor
+  return t;
+}
+
+
+Matrix* importMatrix(const char* filename)
+{
+  // Open file
+  std::ifstream ifs;
+  ifs.open(filename);
+  assert(ifs.is_open());
+
+  // Read the type of object
+  // If the type is not "tensor", that's bad
+  std::string tensorStr;
+  ifs >> tensorStr;
+  assert(tensorStr == "tensor");
+
+  // Read the number of dimensions
+  int ndims;
+  ifs >> ndims;
+  assert(ndims == 2);
+
+  // Read the dimensions
+  int nrows, ncols;
+    ifs >> nrows >> ncols;
+
+  // Create a matrix
+  Matrix* m;
+  try {
+    m = new Matrix(nrows,ncols);
+  }
+  catch(std::exception& e) {
+    std::cout << "Exception: " << e.what() << std::endl;
+  }
+
+  // Read the entries of the tensor
+  size_t numEntries = nrows*ncols;
+  double * data = m->data();
+  for(size_t i=0; i<numEntries; i++) {
+    ifs >> data[i];
+  }
+
+  // Close the file
+  ifs.close();
+
+  // Return the tensor
+  return m;
+}
+
+
+void exportTensor(const Tensor* Y, const char* filename)
+{
+  // Open the file
+  std::ofstream ofs;
+  ofs.open(filename);
+
+  // Write the type of object
+  ofs << "tensor\n";
+
+  // Write the number of dimensions of the tensor
+  int ndims = Y->size().size();
+  ofs << ndims << std::endl;
+
+  // Write the size of each dimension
+  for(int i=0; i<ndims; i++) {
+    ofs << Y->size(i) << " ";
+  }
+  ofs << std::endl;
+
+  // Write the elements of the tensor
+  size_t numEntries = Y->size().prod();
+  const double* data = Y->data();
+  for(size_t i=0; i<numEntries; i++) {
+    ofs << data[i] << std::endl;
+  }
+
+  // Close the file
+  ofs.close();
+}
+
+} // end namespace Tucker

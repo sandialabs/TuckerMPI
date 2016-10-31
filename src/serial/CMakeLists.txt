@@ -1,0 +1,5 @@
+FILE(GLOB SOURCES "*.cpp")
+ADD_LIBRARY(serial_tucker ${SOURCES})
+
+ADD_SUBDIRECTORY(drivers)
+ADD_SUBDIRECTORY(tests)

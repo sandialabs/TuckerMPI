@@ -1,0 +1,7 @@
+INCLUDE_DIRECTORIES(..)
+
+ADD_EXECUTABLE(driver driver.cpp)
+TARGET_LINK_LIBRARIES(driver serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(file_driver file_driver.cpp)
+TARGET_LINK_LIBRARIES(file_driver serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
