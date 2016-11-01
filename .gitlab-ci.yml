@@ -22,3 +22,12 @@ test:
   - ctest
   dependencies:
   - build
+
+pages:
+  script:
+  - doxygen doxygen/Doxyfile
+  - mv doxgen/documentation/html/ public/
+  artifacts:
+    paths:
+    - public
+
