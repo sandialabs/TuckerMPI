@@ -1,7 +1,7 @@
 image: gcc
 
 before_script:
-- apt-get update -qq && apt-get install -y -qq cmake libopenmpi-dev openmpi-bin liblapack-dev doxygen
+- apt-get update -qq && apt-get install -y -qq cmake libopenmpi-dev openmpi-bin liblapack-dev doxygen latex dvips
 
 build:
   stage: build
@@ -26,6 +26,10 @@ test:
 pages:
   script:
   - doxygen doxygen/Doxyfile
+  - pwd
+  - ls
+  - ls doxygen
+  - ls doxygen/documentation
   - mv doxgen/documentation/html/ public/
   artifacts:
     paths:
