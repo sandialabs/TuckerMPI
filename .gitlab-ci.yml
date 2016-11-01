@@ -18,8 +18,7 @@ build:
 test:
   stage: test
   script:
-  - ls
-  - pwd
+  - cd build
   - ctest
   dependencies:
   - build
