@@ -43,6 +43,7 @@ int main(int argc, char* argv[])
   std::vector<std::string> fileAsString = Tucker::getFileAsStrings(paramfn);
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
   Tucker::SizeArray* I_dims             = Tucker::stringParseSizeArray(fileAsString, "Global dims");
+  Tucker::SizeArray* ranks              = Tucker::stringParseSizeArray(fileAsString, "Ranks");
   Tucker::SizeArray* proc_grid_dims     = Tucker::stringParseSizeArray(fileAsString, "Grid dims");
 
   int nd = I_dims->size();
@@ -53,6 +54,7 @@ int main(int argc, char* argv[])
   ///////////////////
   if (rank == 0 && boolPrintOptions) {
     std::cout << "Global dims = " << *I_dims << std::endl;
+    std::cout << "Ranks = " << *ranks << std::endl;
     std::cout << "Grid dims = " << *proc_grid_dims << std::endl;
     std::cout << "Use old Gram = " << (boolUseOldGram ? "true" : "false") << std::endl;
     std::cout << std::endl;
@@ -80,16 +82,15 @@ int main(int argc, char* argv[])
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
-  ////////////////////////////////
-  // Set up distribution object //
-  ////////////////////////////////
-  TuckerMPI::Distribution dist(*I_dims, *proc_grid_dims);
-
-  //////////////////////////
-  // Create random tensor //
-  //////////////////////////
-  TuckerMPI::Tensor X(&dist);
-  X.rand();
+  if (ranks->size() != proc_grid_dims->size()) {
+    if (rank == 0) {
+      std::cerr << "Error: The size of the ranks array (" << nd;
+      std::cerr << ") must be equal to the size of the processor grid ("
+          << proc_grid_dims->size() << ")" << std::endl;
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
 
   /////////////////////////////
   // Compute the Gram matrix //
@@ -103,6 +104,14 @@ int main(int argc, char* argv[])
   Tucker::Timer alltoall_timer[nd];
   Tucker::Timer unpack_timer[nd];
   for(int mode = 0; mode < nd; mode++) {
+    if(mode > 0) {
+      (*I_dims)[mode-1] = (*ranks)[mode-1];
+    }
+    TuckerMPI::Distribution dist(*I_dims, *proc_grid_dims);
+
+    TuckerMPI::Tensor X(&dist);
+    X.rand();        
+
     MPI_Barrier(MPI_COMM_WORLD);
     gram_timer[mode].start();
     if(boolUseOldGram) {
@@ -160,6 +169,7 @@ int main(int argc, char* argv[])
          << "),Gram unpacking(" << mode << ")";
       if(mode < nd-1) os << ",";
     }
+    os << std::endl;
 
     // For each MPI process
     for(int r=0; r<nprocs; r++) {
@@ -179,6 +189,7 @@ int main(int argc, char* argv[])
   /////////////////
   if(rank == 0) delete[] gathered_data;
   delete I_dims;
+  delete ranks;
   delete proc_grid_dims;
 
   //////////////////
