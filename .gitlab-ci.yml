@@ -26,11 +26,7 @@ test:
 pages:
   script:
   - doxygen doxygen/Doxyfile
-  - pwd
-  - ls
-  - ls doxygen
-  - ls doxygen/documentation
-  - mv doxgen/documentation/html/ public/
+  - mv doxygen/documentation/html/ public/
   artifacts:
     paths:
     - public
