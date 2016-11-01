@@ -6,8 +6,8 @@ before_script:
 build:
     stage: build
     script:
-       - ls
-       - ls ..
+       - mkdir build
+       - cd build
        - cmake ../src
        - make
 
