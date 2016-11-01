@@ -1,0 +1,115 @@
+/**
+\mainpage 
+
+\section install_sec Installation
+
+This package uses <a href="https://cmake.org/runningcmake">CMake</a>.
+To build the code, follow these instructions.
+-# Create a build directory \n
+   <tt>mkdir build</tt>
+-# Go into the build directory \n
+   <tt>cd build</tt>
+-# Use CMake to create the Makefiles \n
+   <tt>cmake [path to src]</tt>
+-# Use make to build the executables \n
+   <tt>make</tt> \n
+   You may use parallel make to build faster if you wish 
+   (<tt>make -j[num threads]</tt>), but the code should not take long
+   to build anyway.
+   
+Depending on the configuration of the machine you are using, you may
+have to specify additional arguments to CMake.
+
+\subsection rhea_sec Installation on RHEA
+
+To build the code on the OLCF machine 
+<a href="https://www.olcf.ornl.gov/support/system-user-guides/rhea-user-guide">RHEA</a>, 
+please follow these instructions.
+-# Load appropriate CMake and gcc modules \n
+   <tt>module load cmake/3.5.2 \n
+   module load gcc/4.8.2</tt>
+-# Use CMake to create the Makefiles \n
+   <tt>cmake [path to src] -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpiCC</tt>
+-# Use make to build the executables \n
+   <tt>make</tt> \n
+   
+When running your code, please ensure that you load the same gcc module 
+(<tt>gcc/4.8.2</tt>) in your script; otherwise, you will get an error.
+   
+\section test_sec Testing
+
+To run the test suite, simply type <tt>ctest</tt> in your root build directory.
+
+\subsection serial_test_sec Running only the serial tests
+-# Go into your build directory \n
+   <tt>cd build</tt>
+-# Go into the serial directory \n
+   <tt>cd serial</tt>
+-# Run the tests using ctest \n
+   <tt>ctest</tt>
+   
+\subsection small_test_sec Running only the "small" tests
+
+Some of the tests use 24 MPI processes, which may be impractical on 
+your machine.  If you would like to exclude all tests which use more
+than 4 MPI processes, use the command \n
+<tt>ctest -LE ManyProcs</tt>
+
+\section run_sec Running the code
+
+We have provided a driver in the directory <tt>src/mpi/drivers</tt>.  
+To use this driver, please type the command \n
+<tt>mpirun -n [# procs] 
+[path_to_build]/mpi/drivers/mpi_driver --parameter-file [path to 
+parameter file]</tt>
+
+The parameter file contains a list of options, some of which are optional,
+and others which are mandatory.  Sample parameter files can be found in
+the <tt>parameter_file_examples</tt> directory.  The currently supported
+parameters are documented in the following table
+
+<table>
+<caption id="param_table">%Tucker Parameters</caption>
+<tr><th>Name</th><th>Type</th><th>Description</th><th>Default value</th></tr>
+<tr><td>Global dims</td><td>List of integers separated by spaces</td><td>Global dimensions of the data tensor</td><td>REQUIRED PARAMETER</td></tr>
+<tr><td>Ranks</td><td>List of integers separated by spaces</td><td>Global dimensions of the desired core tensor.  \n(Optional if using "Automatic rank determination")</td><td>NONE</td></tr>
+<tr><td>Grid dims</td><td>List of integers separated by spaces</td><td>Global dimensions of the processor grid</td><td>REQUIRED PARAMETER</td></tr>
+<tr><td>Print options</td><td>Boolean</td><td>If true, print the options described in this table</td><td>false</td></tr>
+<tr><td>Write preprocessed data</td><td>Boolean</td><td>If true, write the preprocessed data to a file</td><td>false</td></tr>
+<tr><td>Write STHOSVD result</td><td>Boolean</td><td>If true, record the result of ST-HOSVD (the core tensor and all factors)</td><td>false</td></tr>
+<tr><td>Input file list</td><td>String</td><td>List of filenames of raw data to be read</td><td>raw.txt</td></tr>
+<tr><td>Perform preprocessing</td><td>Boolean</td><td>If true, perform preprocessing to normalize the input</td><td>false</td></tr>
+<tr><td>MinMax scaling</td><td>Boolean</td><td>Uses minmax scaling when true; uses standard centering by mean and scaling by std when false</td><td>false</td></tr>
+<tr><td>Scale mode</td><td>Integer</td><td>Which mode's hyperslices will be scaled</td><td>nd-1, the last mode</td></tr>
+<tr><td>STD Threshold</td><td>Double</td><td>Threshold for standard deviation before we simply set it to 1\n Used in preprocessing</td><td>1e-9</td></tr>
+<tr><td>Stats file</td><td>String</td><td>Location of statistics file containing max, min, mean, and std of each hyperslice</td><td>stats.txt</td></tr>
+<tr><td>Preprocessed output file list</td><td>String</td><td>File containing a list of filenames to output the clean data into</td><td>pre.txt</td></tr>
+<tr><td>SV directory</td><td>String</td><td>Directory to place singular value check information into</td><td>.</td></tr>
+<tr><td>SV file prefix</td><td>String</td><td>Base name for writing the singular value files</td><td>sv</td></tr>
+<tr><td>Automatic rank determination</td><td>Boolean</td><td>If true, automatically determine rank; otherwise, use the user-defined ranks</td><td>false</td></tr>
+<tr><td>Use old Gram</td><td>Boolean</td><td>If true, use the old Gram algorithm; otherwise use the new one</td><td>true</td></tr>
+<tr><td>STHOSVD directory</td><td>String</td><td>Directory location of STHOSVD output files</td><td>compressed</td></tr>
+<tr><td>STHOSVD file prefix</td><td>String</td><td>Base name of STHOSVD output files</td><td>sthosvd</td></tr>
+<tr><td>SV Threshold</td><td>Double</td><td>Used for automatic rank determination; the desired error rate</td><td>1e-5</td></tr>
+</table>
+
+\subsection issues_sec Common installation problems
+
+\subsubsection compiler_sec My compiler doesn't recognize std::numeric_limits<double>::lowest()!
+This function and several others in the code rely on C++11.  If your compiler does not support
+C++11, you will see error messages about unrecognized functions.  Please choose a different
+compiler.
+
+\subsubsection intel_sec My Intel compiler should be C++11 compliant, but I'm still getting those error messages!
+The Intel compiler relies on GNU gcc.  If the GNU gcc in the path is too old, the Intel compiler
+will not support C++11.  You must update your version of GNU or load an appropriate module. Please see 
+<a href=https://software.intel.com/en-us/articles/c11-support-in-intel-c-compiler> this link</a> 
+for more details.
+
+\section thread_sec A note about threads...
+Some sections of the code currently use <a href="http://openmp.org">OpenMP</a>.
+Please ensure that your environment variable <tt>OMP_NUM_THREADS</tt> is set
+to a reasonable value or it may result in significant slow-down.  The entire
+test suite should complete in about a minute; if it does not, there's a good
+chance your <tt>OMP_NUM_THREADS</tt> is too large.
+*/
