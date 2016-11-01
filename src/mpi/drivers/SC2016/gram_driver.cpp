@@ -150,27 +150,29 @@ int main(int argc, char* argv[])
   /////////////////////////////
   // Send the data to a file //
   /////////////////////////////
-  std::ofstream os("gram_runtimes.csv");
+  if(rank == 0) {
+    std::ofstream os("gram_runtimes.csv");
 
-  for(int mode=0; mode<nd; mode++) {
-    os << "Gram(" << mode << "),Gram local multiply(" << mode << "),Gram shift("
-        << mode << "),Gram all-reduce(" << mode << "),Gram all-gather("
-        << mode << "),Gram packing(" << mode << "),Gram all-to-all(" << mode
-        << "),Gram unpacking(" << mode << ")";
-    if(mode < nd-1) os << ",";
-  }
-
-  // For each MPI process
-  for(int r=0; r<nprocs; r++) {
-    // For each timer belonging to that process
-    for(int t=0; t<NTIMERS*nd; t++) {
-      os << gathered_data[r*(NTIMERS*nd+1)+t];
-      if(t < NTIMERS*nd-1) os << ",";
+    for(int mode=0; mode<nd; mode++) {
+      os << "Gram(" << mode << "),Gram local multiply(" << mode << "),Gram shift("
+         << mode << "),Gram all-reduce(" << mode << "),Gram all-gather("
+         << mode << "),Gram packing(" << mode << "),Gram all-to-all(" << mode
+         << "),Gram unpacking(" << mode << ")";
+      if(mode < nd-1) os << ",";
     }
-    os << std::endl;
-  }
 
-  os.close();
+    // For each MPI process
+    for(int r=0; r<nprocs; r++) {
+      // For each timer belonging to that process
+      for(int t=0; t<NTIMERS*nd; t++) {
+        os << gathered_data[r*NTIMERS*nd+t];
+        if(t < NTIMERS*nd-1) os << ",";
+      }
+      os << std::endl;
+    }
+
+    os.close();
+  }
 
   /////////////////
   // Free memory //
