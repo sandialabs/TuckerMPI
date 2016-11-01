@@ -1,6 +1,12 @@
-build_linux:
-   stage: build
-   script:
-      - cmake ../src
-      - make
-      - ctest
+image: gcc
+
+build:
+    stage: build
+    script:
+       - cmake ../src
+       - make
+
+test:
+    stage: test
+    script:
+       - ctest
