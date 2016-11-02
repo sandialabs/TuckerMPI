@@ -614,19 +614,19 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
     double* recvBuf = Tucker::safe_new<double>(numSlices);
     if(metrics & Tucker::MIN) {
       for(int i=0; i<numSlices; i++) sendBuf[i] = result->getMinData()[i];
-      MPI_Allreduce(sendBuf, recvBuf, numSlices, MPI_DOUBLE_PRECISION,
+      MPI_Allreduce(sendBuf, recvBuf, numSlices, MPI_DOUBLE,
           MPI_MIN, comm);
       for(int i=0; i<numSlices; i++) result->getMinData()[i] = recvBuf[i];
     }
     if(metrics & Tucker::MAX) {
       for(int i=0; i<numSlices; i++) sendBuf[i] = result->getMaxData()[i];
-      MPI_Allreduce(sendBuf, recvBuf, numSlices, MPI_DOUBLE_PRECISION,
+      MPI_Allreduce(sendBuf, recvBuf, numSlices, MPI_DOUBLE,
           MPI_MAX, comm);
       for(int i=0; i<numSlices; i++) result->getMaxData()[i] = recvBuf[i];
     }
     if(metrics & Tucker::SUM) {
       for(int i=0; i<numSlices; i++) sendBuf[i] = result->getSumData()[i];
-      MPI_Allreduce(sendBuf, recvBuf, numSlices, MPI_DOUBLE_PRECISION,
+      MPI_Allreduce(sendBuf, recvBuf, numSlices, MPI_DOUBLE,
           MPI_SUM, comm);
       for(int i=0; i<numSlices; i++) result->getSumData()[i] = recvBuf[i];
     }
@@ -649,7 +649,7 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
       }
 
       MPI_Allreduce(sendBuf, recvBuf, numSlices,
-          MPI_DOUBLE_PRECISION, MPI_SUM, comm);
+          MPI_DOUBLE, MPI_SUM, comm);
 
       double* meanDiff;
       if(metrics & Tucker::VARIANCE) {
@@ -673,7 +673,7 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
         }
 
         MPI_Allreduce(sendBuf, recvBuf, numSlices,
-            MPI_DOUBLE_PRECISION, MPI_SUM, comm);
+            MPI_DOUBLE, MPI_SUM, comm);
 
         for(int i=0; i<numSlices; i++) {
           result->getVarianceData()[i] = recvBuf[i] / globalSliceSize;

@@ -172,7 +172,7 @@ double Tensor::maxEntry() const
   }
 
   double globalMax;
-  MPI_Allreduce(&localMax, &globalMax, 1, MPI_DOUBLE_PRECISION,
+  MPI_Allreduce(&localMax, &globalMax, 1, MPI_DOUBLE,
             MPI_MAX, MPI_COMM_WORLD);
   return globalMax;
 }
