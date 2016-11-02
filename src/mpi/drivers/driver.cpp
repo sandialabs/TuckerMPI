@@ -296,6 +296,10 @@ int main(int argc, char* argv[])
       // Write the eigenvalues to files
       std::string filePrefix = sv_dir + "/" + sv_fn + "_mode_";
       TuckerMPI::printEigenvalues(solution, filePrefix);
+
+      // Print the core tensor size
+      std::cout << "Core tensor size: " <<
+          solution->G->getGlobalSize() << std::endl;
     }
 
     if(boolWriteSTHOSVD) {
