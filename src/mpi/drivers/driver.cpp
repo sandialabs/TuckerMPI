@@ -283,9 +283,12 @@ int main(int argc, char* argv[])
 
       TuckerMPI::Tensor* diff = X.subtract(t);
       double normalized_rms_error = diff->norm2();
+      double maxEntry = diff->maxEntry();
       if(rank == 0) {
         std::cout << "Normalized RMS error: "
             << normalized_rms_error << std::endl;
+        std::cout << "Maximum entry: "
+            << maxEntry << std::endl;
       }
 //    }
 

@@ -36,6 +36,7 @@
  * @author Alicia Klinvex
  */
 
+#include <limits>
 #include "TuckerMPI_Tensor.hpp"
 
 namespace TuckerMPI {
@@ -146,15 +147,34 @@ Tensor* Tensor::subtract(const Tensor* t) const
 {
   Tensor* sub = new Tensor(dist_);
 
-  double* subdata = sub->localTensor_->data();
-  double* thisdata = localTensor_->data();
-  double* tdata = t->localTensor_->data();
-
   size_t nnz = getLocalNumEntries();
-  for(size_t i=0; i<nnz; i++) {
-    subdata[i] = thisdata[i] - tdata[i];
+  if(nnz > 0) {
+    double* subdata = sub->localTensor_->data();
+    double* thisdata = localTensor_->data();
+    double* tdata = t->localTensor_->data();
+
+    for(size_t i=0; i<nnz; i++) {
+      subdata[i] = thisdata[i] - tdata[i];
+    }
   }
   return sub;
+}
+
+double Tensor::maxEntry() const
+{
+  double localMax = std::numeric_limits<double>::lowest();
+  size_t nnz = getLocalNumEntries();
+  if(nnz > 0) {
+    double* data = localTensor_->data();
+    for(size_t i=0; i<nnz; i++) {
+      localMax = std::max(localMax,data[i]);
+    }
+  }
+
+  double globalMax;
+  MPI_Allreduce(&localMax, &globalMax, 1, MPI_DOUBLE_PRECISION,
+            MPI_MAX, MPI_COMM_WORLD);
+  return globalMax;
 }
 
 bool isApproxEqual(const Tensor* t1, const Tensor* t2,

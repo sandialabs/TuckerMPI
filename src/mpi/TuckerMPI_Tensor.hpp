@@ -105,6 +105,9 @@ public:
   //! Returns \a this - \a t
   Tensor* subtract(const Tensor* t) const;
 
+  //! Returns the maximum entry of the tensor
+  double maxEntry() const;
+
   friend bool isApproxEqual(const Tensor* t1, const Tensor* t2,
       double tol);
 
