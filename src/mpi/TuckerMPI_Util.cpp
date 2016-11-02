@@ -431,4 +431,81 @@ Tucker::Matrix* reduceForGram(const Tucker::Matrix* U)
   return reducedU;
 }
 
+void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
+{
+  // If Y has no entries, there's nothing to pack
+  size_t nentries = Y->getNumElements();
+  if(nentries == 0)
+    return;
+
+  // Get the number of dimensions
+  int ndim = Y->N();
+
+  // If n is the last dimension, the data is already packed
+  // (because the data is stored in row-major order)
+  if(n == ndim-1) {
+    return;
+  }
+
+  const int inc = 1;
+
+  // Allocate memory
+  // TODO: I'm sure there's a more space-efficient way than this
+  int numEntries = Y->getNumElements();
+  double* tempMem = Tucker::safe_new<double>(numEntries);
+
+  // Get communicator corresponding to this dimension
+  const MPI_Comm& comm = map->getComm();
+
+  // Get number of MPI processes
+  int nprocs;
+  MPI_Comm_size(comm,&nprocs);
+
+  // Get the leading dimension of this tensor unfolding
+  const Tucker::SizeArray& sa = Y->size();
+  int leadingDim = sa.prod(0,n-1,1);
+
+  // Get the number of global rows of this tensor unfolding
+  int nGlobalRows = map->getGlobalNumEntries();
+
+  // Get pointer to tensor data
+  double* tenData = Y->data();
+
+  // Set the stride
+  int stride = leadingDim*nGlobalRows;
+
+  int tempMemOffset = 0;
+  for(int rank=0; rank<nprocs; rank++)
+  {
+    // Get number of local rows
+    int nLocalRows = map->getNumEntries(rank);
+
+    // Number of contiguous elements to copy
+    int blockSize = leadingDim*nLocalRows;
+
+    // Get offset of this row
+    int rowOffset = map->getOffset(rank);
+
+    for(int tensorOffset = rowOffset*leadingDim;
+        tensorOffset < numEntries;
+        tensorOffset += stride)
+    {
+      int RANK;
+      MPI_Comm_rank(MPI_COMM_WORLD,&RANK);
+
+      // Copy block to destination
+      dcopy_(&blockSize, tenData+tensorOffset, &inc,
+          tempMem+tempMemOffset, &inc);
+
+      // Update the offset
+      tempMemOffset += blockSize;
+    }
+  }
+
+  // Copy data from temporary memory back to tensor
+  dcopy_(&numEntries, tempMem, &inc, tenData, &inc);
+
+  delete[] tempMem;
+}
+
 } // end namespace TuckerMPI

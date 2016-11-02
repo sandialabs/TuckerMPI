@@ -98,6 +98,11 @@ void localGEMMForGram(const double* Y1, int nrowsY1, int n,
  */
 Tucker::Matrix* reduceForGram(const Tucker::Matrix* U);
 
+/** \brief Packs the tensor for the TTM
+ *
+ */
+void packForTTM(Tucker::Tensor* Y, int n, const Map* map);
+
 } // end namespace TuckerMPI
 
 #endif /* UTIL_MPI_HPP_ */

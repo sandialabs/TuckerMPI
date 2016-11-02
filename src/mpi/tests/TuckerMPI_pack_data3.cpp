@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
   TuckerMPI::Map map(4,MPI_COMM_WORLD);
 
   // Pack the tensor
-  packTensor(&tensor, 2, &map);
+  packForTTM(&tensor, 2, &map);
 
   tensor.print();
 

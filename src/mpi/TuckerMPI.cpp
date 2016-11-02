@@ -43,8 +43,8 @@
 #include "TuckerMPI.hpp"
 #include "TuckerMPI_Util.hpp"
 #include "TuckerMPI_TuckerTensor.hpp"
+#include "TuckerMPI_ttm.hpp"
 #include "mpi.h"
-#include "math.h"
 #include "assert.h"
 #include <cmath>
 #include <chrono>
@@ -52,200 +52,6 @@
 
 namespace TuckerMPI
 {
-
-Tensor* ttm(const Tensor* X, const int n,
-    const Tucker::Matrix* const U, bool Utransp,
-    Tucker::Timer* mult_timer, Tucker::Timer* pack_timer,
-    Tucker::Timer* reduce_scatter_timer,
-    Tucker::Timer* reduce_timer)
-{
-  // Compute the number of rows for the resulting "matrix"
-  int nrows;
-  if(Utransp)
-    nrows = U->ncols();
-  else
-    nrows = U->nrows();
-
-  // Get the size of the new tensor
-  int ndims = X->getNumDimensions();
-  Tucker::SizeArray newSize(ndims);
-  for(int i=0; i<ndims; i++) {
-    if(i == n) {
-      newSize[i] = nrows;
-    }
-    else {
-      newSize[i] = X->getGlobalSize(i);
-    }
-  }
-
-  // Create a distribution object for it
-  Distribution* dist = new Distribution(newSize,
-          X->getDistribution()->getProcessorGrid()->size());
-
-  // Create the new tensor
-  Tensor* Y;
-  try {
-    Y = new Tensor(dist);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
-
-  // Get the local part of the tensor
-  const Tucker::Tensor* localX = X->getLocalTensor();
-  Tucker::Tensor* localY = Y->getLocalTensor();
-
-  // Determine whether there are multiple MPI processes along this dimension
-  int Pn = X->getDistribution()->getProcessorGrid()->getNumProcs(n,false);
-  if(Pn == 1)
-  {
-    if(!X->getDistribution()->ownNothing()) {
-      // Compute the TTM
-      if(mult_timer) mult_timer->start();
-      Tucker::ttm(localX, n, U, localY, Utransp);
-      if(mult_timer) mult_timer->stop();
-    }
-  }
-  else
-  {
-    // Get the local communicator
-    const MPI_Comm& comm = X->getDistribution()->getProcessorGrid()->getColComm(n,false);
-
-    // Determine whether we must block the result
-    // If the temporary storage is bigger than the tensor, we block instead
-    int K = U->ncols();
-    int Jn = U->nrows();
-
-    int uGlobalRows = Y->getGlobalSize(n);
-    int uGlobalCols = X->getGlobalSize(n);
-
-    const Map* xMap = X->getDistribution()->getMap(n,false);
-    const Map* yMap = Y->getDistribution()->getMap(n,false);
-
-    const double* Uptr;
-    assert(U->getNumElements() > 0);
-    if(Utransp)
-      Uptr = U->data() + xMap->getGlobalIndex(0);
-    else
-      Uptr = U->data() + xMap->getGlobalIndex(0)*uGlobalRows;
-
-    int stride;
-    if(Utransp)
-      stride = uGlobalCols;
-    else
-      stride = uGlobalRows;
-
-    // If the required memory is small, we can do a single reduce_scatter
-    if(K < std::ceil(Jn/Pn)) {
-      // Compute the TTM
-      Tucker::Tensor* localResult;
-      if(X->getDistribution()->ownNothing()) {
-        Tucker::SizeArray sz(ndims);
-        for(int i=0; i<ndims; i++) {
-          sz[i] = X->getLocalSize(i);
-        }
-        sz[n] = Y->getGlobalSize(n);
-        localResult = new Tucker::Tensor(sz);
-        localResult->initialize();
-      }
-      else {
-        if(mult_timer) mult_timer->start();
-        localResult = Tucker::ttm(localX, n, Uptr,
-                  uGlobalRows, stride, Utransp);
-        if(mult_timer) mult_timer->stop();
-      }
-
-      // Pack the data
-      if(pack_timer) pack_timer->start();
-      packTensor(localResult,n,yMap);
-      if(pack_timer) pack_timer->stop();
-
-      // Perform a reduce-scatter
-      const double* sendBuf;
-      if(localResult->getNumElements() > 0)
-        sendBuf = localResult->data();
-      else
-        sendBuf = 0;
-      double* recvBuf;
-      if(localY->getNumElements() > 0)
-        recvBuf = localY->data();
-      else
-        recvBuf = 0;
-      int nprocs;
-      MPI_Comm_size(comm,&nprocs);
-      int* recvCounts = Tucker::safe_new<int>(nprocs);
-      int multiplier = Y->getLocalSize().prod(0,n-1,1)*Y->getLocalSize().prod(n+1,ndims-1,1);
-      for(int i=0; i<nprocs; i++) {
-        recvCounts[i] = multiplier*(yMap->getNumEntries(i));
-      }
-
-      if(reduce_scatter_timer) reduce_scatter_timer->start();
-      MPI_Reduce_scatter((void*)sendBuf, recvBuf, recvCounts, MPI_DOUBLE,
-          MPI_SUM, comm);
-      if(reduce_scatter_timer) reduce_scatter_timer->stop();
-    }
-    else {
-      for(int root=0; root<Pn; root++) {
-        int uLocalRows = yMap->getNumEntries(root);
-
-        if(uLocalRows == 0) {
-          continue;
-        }
-
-        // Compute the local TTM
-        Tucker::Tensor* localResult;
-        if(X->getDistribution()->ownNothing()) {
-          Tucker::SizeArray sz(ndims);
-          for(int i=0; i<ndims; i++) {
-            sz[i] = X->getLocalSize(i);
-          }
-          sz[n] = uLocalRows;
-          localResult = new Tucker::Tensor(sz);
-          localResult->initialize();
-        }
-        else {
-          if(mult_timer) mult_timer->start();
-          localResult = Tucker::ttm(localX, n, Uptr, uLocalRows, stride, Utransp);
-          if(mult_timer) mult_timer->stop();
-        }
-
-        // Combine the local results with a reduce operation
-        const double* sendBuf;
-        if(localResult->getNumElements() > 0)
-          sendBuf = localResult->data();
-        else
-          sendBuf = 0;
-        double* recvBuf;
-        if(localY->getNumElements() > 0)
-          recvBuf = localY->data();
-        else
-          recvBuf = 0;
-        int count = localResult->getNumElements();
-
-
-        if(count > 0) {
-          if(reduce_timer) reduce_timer->start();
-          MPI_Reduce((void*)sendBuf, recvBuf, count, MPI_DOUBLE, MPI_SUM,
-              root, comm);
-          if(reduce_timer)reduce_timer->stop();
-        }
-
-
-        // Free memory
-        delete localResult;
-
-        // Increment the data pointer
-        if(Utransp)
-          Uptr += (uLocalRows*stride);
-        else
-          Uptr += uLocalRows;
-      } // end for i = 0 .. Pn-1
-    } // end if K >= Jn/Pn
-  } // end if Pn != 1
-
-  // Return the result
-  return Y;
-}
 
 /**
  * \test TuckerMPI_old_gram_test_file.cpp
@@ -574,83 +380,6 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
   return gramMat;
 }
 
-void packTensor(Tucker::Tensor* Y, int n, const Map* map)
-{
-  // If Y has no entries, there's nothing to pack
-  size_t nentries = Y->getNumElements();
-  if(nentries == 0)
-    return;
-
-  // Get the number of dimensions
-  int ndim = Y->N();
-
-  // If n is the last dimension, the data is already packed
-  // (because the data is stored in row-major order)
-  if(n == ndim-1) {
-    return;
-  }
-
-  const int inc = 1;
-
-  // Allocate memory
-  // TODO: I'm sure there's a more space-efficient way than this
-  int numEntries = Y->getNumElements();
-  double* tempMem = Tucker::safe_new<double>(numEntries);
-
-  // Get communicator corresponding to this dimension
-  const MPI_Comm& comm = map->getComm();
-
-  // Get number of MPI processes
-  int nprocs;
-  MPI_Comm_size(comm,&nprocs);
-
-  // Get the leading dimension of this tensor unfolding
-  const Tucker::SizeArray& sa = Y->size();
-  int leadingDim = sa.prod(0,n-1,1);
-
-  // Get the number of global rows of this tensor unfolding
-  int nGlobalRows = map->getGlobalNumEntries();
-
-  // Get pointer to tensor data
-  double* tenData = Y->data();
-
-  // Set the stride
-  int stride = leadingDim*nGlobalRows;
-
-  int tempMemOffset = 0;
-  for(int rank=0; rank<nprocs; rank++)
-  {
-    // Get number of local rows
-    int nLocalRows = map->getNumEntries(rank);
-
-    // Number of contiguous elements to copy
-    int blockSize = leadingDim*nLocalRows;
-
-    // Get offset of this row
-    int rowOffset = map->getOffset(rank);
-
-    for(int tensorOffset = rowOffset*leadingDim;
-        tensorOffset < numEntries;
-        tensorOffset += stride)
-    {
-      int RANK;
-      MPI_Comm_rank(MPI_COMM_WORLD,&RANK);
-
-      // Copy block to destination
-      dcopy_(&blockSize, tenData+tensorOffset, &inc,
-          tempMem+tempMemOffset, &inc);
-
-      // Update the offset
-      tempMemOffset += blockSize;
-    }
-  }
-
-  // Copy data from temporary memory back to tensor
-  dcopy_(&numEntries, tempMem, &inc, tenData, &inc);
-
-  delete[] tempMem;
-}
-
 const TuckerTensor* STHOSVD(const Tensor* const X,
     const double epsilon, bool useOldGram, bool flipSign)
 {
@@ -673,6 +402,8 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   double tensorNorm = X->norm2();
   double thresh = epsilon*epsilon*tensorNorm/ndims;
   if(rank == 0) {
+    std::cout << "\tAutoST-HOSVD::Tensor Norm: "
+        << std::sqrt(tensorNorm) << "...\n";
     std::cout << "\tAutoST-HOSVD::Relative Threshold: "
         << thresh << "...\n";
   }
