@@ -43,6 +43,7 @@
 #include "Tucker_Timer.hpp"
 #include "Tucker_Matrix.hpp"
 #include "TuckerMPI_Tensor.hpp"
+#include "TuckerMPI_ttm.hpp"
 
 namespace TuckerMPI {
 
@@ -108,6 +109,21 @@ public:
     delete[] ttm_pack_timer_;
     delete[] ttm_reducescatter_timer_;
     delete[] ttm_reduce_timer_;
+  }
+
+  Tensor* reconstructTensor() const
+  {
+    Tensor* temp = G;
+    for(int mode=0; mode<N; mode++) {
+      Tensor* t = ttm(temp,mode,U[mode]);
+
+      // At iteration 0, temp = G
+      if(mode > 0) {
+        delete temp;
+      }
+      temp = t;
+    }
+    return temp;
   }
 
   /** \brief Prints some runtime information

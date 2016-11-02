@@ -102,8 +102,12 @@ public:
 
   void rand();
 
+  //! Returns \a this - \a t
+  Tensor* subtract(const Tensor* t) const;
+
   friend bool isApproxEqual(const Tensor* t1, const Tensor* t2,
       double tol);
+
 private:
   /// @cond EXCLUDE
   Tensor(const Tensor& t);

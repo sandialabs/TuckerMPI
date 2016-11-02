@@ -142,6 +142,21 @@ void Tensor::rand()
   localTensor_->rand();
 }
 
+Tensor* Tensor::subtract(const Tensor* t) const
+{
+  Tensor* sub = new Tensor(dist_);
+
+  double* subdata = sub->localTensor_->data();
+  double* thisdata = localTensor_->data();
+  double* tdata = t->localTensor_->data();
+
+  size_t nnz = getLocalNumEntries();
+  for(size_t i=0; i<nnz; i++) {
+    subdata[i] = thisdata[i] - tdata[i];
+  }
+  return sub;
+}
+
 bool isApproxEqual(const Tensor* t1, const Tensor* t2,
     double tol)
 {

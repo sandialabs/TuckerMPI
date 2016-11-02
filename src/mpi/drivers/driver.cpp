@@ -263,6 +263,32 @@ int main(int argc, char* argv[])
 
     solution->printTimers();
 
+//    if(boolReconstruct) {
+      TuckerMPI::Tensor* t = solution->reconstructTensor();
+
+      if(boolPreprocess) {
+        if(scaling_type == "Max") {
+          normalizeTensorMax(t, scale_mode);
+        }
+        if(scaling_type == "MinMax") {
+          normalizeTensorMinMax(t, scale_mode);
+        }
+        else if(scaling_type == "StandardCentering") {
+          normalizeTensorStandardCentering(t, scale_mode, stdThresh);
+        }
+        else {
+          std::cerr << "Error: invalid scaling type: " << scaling_type << std::endl;
+        }
+      }
+
+      TuckerMPI::Tensor* diff = X.subtract(t);
+      double normalized_rms_error = diff->norm2();
+      if(rank == 0) {
+        std::cout << "Normalized RMS error: "
+            << normalized_rms_error << std::endl;
+      }
+//    }
+
     if(rank == 0) {
       // Write the eigenvalues to files
       std::string filePrefix = sv_dir + "/" + sv_fn + "_mode_";
