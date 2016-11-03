@@ -78,8 +78,7 @@ parameters are documented in the following table
 <tr><td>Write preprocessed data</td><td>Boolean</td><td>If true, write the preprocessed data to a file</td><td>false</td></tr>
 <tr><td>Write STHOSVD result</td><td>Boolean</td><td>If true, record the result of ST-HOSVD (the core tensor and all factors)</td><td>false</td></tr>
 <tr><td>Input file list</td><td>String</td><td>List of filenames of raw data to be read</td><td>raw.txt</td></tr>
-<tr><td>Perform preprocessing</td><td>Boolean</td><td>If true, perform preprocessing to normalize the input</td><td>false</td></tr>
-<tr><td>MinMax scaling</td><td>Boolean</td><td>Uses minmax scaling when true; uses standard centering by mean and scaling by std when false</td><td>false</td></tr>
+<tr><td>Scaling type</td><td>String</td><td>How to scale the tensor\nOptions: Max, MinMax, StandardCentering, None</td><td>None</td></tr>
 <tr><td>Scale mode</td><td>Integer</td><td>Which mode's hyperslices will be scaled</td><td>nd-1, the last mode</td></tr>
 <tr><td>STD Threshold</td><td>Double</td><td>Threshold for standard deviation before we simply set it to 1\n Used in preprocessing</td><td>1e-9</td></tr>
 <tr><td>Stats file</td><td>String</td><td>Location of statistics file containing max, min, mean, and std of each hyperslice</td><td>stats.txt</td></tr>

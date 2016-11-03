@@ -43,7 +43,6 @@ int main(int argc, char* argv[])
   //
   std::vector<std::string> fileAsString = Tucker::getFileAsStrings(paramfn);
   bool boolAuto                         = Tucker::stringParse<bool>(fileAsString, "Automatic rank determination", false);
-  bool boolPreprocess                   = Tucker::stringParse<bool>(fileAsString, "Perform Preprocessing", false);
   bool boolSTHOSVD                      = Tucker::stringParse<bool>(fileAsString, "Perform STHOSVD", false);
   bool boolWriteSTHOSVD                 = Tucker::stringParse<bool>(fileAsString, "Write STHOSVD result", false);
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
@@ -58,7 +57,7 @@ int main(int argc, char* argv[])
   if(!boolAuto)  R_dims                 = Tucker::stringParseSizeArray(fileAsString, "Ranks");
   Tucker::SizeArray* proc_grid_dims     = Tucker::stringParseSizeArray(fileAsString, "Grid dims");
 
-  std::string scaling_type              = Tucker::stringParse<std::string>(fileAsString, "Scaling type", "Max");
+  std::string scaling_type              = Tucker::stringParse<std::string>(fileAsString, "Scaling type", "None");
   std::string sthosvd_dir               = Tucker::stringParse<std::string>(fileAsString, "STHOSVD directory", "compressed");
   std::string sthosvd_fn                = Tucker::stringParse<std::string>(fileAsString, "STHOSVD file prefix", "sthosvd");
   std::string sv_dir                    = Tucker::stringParse<std::string>(fileAsString, "SV directory", ".");
@@ -76,7 +75,6 @@ int main(int argc, char* argv[])
   //
   if (rank == 0 && boolPrintOptions) {
     std::cout << "Automatic rank determination = " << boolAuto << std::endl;
-    std::cout << "Perform Preprocessing = " << boolPreprocess << std::endl;
     std::cout << "Perform STHOSVD = " << boolSTHOSVD << std::endl;
     std::cout << "Write STHOSVD result = " << boolWriteSTHOSVD << std::endl;
     std::cout << "Stopping tolerance = " << tol << std::endl;
@@ -226,27 +224,24 @@ int main(int argc, char* argv[])
   ///////////////////////////
   // Perform preprocessing //
   ///////////////////////////
-  if(boolPreprocess) {
-    if(scaling_type == "Max") {
-      normalizeTensorMax(&X, scale_mode);
-    }
-    if(scaling_type == "MinMax") {
-      normalizeTensorMinMax(&X, scale_mode);
-    }
-    else if(scaling_type == "StandardCentering") {
-      normalizeTensorStandardCentering(&X, scale_mode, stdThresh);
-    }
-    else {
-      std::cerr << "Error: invalid scaling type: " << scaling_type << std::endl;
-    }
-
-    if(boolWritePreprocessed) {
-      TuckerMPI::writeTensorBinary(pre_fns_file,X);
-    }
+  if(scaling_type == "Max") {
+    normalizeTensorMax(&X, scale_mode);
   }
-  else if(boolWritePreprocessed && rank == 0) {
-    std::cout << "WARNING: No preprocessing was done, so the preprocessed data will not be written to "
-        << pre_fns_file << std::endl;
+  if(scaling_type == "MinMax") {
+    normalizeTensorMinMax(&X, scale_mode);
+  }
+  else if(scaling_type == "StandardCentering") {
+    normalizeTensorStandardCentering(&X, scale_mode, stdThresh);
+  }
+  else if(scaling_type == "None") {
+
+  }
+  else {
+    std::cerr << "Error: invalid scaling type: " << scaling_type << std::endl;
+  }
+
+  if(boolWritePreprocessed) {
+    TuckerMPI::writeTensorBinary(pre_fns_file,X);
   }
 
   /////////////////////
@@ -268,19 +263,14 @@ int main(int argc, char* argv[])
 //    if(boolReconstruct) {
       TuckerMPI::Tensor* t = solution->reconstructTensor();
 
-      if(boolPreprocess) {
-        if(scaling_type == "Max") {
-          normalizeTensorMax(t, scale_mode);
-        }
-        if(scaling_type == "MinMax") {
-          normalizeTensorMinMax(t, scale_mode);
-        }
-        else if(scaling_type == "StandardCentering") {
-          normalizeTensorStandardCentering(t, scale_mode, stdThresh);
-        }
-        else {
-          std::cerr << "Error: invalid scaling type: " << scaling_type << std::endl;
-        }
+      if(scaling_type == "Max") {
+        normalizeTensorMax(t, scale_mode);
+      }
+      if(scaling_type == "MinMax") {
+        normalizeTensorMinMax(t, scale_mode);
+      }
+      else if(scaling_type == "StandardCentering") {
+        normalizeTensorStandardCentering(t, scale_mode, stdThresh);
       }
 
       TuckerMPI::Tensor* diff = X.subtract(t);
