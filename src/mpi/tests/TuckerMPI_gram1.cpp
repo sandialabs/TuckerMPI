@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
   TuckerMPI::Tensor tensor(&dist);
 
   // Read the entries from a file
-  std::string filename = "../../../input_data/tensor36.mpi";
+  std::string filename = "input_files/tensor36.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&tensor);
 
   // Compute the gram matrix in dimension 1
