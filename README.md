@@ -2,11 +2,11 @@ This is the GIT repo for the work on building a parallel Tucker for
 combustion data.                                                   
 
 For more information:
-Alicia Klinvex (amklinv@sandia.gov)
-Grey Ballard   (ballard@wfu.edu)
-Tamara Kolda   (tgkolda@sandia.gov)
-Woody Austin   (austinwn@cs.utexas.edu)
-Hemanth Kolla  (hnkolla@sandia.gov)
+[Alicia Klinvex](mailto:amklinv@sandia.gov)  
+[Grey Ballard](mailto:ballard@wfu.edu)  
+[Tamara Kolda](mailto:tgkolda@sandia.gov)  
+[Woody Austin](mailto:austinwn@cs.utexas.edu)  
+[Hemanth Kolla](mailto:hnkolla@sandia.gov)  
 
 WARNING
 -------
@@ -14,10 +14,10 @@ This code is not ready for public release, but is ready for evaluation by friend
 
 Requirements
 ------------
-MPI implementation (We use openMPI MPICH2, and MVAPICH2)
-BLAS implementation                                     
-LAPACK implementation                                   
-C++11 or greater
+MPI implementation (We use openMPI MPICH2, and MVAPICH2)  
+BLAS implementation  
+LAPACK implementation  
+C++11 or greater  
 
 Documentation
 -------------
@@ -25,7 +25,7 @@ Please see https://tensors.gitlab.io/TuckerMPI
 
 Papers
 ------
-Parallel Tensor Compression for Large-Scale Scientific Data
+Parallel Tensor Compression for Large-Scale Scientific Data  
 Woody Austin, Grey Ballard, and Tamara G. Kolda
 
 Funding Statement
