@@ -1,7 +1,6 @@
-This is the GIT repo for the work on building a parallel Tucker for
-combustion data.                                                   
+This is the GIT repo for the work on building a parallel Tucker for combustion data.                                                   
 
-For more information:
+For more information:  
 [Alicia Klinvex](mailto:amklinv@sandia.gov)  
 [Grey Ballard](mailto:ballard@wfu.edu)  
 [Tamara Kolda](mailto:tgkolda@sandia.gov)  
@@ -26,7 +25,9 @@ Please see https://tensors.gitlab.io/TuckerMPI
 Papers
 ------
 Parallel Tensor Compression for Large-Scale Scientific Data  
-Woody Austin, Grey Ballard, and Tamara G. Kolda
+Woody Austin, Grey Ballard, and Tamara G. Kolda  
+[Find it on arXiv!](https://arxiv.org/abs/1510.06689)  
+[Cite this!](latex/citations.txt)
 
 Funding Statement
 -----------------
