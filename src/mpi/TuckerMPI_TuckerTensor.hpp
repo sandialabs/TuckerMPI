@@ -130,7 +130,7 @@ public:
    *
    * \todo This can be made more efficient
    */
-  void printTimers() const
+  void printTimers(const std::string& filename) const
   {
     const int ntimers = 14;
     double* raw_array = Tucker::safe_new<double>(ntimers*N+1);
@@ -292,7 +292,7 @@ public:
           << mean_array[ntimers*N] << std::endl << std::endl;
 
       // Send the data to a file
-      std::ofstream os("alicia_temp_runtimes.csv");
+      std::ofstream os(filename);
 
       // Create the header row
       for(int d=0; d<N; d++) {

@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
 
   Tucker::SizeArray* I_dims             = Tucker::stringParseSizeArray(fileAsString, "Global dims");
   Tucker::SizeArray* R_dims = 0;
-  if(!boolAuto) R_dims = Tucker::stringParseSizeArray(fileAsString, "Ranks");
+  if(!boolAuto)  R_dims                 = Tucker::stringParseSizeArray(fileAsString, "Ranks");
   Tucker::SizeArray* proc_grid_dims     = Tucker::stringParseSizeArray(fileAsString, "Grid dims");
 
   std::string scaling_type              = Tucker::stringParse<std::string>(fileAsString, "Scaling type", "Max");
@@ -66,6 +66,7 @@ int main(int argc, char* argv[])
   std::string in_fns_file               = Tucker::stringParse<std::string>(fileAsString, "Input file list", "raw.txt");
   std::string pre_fns_file              = Tucker::stringParse<std::string>(fileAsString, "Preprocessed output file list", "pre.txt");
   std::string stats_file                = Tucker::stringParse<std::string>(fileAsString, "Stats file", "stats.txt");
+  std::string timing_file               = Tucker::stringParse<std::string>(fileAsString, "Timing file", "runtime.csv");
 
   int nd = I_dims->size();
   int scale_mode                        = Tucker::stringParse<int>(fileAsString, "Scale mode", nd-1);
@@ -261,7 +262,8 @@ int main(int argc, char* argv[])
       solution = TuckerMPI::STHOSVD(&X, R_dims, boolUseOldGram);
     }
 
-    solution->printTimers();
+    // Send the timing information to a CSV
+    solution->printTimers(timing_file);
 
 //    if(boolReconstruct) {
       TuckerMPI::Tensor* t = solution->reconstructTensor();
