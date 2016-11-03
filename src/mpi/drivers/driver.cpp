@@ -48,6 +48,7 @@ int main(int argc, char* argv[])
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
   bool boolWritePreprocessed            = Tucker::stringParse<bool>(fileAsString, "Write preprocessed data", false);
   bool boolUseOldGram                   = Tucker::stringParse<bool>(fileAsString, "Use old Gram", true);
+  bool boolReconstruct                  = Tucker::stringParse<bool>(fileAsString, "Reconstruct tensor", false);
 
   double tol                            = Tucker::stringParse<double>(fileAsString, "SV Threshold", 1e-6);
   double stdThresh                      = Tucker::stringParse<double>(fileAsString, "STD Threshold", 1e-9);
@@ -260,7 +261,7 @@ int main(int argc, char* argv[])
     // Send the timing information to a CSV
     solution->printTimers(timing_file);
 
-//    if(boolReconstruct) {
+    if(boolReconstruct) {
       TuckerMPI::Tensor* t = solution->reconstructTensor();
 
       if(scaling_type == "Max") {
@@ -274,15 +275,17 @@ int main(int argc, char* argv[])
       }
 
       TuckerMPI::Tensor* diff = X.subtract(t);
-      double normalized_rms_error = diff->norm2();
+      double nrm = X.norm2();
+      double err = diff->norm2();
       double maxEntry = diff->maxEntry();
       if(rank == 0) {
-        std::cout << "Normalized RMS error: "
-            << normalized_rms_error << std::endl;
-        std::cout << "Maximum entry: "
+        std::cout << "Norm of X: " << std::sqrt(nrm) << std::endl;
+        std::cout << "Norm of X - Xtilde: "
+            << std::sqrt(err) << std::endl;
+        std::cout << "Maximum entry of X - Xtilde: "
             << maxEntry << std::endl;
       }
-//    }
+    }
 
     if(rank == 0) {
       // Write the eigenvalues to files

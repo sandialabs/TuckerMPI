@@ -77,6 +77,7 @@ parameters are documented in the following table
 <tr><td>Print options</td><td>Boolean</td><td>If true, print the options described in this table</td><td>false</td></tr>
 <tr><td>Write preprocessed data</td><td>Boolean</td><td>If true, write the preprocessed data to a file</td><td>false</td></tr>
 <tr><td>Write STHOSVD result</td><td>Boolean</td><td>If true, record the result of ST-HOSVD (the core tensor and all factors)</td><td>false</td></tr>
+<tr><td>Reconstruct tensor</td><td>Boolean</td><td>If true, reconstruct an approximation of the original tensor after ST-HOSVD</td><td>false</td></tr>
 <tr><td>Input file list</td><td>String</td><td>List of filenames of raw data to be read</td><td>raw.txt</td></tr>
 <tr><td>Scaling type</td><td>String</td><td>How to scale the tensor\nOptions: Max, MinMax, StandardCentering, None</td><td>None</td></tr>
 <tr><td>Scale mode</td><td>Integer</td><td>Which mode's hyperslices will be scaled</td><td>nd-1, the last mode</td></tr>
