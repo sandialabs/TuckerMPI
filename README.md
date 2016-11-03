@@ -1,3 +1,6 @@
+[![build status](https://gitlab.com/tensors/TuckerMPI/badges/master/build.svg)](https://gitlab.com/tensors/TuckerMPI/commits/master)
+[![coverage report](https://gitlab.com/tensors/TuckerMPI/badges/master/coverage.svg)](https://gitlab.com/tensors/TuckerMPI/commits/master)
+
 This is the GIT repo for the work on building a parallel Tucker for combustion data.                                                   
 
 For more information:  
