@@ -268,12 +268,13 @@ int main(int argc, char* argv[])
       double nrm = X.norm2();
       double err = diff->norm2();
       double maxEntry = diff->maxEntry();
+      double minEntry = diff->minEntry();
       if(rank == 0) {
         std::cout << "Norm of X: " << std::sqrt(nrm) << std::endl;
         std::cout << "Norm of X - Xtilde: "
             << std::sqrt(err) << std::endl;
         std::cout << "Maximum entry of X - Xtilde: "
-            << maxEntry << std::endl;
+            << std::max(maxEntry,-minEntry) << std::endl;
       }
     }
 

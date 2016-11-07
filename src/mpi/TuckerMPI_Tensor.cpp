@@ -177,6 +177,23 @@ double Tensor::maxEntry() const
   return globalMax;
 }
 
+double Tensor::minEntry() const
+{
+  double localMin = std::numeric_limits<double>::max();
+  size_t nnz = getLocalNumEntries();
+  if(nnz > 0) {
+    double* data = localTensor_->data();
+    for(size_t i=0; i<nnz; i++) {
+      localMin = std::min(localMin,data[i]);
+    }
+  }
+
+  double globalMin;
+  MPI_Allreduce(&localMin, &globalMin, 1, MPI_DOUBLE,
+            MPI_MIN, MPI_COMM_WORLD);
+  return globalMin;
+}
+
 bool isApproxEqual(const Tensor* t1, const Tensor* t2,
     double tol)
 {

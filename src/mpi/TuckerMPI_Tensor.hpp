@@ -108,6 +108,9 @@ public:
   //! Returns the maximum entry of the tensor
   double maxEntry() const;
 
+  //! Returns the minimum entry of the tensor
+  double minEntry() const;
+
   friend bool isApproxEqual(const Tensor* t1, const Tensor* t2,
       double tol);
 
