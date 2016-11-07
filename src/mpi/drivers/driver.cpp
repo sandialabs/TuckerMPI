@@ -264,16 +264,6 @@ int main(int argc, char* argv[])
     if(boolReconstruct) {
       TuckerMPI::Tensor* t = solution->reconstructTensor();
 
-      if(scaling_type == "Max") {
-        normalizeTensorMax(t, scale_mode);
-      }
-      if(scaling_type == "MinMax") {
-        normalizeTensorMinMax(t, scale_mode);
-      }
-      else if(scaling_type == "StandardCentering") {
-        normalizeTensorStandardCentering(t, scale_mode, stdThresh);
-      }
-
       TuckerMPI::Tensor* diff = X.subtract(t);
       double nrm = X.norm2();
       double err = diff->norm2();
