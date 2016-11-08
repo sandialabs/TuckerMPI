@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
   /////////////////////////
   // Check for bad input //
   /////////////////////////
-  if (proc_grid_dims->prod() != nprocs){
+  if ((int)proc_grid_dims->prod() != nprocs){
     if (rank==0) {
       std::cerr << "Processor grid dimensions do not multiply to nprocs" << std::endl;
       std::cout << "Processor grid dimensions: " << *proc_grid_dims << std::endl;

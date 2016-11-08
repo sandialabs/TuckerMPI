@@ -901,8 +901,6 @@ bool runSim(Tucker::SizeArray& procs)
 
   const double TRUE_SOLUTION = 9.690249359274157;
 
-  bool matchesTrueSol;
-
   if(rank == 0) std::cout << procs << std::endl;
 
   // Create a SizeArray with the dimensions of the tensor

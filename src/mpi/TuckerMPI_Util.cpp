@@ -102,17 +102,19 @@ const double* packForGram(const Tensor* Y, int n, const Map* redistMap)
     const Tucker::SizeArray& sz = Y->getLocalSize();
 
     // Get information about the local blocks
-    int numLocalBlocks = sz.prod(n+1,ndims-1);
-    int ncolsPerLocalBlock = sz.prod(0,n-1);
+    size_t numLocalBlocks = sz.prod(n+1,ndims-1);
+    size_t ncolsPerLocalBlock = sz.prod(0,n-1);
+    assert(ncolsPerLocalBlock <= std::numeric_limits<int>::max());
 
     const double* src = Y->getLocalTensor()->data();
 
     // Make local data column major
-    for(int b=0; b<numLocalBlocks; b++) {
+    for(size_t b=0; b<numLocalBlocks; b++) {
       double* dest = sendData+b*localNumRows*ncolsPerLocalBlock;
       // Copy one row at a time
       for(int r=0; r<localNumRows; r++) {
-        dcopy_(&ncolsPerLocalBlock, src, &ONE, dest, &localNumRows);
+        int temp = (int)ncolsPerLocalBlock;
+        dcopy_(&temp, src, &ONE, dest, &localNumRows);
         src += ncolsPerLocalBlock;
         dest += 1;
       }
@@ -149,14 +151,15 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
   int ndims = Y->getNumDimensions();
   const Tucker::SizeArray& sz = Y->getLocalSize();
   int nrows = Y->getGlobalSize(n);
-  int ncols = sz.prod(0,n-1,1)*sz.prod(n+1,ndims-1,1);
+  size_t ncols = sz.prod(0,n-1,1)*sz.prod(n+1,ndims-1,1);
+  assert(ncols <= std::numeric_limits<int>::max());
 
   // Create a matrix to store the redistributed Y_n
   // Y_n has a block row distribution
   // We want it to have a block column distribution
   Matrix* redistY;
   try {
-    redistY = new Matrix(nrows,ncols,comm,false);
+    redistY = new Matrix(nrows,(int)ncols,comm,false);
   }
   catch(std::exception& e) {
     std::cout << "Exception: " << e.what() << std::endl;
@@ -334,7 +337,8 @@ void localGEMMForGram(const double* Y1, int nrowsY1, int n,
   int numLocalRows = Y2->getLocalSize(n);
   int numGlobalRows = Y2->getGlobalSize(n);
   const Tucker::SizeArray& sz = Y2->getLocalSize();
-  int numCols = sz.prod(0,n-1,1)*sz.prod(n+1,ndims-1,1);
+  size_t numCols = sz.prod(0,n-1,1)*sz.prod(n+1,ndims-1,1);
+  assert(numCols <= std::numeric_limits<int>::max());
 
   if(n == 0) {
     // Data is stored column-major
@@ -342,7 +346,7 @@ void localGEMMForGram(const double* Y1, int nrowsY1, int n,
     char transb = 'T';
     int crows = nrowsY1;
     int ccols = numLocalRows;
-    int interDim = numCols;
+    int interDim = (int)numCols;
     double alpha = 1;
     const double* Aptr = Y1;
     int lda = nrowsY1;
@@ -360,12 +364,12 @@ void localGEMMForGram(const double* Y1, int nrowsY1, int n,
     char transb = 'N';
     int crows = nrowsY1;
     int ccols = numLocalRows;
-    int interDim = numCols;
+    int interDim = (int)numCols;
     double alpha = 1;
     const double* Aptr = Y1;
-    int lda = numCols;
+    int lda = (int)numCols;
     const double* Bptr = Y2->getLocalTensor()->data();
-    int ldb = numCols;
+    int ldb = (int)numCols;
     double beta = 0;
     int ldc = numGlobalRows;
 
@@ -374,23 +378,24 @@ void localGEMMForGram(const double* Y1, int nrowsY1, int n,
   }
   else {
     // Data is a series of row-major blocks
-    int numBlocks = sz.prod(n+1,ndims-1);
-    int colsPerBlock = sz.prod(0,n-1);
+    size_t numBlocks = sz.prod(n+1,ndims-1);
+    size_t colsPerBlock = sz.prod(0,n-1);
+    assert(colsPerBlock <= std::numeric_limits<int>::max());
 
     char transa = 'T';
     char transb = 'N';
     int crows = nrowsY1;
     int ccols = numLocalRows;
-    int interDim = colsPerBlock;
+    int interDim = (int)colsPerBlock;
     double alpha = 1;
     const double* Aptr = Y1;
-    int lda = colsPerBlock;
+    int lda = (int)colsPerBlock;
     const double* Bptr = Y2->getLocalTensor()->data();
-    int ldb = colsPerBlock;
+    int ldb = (int)colsPerBlock;
     double beta;
     int ldc = numGlobalRows;
 
-    for(int b=0; b<numBlocks; b++) {
+    for(size_t b=0; b<numBlocks; b++) {
       if(b == 0) {
         beta = 0;
       }
@@ -451,7 +456,8 @@ void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
 
   // Allocate memory
   // TODO: I'm sure there's a more space-efficient way than this
-  int numEntries = Y->getNumElements();
+  size_t numEntries = Y->getNumElements();
+  assert(numEntries <= std::numeric_limits<int>::max());
   double* tempMem = Tucker::safe_new<double>(numEntries);
 
   // Get communicator corresponding to this dimension
@@ -463,7 +469,7 @@ void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
 
   // Get the leading dimension of this tensor unfolding
   const Tucker::SizeArray& sa = Y->size();
-  int leadingDim = sa.prod(0,n-1,1);
+  size_t leadingDim = sa.prod(0,n-1,1);
 
   // Get the number of global rows of this tensor unfolding
   int nGlobalRows = map->getGlobalNumEntries();
@@ -472,21 +478,22 @@ void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
   double* tenData = Y->data();
 
   // Set the stride
-  int stride = leadingDim*nGlobalRows;
+  size_t stride = leadingDim*nGlobalRows;
 
-  int tempMemOffset = 0;
+  size_t tempMemOffset = 0;
   for(int rank=0; rank<nprocs; rank++)
   {
     // Get number of local rows
     int nLocalRows = map->getNumEntries(rank);
 
     // Number of contiguous elements to copy
-    int blockSize = leadingDim*nLocalRows;
+    size_t blockSize = leadingDim*nLocalRows;
+    assert(blockSize <= std::numeric_limits<int>::max());
 
     // Get offset of this row
     int rowOffset = map->getOffset(rank);
 
-    for(int tensorOffset = rowOffset*leadingDim;
+    for(size_t tensorOffset = rowOffset*leadingDim;
         tensorOffset < numEntries;
         tensorOffset += stride)
     {
@@ -494,7 +501,8 @@ void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
       MPI_Comm_rank(MPI_COMM_WORLD,&RANK);
 
       // Copy block to destination
-      dcopy_(&blockSize, tenData+tensorOffset, &inc,
+      int tbs = (int)blockSize;
+      dcopy_(&tbs, tenData+tensorOffset, &inc,
           tempMem+tempMemOffset, &inc);
 
       // Update the offset
@@ -503,7 +511,8 @@ void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
   }
 
   // Copy data from temporary memory back to tensor
-  dcopy_(&numEntries, tempMem, &inc, tenData, &inc);
+  int temp = (int)numEntries;
+  dcopy_(&temp, tempMem, &inc, tenData, &inc);
 
   delete[] tempMem;
 }

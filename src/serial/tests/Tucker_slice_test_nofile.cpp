@@ -18,10 +18,10 @@ int main()
   size[3] = 7;
   Tucker::Tensor t(size);
 
-  int nnz = size.prod();
+  size_t nnz = size.prod();
   double* data = t.data();
-  for(int i=0; i<nnz; i++) {
-    data[i] = i+1;
+  for(size_t i=0; i<nnz; i++) {
+    data[i] = (double)i+1;
   }
 
   double trueData[7][4][3];

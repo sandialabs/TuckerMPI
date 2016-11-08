@@ -100,15 +100,15 @@ int main(int argc, char* argv[])
   // Create a tensor
   TuckerMPI::Tensor tensor(&dist);
   double* tensorData = tensor.getLocalTensor()->data();
-  for(int i=0; i<tensor.getLocalNumEntries(); i++) {
-    tensorData[i] = i+1;
+  for(size_t i=0; i<tensor.getLocalNumEntries(); i++) {
+    tensorData[i] = (double)i+1;
   }
 
   // Create a matrix
   Tucker::Matrix matrix(3,2);
   double* matrixData = matrix.data();
   for(size_t i=0; i<matrix.getNumElements(); i++) {
-    matrixData[i] = i+1;
+    matrixData[i] = (double)i+1;
   }
 
   // Perform a TTM

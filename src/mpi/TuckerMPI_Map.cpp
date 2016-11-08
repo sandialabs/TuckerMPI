@@ -38,6 +38,7 @@
 
 #include "TuckerMPI_Map.hpp"
 #include <cassert>
+#include <limits>
 
 namespace TuckerMPI {
 
@@ -172,11 +173,12 @@ void Map::removeEmptyProcs()
   }
 
   // Remove those from numElementsPerProc
-  int newNumProcs = numElementsPerProc_->size() - emptyProcs.size();
-  int i=0;
+  size_t newNumProcs = numElementsPerProc_->size() - emptyProcs.size();
+  size_t i=0;
   int src=0;
-  Tucker::SizeArray* newSize = new Tucker::SizeArray(newNumProcs);
-  for(int dest=0; dest<newNumProcs; dest++) {
+  assert(newNumProcs <= std::numeric_limits<int>::max());
+  Tucker::SizeArray* newSize = new Tucker::SizeArray((int)newNumProcs);
+  for(int dest=0; dest<(int)newNumProcs; dest++) {
     while(i < emptyProcs.size() && src == emptyProcs[i]) {
       src++;
       i++;
@@ -188,10 +190,10 @@ void Map::removeEmptyProcs()
   numElementsPerProc_ = newSize;
 
   // Remove them from offsets too
-  Tucker::SizeArray* newOffsets = new Tucker::SizeArray(newNumProcs);
+  Tucker::SizeArray* newOffsets = new Tucker::SizeArray((int)newNumProcs);
   i=0;
   src=0;
-  for(int dest=0; dest<newNumProcs; dest++) {
+  for(int dest=0; dest<(int)newNumProcs; dest++) {
     while(i < emptyProcs.size() && src == emptyProcs[i]) {
       src++;
       i++;
@@ -202,11 +204,13 @@ void Map::removeEmptyProcs()
   delete offsets_;
   offsets_ = newOffsets;
 
+  assert(emptyProcs.size() <= std::numeric_limits<int>::max());
+
   // Remove them from the communicator too
   MPI_Group old_group, new_group;
   MPI_Comm new_comm;
   MPI_Comm_group(comm_, &old_group);
-  MPI_Group_excl (old_group, emptyProcs.size(),
+  MPI_Group_excl (old_group, (int)emptyProcs.size(),
       emptyProcs.data(), &new_group);
   MPI_Comm_create (comm_, new_group, &new_comm);
   comm_ = new_comm;

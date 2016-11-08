@@ -122,8 +122,8 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
         int ndims = Y->getNumDimensions();
         const Tucker::SizeArray& sz = Y->getLocalSize();
         int maxNumRows = Y->getDistribution()->getMap(n,true)->getMaxNumEntries();
-        int numCols = sz.prod(0,n-1,1)*sz.prod(n+1,ndims-1,1);
-        int maxEntries = maxNumRows*numCols;
+        size_t numCols = sz.prod(0,n-1,1)*sz.prod(n+1,ndims-1,1);
+        size_t maxEntries = maxNumRows*numCols;
 
         // Create buffer for receiving data
         double* recvBuf = Tucker::safe_new<double>(maxEntries);
@@ -131,11 +131,12 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
         // Send data to the next proc in column
         MPI_Request* sendRequests =
             Tucker::safe_new<MPI_Request>(numColProcsSqueezed);
-        int numToSend = Y->getLocalNumEntries();
+        size_t numToSend = Y->getLocalNumEntries();
+        assert(numToSend <= std::numeric_limits<int>::max());
         int tag = 0;
         int sendDest = (myColRankSqueezed+1)%numColProcsSqueezed;
         if(shift_timer) shift_timer->start();
-        MPI_Isend((void*)Y->getLocalTensor()->data(), numToSend, MPI_DOUBLE,
+        MPI_Isend((void*)Y->getLocalTensor()->data(), (int)numToSend, MPI_DOUBLE,
             sendDest, tag, colCommSqueezed, sendRequests+sendDest);
         if(shift_timer) shift_timer->stop();
 
@@ -146,10 +147,11 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
             (numColProcsSqueezed+myColRankSqueezed-1)%numColProcsSqueezed;
         int numRowsToReceive =
             Y->getDistribution()->getMap(n,true)->getNumEntries(recvSource);
-        int numToReceive = numRowsToReceive*numCols;
+        size_t numToReceive = numRowsToReceive*numCols;
+        assert(numToReceive <= std::numeric_limits<int>::max());
 
         if(shift_timer) shift_timer->start();
-        MPI_Irecv(recvBuf, numToReceive, MPI_DOUBLE,
+        MPI_Irecv(recvBuf, (int)numToReceive, MPI_DOUBLE,
             recvSource, tag, colCommSqueezed, recvRequests+recvSource);
         if(shift_timer) shift_timer->stop();
 
@@ -171,7 +173,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
           // Send data to next proc in column
           sendDest = (sendDest+1)%numColProcsSqueezed;
           if(sendDest != myColRankSqueezed) {
-            MPI_Isend((void*)Y->getLocalTensor()->data(), numToSend, MPI_DOUBLE,
+            MPI_Isend((void*)Y->getLocalTensor()->data(), (int)numToSend, MPI_DOUBLE,
                 sendDest, tag, colCommSqueezed, sendRequests+sendDest);
           }
           if(shift_timer) shift_timer->stop();
@@ -190,7 +192,8 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
             numRowsToReceive =
                     Y->getDistribution()->getMap(n,true)->getNumEntries(recvSource);
             numToReceive = numRowsToReceive*numCols;
-            MPI_Irecv(recvBuf, numToReceive, MPI_DOUBLE,
+            assert(numToReceive <= std::numeric_limits<int>::max());
+            MPI_Irecv(recvBuf, (int)numToReceive, MPI_DOUBLE,
                 recvSource, tag, colCommSqueezed, recvRequests+recvSource);
           }
           if(shift_timer) shift_timer->stop();
@@ -636,16 +639,16 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
       // Compute the size of my local slice
       int ndims = Y->getNumDimensions();
       const Tucker::SizeArray& localSize = Y->getLocalSize();
-      int localSliceSize = localSize.prod(0,mode-1,1) *
+      size_t localSliceSize = localSize.prod(0,mode-1,1) *
           localSize.prod(mode+1,ndims-1,1);
 
       // Compute the size of the global slice
       const Tucker::SizeArray& globalSize = Y->getGlobalSize();
-      int globalSliceSize = globalSize.prod(0,mode-1,1) *
+      size_t globalSliceSize = globalSize.prod(0,mode-1,1) *
           globalSize.prod(mode+1,ndims-1,1);
 
       for(int i=0; i<numSlices; i++) {
-        sendBuf[i] = result->getMeanData()[i] * localSliceSize;
+        sendBuf[i] = result->getMeanData()[i] * (double)localSliceSize;
       }
 
       MPI_Allreduce(sendBuf, recvBuf, numSlices,
@@ -656,27 +659,27 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
         meanDiff = Tucker::safe_new<double>(numSlices);
         for(int i=0; i<numSlices; i++) {
           meanDiff[i] = result->getMeanData()[i] -
-              recvBuf[i] / globalSliceSize;
+              recvBuf[i] / (double)globalSliceSize;
         }
       }
 
       for(int i=0; i<numSlices; i++) {
-        result->getMeanData()[i] = recvBuf[i] / globalSliceSize;
+        result->getMeanData()[i] = recvBuf[i] / (double)globalSliceSize;
       }
 
       if(metrics & Tucker::VARIANCE) {
         for(int i=0; i<numSlices; i++) {
           // Source of this equation:
           // http://stats.stackexchange.com/questions/10441/how-to-calculate-the-variance-of-a-partition-of-variables
-          sendBuf[i] = localSliceSize*result->getVarianceData()[i] +
-              localSliceSize*meanDiff[i]*meanDiff[i];
+          sendBuf[i] = (double)localSliceSize*result->getVarianceData()[i] +
+              (double)localSliceSize*meanDiff[i]*meanDiff[i];
         }
 
         MPI_Allreduce(sendBuf, recvBuf, numSlices,
             MPI_DOUBLE, MPI_SUM, comm);
 
         for(int i=0; i<numSlices; i++) {
-          result->getVarianceData()[i] = recvBuf[i] / globalSliceSize;
+          result->getVarianceData()[i] = recvBuf[i] / (double)globalSliceSize;
         }
       }
     }
@@ -841,10 +844,11 @@ void importTensorBinary(const char* filename, Tensor* Y)
   MPI_File_set_view(fh, disp, MPI_DOUBLE, view, "native", MPI_INFO_NULL);
 
   // Read the file
-  int count = Y->getLocalNumEntries();
+  size_t count = Y->getLocalNumEntries();
+  assert(count <= std::numeric_limits<int>::max());
   MPI_Status status;
   ret = MPI_File_read_all(fh, Y->getLocalTensor()->data(),
-      count, MPI_DOUBLE, &status);
+      (int)count, MPI_DOUBLE, &status);
   int nread;
   MPI_Get_count (&status, MPI_DOUBLE, &nread);
   if(ret != MPI_SUCCESS) {
@@ -884,10 +888,11 @@ void importTensorBinary(const char* filename, Tucker::Tensor* Y)
   }
 
   // Read the file
-  int count = Y->size().prod();
+  size_t count = Y->size().prod();
+  assert(count <= std::numeric_limits<int>::max());
   double * data = Y->data();
   MPI_Status status;
-  ret = MPI_File_read(fh, data, count, MPI_DOUBLE, &status);
+  ret = MPI_File_read(fh, data, (int)count, MPI_DOUBLE, &status);
   if(ret != MPI_SUCCESS && rank == 0) {
     std::cerr << "Error: Could not read file " << filename << std::endl;
   }
@@ -931,7 +936,8 @@ void importTimeSeries(const char* filename, Tensor* Y)
   const Map* stepMap = Y->getDistribution()->getMap(ndims-1,true);
   const MPI_Comm& stepComm = Y->getDistribution()->getProcessorGrid()->getRowComm(ndims-1,true);
   double* dataPtr = Y->getLocalTensor()->data();
-  int count = Y->getLocalSize().prod(0,ndims-2);
+  size_t count = Y->getLocalSize().prod(0,ndims-2);
+  assert(count <= std::numeric_limits<int>::max());
 
   for(int step=0; step<nsteps; step++) {
     std::string stepFilename;
@@ -960,7 +966,7 @@ void importTimeSeries(const char* filename, Tensor* Y)
     // Read the file
     MPI_Status status;
     ret = MPI_File_read_all(fh, dataPtr,
-        count, MPI_DOUBLE, &status);
+        (int)count, MPI_DOUBLE, &status);
     if(ret != MPI_SUCCESS && rank == 0) {
       std::cerr << "Error: Could not read file " << stepFilename << std::endl;
       exit(1);
@@ -1060,9 +1066,10 @@ void exportTensorBinary(const char* filename, const Tensor* Y)
   MPI_File_set_view(fh, disp, MPI_DOUBLE, view, "native", MPI_INFO_NULL);
 
   // Write the file
-  int count = Y->getLocalNumEntries();
+  size_t count = Y->getLocalNumEntries();
+  assert(count <= std::numeric_limits<int>::max());
   MPI_Status status;
-  ret = MPI_File_write_all(fh, (double*)Y->getLocalTensor()->data(), count,
+  ret = MPI_File_write_all(fh, (double*)Y->getLocalTensor()->data(), (int)count,
       MPI_DOUBLE, &status);
   if(ret != MPI_SUCCESS && rank == 0) {
     std::cerr << "Error: Could not write to file " << filename << std::endl;
@@ -1099,10 +1106,11 @@ void exportTensorBinary(const char* filename, const Tucker::Tensor* Y)
   }
 
   // Write the tensor to a binary file
-  int nentries = Y->size().prod();
+  size_t nentries = Y->size().prod();
+  assert(nentries <= std::numeric_limits<int>::max());
   const double* entries = Y->data();
   MPI_Status status;
-  ret = MPI_File_write(fh, (double*)entries, nentries, MPI_DOUBLE, &status);
+  ret = MPI_File_write(fh, (double*)entries, (int)nentries, MPI_DOUBLE, &status);
   if(ret != MPI_SUCCESS && rank == 0) {
     std::cerr << "Error: Could not write file " << filename << std::endl;
   }
@@ -1146,7 +1154,8 @@ void exportTimeSeries(const char* filename, const Tensor* Y)
   const Map* stepMap = Y->getDistribution()->getMap(ndims-1,true);
   const MPI_Comm& stepComm = Y->getDistribution()->getProcessorGrid()->getRowComm(ndims-1,true);
   const double* dataPtr = Y->getLocalTensor()->data();
-  int count = Y->getLocalSize().prod(0,ndims-2);
+  size_t count = Y->getLocalSize().prod(0,ndims-2);
+  assert(count <= std::numeric_limits<int>::max());
   for(int step=0; step<nsteps; step++) {
     std::string stepFilename;
     ifs >> stepFilename;
@@ -1174,7 +1183,7 @@ void exportTimeSeries(const char* filename, const Tensor* Y)
 
     // Write the file
     MPI_Status status;
-    ret = MPI_File_write_all(fh, (void*)dataPtr, count,
+    ret = MPI_File_write_all(fh, (void*)dataPtr, (int)count,
         MPI_DOUBLE, &status);
     if(ret != MPI_SUCCESS && rank == 0) {
       std::cerr << "Error: Could not write to file " << stepFilename << std::endl;

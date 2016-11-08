@@ -43,11 +43,12 @@ namespace TuckerMPI {
 
 ProcessorGrid::ProcessorGrid(const Tucker::SizeArray& sz,
     const MPI_Comm& comm) :
-        squeezed_(false),
         size_(sz.size()),
+        squeezed_(false),
+        cartComm_squeezed_(MPI_COMM_NULL),
         rowcomms_squeezed_(0),
-        colcomms_squeezed_(0),
-        cartComm_squeezed_(MPI_COMM_NULL)
+        colcomms_squeezed_(0)
+
 {
   int ndims = sz.size();
 

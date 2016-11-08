@@ -33,9 +33,10 @@ int main(int argc, char* argv[])
 
   // Write the tensor to a binary file
   MPI_Status status;
-  int nentries = t->size().prod();
+  size_t nentries = t->size().prod();
+  assert(nentries <= std::numeric_limits<int>::max());
   double* entries = t->data();
-  ret = MPI_File_write(fh, entries, nentries, MPI_DOUBLE, &status);
+  ret = MPI_File_write(fh, entries, (int)nentries, MPI_DOUBLE, &status);
   if(ret != MPI_SUCCESS) {
     std::cerr << "Error: Could not write file " << argv[2] << std::endl;
   }

@@ -617,7 +617,15 @@ void ttm(const Tensor* const X, const int n,
     // Compute number of columns of Y_n
     // Technically, we could divide the total number of entries by n,
     // but that seems like a bad decision
-    int ncols = X->size().prod(1,X->N()-1);
+    size_t ncols = X->size().prod(1,X->N()-1);
+
+    if(ncols > std::numeric_limits<int>::max()) {
+      std::ostringstream oss;
+      oss << "Error in Tucker::ttm: " << ncols
+          << " is larger than std::numeric_limits<int>::max() ("
+          << std::numeric_limits<int>::max() << ")";
+      throw std::runtime_error(oss.str());
+    }
 
     // Call matrix matrix multiply
     // call dgemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
@@ -627,7 +635,7 @@ void ttm(const Tensor* const X, const int n,
     char transa;
     char transb = 'N';
     int m = Y->size(n);
-    int blas_n = ncols;
+    int blas_n = (int)ncols;
     int k = X->size(n);
     int lda = strideU;
     int ldb = k;
@@ -646,13 +654,21 @@ void ttm(const Tensor* const X, const int n,
   else
   {
     // Count the number of columns
-    int ncols = X->size().prod(0,n-1);
+    size_t ncols = X->size().prod(0,n-1);
 
     // Count the number of matrices
-    int nmats = X->size().prod(n+1,X->N()-1,1);
+    size_t nmats = X->size().prod(n+1,X->N()-1,1);
+
+    if(ncols > std::numeric_limits<int>::max()) {
+      std::ostringstream oss;
+      oss << "Error in Tucker::ttm: " << ncols
+          << " is larger than std::numeric_limits<int>::max() ("
+          << std::numeric_limits<int>::max() << ")";
+      throw std::runtime_error(oss.str());
+    }
 
     // For each matrix...
-    for(int i=0; i<nmats; i++) {
+    for(size_t i=0; i<nmats; i++) {
       // Call matrix matrix multiply
       // call dgemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
       // C := alpha*op( A )*op( B ) + beta*C
@@ -660,12 +676,12 @@ void ttm(const Tensor* const X, const int n,
       // op( B ) a k by n matrix and C an m by n matrix.
       char transa = 'N';
       char transb;
-      int m = ncols;
+      int m = (int)ncols;
       int blas_n = Y->size(n);
       int k;
-      int lda = ncols;
+      int lda = (int)ncols;
       int ldb = strideU;
-      int ldc = ncols;
+      int ldc = (int)ncols;
       double alpha = 1;
       double beta = 0;
       if(Utransp) {
@@ -728,12 +744,13 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
 
   // Compute the result
   int ndims = Y->N();
-  int numContig = Y->size().prod(0,mode-1,1); // Number of contiguous elements in a slice
-  int numSetsContig = Y->size().prod(mode+1,ndims-1,1); // Number of sets of contiguous elements per slice
-  int distBetweenSets = Y->size().prod(0,mode); // Distance between sets of contiguous elements
+  size_t numContig = Y->size().prod(0,mode-1,1); // Number of contiguous elements in a slice
+  size_t numSetsContig = Y->size().prod(mode+1,ndims-1,1); // Number of sets of contiguous elements per slice
+  size_t distBetweenSets = Y->size().prod(0,mode); // Distance between sets of contiguous elements
 
   const double* dataPtr;
-  int slice, i, c;
+  int slice;
+  size_t i, c;
   #pragma omp parallel for default(shared) private(slice,i,c,dataPtr)
   for(slice=0; slice<numSlices; slice++)
   {
@@ -770,9 +787,9 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
     delete[] nArray;
   }
   if(metrics & VARIANCE) {
-    int sizeOfSlice = numContig*numSetsContig;
+    size_t sizeOfSlice = numContig*numSetsContig;
     for(int i=0; i<numSlices; i++) {
-      result->getVarianceData()[i] /= sizeOfSlice;
+      result->getVarianceData()[i] /= (double)sizeOfSlice;
     }
   }
 
@@ -785,22 +802,20 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
 void transformSlices(Tensor* Y, int mode, const double* scales, const double* shifts)
 {
   // If the tensor has no entries, no transformation is necessary
-  int numEntries = Y->getNumElements();
+  size_t numEntries = Y->getNumElements();
   if(numEntries == 0)
     return;
-
-  // Get the raw data from the tensor
-  double* data = Y->data();
 
   // Compute the result
   int ndims = Y->N();
   int numSlices = Y->size(mode);
-  int numContig = Y->size().prod(0,mode-1,1); // Number of contiguous elements in a slice
-  int numSetsContig = Y->size().prod(mode+1,ndims-1,1); // Number of sets of contiguous elements per slice
-  int distBetweenSets = Y->size().prod(0,mode); // Distance between sets of contiguous elements
+  size_t numContig = Y->size().prod(0,mode-1,1); // Number of contiguous elements in a slice
+  size_t numSetsContig = Y->size().prod(mode+1,ndims-1,1); // Number of sets of contiguous elements per slice
+  size_t distBetweenSets = Y->size().prod(0,mode); // Distance between sets of contiguous elements
 
   double* dataPtr;
-  int slice, i, c;
+  int slice;
+  size_t i, c;
   #pragma omp parallel for default(shared) private(slice,i,c,dataPtr)
   for(slice=0; slice<numSlices; slice++)
   {

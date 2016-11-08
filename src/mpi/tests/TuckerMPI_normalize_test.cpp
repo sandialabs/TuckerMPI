@@ -901,8 +901,6 @@ bool runSim(Tucker::SizeArray& procs)
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-  bool matchesTrueSol;
-
   if(rank == 0) std::cout << procs << std::endl;
 
   // Create a SizeArray with the dimensions of the tensor

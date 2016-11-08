@@ -29,8 +29,6 @@ bool checkUTEqual(const double* arr1, const double* arr2, int numRows)
 
 int main()
 {
-  const double TRUE_SOLUTION = 9.690249359274157;
-
   // Read the matrix from a binary file
   Tucker::Tensor* tensor =
       Tucker::importTensor("input_files/3x5x7x11.txt");

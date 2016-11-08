@@ -131,9 +131,11 @@ Tensor* ttm(const Tensor* X, const int n,
       int nprocs;
       MPI_Comm_size(comm,&nprocs);
       int* recvCounts = Tucker::safe_new<int>(nprocs);
-      int multiplier = Y->getLocalSize().prod(0,n-1,1)*Y->getLocalSize().prod(n+1,ndims-1,1);
+      size_t multiplier = Y->getLocalSize().prod(0,n-1,1)*Y->getLocalSize().prod(n+1,ndims-1,1);
       for(int i=0; i<nprocs; i++) {
-        recvCounts[i] = multiplier*(yMap->getNumEntries(i));
+        size_t temp = multiplier*(yMap->getNumEntries(i));
+        assert(temp <= std::numeric_limits<int>::max());
+        recvCounts[i] = (int)temp;
       }
 
       if(reduce_scatter_timer) reduce_scatter_timer->start();
@@ -177,12 +179,12 @@ Tensor* ttm(const Tensor* X, const int n,
           recvBuf = localY->data();
         else
           recvBuf = 0;
-        int count = localResult->getNumElements();
-
+        size_t count = localResult->getNumElements();
+        assert(count <= std::numeric_limits<int>::max());
 
         if(count > 0) {
           if(reduce_timer) reduce_timer->start();
-          MPI_Reduce((void*)sendBuf, recvBuf, count, MPI_DOUBLE, MPI_SUM,
+          MPI_Reduce((void*)sendBuf, recvBuf, (int)count, MPI_DOUBLE, MPI_SUM,
               root, comm);
           if(reduce_timer)reduce_timer->stop();
         }
