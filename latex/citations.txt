@@ -1,13 +1,12 @@
-@article{DBLP:journals/corr/AustinBK15,
-  author    = {Woody Austin and
-               Grey Ballard and
-               Tamara G. Kolda},
-  title     = {Parallel Tensor Compression for Large-Scale Scientific Data},
-  journal   = {CoRR},
-  volume    = {abs/1510.06689},
-  year      = {2015},
-  url       = {http://arxiv.org/abs/1510.06689},
-  timestamp = {Sun, 01 Nov 2015 17:30:45 +0100},
-  biburl    = {http://dblp.uni-trier.de/rec/bib/journals/corr/AustinBK15},
-  bibsource = {dblp computer science bibliography, http://dblp.org}
+@inproceedings{AuBaKo16,  
+author = {Woody Austin and Grey Ballard and Tamara G. Kolda}, 
+title = {Parallel Tensor Compression for Large-Scale Scientific Data}, 
+booktitle = {IPDPS'16: Proceedings of the 30th IEEE International Parallel and Distributed Processing Symposium},
+venue = {Chicago, IL},
+eventdate = {2016-05-23/2016-05-27}, 
+pages = {912--922}, 
+month = may, 
+year = {2016},
+doi = {10.1109/IPDPS.2016.67},
+eprint = {1510.06689},
 }
