@@ -1069,36 +1069,41 @@ bool runSim(Tucker::SizeArray& procs)
         std::cout << mets->getMinData()[j] << " != " << trueData[globalJ][n][0]
                   << "; the difference is " << mets->getMinData()[j] - trueData[globalJ][n][0]
                   << std::endl;
+        delete mets;
         return false;
       }
       if(std::abs(mets->getMaxData()[j]-trueData[globalJ][n][1])>1e-10) {
         std::cout << mets->getMaxData()[j] << " != " << trueData[globalJ][n][1]
                   << "; the difference is " << mets->getMaxData()[j] - trueData[globalJ][n][1]
                   << std::endl;
+        delete mets;
         return false;
       }
       if(std::abs(mets->getSumData()[j]-trueData[globalJ][n][2])>1e-10) {
         std::cout << mets->getSumData()[j] << " != " << trueData[globalJ][n][2]
                   << "; the difference is " << mets->getSumData()[j] - trueData[globalJ][n][2]
                   << std::endl;
+        delete mets;
         return false;
       }
       if(std::abs(mets->getMeanData()[j]-trueData[globalJ][n][3])>1e-10) {
         std::cout << mets->getMeanData()[j] << " != " << trueData[globalJ][n][3]
                   << "; the difference is " << mets->getMeanData()[j] - trueData[globalJ][n][3]
                   << std::endl;
+        delete mets;
         return false;
       }
       if(std::abs(sqrt(mets->getVarianceData()[j])-trueData[globalJ][n][4])>1e-10) {
         std::cout << sqrt(mets->getVarianceData()[j]) << " != " << trueData[globalJ][n][4]
                   << "; the difference is " << sqrt(mets->getVarianceData()[j]) - trueData[globalJ][n][4]
                   << std::endl;
+        delete mets;
         return false;
       }
-    }
+    } // end for(int j=0; j<tensor.getLocalSize(n); j++)
 
     delete mets;
-  }
+  } // end for(int n=0; n<tensor.getNumDimensions(); n++)
 
   return true;
 }

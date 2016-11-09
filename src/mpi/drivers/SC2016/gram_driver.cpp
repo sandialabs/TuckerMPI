@@ -153,6 +153,9 @@ int main(int argc, char* argv[])
   if(rank == 0) {
     gathered_data = Tucker::safe_new<double>(nd*NTIMERS*nprocs);
   }
+  else {
+    gathered_data = 0;
+  }
   MPI_Gather(timeArray, nd*NTIMERS, MPI_DOUBLE, gathered_data,
       nd*NTIMERS, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 

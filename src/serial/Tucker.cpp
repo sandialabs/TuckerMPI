@@ -737,10 +737,15 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
     if(metrics & VARIANCE) {
       result->getVarianceData()[i] = 0;
     }
-  }
+  } // end for(int i=0; i<numSlices; i++)
 
-  if(Y->getNumElements() == 0)
+  if(Y->getNumElements() == 0) {
+    if((metrics & MEAN) || (metrics & VARIANCE)) {
+      delete[] delta;
+      delete[] nArray;
+    }
     return result;
+  }
 
   // Compute the result
   int ndims = Y->N();
@@ -777,10 +782,10 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
           result->getVarianceData()[slice] +=
               (delta[slice]*(dataPtr[i]-result->getMeanData()[slice]));
         }
-      }
+      } // end for(i=0; i<numContig; i++)
       dataPtr += distBetweenSets;
-    }
-  }
+    } // end for(c=0; c<numSetsContig; c++)
+  } // end for(slice=0; slice<numSlices; slice++)
 
   if((metrics & MEAN) || (metrics & VARIANCE)) {
     delete[] delta;

@@ -142,7 +142,8 @@ Tensor* ttm(const Tensor* X, const int n,
       MPI_Reduce_scatter((void*)sendBuf, recvBuf, recvCounts, MPI_DOUBLE,
           MPI_SUM, comm);
       if(reduce_scatter_timer) reduce_scatter_timer->stop();
-    }
+      delete localResult;
+    } // end if(K < std::ceil(Jn/Pn))
     else {
       for(int root=0; root<Pn; root++) {
         int uLocalRows = yMap->getNumEntries(root);

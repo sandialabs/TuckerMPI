@@ -345,7 +345,8 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
         temp->initialize();
         localGram = temp;
       }
-    }
+      delete redistributedY;
+    } // end if(!myColEmpty)
   }
   else {
     if(Y->getDistribution()->ownNothing()) {
@@ -365,6 +366,7 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
   if(allreduce_timer) allreduce_timer->start();
   Tucker::Matrix* gramMat = reduceForGram(localGram);
   if(allreduce_timer) allreduce_timer->stop();
+  delete localGram;
 
   if(rank == 0) {
     if(mult_timer)
@@ -675,18 +677,20 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
               (double)localSliceSize*meanDiff[i]*meanDiff[i];
         }
 
+        delete[] meanDiff;
+
         MPI_Allreduce(sendBuf, recvBuf, numSlices,
             MPI_DOUBLE, MPI_SUM, comm);
 
         for(int i=0; i<numSlices; i++) {
           result->getVarianceData()[i] = recvBuf[i] / (double)globalSliceSize;
         }
-      }
-    }
+      } // end if(metrics & Tucker::VARIANCE)
+    } // end if((metrics & Tucker::MEAN) || (metrics & Tucker::VARIANCE))
 
     delete[] sendBuf;
     delete[] recvBuf;
-  }
+  } // end if(nprocs > 1)
 
   return result;
 }

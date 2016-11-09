@@ -900,6 +900,7 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::Tensor* mySol;
   TuckerMPI::Distribution* trueDist;
   TuckerMPI::Tensor* trueSol;
+  bool approxEqual;
 
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -932,13 +933,11 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 0, mat, true);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(trueSol, mySol, 1e-10))
-  {
-    return false;
-  }
-
+  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
   delete mat;
   delete mySol;
+  if(!approxEqual)
+    return false;
 
   // Read a matrix to multiply
   mat = Tucker::importMatrix("input_files/4x3.txt");
@@ -953,13 +952,11 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 0, mat);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(trueSol, mySol, 1e-10))
-  {
-    return false;
-  }
-
+  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
   delete mat;
   delete mySol;
+  if(!approxEqual)
+    return false;
 
   // Read a matrix to multiply
   mat = Tucker::importMatrix("input_files/5x8.txt");
@@ -974,13 +971,11 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 1, mat, true);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(trueSol, mySol, 1e-10))
-  {
-    return false;
-  }
-
+  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
   delete mat;
   delete mySol;
+  if(!approxEqual)
+    return false;
 
   // Read a matrix to multiply
   mat = Tucker::importMatrix("input_files/2x5.txt");
@@ -995,13 +990,11 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 1, mat);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(trueSol, mySol, 1e-10))
-  {
-    return false;
-  }
-
+  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
   delete mat;
   delete mySol;
+  if(!approxEqual)
+    return false;
 
   // Read a matrix to multiply
   mat = Tucker::importMatrix("input_files/7x1.txt");
@@ -1016,14 +1009,11 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 2, mat, true);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(trueSol, mySol, 1e-10))
-  {
-    std::cout << rank << ": not equal\n";
-    return false;
-  }
-
+  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
   delete mat;
   delete mySol;
+  if(!approxEqual)
+    return false;
 
   // Read a matrix to multiply
   mat = Tucker::importMatrix("input_files/1x7.txt");
@@ -1038,13 +1028,11 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 2, mat);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(trueSol, mySol, 1e-10))
-  {
-    return false;
-  }
-
+  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
   delete mat;
   delete mySol;
+  if(!approxEqual)
+    return false;
 
   // Read a matrix to multiply
   mat = Tucker::importMatrix("input_files/11x25.txt");
@@ -1059,13 +1047,11 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 3, mat, true);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(trueSol, mySol, 1e-10))
-  {
-    return false;
-  }
-
+  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
   delete mat;
   delete mySol;
+  if(!approxEqual)
+    return false;
 
   // Read a matrix to multiply
   mat = Tucker::importMatrix("input_files/17x11.txt");
@@ -1080,13 +1066,11 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 3, mat);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(trueSol, mySol, 1e-10))
-  {
-    return false;
-  }
-
+  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
   delete mat;
   delete mySol;
+  if(!approxEqual)
+    return false;
 
   return true;
 }

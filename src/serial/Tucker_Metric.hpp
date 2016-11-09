@@ -132,6 +132,7 @@ public:
     if(sumData_) delete[] sumData_;
     if(norm1Data_) delete[] norm1Data_;
     if(norm2Data_) delete[] norm2Data_;
+    if(meanData_) delete[] meanData_;
     if(varianceData_) delete[] varianceData_;
   }
 

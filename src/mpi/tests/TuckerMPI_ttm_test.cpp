@@ -11,6 +11,8 @@
 
 int main(int argc, char* argv[])
 {
+  bool approxEqual;
+
   // Initialize MPI
   MPI_Init(&argc,&argv);
 
@@ -61,12 +63,12 @@ int main(int argc, char* argv[])
   filename = "../../../input_data/ttm_result0.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult);
 
-  if(!isApproxEqual(result,&expectedResult, 1e-10)) {
+  approxEqual = isApproxEqual(result,&expectedResult, 1e-10);
+  delete result;
+  if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
   }
-
-  delete result;
 
   ///////////////////////////////////////////////////////////////////
   // Second test: mode 0, transpose
@@ -92,12 +94,12 @@ int main(int argc, char* argv[])
   filename = "../../../input_data/ttm_result0t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult2);
 
-  if(!isApproxEqual(result,&expectedResult2, 1e-10)) {
+  approxEqual = isApproxEqual(result,&expectedResult, 1e-10);
+  delete result;
+  if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
   }
-
-  delete result;
 
   ///////////////////////////////////////////////////////////////////
   // Third test: mode 1, no transpose
@@ -125,12 +127,12 @@ int main(int argc, char* argv[])
   filename = "../../../input_data/ttm_result1.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult3);
 
-  if(!isApproxEqual(result,&expectedResult3, 1e-10)) {
+  approxEqual = isApproxEqual(result,&expectedResult, 1e-10);
+  delete result;
+  if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
   }
-
-  delete result;
 
   ///////////////////////////////////////////////////////////////////
   // Fourth test: mode 1, transpose
@@ -158,12 +160,12 @@ int main(int argc, char* argv[])
   filename = "../../../input_data/ttm_result1t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult4);
 
-  if(!isApproxEqual(result,&expectedResult4, 1e-10)) {
+  approxEqual = isApproxEqual(result,&expectedResult, 1e-10);
+  delete result;
+  if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
   }
-
-  delete result;
 
   ///////////////////////////////////////////////////////////////////
   // Fifth test: mode 2, no transpose
@@ -194,12 +196,12 @@ int main(int argc, char* argv[])
   filename = "../../../input_data/ttm_result2.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult5);
 
-  if(!isApproxEqual(result,&expectedResult5, 1e-10)) {
+  approxEqual = isApproxEqual(result,&expectedResult, 1e-10);
+  delete result;
+  if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
   }
-
-  delete result;
 
   ///////////////////////////////////////////////////////////////////
   // Sixth test: mode 2, transpose
@@ -230,15 +232,14 @@ int main(int argc, char* argv[])
   filename = "../../../input_data/ttm_result2t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult6);
 
-  if(!isApproxEqual(result,&expectedResult6, 1e-10)) {
+  approxEqual = isApproxEqual(result,&expectedResult, 1e-10);
+  delete result;
+  if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
   }
 
-  delete result;
-
   MPI_Finalize();
-
   return EXIT_SUCCESS;
 }
 

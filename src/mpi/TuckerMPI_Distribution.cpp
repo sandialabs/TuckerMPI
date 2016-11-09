@@ -46,6 +46,7 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
     const Tucker::SizeArray& procs) :
         localDims_(dims.size()),
         globalDims_(dims.size()),
+        maps_squeezed_(0),
         squeezed_(false)
 {
   // Get number of dimensions
@@ -99,7 +100,7 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
     // Re-create the processor grid without lazy processes
     if(!ownNothing_)
       updateProcessorGrid(comm);
-  }
+  } // end if(squeezed_)
   else {
     ownNothing_ = false;
   }

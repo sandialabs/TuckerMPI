@@ -946,10 +946,10 @@ bool runSim(Tucker::SizeArray& procs)
      3.302846757455286,  -1.525701935166856,  33.203090378426815};
 
   matchesTrueSol = checkUTEqual(matrix->data(), TRUE_SOLUTION_0, 3);
-  if(!matchesTrueSol)
-    return false;
 
   delete matrix;
+  if(!matchesTrueSol)
+    return false;
 
   // Compute the Gram matrix
   matrix = TuckerMPI::oldGram(&tensor,1);
@@ -963,10 +963,9 @@ bool runSim(Tucker::SizeArray& procs)
 
   matchesTrueSol = checkUTEqual(matrix->data(), TRUE_SOLUTION_1, 5);
 
+  delete matrix;
   if(!matchesTrueSol)
     return false;
-
-  delete matrix;
 
   // Compute the Gram matrix
   matrix = TuckerMPI::oldGram(&tensor,2);
@@ -982,10 +981,9 @@ bool runSim(Tucker::SizeArray& procs)
 
   matchesTrueSol = checkUTEqual(matrix->data(), TRUE_SOLUTION_2, 7);
 
+  delete matrix;
   if(!matchesTrueSol)
     return false;
-
-  delete matrix;
 
   // Compute the Gram matrix
   matrix = TuckerMPI::oldGram(&tensor,3);
@@ -1005,10 +1003,9 @@ bool runSim(Tucker::SizeArray& procs)
 
   matchesTrueSol = checkUTEqual(matrix->data(), TRUE_SOLUTION_3, 11);
 
+  delete matrix;
   if(!matchesTrueSol)
     return false;
-
-  delete matrix;
 
   return true;
 }

@@ -172,6 +172,12 @@ public:
       mean_array = Tucker::safe_new<double>(ntimers*N+1);
       gathered_data = Tucker::safe_new<double>((ntimers*N+1)*nprocs);
     }
+    else {
+      min_array = 0;
+      max_array = 0;
+      mean_array = 0;
+      gathered_data = 0;
+    }
 
     // Perform the reductions
     MPI_Reduce((void*)raw_array, (void*)min_array, ntimers*N+1,
