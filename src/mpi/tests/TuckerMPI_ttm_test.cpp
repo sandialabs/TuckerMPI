@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
   TuckerMPI::Tensor t(&dist);
 
   // Read the values from a file
-  std::string filename = "../../../input_data/ttm_data.mpi";
+  std::string filename = "input_files/ttm_data.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&t);
 
   ///////////////////////////////////////////////////////////////////
@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
   TuckerMPI::Distribution* expectedDist =
       new TuckerMPI::Distribution(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult(expectedDist);
-  filename = "../../../input_data/ttm_result0.mpi";
+  filename = "input_files/ttm_result0.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult);
 
   approxEqual = isApproxEqual(result,&expectedResult, 1e-10);
@@ -91,10 +91,10 @@ int main(int argc, char* argv[])
   expectedDist =
       new TuckerMPI::Distribution(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult2(expectedDist);
-  filename = "../../../input_data/ttm_result0t.mpi";
+  filename = "input_files/ttm_result0t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult2);
 
-  approxEqual = isApproxEqual(result,&expectedResult, 1e-10);
+  approxEqual = isApproxEqual(result,&expectedResult2, 1e-10);
   delete result;
   if(!approxEqual) {
     MPI_Finalize();
@@ -124,10 +124,10 @@ int main(int argc, char* argv[])
   expectedDist =
       new TuckerMPI::Distribution(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult3(expectedDist);
-  filename = "../../../input_data/ttm_result1.mpi";
+  filename = "input_files/ttm_result1.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult3);
 
-  approxEqual = isApproxEqual(result,&expectedResult, 1e-10);
+  approxEqual = isApproxEqual(result,&expectedResult3, 1e-10);
   delete result;
   if(!approxEqual) {
     MPI_Finalize();
@@ -157,10 +157,10 @@ int main(int argc, char* argv[])
   expectedDist =
       new TuckerMPI::Distribution(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult4(expectedDist);
-  filename = "../../../input_data/ttm_result1t.mpi";
+  filename = "input_files/ttm_result1t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult4);
 
-  approxEqual = isApproxEqual(result,&expectedResult, 1e-10);
+  approxEqual = isApproxEqual(result,&expectedResult4, 1e-10);
   delete result;
   if(!approxEqual) {
     MPI_Finalize();
@@ -193,10 +193,10 @@ int main(int argc, char* argv[])
   expectedDist =
       new TuckerMPI::Distribution(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult5(expectedDist);
-  filename = "../../../input_data/ttm_result2.mpi";
+  filename = "input_files/ttm_result2.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult5);
 
-  approxEqual = isApproxEqual(result,&expectedResult, 1e-10);
+  approxEqual = isApproxEqual(result,&expectedResult5, 1e-10);
   delete result;
   if(!approxEqual) {
     MPI_Finalize();
@@ -229,10 +229,10 @@ int main(int argc, char* argv[])
   expectedDist =
       new TuckerMPI::Distribution(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult6(expectedDist);
-  filename = "../../../input_data/ttm_result2t.mpi";
+  filename = "input_files/ttm_result2t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult6);
 
-  approxEqual = isApproxEqual(result,&expectedResult, 1e-10);
+  approxEqual = isApproxEqual(result,&expectedResult6, 1e-10);
   delete result;
   if(!approxEqual) {
     MPI_Finalize();
