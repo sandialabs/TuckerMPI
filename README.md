@@ -12,7 +12,7 @@ For more information:
 
 WARNING
 -------
-This code is not ready for public release, but is ready for evaluation by friendly expert users.  Please contact us if you have any questions, or submit an issue if you find a bug or wish to request a new feature.
+This code still in development, but we welcome evaluation by friendly expert users.  Please contact us if you have any questions, or submit an issue if you find a bug or wish to request a new feature.
 
 Requirements
 ------------
@@ -29,6 +29,9 @@ Papers
 ------
 Parallel Tensor Compression for Large-Scale Scientific Data  
 Woody Austin, Grey Ballard, and Tamara G. Kolda  
+IPDPS'16
+[doi:10.1109/IPDPS.2016.67](https://doi.org/10.1109/IPDPS.2016.67)
+
 [Find it on arXiv!](https://arxiv.org/abs/1510.06689)  
 [Cite this!](latex/citations.txt)
 
