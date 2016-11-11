@@ -163,6 +163,8 @@ private:
   int localNumEntries_;
   //! Total number of entries
   int globalNumEntries_;
+
+  bool removedEmptyProcs_;
 };
 
 } /* namespace TuckerMPI */

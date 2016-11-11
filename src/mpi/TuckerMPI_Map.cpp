@@ -44,7 +44,8 @@ namespace TuckerMPI {
 
 Map::Map(int globalNumEntries, const MPI_Comm& comm) :
   comm_(comm),
-  globalNumEntries_(globalNumEntries)
+  globalNumEntries_(globalNumEntries),
+  removedEmptyProcs_(false)
 {
   // Get the number of MPI processes
   int myRank, nprocs;
@@ -91,6 +92,8 @@ Map::~Map()
 {
   delete numElementsPerProc_;
   delete offsets_;
+  if(removedEmptyProcs_)
+    MPI_Comm_free(&comm_);
 }
 
 int Map::getLocalIndex(int globalIndex) const
@@ -214,6 +217,7 @@ void Map::removeEmptyProcs()
       emptyProcs.data(), &new_group);
   MPI_Comm_create (comm_, new_group, &new_comm);
   comm_ = new_comm;
+  removedEmptyProcs_ = true;
 }
 
 } /* namespace TuckerMPI */

@@ -104,6 +104,14 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
   else {
     ownNothing_ = false;
   }
+
+  std::cerr << "Freeing comm?\n";
+  if(comm != MPI_COMM_WORLD && !ownNothing()) {
+    std::cerr << "Freeing the comm\n";
+    MPI_Comm_free(&comm);
+    std::cerr << "Freed the comm\n";
+  }
+  std::cerr << "Freed comm?\n";
 }
 
 

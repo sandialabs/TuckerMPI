@@ -107,6 +107,8 @@ ProcessorGrid::~ProcessorGrid()
 {
   delete[] rowcomms_;
   delete[] colcomms_;
+  if(squeezed_)
+    MPI_Comm_free(&cartComm_squeezed_);
 }
 
 const MPI_Comm& ProcessorGrid::getComm(bool squeezed) const
