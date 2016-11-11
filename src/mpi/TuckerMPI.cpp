@@ -776,33 +776,27 @@ const Tensor* reconstructSingleSlice(const TuckerTensor* fact,
   assert(mode >= 0 && mode < fact->N);
   assert(sliceNum >= 0 && sliceNum < fact->U[mode]->nrows());
 
-  Tensor* ten = fact->G;
+  // Process mode first, in order to minimize storage requirements
+
+  // Copy row of matrix
+  int nrows = fact->U[mode]->nrows();
+  int ncols = fact->U[mode]->ncols();
+  Tucker::Matrix tempMat(1,ncols);
+  const double* olddata = fact->U[mode]->data();
+  double* rowdata = tempMat.data();
+  for(int j=0; j<ncols; j++)
+    rowdata[j] = olddata[j*nrows+sliceNum];
+  Tensor* ten = ttm(fact->G, mode, &tempMat);
 
   for(int i=0; i<fact->N; i++)
   {
     Tucker::Matrix* tempMat;
     if(i == mode)
-    {
-      // Copy row of matrix
-      int nrows = fact->U[mode]->nrows();
-      int ncols = fact->U[mode]->ncols();
-      tempMat = new Tucker::Matrix(1,ncols);
-      double* olddata = fact->U[mode]->data();
-      double* rowdata = tempMat->data();
-      for(int j=0; j<ncols; j++)
-      {
-        rowdata[j] = olddata[j*nrows+sliceNum];
-      }
-    }
-    else
-      tempMat = fact->U[i];
-    Tensor* temp = ttm(ten, i, tempMat);
+      continue;  
+    
+    Tensor* temp = ttm(ten, i, fact->U[i]);
 
-    if(ten != fact->G)
-      delete ten;
-    if(tempMat != fact->U[i])
-      delete tempMat;
-
+    delete ten;
     ten = temp;
   }
 
