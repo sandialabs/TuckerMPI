@@ -148,6 +148,9 @@ void normalizeTensorMinMax(Tensor* Y, int mode);
 
 void normalizeTensorMax(Tensor* Y, int mode);
 
+const Tensor* reconstructSingleSlice(const TuckerTensor* fact,
+    const int mode, const int sliceNum);
+
 void readTensorBinary(std::string& filename, Tensor& Y);
 
 /** \brief Imports a parallel tensor using MPI_IO

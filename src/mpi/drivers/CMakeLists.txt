@@ -4,6 +4,9 @@ ADD_SUBDIRECTORY(SC2016)
 ADD_EXECUTABLE(mpi_driver driver.cpp)
 TARGET_LINK_LIBRARIES(mpi_driver mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
+ADD_EXECUTABLE(reconstruct reconstruct.cpp)
+TARGET_LINK_LIBRARIES(reconstruct mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 ADD_EXECUTABLE(parallel_tensor_test parallel_tensor_test.cpp)
 TARGET_LINK_LIBRARIES(parallel_tensor_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 

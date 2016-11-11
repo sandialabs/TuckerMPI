@@ -770,6 +770,45 @@ void normalizeTensorMax(Tensor* Y, int mode)
   delete metrics;
 }
 
+const Tensor* reconstructSingleSlice(const TuckerTensor* fact,
+    const int mode, const int sliceNum)
+{
+  assert(mode >= 0 && mode < fact->N);
+  assert(sliceNum >= 0 && sliceNum < fact->U[mode]->nrows());
+
+  Tensor* ten = fact->G;
+
+  for(int i=0; i<fact->N; i++)
+  {
+    Tucker::Matrix* tempMat;
+    if(i == mode)
+    {
+      // Copy row of matrix
+      int nrows = fact->U[mode]->nrows();
+      int ncols = fact->U[mode]->ncols();
+      tempMat = new Tucker::Matrix(1,ncols);
+      double* olddata = fact->U[mode]->data();
+      double* rowdata = tempMat->data();
+      for(int j=0; j<ncols; j++)
+      {
+        rowdata[j] = olddata[j*nrows+sliceNum];
+      }
+    }
+    else
+      tempMat = fact->U[i];
+    Tensor* temp = ttm(ten, i, tempMat);
+
+    if(ten != fact->G)
+      delete ten;
+    if(tempMat != fact->U[i])
+      delete tempMat;
+
+    ten = temp;
+  }
+
+  return ten;
+}
+
 void readTensorBinary(std::string& filename, Tensor& Y)
 {
   // Count the number of filenames
