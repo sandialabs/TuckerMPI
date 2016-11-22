@@ -87,8 +87,8 @@ public:
   {
     delete G;
     for(int i=0; i<N; i++) {
-      delete U[i];
-      delete[] eigenvalues[i];
+      if(U[i]) delete U[i];
+      if(eigenvalues[i]) delete[] eigenvalues[i];
     }
     delete[] U;
     delete[] eigenvalues;
