@@ -16,7 +16,7 @@ For more information:
 
 WARNING
 -------
-This code still in development, but we welcome evaluation by friendly expert users.  Please contact us if you have any questions, or submit an issue if you find a bug or wish to request a new feature.
+This code is still in development, but we welcome evaluation by friendly expert users.  Please contact us if you have any questions, or submit an issue if you find a bug or wish to request a new feature.
 
 Requirements
 ------------
