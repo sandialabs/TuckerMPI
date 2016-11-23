@@ -1,5 +1,8 @@
 INCLUDE_DIRECTORIES(..)
 
+ADD_EXECUTABLE(Tucker_IO_test Tucker_IO_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_IO_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 ADD_EXECUTABLE(Tucker_shift_scale_test Tucker_shift_scale_test.cpp)
 TARGET_LINK_LIBRARIES(Tucker_shift_scale_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
@@ -38,6 +41,7 @@ TARGET_LINK_LIBRARIES(Tucker_slice_test_nofile serial_tucker ${BLAS_LIBRARIES} $
 
 
 ENABLE_TESTING()
+ADD_TEST(Tucker_serial_IO_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_IO_test)
 ADD_TEST(Tucker_serial_shift_scale_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_shift_scale_test)
 ADD_TEST(Tucker_serial_eig_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_eig_test)
 ADD_TEST(Tucker_serial_norm_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_norm_test)
@@ -62,6 +66,8 @@ SET_PROPERTY(TEST Tucker_serial_ttm_test_nofile PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST Tucker_serial_slice_test_file PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST Tucker_serial_slice_test_nofile PROPERTY LABELS UnitTest)
 
+FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/input_files)
+FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/output_files)
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/5x5.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/3x5x7x11.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/3x5x7x11_ss0.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")

@@ -377,6 +377,13 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode);
  */
 Tensor* importTensor(const char* filename);
 
+/** \brief Imports a tensor from a binary file
+ *
+ * \param[in] filename Name of file to be read
+ * \param[in,out] t Tensor to be read
+ */
+void importTensorBinary(const char* filename, Tensor* t);
+
 /** \brief Imports a tensor from a text file
  *
  * \param[in] filename Name of file to be read
@@ -395,6 +402,17 @@ Matrix* importMatrix(const char* filename);
  * \todo Ensure that this function outputs matrices correctly
  */
 void exportTensor(const Tensor* Y, const char* filename);
+
+/** \brief Writes a tensor to a binary file
+ *
+ * The output file can be read by MPI IO
+ *
+ * \param[in] Y tensor to be written to file
+ * \param[in] filename Name of file to be written to
+ *
+ * \todo Ensure that this function outputs matrices correctly
+ */
+void exportTensorBinary(const Tensor* Y, const char* filename);
 
 } // end of namespace Tucker
 

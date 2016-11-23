@@ -924,6 +924,40 @@ Tensor* importTensor(const char* filename)
   return t;
 }
 
+/// \todo Investigate potential endian-ness problem
+void importTensorBinary(const char* filename, Tensor* t)
+{
+  // Get the maximum file size we can read
+  const std::streamoff MAX_OFFSET =
+      std::numeric_limits<std::streamoff>::max();
+  std::cout << "The maximum file size is " << MAX_OFFSET << " bytes\n";
+
+  // Open file
+  std::ifstream ifs;
+  ifs.open(filename, std::ios::in | std::ios::binary);
+  assert(ifs.is_open());
+
+  // Get the size of the file
+  std::streampos begin, end, size;
+  begin = ifs.tellg();
+  ifs.seekg(0, std::ios::end);
+  end = ifs.tellg();
+  size = end - begin;
+  std::cout << "Reading " << size << " bytes...\n";
+
+  // Assert that this size is consistent with the number of tensor entries
+  size_t numEntries = t->getNumElements();
+  assert(size == numEntries*sizeof(double));
+
+  // Read the file
+  double* data = t->data();
+  ifs.seekg(0, std::ios::beg);
+  ifs.read((char*)data,size);
+
+  // Close the file
+  ifs.close();
+}
+
 
 Matrix* importMatrix(const char* filename)
 {
@@ -996,6 +1030,31 @@ void exportTensor(const Tensor* Y, const char* filename)
   for(size_t i=0; i<numEntries; i++) {
     ofs << data[i] << std::endl;
   }
+
+  // Close the file
+  ofs.close();
+}
+
+void exportTensorBinary(const Tensor* Y, const char* filename)
+{
+  // Get the maximum file size we can write
+  const std::streamoff MAX_OFFSET =
+      std::numeric_limits<std::streamoff>::max();
+  std::cout << "The maximum file size is " << MAX_OFFSET << " bytes\n";
+
+  // Determine how many bytes we are writing
+  size_t numEntries = Y->getNumElements();
+  std::cout << "Writing " << numEntries*sizeof(double)
+            << " bytes...\n";
+
+  // Open file
+  std::ofstream ofs;
+  ofs.open(filename, std::ios::out | std::ios::binary);
+  assert(ofs.is_open());
+
+  // Write the file
+  const double* data = Y->data();
+  ofs.write((char*)data,numEntries*sizeof(double));
 
   // Close the file
   ofs.close();
