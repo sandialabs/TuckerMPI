@@ -43,6 +43,12 @@
 #include <iostream>
 #include "Tucker_Tensor.hpp"
 
+/// @cond EXCLUDE
+// Copy from one array to another
+extern "C" void dcopy_(const int*, const double*, const int*,
+    double*, const int*);
+/// @endcond
+
 namespace Tucker {
 
 /** \brief A sequential dense matrix
@@ -72,6 +78,23 @@ public:
   int ncols() const
   {
     return I_[1];
+  }
+
+  Matrix* getSubmatrix(const int rbegin, const int rend) const
+  {
+    const int ONE = 1;
+    int new_nrows = rend-rbegin+1;
+    int old_nrows = nrows();
+    int myncols = ncols();
+    Matrix* newMat = new Matrix(new_nrows,myncols);
+
+    for(int c=0; c<myncols; c++)
+    {
+      dcopy_(&new_nrows, data()+c*old_nrows+rbegin, &ONE,
+          newMat->data()+c*new_nrows, &ONE);
+    }
+
+    return newMat;
   }
 
 private:

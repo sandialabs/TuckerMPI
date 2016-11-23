@@ -1,6 +1,9 @@
 INCLUDE_DIRECTORIES(.. ../../serial)
 ADD_SUBDIRECTORY(SC2016)
 
+ADD_EXECUTABLE(partial_reconstruct partial_reconstruct.cpp)
+TARGET_LINK_LIBRARIES(partial_reconstruct mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 ADD_EXECUTABLE(mpi_driver driver.cpp)
 TARGET_LINK_LIBRARIES(mpi_driver mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
