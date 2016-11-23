@@ -106,17 +106,24 @@ ProcessorGrid::ProcessorGrid(const Tucker::SizeArray& sz,
 ProcessorGrid::~ProcessorGrid()
 {
   int ndims = size_.size();
-  for(int i=0; i<ndims; i++) {
-    MPI_Comm_free(rowcomms_+i);
-    MPI_Comm_free(colcomms_+i);
+  int finalized;
+  MPI_Finalized(&finalized);
+
+  if(!finalized) {
+    for(int i=0; i<ndims; i++) {
+      MPI_Comm_free(rowcomms_+i);
+      MPI_Comm_free(colcomms_+i);
+    }
   }
   delete[] rowcomms_;
   delete[] colcomms_;
   if(squeezed_) {
-    MPI_Comm_free(&cartComm_squeezed_);
-    for(int i=0; i<ndims; i++) {
-      MPI_Comm_free(rowcomms_squeezed_+i);
-      MPI_Comm_free(colcomms_squeezed_+i);
+    if(!finalized) {
+      MPI_Comm_free(&cartComm_squeezed_);
+      for(int i=0; i<ndims; i++) {
+        MPI_Comm_free(rowcomms_squeezed_+i);
+        MPI_Comm_free(colcomms_squeezed_+i);
+      }
     }
     delete[] rowcomms_squeezed_;
     delete[] colcomms_squeezed_;

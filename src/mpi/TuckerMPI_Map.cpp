@@ -92,8 +92,12 @@ Map::~Map()
 {
   delete numElementsPerProc_;
   delete offsets_;
-  if(removedEmptyProcs_)
+
+  int finalized;
+  MPI_Finalized(&finalized);
+  if(removedEmptyProcs_ && !finalized) {
     MPI_Comm_free(&comm_);
+  }
 }
 
 int Map::getLocalIndex(int globalIndex) const
