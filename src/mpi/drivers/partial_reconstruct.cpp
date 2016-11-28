@@ -163,7 +163,6 @@ int main(int argc, char* argv[])
   ////////////////////////////////////////////
   // Write the reconstructed tensor to disk //
   ////////////////////////////////////////////
-  result->print();
   TuckerMPI::writeTensorBinary(out_fns_file, *result);
 
   /////////////////
