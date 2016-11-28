@@ -429,3 +429,13 @@ FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/ttm_result1.txt" DESTINATION "${CMAKE
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/ttm_result1t.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/ttm_result2.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/ttm_result2t.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
+
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/reconstruction/rec.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files/reconstruction")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/reconstruction/paramfile.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files/reconstruction")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/reconstruction/sthosvd_ranks.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files/reconstruction")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/reconstruction/sthosvd_core.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files/reconstruction")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/reconstruction/sthosvd_mat_0.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files/reconstruction")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/reconstruction/sthosvd_mat_1.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files/reconstruction")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/reconstruction/sthosvd_mat_2.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files/reconstruction")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/reconstruction/sthosvd_mat_3.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files/reconstruction")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/reconstruction/reconstructed.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files/reconstruction")

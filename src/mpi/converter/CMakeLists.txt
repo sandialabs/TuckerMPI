@@ -115,3 +115,16 @@ ADD_CUSTOM_COMMAND(TARGET TuckerMPI_converter POST_BUILD
     COMMAND ${CMAKE_TUCKER_CONVERTER_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_converter ${CMAKE_SOURCE_DIR}/input_files/ttm_result2.txt ${CMAKE_TUCKER_BINARY_INPUT_DIR}/ttm_result2.mpi)
 ADD_CUSTOM_COMMAND(TARGET TuckerMPI_converter POST_BUILD
     COMMAND ${CMAKE_TUCKER_CONVERTER_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_converter ${CMAKE_SOURCE_DIR}/input_files/ttm_result2t.txt ${CMAKE_TUCKER_BINARY_INPUT_DIR}/ttm_result2t.mpi)
+    
+ADD_CUSTOM_COMMAND(TARGET TuckerMPI_converter POST_BUILD
+    COMMAND ${CMAKE_TUCKER_CONVERTER_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_converter ${CMAKE_SOURCE_DIR}/input_files/reconstruction/sthosvd_core.txt ${CMAKE_TUCKER_BINARY_INPUT_DIR}/reconstruction/sthosvd_core.mpi)
+ADD_CUSTOM_COMMAND(TARGET TuckerMPI_converter POST_BUILD
+    COMMAND ${CMAKE_TUCKER_CONVERTER_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_converter ${CMAKE_SOURCE_DIR}/input_files/reconstruction/sthosvd_mat_0.txt ${CMAKE_TUCKER_BINARY_INPUT_DIR}/reconstruction/sthosvd_mat_0.mpi)
+ADD_CUSTOM_COMMAND(TARGET TuckerMPI_converter POST_BUILD
+    COMMAND ${CMAKE_TUCKER_CONVERTER_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_converter ${CMAKE_SOURCE_DIR}/input_files/reconstruction/sthosvd_mat_1.txt ${CMAKE_TUCKER_BINARY_INPUT_DIR}/reconstruction/sthosvd_mat_1.mpi)
+ADD_CUSTOM_COMMAND(TARGET TuckerMPI_converter POST_BUILD
+    COMMAND ${CMAKE_TUCKER_CONVERTER_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_converter ${CMAKE_SOURCE_DIR}/input_files/reconstruction/sthosvd_mat_2.txt ${CMAKE_TUCKER_BINARY_INPUT_DIR}/reconstruction/sthosvd_mat_2.mpi)
+ADD_CUSTOM_COMMAND(TARGET TuckerMPI_converter POST_BUILD
+    COMMAND ${CMAKE_TUCKER_CONVERTER_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_converter ${CMAKE_SOURCE_DIR}/input_files/reconstruction/sthosvd_mat_3.txt ${CMAKE_TUCKER_BINARY_INPUT_DIR}/reconstruction/sthosvd_mat_3.mpi)
+ADD_CUSTOM_COMMAND(TARGET TuckerMPI_converter POST_BUILD
+    COMMAND ${CMAKE_TUCKER_CONVERTER_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_converter ${CMAKE_SOURCE_DIR}/input_files/reconstruction/reconstructed.txt ${CMAKE_TUCKER_BINARY_INPUT_DIR}/reconstruction/sthosvd_reconstructed.mpi)

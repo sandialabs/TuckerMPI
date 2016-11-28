@@ -1,0 +1,7 @@
+Print options = true
+Grid dims = 1 2 2 3
+Global dims = 19 17 13 11
+Beginning subscripts = 2 0 8 3
+Ending subscripts = 4 2 12 3
+STHOSVD directory = ../tests/input_files/reconstruction
+Output file list = ../tests/input_files/reconstruction/rec.txt

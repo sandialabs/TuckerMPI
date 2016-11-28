@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
     std::cout << "Global dims = " << *I_dims << std::endl;
     std::cout << "Grid dims = " << *proc_grid_dims << std::endl;
     std::cout << "Beginning subscripts = " << *subs_begin << std::endl;
-    std::cout << "Ending subscripts = " << *subs_begin << std::endl;
+    std::cout << "Ending subscripts = " << *subs_end << std::endl;
     std::cout << std::endl;
   }
 
@@ -163,6 +163,7 @@ int main(int argc, char* argv[])
   ////////////////////////////////////////////
   // Write the reconstructed tensor to disk //
   ////////////////////////////////////////////
+  result->print();
   TuckerMPI::writeTensorBinary(out_fns_file, *result);
 
   /////////////////
@@ -172,6 +173,7 @@ int main(int argc, char* argv[])
   delete proc_grid_dims;
   delete subs_begin;
   delete subs_end;
+  delete result;
 
   //////////////////
   // Finalize MPI //
