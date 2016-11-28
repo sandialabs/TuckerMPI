@@ -887,7 +887,7 @@ Tensor* importTensor(const char* filename)
   // If the type is not "tensor", that's bad
   std::string tensorStr;
   ifs >> tensorStr;
-  assert(tensorStr == "tensor");
+  assert(tensorStr == "tensor" || tensorStr == "matrix");
 
   // Read the number of dimensions
   int ndims;
