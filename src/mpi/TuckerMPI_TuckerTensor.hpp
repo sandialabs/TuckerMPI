@@ -62,6 +62,10 @@ public:
     N = numDims;
     U = Tucker::safe_new<Tucker::Matrix*>(N);
     eigenvalues = Tucker::safe_new<double*>(N);
+    for(int i=0; i<N; i++) {
+      U[i] = 0;
+      eigenvalues[i] = 0;
+    }
     G = 0;
 
     gram_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
