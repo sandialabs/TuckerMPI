@@ -107,6 +107,9 @@ SizeArray* stringParseSizeArray(const std::vector<std::string>& lines,
 
   assert(tmp.size() <= std::numeric_limits<int>::max());
 
+  if(tmp.size() == 0)
+    return NULL;
+
   // Copy tmp vector into the IndxArray
   SizeArray* arr = new SizeArray((int)tmp.size());
   for (int i = 0; i < (int)tmp.size(); i++) {
