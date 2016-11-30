@@ -48,14 +48,53 @@ int main(int argc, char* argv[])
   Tucker::SizeArray* I_dims             = Tucker::stringParseSizeArray(fileAsString, "Global dims");
   Tucker::SizeArray* subs_begin         = Tucker::stringParseSizeArray(fileAsString, "Beginning subscripts");
   Tucker::SizeArray* subs_end           = Tucker::stringParseSizeArray(fileAsString, "Ending subscripts");
+  Tucker::SizeArray* rec_order          = Tucker::stringParseSizeArray(fileAsString, "Reconstruction order");
 
   std::string sthosvd_dir               = Tucker::stringParse<std::string>(fileAsString, "STHOSVD directory", "compressed");
   std::string sthosvd_fn                = Tucker::stringParse<std::string>(fileAsString, "STHOSVD file prefix", "sthosvd");
   std::string out_fns_file              = Tucker::stringParse<std::string>(fileAsString, "Output file list", "rec.txt");
 
-  //
-  // Print options
-  //
+  /////////////////////////////////////////////////
+  // Assert that none of the SizeArrays are null //
+  /////////////////////////////////////////////////
+  if(proc_grid_dims == NULL) {
+    if(rank == 0)
+      std::cerr << "Error: Grid dims is a required parameter\n";
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Abort(MPI_COMM_WORLD,1);
+  }
+
+  if(I_dims == NULL) {
+    if(rank == 0)
+      std::cerr << "Error: Global dims is a required parameter\n";
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Abort(MPI_COMM_WORLD,1);
+  }
+
+  if(subs_begin == NULL) {
+    if(rank == 0)
+      std::cerr << "Error: Beginning subscripts is a required parameter\n";
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Abort(MPI_COMM_WORLD,1);
+  }
+
+  if(subs_end == NULL) {
+    if(rank == 0)
+      std::cerr << "Error: Ending subscripts is a required parameter\n";
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Abort(MPI_COMM_WORLD,1);
+  }
+
+  if(rec_order == NULL) {
+    if(rank == 0)
+      std::cerr << "Error: Reconstruction order is a required parameter\n";
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Abort(MPI_COMM_WORLD,1);
+  }
+
+  ///////////////////
+  // Print options //
+  ///////////////////
   if (rank == 0 && boolPrintOptions) {
     std::cout << "STHOSVD directory = " << sthosvd_dir << std::endl;
     std::cout << "STHOSVD file prefix = " << sthosvd_fn << std::endl;
@@ -64,13 +103,14 @@ int main(int argc, char* argv[])
     std::cout << "Grid dims = " << *proc_grid_dims << std::endl;
     std::cout << "Beginning subscripts = " << *subs_begin << std::endl;
     std::cout << "Ending subscripts = " << *subs_end << std::endl;
+    std::cout << "Reconstruction order = " << *rec_order << std::endl;
     std::cout << std::endl;
   }
 
   ///////////////////////
   // Check array sizes //
   ///////////////////////
-  int nd = I_dims->size();
+  int nd = proc_grid_dims->size();
 
   // Does |grid| == nprocs?
   if ((int)proc_grid_dims->prod() != nprocs){
@@ -82,14 +122,112 @@ int main(int argc, char* argv[])
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
-  if (nd != proc_grid_dims->size()) {
+  if (nd != I_dims->size()) {
     if (rank == 0) {
-      std::cerr << "Error: The size of global dimension array (" << nd;
+      std::cerr << "Error: The size of global dimension array (" << I_dims->size();
       std::cerr << ") must be equal to the size of the processor grid ("
-          << proc_grid_dims->size() << ")" << std::endl;
+          << nd << ")" << std::endl;
     }
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Abort(MPI_COMM_WORLD, 1);
+  }
+
+  if (nd != subs_begin->size()) {
+    if (rank == 0) {
+      std::cerr << "Error: The size of the subs_begin array (" << subs_begin->size();
+      std::cerr << ") must be equal to the size of the processor grid ("
+          << nd << ")" << std::endl;
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
+
+  if (nd != subs_end->size()) {
+    if (rank == 0) {
+      std::cerr << "Error: The size of the subs_end array (" << subs_end->size();
+      std::cerr << ") must be equal to the size of the processor grid ("
+          << nd << ")" << std::endl;
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
+
+  if (nd != rec_order->size()) {
+    if (rank == 0) {
+      std::cerr << "Error: The size of the rec_order array (" << rec_order->size();
+      std::cerr << ") must be equal to the size of the processor grid ("
+          << nd << ")" << std::endl;
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
+
+  ////////////////////////////////////////////////////////
+  // Make sure the subs begin and end arrays make sense //
+  ////////////////////////////////////////////////////////
+  for(int i=0; i<nd; i++) {
+    if((*subs_begin)[i] < 0) {
+      if(rank == 0) {
+        std::cerr << "Error: subs_begin[" << i << "] = "
+            << (*subs_begin)[i] << " < 0\n";
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+
+    if((*subs_begin)[i] > (*subs_end)[i]) {
+      if(rank == 0) {
+        std::cerr << "Error: subs_begin[" << i << "] = "
+            << (*subs_begin)[i] << " > subs_end[" << i << "] = "
+            << (*subs_end)[i] << std::endl;
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+
+    if((*subs_end)[i] >= (*I_dims)[i]) {
+      if(rank == 0) {
+        std::cerr << "Error: subs_end[" << i << "] = "
+            << (*subs_end)[i] << " >= I_dims[" << i << "] = "
+            << (*I_dims)[i] << std::endl;
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+  }
+
+  //////////////////////////////////////////////////////////
+  // Make sure the reconstruction order array makes sense //
+  //////////////////////////////////////////////////////////
+  for(int i=0; i<nd; i++) {
+    if((*rec_order)[i] < 0) {
+      if(rank == 0) {
+        std::cerr << "Error: rec_order[" << i << "] = "
+            << (*rec_order)[i] << " < 0\n";
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+
+    if((*rec_order)[i] >= nd) {
+      if(rank == 0) {
+        std::cerr << "Error: rec_order[" << i << "] = "
+            << (*rec_order)[i] << " >= nd = " << nd << std::endl;
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+
+    for(int j=i+1; j<nd; j++) {
+      if((*rec_order)[i] == (*rec_order)[j]) {
+        if(rank == 0) {
+          std::cerr << "Error: rec_order[" << i << "] == rec_order["
+              << j << "] = " << (*rec_order)[i] << std::endl;
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+      }
+    }
   }
 
   ////////////////////////////////////
@@ -102,12 +240,44 @@ int main(int argc, char* argv[])
         "_ranks.txt";
     std::ifstream ifs(dimFilename);
 
+    if(!ifs.is_open()) {
+      if(rank == 0) {
+        std::cerr << "Failed to open core size file: " << dimFilename
+            << std::endl;
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+
     for(int mode=0; mode<nd; mode++) {
       ifs >> coreSize[mode];
     }
     ifs.close();
   }
   MPI_Bcast(coreSize.data(),nd,MPI_INT,0,MPI_COMM_WORLD);
+
+  //////////////////////////////////////////////
+  // Make sure the core size data makes sense //
+  //////////////////////////////////////////////
+  for(int i=0; i<nd; i++) {
+    if(coreSize[i] <= 0) {
+      if(rank == 0) {
+        std::cerr << "coreSize[" << i << "] = " << coreSize[i]
+                  << " <= 0\n";
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Abort(MPI_COMM_WORLD,1);
+    }
+
+    if(coreSize[i] > (*I_dims)[i]) {
+      if(rank == 0) {
+        std::cerr << "coreSize[" << i << "] = " << coreSize[i]
+                  << " > I_dims[" << (*I_dims)[i] << std::endl;
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Abort(MPI_COMM_WORLD,1);
+    }
+  }
 
   /////////////////////////////////
   // Set up factorization object //
@@ -172,6 +342,7 @@ int main(int argc, char* argv[])
   delete proc_grid_dims;
   delete subs_begin;
   delete subs_end;
+  delete rec_order;
   delete result;
 
   //////////////////
