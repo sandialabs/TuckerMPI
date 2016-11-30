@@ -85,13 +85,6 @@ int main(int argc, char* argv[])
     MPI_Abort(MPI_COMM_WORLD,1);
   }
 
-  if(rec_order == NULL) {
-    if(rank == 0)
-      std::cerr << "Error: Reconstruction order is a required parameter\n";
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-  }
-
   ///////////////////
   // Print options //
   ///////////////////
@@ -103,7 +96,7 @@ int main(int argc, char* argv[])
     std::cout << "Grid dims = " << *proc_grid_dims << std::endl;
     std::cout << "Beginning subscripts = " << *subs_begin << std::endl;
     std::cout << "Ending subscripts = " << *subs_end << std::endl;
-    std::cout << "Reconstruction order = " << *rec_order << std::endl;
+    if(rec_order != NULL) std::cout << "Reconstruction order = " << *rec_order << std::endl;
     std::cout << std::endl;
   }
 
@@ -152,7 +145,7 @@ int main(int argc, char* argv[])
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
-  if (nd != rec_order->size()) {
+  if (rec_order != NULL && nd != rec_order->size()) {
     if (rank == 0) {
       std::cerr << "Error: The size of the rec_order array (" << rec_order->size();
       std::cerr << ") must be equal to the size of the processor grid ("
@@ -193,40 +186,6 @@ int main(int argc, char* argv[])
       }
       MPI_Barrier(MPI_COMM_WORLD);
       MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-  }
-
-  //////////////////////////////////////////////////////////
-  // Make sure the reconstruction order array makes sense //
-  //////////////////////////////////////////////////////////
-  for(int i=0; i<nd; i++) {
-    if((*rec_order)[i] < 0) {
-      if(rank == 0) {
-        std::cerr << "Error: rec_order[" << i << "] = "
-            << (*rec_order)[i] << " < 0\n";
-      }
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-
-    if((*rec_order)[i] >= nd) {
-      if(rank == 0) {
-        std::cerr << "Error: rec_order[" << i << "] = "
-            << (*rec_order)[i] << " >= nd = " << nd << std::endl;
-      }
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-
-    for(int j=i+1; j<nd; j++) {
-      if((*rec_order)[i] == (*rec_order)[j]) {
-        if(rank == 0) {
-          std::cerr << "Error: rec_order[" << i << "] == rec_order["
-              << j << "] = " << (*rec_order)[i] << std::endl;
-        }
-        MPI_Barrier(MPI_COMM_WORLD);
-        MPI_Abort(MPI_COMM_WORLD, 1);
-      }
     }
   }
 
@@ -279,6 +238,74 @@ int main(int argc, char* argv[])
     }
   }
 
+  ////////////////////////////////////////////////////////////
+  // Create the optimal reconstruction order if unspecified //
+  ////////////////////////////////////////////////////////////
+  if(rec_order == NULL) {
+    // Create the SizeArray
+    rec_order = new Tucker::SizeArray(nd);
+    for(int i=0; i<nd; i++) {
+      (*rec_order)[i] = i;
+    }
+
+    // Compute the ratios of reconstructed size to core size
+    int* rec_size = Tucker::safe_new<int>(nd);
+    double* ratios = Tucker::safe_new<double>(nd);
+    for(int i=0; i<nd; i++) {
+      rec_size[i] = 1 + (*subs_end)[i] - (*subs_begin)[i];
+      ratios[i] = (double)rec_size[i] / coreSize[i];
+    }
+
+    // Sort the ratios
+    for(int i=1; i<nd; i++) {
+      for(int j=0; j<nd-i; j++) {
+        if(ratios[j] > ratios[j+1]) {
+          std::swap(ratios[j],ratios[j+1]);
+          std::swap((*rec_order)[j],(*rec_order)[j+1]);
+        }
+      }
+    }
+    if(rank == 0) std::cout << "Reconstruction order: " << *rec_order << std::endl;
+
+    // Free the memory
+    delete[] rec_size;
+    delete[] ratios;
+  }
+
+  //////////////////////////////////////////////////////////
+  // Make sure the reconstruction order array makes sense //
+  //////////////////////////////////////////////////////////
+  for(int i=0; i<nd; i++) {
+    if((*rec_order)[i] < 0) {
+      if(rank == 0) {
+        std::cerr << "Error: rec_order[" << i << "] = "
+            << (*rec_order)[i] << " < 0\n";
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+
+    if((*rec_order)[i] >= nd) {
+      if(rank == 0) {
+        std::cerr << "Error: rec_order[" << i << "] = "
+            << (*rec_order)[i] << " >= nd = " << nd << std::endl;
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+
+    for(int j=i+1; j<nd; j++) {
+      if((*rec_order)[i] == (*rec_order)[j]) {
+        if(rank == 0) {
+          std::cerr << "Error: rec_order[" << i << "] == rec_order["
+              << j << "] = " << (*rec_order)[i] << std::endl;
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+      }
+    }
+  }
+
   /////////////////////////////////
   // Set up factorization object //
   /////////////////////////////////
@@ -313,8 +340,9 @@ int main(int argc, char* argv[])
   // Reconstruct the requested pieces of the tensor //
   ////////////////////////////////////////////////////
   TuckerMPI::Tensor* result = fact.G;
-  for(int mode=0; mode<nd; mode++)
+  for(int i=0; i<nd; i++)
   {
+    int mode = (*rec_order)[i];
     // Grab the requested rows of the factor matrix
     int start_subs = (*subs_begin)[mode];
     int end_subs = (*subs_end)[mode];
@@ -325,7 +353,7 @@ int main(int argc, char* argv[])
     TuckerMPI::Tensor* temp = TuckerMPI::ttm(result,mode,factMat);
 
     delete factMat;
-    if(mode > 0)
+    if(result != fact.G)
       delete result;
     result = temp;
   }
