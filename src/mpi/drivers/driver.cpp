@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
   bool boolWriteSTHOSVD                 = Tucker::stringParse<bool>(fileAsString, "Write STHOSVD result", false);
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
   bool boolWritePreprocessed            = Tucker::stringParse<bool>(fileAsString, "Write preprocessed data", false);
-  bool boolUseOldGram                   = Tucker::stringParse<bool>(fileAsString, "Use old Gram", true);
+  bool boolUseOldGram                   = Tucker::stringParse<bool>(fileAsString, "Use old Gram", false);
   bool boolReconstruct                  = Tucker::stringParse<bool>(fileAsString, "Reconstruct tensor", false);
 
   double tol                            = Tucker::stringParse<double>(fileAsString, "SV Threshold", 1e-6);
