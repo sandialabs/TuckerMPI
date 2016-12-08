@@ -192,7 +192,7 @@ int main(int argc, char* argv[])
   ////////////////////////////////////
   // Read the core size from a file //
   ////////////////////////////////////
-  Tucker::SizeArray coreSize(nd);
+  Tucker::SizeArray* coreSize = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
   if(rank == 0)
   {
     std::string dimFilename = sthosvd_dir + "/" + sthosvd_fn +
@@ -209,28 +209,28 @@ int main(int argc, char* argv[])
     }
 
     for(int mode=0; mode<nd; mode++) {
-      ifs >> coreSize[mode];
+      ifs >> (*coreSize)[mode];
     }
     ifs.close();
   }
-  MPI_Bcast(coreSize.data(),nd,MPI_INT,0,MPI_COMM_WORLD);
+  MPI_Bcast(coreSize->data(),nd,MPI_INT,0,MPI_COMM_WORLD);
 
   //////////////////////////////////////////////
   // Make sure the core size data makes sense //
   //////////////////////////////////////////////
   for(int i=0; i<nd; i++) {
-    if(coreSize[i] <= 0) {
+    if((*coreSize)[i] <= 0) {
       if(rank == 0) {
-        std::cerr << "coreSize[" << i << "] = " << coreSize[i]
+        std::cerr << "coreSize[" << i << "] = " << (*coreSize)[i]
                   << " <= 0\n";
       }
       MPI_Barrier(MPI_COMM_WORLD);
       MPI_Abort(MPI_COMM_WORLD,1);
     }
 
-    if(coreSize[i] > (*I_dims)[i]) {
+    if((*coreSize)[i] > (*I_dims)[i]) {
       if(rank == 0) {
-        std::cerr << "coreSize[" << i << "] = " << coreSize[i]
+        std::cerr << "coreSize[" << i << "] = " << (*coreSize)[i]
                   << " > I_dims[" << (*I_dims)[i] << std::endl;
       }
       MPI_Barrier(MPI_COMM_WORLD);
@@ -253,7 +253,7 @@ int main(int argc, char* argv[])
     double* ratios = Tucker::MemoryManager::safe_new_array<double>(nd);
     for(int i=0; i<nd; i++) {
       rec_size[i] = 1 + (*subs_end)[i] - (*subs_begin)[i];
-      ratios[i] = (double)rec_size[i] / coreSize[i];
+      ratios[i] = (double)rec_size[i] / (*coreSize)[i];
     }
 
     // Sort the ratios
@@ -309,20 +309,22 @@ int main(int argc, char* argv[])
   /////////////////////////////////
   // Set up factorization object //
   /////////////////////////////////
-  TuckerMPI::TuckerTensor fact(nd);
+  TuckerMPI::TuckerTensor* fact =
+      Tucker::MemoryManager::safe_new<TuckerMPI::TuckerTensor>(nd);
 
   /////////////////////////////////////////////
   // Set up distribution object for the core //
   /////////////////////////////////////////////
-  TuckerMPI::Distribution dist(coreSize, *proc_grid_dims);
+  TuckerMPI::Distribution* dist =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*coreSize, *proc_grid_dims);
 
   ///////////////////////////
   // Read core tensor data //
   ///////////////////////////
   std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn +
             "_core.mpi";
-  fact.G = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(&dist);
-  TuckerMPI::importTensorBinary(coreFilename.c_str(),fact.G);
+  fact->G = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
+  TuckerMPI::importTensorBinary(coreFilename.c_str(),fact->G);
 
   //////////////////////////
   // Read factor matrices //
@@ -332,14 +334,14 @@ int main(int argc, char* argv[])
     std::ostringstream ss;
     ss << sthosvd_dir << "/" << sthosvd_fn << "_mat_" << mode << ".mpi";
 
-    fact.U[mode] = Tucker::MemoryManager::safe_new<Tucker::Matrix>((*I_dims)[mode],coreSize[mode]);
-    TuckerMPI::importTensorBinary(ss.str().c_str(), fact.U[mode]);
+    fact->U[mode] = Tucker::MemoryManager::safe_new<Tucker::Matrix>((*I_dims)[mode],(*coreSize)[mode]);
+    TuckerMPI::importTensorBinary(ss.str().c_str(), fact->U[mode]);
   }
 
   ////////////////////////////////////////////////////
   // Reconstruct the requested pieces of the tensor //
   ////////////////////////////////////////////////////
-  TuckerMPI::Tensor* result = fact.G;
+  TuckerMPI::Tensor* result = fact->G;
   for(int i=0; i<nd; i++)
   {
     int mode = (*rec_order)[i];
@@ -347,14 +349,15 @@ int main(int argc, char* argv[])
     int start_subs = (*subs_begin)[mode];
     int end_subs = (*subs_end)[mode];
     Tucker::Matrix* factMat =
-        fact.U[mode]->getSubmatrix(start_subs, end_subs);
+        fact->U[mode]->getSubmatrix(start_subs, end_subs);
 
     // Perform the TTM
     TuckerMPI::Tensor* temp = TuckerMPI::ttm(result,mode,factMat);
 
     Tucker::MemoryManager::safe_delete<Tucker::Matrix>(factMat);
-    if(result != fact.G)
+    if(result != fact->G) {
       Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);
+    }
     result = temp;
   }
 
@@ -366,12 +369,19 @@ int main(int argc, char* argv[])
   /////////////////
   // Free memory //
   /////////////////
+  Tucker::MemoryManager::safe_delete<TuckerMPI::TuckerTensor>(fact);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(coreSize);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(I_dims);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(proc_grid_dims);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(subs_begin);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(subs_end);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(rec_order);
   Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);
+
+  if(Tucker::MemoryManager::curMemUsage > 0) {
+    Tucker::MemoryManager::printCurrentMemUsage();
+    MPI_Abort(MPI_COMM_WORLD,1);
+  }
 
   //////////////////
   // Finalize MPI //
