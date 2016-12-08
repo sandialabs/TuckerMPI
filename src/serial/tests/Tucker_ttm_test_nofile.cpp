@@ -35,7 +35,7 @@ int main()
 
   Tucker::Tensor* result = Tucker::ttm(&t,0,&mat,false);
   data = result->data();
-  double* trueData = Tucker::safe_new_array<double>(105);
+  double* trueData = Tucker::MemoryManager::safe_new_array<double>(105);
   trueData[0] = 763; trueData[1] = 793; trueData[2] = 815; trueData[3] = 841;
   trueData[4] = 875; trueData[5] = 893; trueData[6] = 917; trueData[7] = 1824;
   trueData[8] = 1896; trueData[9] = 1948; trueData[10] = 2012; trueData[11] = 2092;
@@ -69,7 +69,7 @@ int main()
       return EXIT_FAILURE;
     }
   }
-  Tucker::safe_delete<Tucker::Tensor>(result);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(result);
 
   Tucker::Matrix matt(2,7);
   data = matt.data();
@@ -121,7 +121,7 @@ int main()
       return EXIT_FAILURE;
     }
   }
-  Tucker::safe_delete<Tucker::Tensor>(result);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(result);
 
   Tucker::Matrix mat1(7,3);
   data = mat1.data();
@@ -166,7 +166,7 @@ int main()
       return EXIT_FAILURE;
     }
   }
-  Tucker::safe_delete<Tucker::Tensor>(result);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(result);
 
   Tucker::Matrix mat1t(3,7);
   data = mat1t.data();
@@ -209,9 +209,9 @@ int main()
       return EXIT_FAILURE;
     }
   }
-  Tucker::safe_delete<Tucker::Tensor>(result);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(result);
 
-  Tucker::safe_delete_array<double>(trueData);
+  Tucker::MemoryManager::safe_delete_array<double>(trueData,105);
 
   return EXIT_SUCCESS;
 }

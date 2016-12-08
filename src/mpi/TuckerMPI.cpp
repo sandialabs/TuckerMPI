@@ -66,7 +66,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
 
   // Create the matrix to return
   Tucker::Matrix* gram =
-      Tucker::safe_new<Tucker::Matrix>(numGlobalRows,numGlobalRows);
+      Tucker::MemoryManager::safe_new<Tucker::Matrix>(numGlobalRows,numGlobalRows);
 
   // Get the row and column communicators
   const MPI_Comm& rowComm =
@@ -80,7 +80,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
   // Create buffer for all-reduce
   double* allRedBuf;
   if(numLocalRows > 0)
-    allRedBuf = Tucker::safe_new_array<double>(numGlobalRows*numLocalRows);
+    allRedBuf = Tucker::MemoryManager::safe_new_array<double>(numGlobalRows*numLocalRows);
   else
     allRedBuf = 0;
 
@@ -106,7 +106,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
       else
       {
         // Create a matrix to store the local result
-        localMatrix = Tucker::safe_new<Tucker::Matrix>(numGlobalRows,numLocalRows);
+        localMatrix = Tucker::MemoryManager::safe_new<Tucker::Matrix>(numGlobalRows,numLocalRows);
 
         // Determine the amount of data being received
         int ndims = Y->getNumDimensions();
@@ -116,11 +116,11 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
         size_t maxEntries = maxNumRows*numCols;
 
         // Create buffer for receiving data
-        double* recvBuf = Tucker::safe_new_array<double>(maxEntries);
+        double* recvBuf = Tucker::MemoryManager::safe_new_array<double>(maxEntries);
 
         // Send data to the next proc in column
         MPI_Request* sendRequests =
-            Tucker::safe_new_array<MPI_Request>(numColProcsSqueezed);
+            Tucker::MemoryManager::safe_new_array<MPI_Request>(numColProcsSqueezed);
         size_t numToSend = Y->getLocalNumEntries();
         assert(numToSend <= std::numeric_limits<int>::max());
         int tag = 0;
@@ -132,7 +132,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
 
         // Receive information from the previous proc in column
         MPI_Request* recvRequests =
-            Tucker::safe_new_array<MPI_Request>(numColProcsSqueezed);
+            Tucker::MemoryManager::safe_new_array<MPI_Request>(numColProcsSqueezed);
         int recvSource =
             (numColProcsSqueezed+myColRankSqueezed-1)%numColProcsSqueezed;
         int numRowsToReceive =
@@ -190,7 +190,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
         }
 
         // Wait for all data to be sent
-        MPI_Status* sendStatuses = Tucker::safe_new_array<MPI_Status>(numColProcsSqueezed);
+        MPI_Status* sendStatuses = Tucker::MemoryManager::safe_new_array<MPI_Status>(numColProcsSqueezed);
         if(shift_timer) shift_timer->start();
         if(myColRankSqueezed > 0) {
           MPI_Waitall(myColRankSqueezed, sendRequests, sendStatuses);
@@ -201,14 +201,14 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
         }
         if(shift_timer) shift_timer->stop();
 
-        Tucker::safe_delete_array<double>(recvBuf);
-        Tucker::safe_delete_array<MPI_Request>(sendRequests);
-        Tucker::safe_delete_array<MPI_Request>(recvRequests);
-        Tucker::safe_delete_array<MPI_Status>(sendStatuses);
+        Tucker::MemoryManager::safe_delete_array<double>(recvBuf,maxEntries);
+        Tucker::MemoryManager::safe_delete_array<MPI_Request>(sendRequests,numColProcsSqueezed);
+        Tucker::MemoryManager::safe_delete_array<MPI_Request>(recvRequests,numColProcsSqueezed);
+        Tucker::MemoryManager::safe_delete_array<MPI_Status>(sendStatuses,numColProcsSqueezed);
       }
     }
     else {
-      localMatrix = Tucker::safe_new<Tucker::Matrix>(numGlobalRows,numLocalRows);
+      localMatrix = Tucker::MemoryManager::safe_new<Tucker::Matrix>(numGlobalRows,numLocalRows);
       localMatrix->initialize();
     }
 
@@ -226,15 +226,15 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
       }
     }
 
-    Tucker::safe_delete<Tucker::Matrix>(localMatrix);
+    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(localMatrix);
   }
   else {
   }
 
   if(numColProcs > 1) {
     // All-gather across column communicator
-    int* recvcounts = Tucker::safe_new_array<int>(numColProcs);
-    int* displs = Tucker::safe_new_array<int>(numColProcs);
+    int* recvcounts = Tucker::MemoryManager::safe_new_array<int>(numColProcs);
+    int* displs = Tucker::MemoryManager::safe_new_array<int>(numColProcs);
     for(int i=0; i<numColProcs; i++) {
       recvcounts[i] = Y->getDistribution()->getMap(n,false)->getNumEntries(i)*numGlobalRows;
       displs[i] = Y->getDistribution()->getMap(n,false)->getOffset(i)*numGlobalRows;
@@ -245,8 +245,8 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
     if(allgather_timer) allgather_timer->stop();
 
     // Free memory
-    Tucker::safe_delete_array<int>(recvcounts);
-    Tucker::safe_delete_array<int>(displs);
+    Tucker::MemoryManager::safe_delete_array<int>(recvcounts,numColProcs);
+    Tucker::MemoryManager::safe_delete_array<int>(displs,numColProcs);
   }
   else {
     size_t nnz = gram->getNumElements();
@@ -255,7 +255,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
   }
 
   // Free memory
-  Tucker::safe_delete_array<double>(allRedBuf);
+  Tucker::MemoryManager::safe_delete_array<double>(allRedBuf,numGlobalRows*numLocalRows);
 
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -308,7 +308,7 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
 
     if(myColEmpty) {
       int nGlobalRows = Y->getGlobalSize(n);
-      Tucker::Matrix* temp = Tucker::safe_new<Tucker::Matrix>(nGlobalRows,nGlobalRows);
+      Tucker::Matrix* temp = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nGlobalRows,nGlobalRows);
       temp->initialize();
       localGram = temp;
     }
@@ -325,17 +325,17 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
       }
       else {
         int nGlobalRows = Y->getGlobalSize(n);
-        Tucker::Matrix* temp = Tucker::safe_new<Tucker::Matrix>(nGlobalRows,nGlobalRows);
+        Tucker::Matrix* temp = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nGlobalRows,nGlobalRows);
         temp->initialize();
         localGram = temp;
       }
-      Tucker::safe_delete<const Matrix>(redistributedY);
+      Tucker::MemoryManager::safe_delete<const Matrix>(redistributedY);
     } // end if(!myColEmpty)
   }
   else {
     if(Y->getDistribution()->ownNothing()) {
       int nGlobalRows = Y->getGlobalSize(n);
-      Tucker::Matrix* temp = Tucker::safe_new<Tucker::Matrix>(nGlobalRows,nGlobalRows);
+      Tucker::Matrix* temp = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nGlobalRows,nGlobalRows);
       temp->initialize();
       localGram = temp;
     }
@@ -350,7 +350,7 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
   if(allreduce_timer) allreduce_timer->start();
   Tucker::Matrix* gramMat = reduceForGram(localGram);
   if(allreduce_timer) allreduce_timer->stop();
-  Tucker::safe_delete<const Tucker::Matrix>(localGram);
+  Tucker::MemoryManager::safe_delete<const Tucker::Matrix>(localGram);
 
   if(rank == 0) {
     if(mult_timer)
@@ -379,7 +379,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   int ndims = X->getNumDimensions();
 
   // Create a struct to store the factorization
-  TuckerTensor* factorization = Tucker::safe_new<TuckerTensor>(ndims);
+  TuckerTensor* factorization = Tucker::MemoryManager::safe_new<TuckerTensor>(ndims);
 
   // Compute the threshold
   double tensorNorm = X->norm2();
@@ -444,7 +444,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
     }
 
     // Free the Gram matrix
-    Tucker::safe_delete<Tucker::Matrix>(S);
+    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(S);
 
     // Perform the tensor times matrix multiplication
     if(rank == 0) {
@@ -463,7 +463,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
     }
 
     if(n > 0) {
-      Tucker::safe_delete<const Tensor>(Y);
+      Tucker::MemoryManager::safe_delete<const Tensor>(Y);
     }
     Y = temp;
   }
@@ -484,7 +484,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   assert(ndims == reducedI->size());
 
   // Create a struct to store the factorization
-  TuckerTensor* factorization = Tucker::safe_new<TuckerTensor>(ndims);
+  TuckerTensor* factorization = Tucker::MemoryManager::safe_new<TuckerTensor>(ndims);
 
   // Barrier for timing
   MPI_Barrier(MPI_COMM_WORLD);
@@ -537,7 +537,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
           << factorization->eigen_timer_[n].duration() << "s\n";
     }
 
-    Tucker::safe_delete<Tucker::Matrix>(S);
+    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(S);
 
     // Perform the tensor times matrix multiplication
     if(rank == 0) {
@@ -555,7 +555,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
           << factorization->ttm_timer_[n].duration() << "s\n";
     }
     if(n > 0) {
-      Tucker::safe_delete<const Tensor>(Y);
+      Tucker::MemoryManager::safe_delete<const Tensor>(Y);
     }
     Y = temp;
   }
@@ -587,8 +587,8 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
   {
     // Compute the global result
     int numSlices = Y->getLocalSize(mode);
-    double* sendBuf = Tucker::safe_new_array<double>(numSlices);
-    double* recvBuf = Tucker::safe_new_array<double>(numSlices);
+    double* sendBuf = Tucker::MemoryManager::safe_new_array<double>(numSlices);
+    double* recvBuf = Tucker::MemoryManager::safe_new_array<double>(numSlices);
     if(metrics & Tucker::MIN) {
       for(int i=0; i<numSlices; i++) sendBuf[i] = result->getMinData()[i];
       MPI_Allreduce(sendBuf, recvBuf, numSlices, MPI_DOUBLE,
@@ -630,7 +630,7 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
 
       double* meanDiff;
       if(metrics & Tucker::VARIANCE) {
-        meanDiff = Tucker::safe_new_array<double>(numSlices);
+        meanDiff = Tucker::MemoryManager::safe_new_array<double>(numSlices);
         for(int i=0; i<numSlices; i++) {
           meanDiff[i] = result->getMeanData()[i] -
               recvBuf[i] / (double)globalSliceSize;
@@ -649,7 +649,7 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
               (double)localSliceSize*meanDiff[i]*meanDiff[i];
         }
 
-        Tucker::safe_delete_array<double>(meanDiff);
+        Tucker::MemoryManager::safe_delete_array<double>(meanDiff,numSlices);
 
         MPI_Allreduce(sendBuf, recvBuf, numSlices,
             MPI_DOUBLE, MPI_SUM, comm);
@@ -660,8 +660,8 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
       } // end if(metrics & Tucker::VARIANCE)
     } // end if((metrics & Tucker::MEAN) || (metrics & Tucker::VARIANCE))
 
-    Tucker::safe_delete_array<double>(sendBuf);
-    Tucker::safe_delete_array<double>(recvBuf);
+    Tucker::MemoryManager::safe_delete_array<double>(sendBuf,numSlices);
+    Tucker::MemoryManager::safe_delete_array<double>(recvBuf,numSlices);
   } // end if(nprocs > 1)
 
   return result;
@@ -683,8 +683,8 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh)
   Tucker::MetricData* metrics =
       computeSliceMetrics(Y, mode, Tucker::MEAN+Tucker::VARIANCE);
   int sizeOfModeDim = Y->getLocalSize(mode);
-  double* scales = Tucker::safe_new_array<double>(sizeOfModeDim);
-  double* shifts = Tucker::safe_new_array<double>(sizeOfModeDim);
+  double* scales = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
+  double* shifts = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
     scales[i] = sqrt(metrics->getVarianceData()[i]);
     shifts[i] = -metrics->getMeanData()[i];
@@ -693,9 +693,9 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh)
     }
   }
   transformSlices(Y,mode,scales,shifts);
-  Tucker::safe_delete_array<double>(scales);
-  Tucker::safe_delete_array<double>(shifts);
-  Tucker::safe_delete<Tucker::MetricData>(metrics);
+  Tucker::MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete<Tucker::MetricData>(metrics);
 }
 
 void normalizeTensorMinMax(Tensor* Y, int mode)
@@ -707,16 +707,16 @@ void normalizeTensorMinMax(Tensor* Y, int mode)
   Tucker::MetricData* metrics = computeSliceMetrics(Y, mode,
       Tucker::MAX+Tucker::MIN);
   int sizeOfModeDim = Y->getLocalSize(mode);
-  double* scales = Tucker::safe_new_array<double>(sizeOfModeDim);
-  double* shifts = Tucker::safe_new_array<double>(sizeOfModeDim);
+  double* scales = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
+  double* shifts = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
     scales[i] = metrics->getMaxData()[i] - metrics->getMinData()[i];
     shifts[i] = -metrics->getMinData()[i];
   }
   transformSlices(Y,mode,scales,shifts);
-  Tucker::safe_delete_array<double>(scales);
-  Tucker::safe_delete_array<double>(shifts);
-  Tucker::safe_delete<Tucker::MetricData>(metrics);
+  Tucker::MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete<Tucker::MetricData>(metrics);
 }
 
 void normalizeTensorMax(Tensor* Y, int mode)
@@ -728,8 +728,8 @@ void normalizeTensorMax(Tensor* Y, int mode)
   Tucker::MetricData* metrics = computeSliceMetrics(Y, mode,
       Tucker::MIN + Tucker::MAX);
   int sizeOfModeDim = Y->getLocalSize(mode);
-  double* scales = Tucker::safe_new_array<double>(sizeOfModeDim);
-  double* shifts = Tucker::safe_new_array<double>(sizeOfModeDim);
+  double* scales = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
+  double* shifts = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
     double scaleval = std::max(std::abs(metrics->getMinData()[i]),
         std::abs(metrics->getMaxData()[i]));
@@ -737,9 +737,9 @@ void normalizeTensorMax(Tensor* Y, int mode)
     shifts[i] = 0;
   }
   transformSlices(Y,mode,scales,shifts);
-  Tucker::safe_delete_array<double>(scales);
-  Tucker::safe_delete_array<double>(shifts);
-  Tucker::safe_delete<Tucker::MetricData>(metrics);
+  Tucker::MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete<Tucker::MetricData>(metrics);
 }
 
 const Tensor* reconstructSingleSlice(const TuckerTensor* fact,
@@ -768,7 +768,7 @@ const Tensor* reconstructSingleSlice(const TuckerTensor* fact,
     
     Tensor* temp = ttm(ten, i, fact->U[i]);
 
-    Tucker::safe_delete<Tensor>(ten);
+    Tucker::MemoryManager::safe_delete<Tensor>(ten);
     ten = temp;
   }
 
@@ -824,9 +824,9 @@ void importTensorBinary(const char* filename, Tensor* Y)
   int ndims = Y->getNumDimensions();
 
   // Define data layout parameters
-  int* starts = Tucker::safe_new_array<int>(ndims);
-  int* lsizes = Tucker::safe_new_array<int>(ndims);
-  int* gsizes = Tucker::safe_new_array<int>(ndims);
+  int* starts = Tucker::MemoryManager::safe_new_array<int>(ndims);
+  int* lsizes = Tucker::MemoryManager::safe_new_array<int>(ndims);
+  int* gsizes = Tucker::MemoryManager::safe_new_array<int>(ndims);
 
   for(int i=0; i<ndims; i++) {
     starts[i] = Y->getDistribution()->getMap(i,true)->getGlobalIndex(0);
@@ -871,9 +871,9 @@ void importTensorBinary(const char* filename, Tensor* Y)
   MPI_Type_free(&view);
 
   // Free other memory
-  Tucker::safe_delete_array<int>(starts);
-  Tucker::safe_delete_array<int>(lsizes);
-  Tucker::safe_delete_array<int>(gsizes);
+  Tucker::MemoryManager::safe_delete_array<int>(starts,ndims);
+  Tucker::MemoryManager::safe_delete_array<int>(lsizes,ndims);
+  Tucker::MemoryManager::safe_delete_array<int>(gsizes,ndims);
 }
 
 // This function assumes that Y has already been allocated
@@ -925,9 +925,9 @@ void importTimeSeries(const char* filename, Tensor* Y)
 
   // Define data layout parameters
   int ndims = Y->getNumDimensions();
-  int* starts = Tucker::safe_new_array<int>(ndims-1);
-  int* lsizes = Tucker::safe_new_array<int>(ndims-1);
-  int* gsizes = Tucker::safe_new_array<int>(ndims-1);
+  int* starts = Tucker::MemoryManager::safe_new_array<int>(ndims-1);
+  int* lsizes = Tucker::MemoryManager::safe_new_array<int>(ndims-1);
+  int* gsizes = Tucker::MemoryManager::safe_new_array<int>(ndims-1);
 
   for(int i=0; i<ndims-1; i++) {
     starts[i] = Y->getDistribution()->getMap(i,true)->getGlobalIndex(0);
@@ -992,9 +992,9 @@ void importTimeSeries(const char* filename, Tensor* Y)
   MPI_Type_free(&view);
 
   // Free other memory
-  Tucker::safe_delete_array<int>(starts);
-  Tucker::safe_delete_array<int>(lsizes);
-  Tucker::safe_delete_array<int>(gsizes);
+  Tucker::MemoryManager::safe_delete_array<int>(starts,ndims);
+  Tucker::MemoryManager::safe_delete_array<int>(lsizes,ndims);
+  Tucker::MemoryManager::safe_delete_array<int>(gsizes,ndims);
 }
 
 void writeTensorBinary(std::string& filename, const Tensor& Y)
@@ -1045,9 +1045,9 @@ void exportTensorBinary(const char* filename, const Tensor* Y)
   int ndims = Y->getNumDimensions();
 
   // Define data layout parameters
-  int* starts = Tucker::safe_new_array<int>(ndims);
-  int* lsizes = Tucker::safe_new_array<int>(ndims);
-  int* gsizes = Tucker::safe_new_array<int>(ndims);
+  int* starts = Tucker::MemoryManager::safe_new_array<int>(ndims);
+  int* lsizes = Tucker::MemoryManager::safe_new_array<int>(ndims);
+  int* gsizes = Tucker::MemoryManager::safe_new_array<int>(ndims);
 
   for(int i=0; i<ndims; i++) {
     starts[i] = Y->getDistribution()->getMap(i,true)->getGlobalIndex(0);
@@ -1091,9 +1091,9 @@ void exportTensorBinary(const char* filename, const Tensor* Y)
   MPI_Type_free(&view);
 
   // Free other memory
-  Tucker::safe_delete_array<int>(starts);
-  Tucker::safe_delete_array<int>(lsizes);
-  Tucker::safe_delete_array<int>(gsizes);
+  Tucker::MemoryManager::safe_delete_array<int>(starts,ndims);
+  Tucker::MemoryManager::safe_delete_array<int>(lsizes,ndims);
+  Tucker::MemoryManager::safe_delete_array<int>(gsizes,ndims);
 }
 
 void exportTensorBinary(const char* filename, const Tucker::Tensor* Y)
@@ -1143,9 +1143,9 @@ void exportTimeSeries(const char* filename, const Tensor* Y)
 
   // Define data layout parameters
   int ndims = Y->getNumDimensions();
-  int* starts = Tucker::safe_new_array<int>(ndims-1);
-  int* lsizes = Tucker::safe_new_array<int>(ndims-1);
-  int* gsizes = Tucker::safe_new_array<int>(ndims-1);
+  int* starts = Tucker::MemoryManager::safe_new_array<int>(ndims-1);
+  int* lsizes = Tucker::MemoryManager::safe_new_array<int>(ndims-1);
+  int* gsizes = Tucker::MemoryManager::safe_new_array<int>(ndims-1);
 
   for(int i=0; i<ndims-1; i++) {
     starts[i] = Y->getDistribution()->getMap(i,true)->getGlobalIndex(0);
@@ -1209,9 +1209,9 @@ void exportTimeSeries(const char* filename, const Tensor* Y)
   MPI_Type_free(&view);
 
   // Free other memory
-  Tucker::safe_delete_array<int>(starts);
-  Tucker::safe_delete_array<int>(lsizes);
-  Tucker::safe_delete_array<int>(gsizes);
+  Tucker::MemoryManager::safe_delete_array<int>(starts,ndims);
+  Tucker::MemoryManager::safe_delete_array<int>(lsizes,ndims);
+  Tucker::MemoryManager::safe_delete_array<int>(gsizes,ndims);
 }
 
 } // end namespace TuckerMPI

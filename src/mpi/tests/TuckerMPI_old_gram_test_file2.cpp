@@ -519,7 +519,7 @@ bool runSim(Tucker::SizeArray& procs)
   if(!matchesTrueSol)
     return false;
 
-  Tucker::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
 
   // Compute the Gram matrix
   matrix = TuckerMPI::oldGram(&tensor,1);
@@ -534,7 +534,7 @@ bool runSim(Tucker::SizeArray& procs)
   if(!matchesTrueSol)
     return false;
 
-  Tucker::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
 
   // Compute the Gram matrix
   matrix = TuckerMPI::oldGram(&tensor,2);
@@ -550,7 +550,7 @@ bool runSim(Tucker::SizeArray& procs)
   if(!matchesTrueSol)
     return false;
 
-  Tucker::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
 
   return true;
 }

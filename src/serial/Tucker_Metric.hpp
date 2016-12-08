@@ -81,42 +81,43 @@ public:
    * \param[in] metrics A sum of Metric values
    * \param[in] dimension Size of array
    */
-  MetricData(const int metrics, const int dimension)
+  MetricData(const int metrics, const int dimension) :
+    dimension_(dimension)
   {
     assert(dimension > 0);
 
     if(metrics & MIN)
-      minData_ = safe_new_array<double>(dimension);
+      minData_ = MemoryManager::safe_new_array<double>(dimension);
     else
       minData_ = 0;
 
     if(metrics & MAX)
-      maxData_ = safe_new_array<double>(dimension);
+      maxData_ = MemoryManager::safe_new_array<double>(dimension);
     else
       maxData_ = 0;
 
     if(metrics & SUM)
-      sumData_ = safe_new_array<double>(dimension);
+      sumData_ = MemoryManager::safe_new_array<double>(dimension);
     else
       sumData_ = 0;
 
     if(metrics & NORM1)
-      norm1Data_ = safe_new_array<double>(dimension);
+      norm1Data_ = MemoryManager::safe_new_array<double>(dimension);
     else
       norm1Data_ = 0;
 
     if(metrics & NORM2)
-      norm2Data_ = safe_new_array<double>(dimension);
+      norm2Data_ = MemoryManager::safe_new_array<double>(dimension);
     else
       norm2Data_ = 0;
 
     if(metrics & MEAN)
-      meanData_ = safe_new_array<double>(dimension);
+      meanData_ = MemoryManager::safe_new_array<double>(dimension);
     else
       meanData_ = 0;
 
     if(metrics & VARIANCE)
-      varianceData_ = safe_new_array<double>(dimension);
+      varianceData_ = MemoryManager::safe_new_array<double>(dimension);
     else
       varianceData_ = 0;
   }
@@ -127,13 +128,13 @@ public:
    */
   ~MetricData()
   {
-    if(minData_) safe_delete_array<double>(minData_);
-    if(maxData_) safe_delete_array<double>(maxData_);
-    if(sumData_) safe_delete_array<double>(sumData_);
-    if(norm1Data_) safe_delete_array<double>(norm1Data_);
-    if(norm2Data_) safe_delete_array<double>(norm2Data_);
-    if(meanData_) safe_delete_array<double>(meanData_);
-    if(varianceData_) safe_delete_array<double>(varianceData_);
+    if(minData_) MemoryManager::safe_delete_array<double>(minData_,dimension_);
+    if(maxData_) MemoryManager::safe_delete_array<double>(maxData_,dimension_);
+    if(sumData_) MemoryManager::safe_delete_array<double>(sumData_,dimension_);
+    if(norm1Data_) MemoryManager::safe_delete_array<double>(norm1Data_,dimension_);
+    if(norm2Data_) MemoryManager::safe_delete_array<double>(norm2Data_,dimension_);
+    if(meanData_) MemoryManager::safe_delete_array<double>(meanData_,dimension_);
+    if(varianceData_) MemoryManager::safe_delete_array<double>(varianceData_,dimension_);
   }
 
   /** \brief Returns the min-data array
@@ -219,6 +220,7 @@ private:
   double* norm2Data_; ///< 2-norm array
   double* meanData_; ///< Mean array
   double* varianceData_; ///< Variance array
+  int dimension_;
 };
 
 }

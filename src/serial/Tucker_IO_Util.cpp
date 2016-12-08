@@ -111,7 +111,7 @@ SizeArray* stringParseSizeArray(const std::vector<std::string>& lines,
     return NULL;
 
   // Copy tmp vector into the IndxArray
-  SizeArray* arr = safe_new<SizeArray>((int)tmp.size());
+  SizeArray* arr = MemoryManager::safe_new<SizeArray>((int)tmp.size());
   for (int i = 0; i < (int)tmp.size(); i++) {
     (*arr)[i] = tmp[i];
   }

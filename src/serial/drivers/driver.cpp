@@ -31,7 +31,7 @@ int main()
   }
 
   // Free some memory
-  Tucker::safe_delete<const Tucker::TuckerTensor>(factorization);
+  Tucker::MemoryManager::safe_delete<const Tucker::TuckerTensor>(factorization);
 }
 
 /*

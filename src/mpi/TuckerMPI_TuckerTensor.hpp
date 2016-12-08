@@ -60,59 +60,59 @@ public:
   TuckerTensor(const int numDims)
   {
     N = numDims;
-    U = Tucker::safe_new_array<Tucker::Matrix*>(N);
-    eigenvalues = Tucker::safe_new_array<double*>(N);
+    U = Tucker::MemoryManager::safe_new_array<Tucker::Matrix*>(N);
+    eigenvalues = Tucker::MemoryManager::safe_new_array<double*>(N);
     for(int i=0; i<N; i++) {
       U[i] = 0;
       eigenvalues[i] = 0;
     }
     G = 0;
 
-    gram_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
-    gram_matmul_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
-    gram_shift_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
-    gram_allreduce_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
-    gram_allgather_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
-    gram_pack_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
-    gram_alltoall_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
-    gram_unpack_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
+    gram_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    gram_matmul_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    gram_shift_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    gram_allreduce_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    gram_allgather_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    gram_pack_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    gram_alltoall_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    gram_unpack_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
 
-    eigen_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
+    eigen_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
 
-    ttm_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
-    ttm_matmul_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
-    ttm_pack_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
-    ttm_reducescatter_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
-    ttm_reduce_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
+    ttm_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    ttm_matmul_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    ttm_pack_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    ttm_reducescatter_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    ttm_reduce_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
   }
 
   /** Destructor */
   ~TuckerTensor()
   {
-    Tucker::safe_delete<Tensor>(G);
+    Tucker::MemoryManager::safe_delete<Tensor>(G);
     for(int i=0; i<N; i++) {
-      if(U[i]) Tucker::safe_delete<Tucker::Matrix>(U[i]);
-      if(eigenvalues[i]) Tucker::safe_delete_array<double>(eigenvalues[i]);
+      if(eigenvalues[i]) Tucker::MemoryManager::safe_delete_array<double>(eigenvalues[i],U[i]->nrows());
+      if(U[i]) Tucker::MemoryManager::safe_delete<Tucker::Matrix>(U[i]);
     }
-    Tucker::safe_delete_array<Tucker::Matrix*>(U);
-    Tucker::safe_delete_array<double*>(eigenvalues);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Matrix*>(U,N);
+    Tucker::MemoryManager::safe_delete_array<double*>(eigenvalues,N);
 
-    Tucker::safe_delete_array<Tucker::Timer>(gram_timer_);
-    Tucker::safe_delete_array<Tucker::Timer>(gram_matmul_timer_);
-    Tucker::safe_delete_array<Tucker::Timer>(gram_shift_timer_);
-    Tucker::safe_delete_array<Tucker::Timer>(gram_allreduce_timer_);
-    Tucker::safe_delete_array<Tucker::Timer>(gram_allgather_timer_);
-    Tucker::safe_delete_array<Tucker::Timer>(gram_pack_timer_);
-    Tucker::safe_delete_array<Tucker::Timer>(gram_alltoall_timer_);
-    Tucker::safe_delete_array<Tucker::Timer>(gram_unpack_timer_);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(gram_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(gram_matmul_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(gram_shift_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(gram_allreduce_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(gram_allgather_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(gram_pack_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(gram_alltoall_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(gram_unpack_timer_,N);
 
-    Tucker::safe_delete_array<Tucker::Timer>(eigen_timer_);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(eigen_timer_,N);
 
-    Tucker::safe_delete_array<Tucker::Timer>(ttm_timer_);
-    Tucker::safe_delete_array<Tucker::Timer>(ttm_matmul_timer_);
-    Tucker::safe_delete_array<Tucker::Timer>(ttm_pack_timer_);
-    Tucker::safe_delete_array<Tucker::Timer>(ttm_reducescatter_timer_);
-    Tucker::safe_delete_array<Tucker::Timer>(ttm_reduce_timer_);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(ttm_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(ttm_matmul_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(ttm_pack_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(ttm_reducescatter_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(ttm_reduce_timer_,N);
   }
 
   Tensor* reconstructTensor() const
@@ -123,7 +123,7 @@ public:
 
       // At iteration 0, temp = G
       if(mode > 0) {
-        Tucker::safe_delete<Tensor>(temp);
+        Tucker::MemoryManager::safe_delete<Tensor>(temp);
       }
       temp = t;
     }
@@ -137,7 +137,7 @@ public:
   void printTimers(const std::string& filename) const
   {
     const int ntimers = 14;
-    double* raw_array = Tucker::safe_new_array<double>(ntimers*N+1);
+    double* raw_array = Tucker::MemoryManager::safe_new_array<double>(ntimers*N+1);
 
     // Get the MPI data
     int rank, nprocs;
@@ -171,10 +171,10 @@ public:
     double* max_array;
     double* mean_array;
     if(rank == 0) {
-      min_array = Tucker::safe_new_array<double>(ntimers*N+1);
-      max_array = Tucker::safe_new_array<double>(ntimers*N+1);
-      mean_array = Tucker::safe_new_array<double>(ntimers*N+1);
-      gathered_data = Tucker::safe_new_array<double>((ntimers*N+1)*nprocs);
+      min_array = Tucker::MemoryManager::safe_new_array<double>(ntimers*N+1);
+      max_array = Tucker::MemoryManager::safe_new_array<double>(ntimers*N+1);
+      mean_array = Tucker::MemoryManager::safe_new_array<double>(ntimers*N+1);
+      gathered_data = Tucker::MemoryManager::safe_new_array<double>((ntimers*N+1)*nprocs);
     }
     else {
       min_array = 0;
@@ -327,12 +327,12 @@ public:
 
       os.close();
 
-      Tucker::safe_delete_array<double>(min_array);
-      Tucker::safe_delete_array<double>(max_array);
-      Tucker::safe_delete_array<double>(mean_array);
+      Tucker::MemoryManager::safe_delete_array<double>(min_array,ntimers*N+1);
+      Tucker::MemoryManager::safe_delete_array<double>(max_array,ntimers*N+1);
+      Tucker::MemoryManager::safe_delete_array<double>(mean_array,ntimers*N+1);
     }
 
-    Tucker::safe_delete_array<double>(raw_array);
+    Tucker::MemoryManager::safe_delete_array<double>(raw_array,ntimers*N+1);
   }
 
   Tensor* G; //!< the tensor of reduced size

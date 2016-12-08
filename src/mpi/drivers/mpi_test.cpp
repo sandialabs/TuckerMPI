@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 //  }
 
   // Free some memory
-  Tucker::safe_delete<const Tucker::TuckerTensor>(ttensor);
+  Tucker::MemoryManager::safe_delete<const Tucker::TuckerTensor>(ttensor);
 
   // Terminate MPI
   MPI_Finalize();

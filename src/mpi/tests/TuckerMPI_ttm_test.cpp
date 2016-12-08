@@ -58,13 +58,13 @@ int main(int argc, char* argv[])
   expectedSize[1] = 3;
   expectedSize[2] = 5;
   TuckerMPI::Distribution* expectedDist =
-      Tucker::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult(expectedDist);
   filename = "input_files/ttm_result0.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult);
 
   approxEqual = isApproxEqual(result,&expectedResult, 1e-10);
-  Tucker::safe_delete<TuckerMPI::Tensor>(result);
+  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);
   if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
@@ -89,13 +89,13 @@ int main(int argc, char* argv[])
   expectedSize[1] = 3;
   expectedSize[2] = 5;
   expectedDist =
-      Tucker::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult2(expectedDist);
   filename = "input_files/ttm_result0t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult2);
 
   approxEqual = isApproxEqual(result,&expectedResult2, 1e-10);
-  Tucker::safe_delete<TuckerMPI::Tensor>(result);
+  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);
   if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
@@ -122,13 +122,13 @@ int main(int argc, char* argv[])
   expectedSize[1] = 7;
   expectedSize[2] = 5;
   expectedDist =
-      Tucker::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult3(expectedDist);
   filename = "input_files/ttm_result1.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult3);
 
   approxEqual = isApproxEqual(result,&expectedResult3, 1e-10);
-  Tucker::safe_delete<TuckerMPI::Tensor>(result);
+  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);
   if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
@@ -155,13 +155,13 @@ int main(int argc, char* argv[])
   expectedSize[1] = 7;
   expectedSize[2] = 5;
   expectedDist =
-      Tucker::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult4(expectedDist);
   filename = "input_files/ttm_result1t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult4);
 
   approxEqual = isApproxEqual(result,&expectedResult4, 1e-10);
-  Tucker::safe_delete<TuckerMPI::Tensor>(result);
+  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);
   if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
@@ -191,13 +191,13 @@ int main(int argc, char* argv[])
   expectedSize[1] = 3;
   expectedSize[2] = 7;
   expectedDist =
-      Tucker::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult5(expectedDist);
   filename = "input_files/ttm_result2.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult5);
 
   approxEqual = isApproxEqual(result,&expectedResult5, 1e-10);
-  Tucker::safe_delete<TuckerMPI::Tensor>(result);
+  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);
   if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
@@ -227,13 +227,13 @@ int main(int argc, char* argv[])
   expectedSize[1] = 3;
   expectedSize[2] = 7;
   expectedDist =
-      Tucker::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult6(expectedDist);
   filename = "input_files/ttm_result2t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult6);
 
   approxEqual = isApproxEqual(result,&expectedResult6, 1e-10);
-  Tucker::safe_delete<TuckerMPI::Tensor>(result);
+  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);
   if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;

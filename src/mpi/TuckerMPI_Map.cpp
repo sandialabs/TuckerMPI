@@ -57,14 +57,14 @@ Map::Map(int globalNumEntries, const MPI_Comm& comm) :
 //  assert(globalNumEntries > nprocs);
 
   // Determine the number of entries owned by each process
-  numElementsPerProc_ = Tucker::safe_new<Tucker::SizeArray>(nprocs);
+  numElementsPerProc_ = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nprocs);
 
   for(int rank=0; rank<nprocs; rank++) {
     (*numElementsPerProc_)[rank] = (globalNumEntries+rank)/nprocs;
   }
 
   // Determine the row offsets for each process
-  offsets_ = Tucker::safe_new<Tucker::SizeArray>(nprocs+1);
+  offsets_ = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nprocs+1);
 
   (*offsets_)[0] = 0;
   for(int rank=1; rank<=nprocs; rank++) {
@@ -80,8 +80,8 @@ Map::Map(int globalNumEntries, const MPI_Comm& comm) :
 
 Map::~Map()
 {
-  Tucker::safe_delete<Tucker::SizeArray>(numElementsPerProc_);
-  Tucker::safe_delete<Tucker::SizeArray>(offsets_);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(numElementsPerProc_);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(offsets_);
 
   int finalized;
   MPI_Finalized(&finalized);
@@ -174,7 +174,7 @@ void Map::removeEmptyProcs()
   size_t i=0;
   int src=0;
   assert(newNumProcs <= std::numeric_limits<int>::max());
-  Tucker::SizeArray* newSize = Tucker::safe_new<Tucker::SizeArray>((int)newNumProcs);
+  Tucker::SizeArray* newSize = Tucker::MemoryManager::safe_new<Tucker::SizeArray>((int)newNumProcs);
   for(int dest=0; dest<(int)newNumProcs; dest++) {
     while(i < emptyProcs.size() && src == emptyProcs[i]) {
       src++;
@@ -183,11 +183,11 @@ void Map::removeEmptyProcs()
     (*newSize)[dest] = (*numElementsPerProc_)[src];
     src++;
   }
-  Tucker::safe_delete<Tucker::SizeArray>(numElementsPerProc_);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(numElementsPerProc_);
   numElementsPerProc_ = newSize;
 
   // Remove them from offsets too
-  Tucker::SizeArray* newOffsets = Tucker::safe_new<Tucker::SizeArray>((int)newNumProcs);
+  Tucker::SizeArray* newOffsets = Tucker::MemoryManager::safe_new<Tucker::SizeArray>((int)newNumProcs);
   i=0;
   src=0;
   for(int dest=0; dest<(int)newNumProcs; dest++) {
@@ -198,7 +198,7 @@ void Map::removeEmptyProcs()
     (*newOffsets)[dest] = (*offsets_)[src];
     src++;
   }
-  Tucker::safe_delete<Tucker::SizeArray>(offsets_);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(offsets_);
   offsets_ = newOffsets;
 
   assert(emptyProcs.size() <= std::numeric_limits<int>::max());

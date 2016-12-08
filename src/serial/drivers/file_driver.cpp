@@ -5,6 +5,7 @@
  *      Author: Alicia Klinvex (amklinv@sandia.gov)
  */
 
+#include "Tucker_Util.hpp"
 #include "Tucker.hpp"
 #include <iostream>
 
@@ -39,6 +40,6 @@ int main()
   Tucker::exportTensor(factorization->G,"output_data/core11.txt");
 
   // Free some memory
-  Tucker::safe_delete<const struct Tucker::TuckerTensor>(factorization);
-  Tucker::safe_delete<Tucker::Tensor>(t);
+  Tucker::MemoryManager::safe_delete<const struct Tucker::TuckerTensor>(factorization);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(t);
 }

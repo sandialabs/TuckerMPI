@@ -46,7 +46,7 @@ int main()
   if(!matchesTrueSol)
     return EXIT_FAILURE;
 
-  Tucker::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
 
   // Compute the Gram matrix
   matrix = Tucker::computeGram(tensor,1);
@@ -63,7 +63,7 @@ int main()
   if(!matchesTrueSol)
     return EXIT_FAILURE;
 
-  Tucker::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
 
   // Compute the Gram matrix
   matrix = Tucker::computeGram(tensor,2);
@@ -82,7 +82,7 @@ int main()
   if(!matchesTrueSol)
     return EXIT_FAILURE;
 
-  Tucker::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
 
   // Compute the Gram matrix
   matrix = Tucker::computeGram(tensor,3);
@@ -105,10 +105,10 @@ int main()
   if(!matchesTrueSol)
     return EXIT_FAILURE;
 
-  Tucker::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
 
   // Free memory
-  Tucker::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
 
   return EXIT_SUCCESS;
 }

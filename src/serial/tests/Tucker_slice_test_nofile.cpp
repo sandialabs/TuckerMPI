@@ -106,7 +106,7 @@ int main()
         return EXIT_FAILURE;
       }
     }
-    Tucker::safe_delete<Tucker::MetricData>(mets);
+    Tucker::MemoryManager::safe_delete<Tucker::MetricData>(mets);
   }
 
   return EXIT_SUCCESS;

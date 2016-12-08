@@ -20,7 +20,7 @@ int main()
   double norm = sqrt(tensor->norm2());
 
   // Free memory
-  Tucker::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
 
   // Compare computed solution to true solution
   double diff = std::abs(norm-TRUE_SOLUTION);

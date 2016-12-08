@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 //  }
 
   // What is my location in the grid?
-  int* coords = Tucker::safe_new_array<int>(ndims);
+  int* coords = Tucker::MemoryManager::safe_new_array<int>(ndims);
   pg->getCoordinates(coords);
   ofs << "Coordinates: ";
   for(int i=0; i<ndims; i++) {
@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
 //    ofs << std::endl;
   }
 
-  Tucker::safe_delete_array<int>(coords);
+  Tucker::MemoryManager::safe_delete_array<int>(coords,ndims);
 
   // Create a tensor
   TuckerMPI::Tensor tensor(&dist);
@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
   std::cout << "result:\n";
   result->print();
 
-  Tucker::safe_delete<TuckerMPI::Tensor>(result);
+  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);
 
   ofs.close();
 

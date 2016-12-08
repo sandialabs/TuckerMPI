@@ -36,11 +36,11 @@ Tensor* ttm(const Tensor* X, const int n,
   }
 
   // Create a distribution object for it
-  Distribution* dist = Tucker::safe_new<Distribution>(newSize,
+  Distribution* dist = Tucker::MemoryManager::safe_new<Distribution>(newSize,
           X->getDistribution()->getProcessorGrid()->size());
 
   // Create the new tensor
-  Tensor* Y = Tucker::safe_new<Tensor>(dist);
+  Tensor* Y = Tucker::MemoryManager::safe_new<Tensor>(dist);
 
   // Get the local part of the tensor
   const Tucker::Tensor* localX = X->getLocalTensor();
@@ -96,7 +96,7 @@ Tensor* ttm(const Tensor* X, const int n,
           sz[i] = X->getLocalSize(i);
         }
         sz[n] = Y->getGlobalSize(n);
-        localResult = Tucker::safe_new<Tucker::Tensor>(sz);
+        localResult = Tucker::MemoryManager::safe_new<Tucker::Tensor>(sz);
         localResult->initialize();
       }
       else {
@@ -124,7 +124,7 @@ Tensor* ttm(const Tensor* X, const int n,
         recvBuf = 0;
       int nprocs;
       MPI_Comm_size(comm,&nprocs);
-      int* recvCounts = Tucker::safe_new_array<int>(nprocs);
+      int* recvCounts = Tucker::MemoryManager::safe_new_array<int>(nprocs);
       size_t multiplier = Y->getLocalSize().prod(0,n-1,1)*Y->getLocalSize().prod(n+1,ndims-1,1);
       for(int i=0; i<nprocs; i++) {
         size_t temp = multiplier*(yMap->getNumEntries(i));
@@ -136,7 +136,7 @@ Tensor* ttm(const Tensor* X, const int n,
       MPI_Reduce_scatter((void*)sendBuf, recvBuf, recvCounts, MPI_DOUBLE,
           MPI_SUM, comm);
       if(reduce_scatter_timer) reduce_scatter_timer->stop();
-      Tucker::safe_delete<Tucker::Tensor>(localResult);
+      Tucker::MemoryManager::safe_delete<Tucker::Tensor>(localResult);
     } // end if(K < std::ceil(Jn/Pn))
     else {
       for(int root=0; root<Pn; root++) {
@@ -154,7 +154,7 @@ Tensor* ttm(const Tensor* X, const int n,
             sz[i] = X->getLocalSize(i);
           }
           sz[n] = uLocalRows;
-          localResult = Tucker::safe_new<Tucker::Tensor>(sz);
+          localResult = Tucker::MemoryManager::safe_new<Tucker::Tensor>(sz);
           localResult->initialize();
         }
         else {
@@ -185,7 +185,7 @@ Tensor* ttm(const Tensor* X, const int n,
         }
 
         // Free memory
-        Tucker::safe_delete<Tucker::Tensor>(localResult);
+        Tucker::MemoryManager::safe_delete<Tucker::Tensor>(localResult);
 
         // Increment the data pointer
         if(Utransp)

@@ -57,7 +57,7 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
     globalDims_[i] = dims[i];
   }
 
-  grid_ = Tucker::safe_new<ProcessorGrid>(procs,MPI_COMM_WORLD);
+  grid_ = Tucker::MemoryManager::safe_new<ProcessorGrid>(procs,MPI_COMM_WORLD);
 
   // Create the maps
   createMaps();
@@ -72,10 +72,10 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
 
   if(squeezed_) {
     // Create a map for each dimension
-    maps_squeezed_ = Tucker::safe_new_array<Map*>(ndims);
+    maps_squeezed_ = Tucker::MemoryManager::safe_new_array<Map*>(ndims);
     for(int d=0; d<ndims; d++) {
       const MPI_Comm& comm = grid_->getColComm(d,false);
-      maps_squeezed_[d] = Tucker::safe_new<Map>(globalDims_[d],comm);
+      maps_squeezed_[d] = Tucker::MemoryManager::safe_new<Map>(globalDims_[d],comm);
     }
 
     // Remove the empty processes from the map communicators
@@ -110,10 +110,10 @@ Distribution::~Distribution()
 {
   int ndims = globalDims_.size();
   for(int i=0; i<ndims; i++) {
-    Tucker::safe_delete<Map>(maps_[i]);
+    Tucker::MemoryManager::safe_delete<Map>(maps_[i]);
   }
-  Tucker::safe_delete_array<Map*>(maps_);
-  Tucker::safe_delete<ProcessorGrid>(grid_);
+  Tucker::MemoryManager::safe_delete_array<Map*>(maps_,ndims);
+  Tucker::MemoryManager::safe_delete<ProcessorGrid>(grid_);
 }
 
 
@@ -156,10 +156,10 @@ void Distribution::createMaps()
   int ndims = globalDims_.size();
 
   // Create a map for each dimension
-  maps_ = Tucker::safe_new_array<Map*>(ndims);
+  maps_ = Tucker::MemoryManager::safe_new_array<Map*>(ndims);
   for(int d=0; d<ndims; d++) {
     const MPI_Comm& comm = grid_->getColComm(d,false);
-    maps_[d] = Tucker::safe_new<Map>(globalDims_[d],comm);
+    maps_[d] = Tucker::MemoryManager::safe_new<Map>(globalDims_[d],comm);
   }
 }
 

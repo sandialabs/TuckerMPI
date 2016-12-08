@@ -44,13 +44,13 @@ namespace TuckerMPI {
 Tensor::Tensor(const Distribution* dist) :
     dist_(dist)
 {
-  localTensor_ = Tucker::safe_new<Tucker::Tensor>(dist->getLocalDims());
+  localTensor_ = Tucker::MemoryManager::safe_new<Tucker::Tensor>(dist->getLocalDims());
 }
 
 
 Tensor::~Tensor()
 {
-  Tucker::safe_delete<Tucker::Tensor>(localTensor_);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(localTensor_);
 }
 
 
@@ -139,7 +139,7 @@ void Tensor::rand()
 
 Tensor* Tensor::subtract(const Tensor* t) const
 {
-  Tensor* sub = Tucker::safe_new<Tensor>(dist_);
+  Tensor* sub = Tucker::MemoryManager::safe_new<Tensor>(dist_);
 
   size_t nnz = getLocalNumEntries();
   if(nnz > 0) {

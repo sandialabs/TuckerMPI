@@ -69,7 +69,7 @@ Matrix* computeGram(const Tensor* Y, const int n)
 
   // Allocate memory for the Gram matrix
   int nrows = Y->size(n);
-  Matrix* S = safe_new<Matrix>(nrows,nrows);
+  Matrix* S = MemoryManager::safe_new<Matrix>(nrows,nrows);
 
   computeGram(Y, n, S->data(), nrows);
 
@@ -176,14 +176,14 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
   }
 
   int nrows = G->nrows();
-  eigenvalues = safe_new_array<double>(nrows);
+  eigenvalues = MemoryManager::safe_new_array<double>(nrows);
 
   // Compute the leading eigenvectors of S
   // call dsyev(jobz, uplo, n, a, lda, w, work, lwork, info)
   char jobz = 'V';
   char uplo = 'U';
   int lwork = 8*nrows;
-  double* work = safe_new_array<double>(lwork);
+  double* work = MemoryManager::safe_new_array<double>(lwork);
   int info;
   dsyev_(&jobz, &uplo, &nrows, G->data(), &nrows,
       eigenvalues, work, &lwork, &info);
@@ -231,7 +231,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
     }
   }
 
-  safe_delete_array<double>(work);
+  MemoryManager::safe_delete_array<double>(work,lwork);
 }
 
 void computeEigenpairs(Matrix* G, double*& eigenvalues,
@@ -263,7 +263,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
 
   // Allocate memory for eigenvectors
   int numRows = G->nrows();
-  eigenvectors = safe_new<Matrix>(numRows,numEvecs);
+  eigenvectors = MemoryManager::safe_new<Matrix>(numRows,numEvecs);
 
   // Copy appropriate eigenvectors
   int nToCopy = numRows*numEvecs;
@@ -305,7 +305,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
 
   // Allocate memory for eigenvectors
   int numRows = G->nrows();
-  eigenvectors = safe_new<Matrix>(numRows,numEvecs);
+  eigenvectors = MemoryManager::safe_new<Matrix>(numRows,numEvecs);
 
   // Copy appropriate eigenvectors
   int nToCopy = numRows*numEvecs;
@@ -333,7 +333,7 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
   int ndims = X->N();
 
   // Create a struct to store the factorization
-  struct TuckerTensor* factorization = safe_new<struct TuckerTensor>(ndims);
+  struct TuckerTensor* factorization = MemoryManager::safe_new<struct TuckerTensor>(ndims);
   factorization->total_timer_.start();
 
   double tensorNorm = X->norm2();
@@ -358,14 +358,14 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
     factorization->eigen_timer_[n].stop();
 
     // Free the Gram matrix
-    safe_delete<Matrix>(S);
+    MemoryManager::safe_delete<Matrix>(S);
 
     // Perform the tensor times matrix multiplication
     factorization->ttm_timer_[n].start();
     Tensor* temp = ttm(Y,n,factorization->U[n],true);
     factorization->ttm_timer_[n].stop();
     if(n > 0) {
-      safe_delete<const Tensor>(Y);
+      MemoryManager::safe_delete<const Tensor>(Y);
     }
     Y = temp;
   }
@@ -410,7 +410,7 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
   }
 
   // Create a struct to store the factorization
-  struct TuckerTensor* factorization = safe_new<struct TuckerTensor>(X->N());
+  struct TuckerTensor* factorization = MemoryManager::safe_new<struct TuckerTensor>(X->N());
   factorization->total_timer_.start();
 
   const Tensor* Y = X;
@@ -431,14 +431,14 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
         factorization->U[n], (*reducedI)[n], flipSign);
     factorization->eigen_timer_[n].stop();
 
-    safe_delete<Matrix>(S);
+    MemoryManager::safe_delete<Matrix>(S);
 
     // Perform the tensor times matrix multiplication
     factorization->ttm_timer_[n].start();
     Tensor* temp = ttm(Y,n,factorization->U[n],true);
     factorization->ttm_timer_[n].stop();
     if(n > 0) {
-      safe_delete<const Tensor>(Y);
+      MemoryManager::safe_delete<const Tensor>(Y);
     }
     Y = temp;
   }
@@ -493,7 +493,7 @@ Tensor* ttm(const Tensor* X, const int n,
       I[i] = nrows;
     }
   }
-  Tensor* Y = safe_new<Tensor>(I);
+  Tensor* Y = MemoryManager::safe_new<Tensor>(I);
 
   // Call TTM
   ttm(X, n, U, Y, Utransp);
@@ -517,7 +517,7 @@ Tensor* ttm(const Tensor* const X, const int n,
       I[i] = dimU;
     }
   }
-  Tensor* Y = safe_new<Tensor>(I);
+  Tensor* Y = MemoryManager::safe_new<Tensor>(I);
 
   // Call TTM
   ttm(X, n, Uptr, strideU, Y, Utransp);
@@ -671,14 +671,14 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
   }
 
   // Allocate memory for the result
-  MetricData* result = safe_new<MetricData>(metrics, numSlices);
+  MetricData* result = MemoryManager::safe_new<MetricData>(metrics, numSlices);
 
   // Initialize the result
   double* delta;
   int* nArray;
   if((metrics & MEAN) || (metrics & VARIANCE)) {
-    delta = safe_new_array<double>(numSlices);
-    nArray = safe_new_array<int>(numSlices);
+    delta = MemoryManager::safe_new_array<double>(numSlices);
+    nArray = MemoryManager::safe_new_array<int>(numSlices);
   }
   for(int i=0; i<numSlices; i++) {
     if(metrics & MIN) {
@@ -701,8 +701,8 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
 
   if(Y->getNumElements() == 0) {
     if((metrics & MEAN) || (metrics & VARIANCE)) {
-      safe_delete_array<double>(delta);
-      safe_delete_array<int>(nArray);
+      MemoryManager::safe_delete_array<double>(delta,numSlices);
+      MemoryManager::safe_delete_array<int>(nArray,numSlices);
     }
     return result;
   }
@@ -748,8 +748,8 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
   } // end for(slice=0; slice<numSlices; slice++)
 
   if((metrics & MEAN) || (metrics & VARIANCE)) {
-    safe_delete_array<double>(delta);
-    safe_delete_array<int>(nArray);
+    MemoryManager::safe_delete_array<double>(delta,numSlices);
+    MemoryManager::safe_delete_array<int>(nArray,numSlices);
   }
   if(metrics & VARIANCE) {
     size_t sizeOfSlice = numContig*numSetsContig;
@@ -799,24 +799,24 @@ void normalizeTensorMinMax(Tensor* Y, int mode)
 {
   MetricData* metrics = computeSliceMetrics(Y, mode, MAX+MIN);
   int sizeOfModeDim = Y->size(mode);
-  double* scales = safe_new_array<double>(sizeOfModeDim);
-  double* shifts = safe_new_array<double>(sizeOfModeDim);
+  double* scales = MemoryManager::safe_new_array<double>(sizeOfModeDim);
+  double* shifts = MemoryManager::safe_new_array<double>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
     scales[i] = metrics->getMaxData()[i] - metrics->getMinData()[i];
     shifts[i] = -metrics->getMinData()[i];
   }
   transformSlices(Y,mode,scales,shifts);
-  safe_delete_array<double>(scales);
-  safe_delete_array<double>(shifts);
-  safe_delete<MetricData>(metrics);
+  MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
+  MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
+  MemoryManager::safe_delete<MetricData>(metrics);
 }
 
 void normalizeTensorStandardCentering(Tensor* Y, int mode)
 {
   MetricData* metrics = computeSliceMetrics(Y, mode, MEAN+VARIANCE);
   int sizeOfModeDim = Y->size(mode);
-  double* scales = safe_new_array<double>(sizeOfModeDim);
-  double* shifts = safe_new_array<double>(sizeOfModeDim);
+  double* scales = MemoryManager::safe_new_array<double>(sizeOfModeDim);
+  double* shifts = MemoryManager::safe_new_array<double>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
     scales[i] = sqrt(metrics->getVarianceData()[i]);
     shifts[i] = -metrics->getMeanData()[i];
@@ -830,9 +830,9 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode)
     }
   }
   transformSlices(Y,mode,scales,shifts);
-  safe_delete_array<double>(scales);
-  safe_delete_array<double>(shifts);
-  safe_delete<MetricData>(metrics);
+  MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
+  MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
+  MemoryManager::safe_delete<MetricData>(metrics);
 }
 
 
@@ -862,7 +862,7 @@ Tensor* importTensor(const char* filename)
   }
 
   // Create a tensor using that SizeArray
-  Tensor* t = safe_new<Tensor>(sz);
+  Tensor* t = MemoryManager::safe_new<Tensor>(sz);
 
   // Read the entries of the tensor
   size_t numEntries = sz.prod();
@@ -936,7 +936,7 @@ Matrix* importMatrix(const char* filename)
     ifs >> nrows >> ncols;
 
   // Create a matrix
-  Matrix* m = safe_new<Matrix>(nrows,ncols);
+  Matrix* m = MemoryManager::safe_new<Matrix>(nrows,ncols);
 
   // Read the entries of the tensor
   size_t numEntries = nrows*ncols;

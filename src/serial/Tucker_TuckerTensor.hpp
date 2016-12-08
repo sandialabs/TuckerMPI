@@ -74,13 +74,13 @@ public:
     }
 
     N = ndims;
-    U = safe_new_array<Matrix*>(N);
-    eigenvalues = safe_new_array<double*>(N);
+    U = MemoryManager::safe_new_array<Matrix*>(N);
+    eigenvalues = MemoryManager::safe_new_array<double*>(N);
     G = 0;
 
-    gram_timer_ = safe_new_array<Timer>(ndims);
-    eigen_timer_ = safe_new_array<Timer>(ndims);
-    ttm_timer_ = safe_new_array<Timer>(ndims);
+    gram_timer_ = MemoryManager::safe_new_array<Timer>(ndims);
+    eigen_timer_ = MemoryManager::safe_new_array<Timer>(ndims);
+    ttm_timer_ = MemoryManager::safe_new_array<Timer>(ndims);
   }
 
   /** \brief Destructor
@@ -90,17 +90,17 @@ public:
    */
   ~TuckerTensor()
   {
-    safe_delete<Tensor>(G);
+    MemoryManager::safe_delete<Tensor>(G);
     for(int i=0; i<N; i++) {
-      safe_delete<Matrix>(U[i]);
-      safe_delete_array<double>(eigenvalues[i]);
+      MemoryManager::safe_delete_array<double>(eigenvalues[i],U[i]->nrows());
+      MemoryManager::safe_delete<Matrix>(U[i]);
     }
-    safe_delete_array<Matrix*>(U);
-    safe_delete_array<double*>(eigenvalues);
+    MemoryManager::safe_delete_array<Matrix*>(U,N);
+    MemoryManager::safe_delete_array<double*>(eigenvalues,N);
 
-    safe_delete_array<Timer>(gram_timer_);
-    safe_delete_array<Timer>(eigen_timer_);
-    safe_delete_array<Timer>(ttm_timer_);
+    MemoryManager::safe_delete_array<Timer>(gram_timer_,N);
+    MemoryManager::safe_delete_array<Timer>(eigen_timer_,N);
+    MemoryManager::safe_delete_array<Timer>(ttm_timer_,N);
   }
 
   /** \brief Prints some runtime information

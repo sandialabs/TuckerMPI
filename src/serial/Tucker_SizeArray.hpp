@@ -69,12 +69,12 @@ public:
   {
     if(n <= 0)
       throw std::invalid_argument("n must be positive");
-    sz_ = safe_new_array<int>(nsz_);
+    sz_ = MemoryManager::safe_new_array<int>(nsz_);
   }
 
   //! Destructor
   ~SizeArray() {
-    safe_delete_array<int>(sz_);
+    MemoryManager::safe_delete_array<int>(sz_,nsz_);
   }
 
   /** \brief Length/Number of entries in the array

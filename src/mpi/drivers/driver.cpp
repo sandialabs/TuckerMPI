@@ -152,8 +152,8 @@ int main(int argc, char* argv[])
       Tucker::MIN+Tucker::MAX+Tucker::MEAN+Tucker::VARIANCE);
 
   // Determine whether I need to communicate with rank 0
-  int* myCoordinates = Tucker::safe_new_array<int>(nd);
-  int* zeroCoordinates = Tucker::safe_new_array<int>(nd);
+  int* myCoordinates = Tucker::MemoryManager::safe_new_array<int>(nd);
+  int* zeroCoordinates = Tucker::MemoryManager::safe_new_array<int>(nd);
   const TuckerMPI::ProcessorGrid* grid = dist.getProcessorGrid();
   grid->getCoordinates(myCoordinates);
   grid->getCoordinates(zeroCoordinates,0);
@@ -172,10 +172,10 @@ int main(int argc, char* argv[])
   const MPI_Comm& rowComm = grid->getColComm(scale_mode,false);
   if(needToSendToZero) {
     int numEntries = map->getGlobalNumEntries();
-    double* mins = Tucker::safe_new_array<double>(numEntries);
-    double* maxs = Tucker::safe_new_array<double>(numEntries);
-    double* means = Tucker::safe_new_array<double>(numEntries);
-    double* vars = Tucker::safe_new_array<double>(numEntries);
+    double* mins = Tucker::MemoryManager::safe_new_array<double>(numEntries);
+    double* maxs = Tucker::MemoryManager::safe_new_array<double>(numEntries);
+    double* means = Tucker::MemoryManager::safe_new_array<double>(numEntries);
+    double* vars = Tucker::MemoryManager::safe_new_array<double>(numEntries);
     MPI_Gatherv (metrics->getMinData(), map->getLocalNumEntries(),
         MPI_DOUBLE, mins, (int*)map->getNumElementsPerProc()->data(),
         (int*)map->getOffsets()->data(), MPI_DOUBLE, 0, rowComm);
@@ -321,9 +321,9 @@ int main(int argc, char* argv[])
   //
   // Free memory
   //
-  Tucker::safe_delete<Tucker::SizeArray>(I_dims);
-  if(R_dims) Tucker::safe_delete<Tucker::SizeArray>(R_dims);
-  Tucker::safe_delete<Tucker::SizeArray>(proc_grid_dims);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(I_dims);
+  if(R_dims) Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(R_dims);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(proc_grid_dims);
 
   // Finalize MPI
   MPI_Finalize();

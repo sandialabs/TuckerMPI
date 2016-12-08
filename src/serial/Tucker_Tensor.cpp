@@ -63,7 +63,7 @@ Tensor::Tensor(const SizeArray& I) :
   // Compute the total number of entries in this tensor
   size_t numEntries = getNumElements();
   if(numEntries > 0)
-    data_ = safe_new_array<double>(numEntries);
+    data_ = MemoryManager::safe_new_array<double>(numEntries);
   else
     data_ = 0;
 }
@@ -89,7 +89,7 @@ Tensor::Tensor(int nrows, int ncols) :
 
   size_t numEntries = nrows*ncols;
   if(numEntries > 0)
-    data_ = safe_new_array<double>(numEntries);
+    data_ = MemoryManager::safe_new_array<double>(numEntries);
   else
     data_ = 0;
 }
@@ -97,7 +97,7 @@ Tensor::Tensor(int nrows, int ncols) :
 Tensor::~Tensor()
 {
   if(data_)
-    safe_delete_array<double>(data_);
+    MemoryManager::safe_delete_array<double>(data_,getNumElements());
 }
 
 int Tensor::N() const {

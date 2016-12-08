@@ -243,14 +243,14 @@ int main(int argc, char* argv[])
   ////////////////////////////////////////////////////////////
   if(rec_order == NULL) {
     // Create the SizeArray
-    rec_order = Tucker::safe_new<Tucker::SizeArray>(nd);
+    rec_order = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
     for(int i=0; i<nd; i++) {
       (*rec_order)[i] = i;
     }
 
     // Compute the ratios of reconstructed size to core size
-    int* rec_size = Tucker::safe_new_array<int>(nd);
-    double* ratios = Tucker::safe_new_array<double>(nd);
+    int* rec_size = Tucker::MemoryManager::safe_new_array<int>(nd);
+    double* ratios = Tucker::MemoryManager::safe_new_array<double>(nd);
     for(int i=0; i<nd; i++) {
       rec_size[i] = 1 + (*subs_end)[i] - (*subs_begin)[i];
       ratios[i] = (double)rec_size[i] / coreSize[i];
@@ -268,8 +268,8 @@ int main(int argc, char* argv[])
     if(rank == 0) std::cout << "Reconstruction order: " << *rec_order << std::endl;
 
     // Free the memory
-    Tucker::safe_delete_array<int>(rec_size);
-    Tucker::safe_delete_array<double>(ratios);
+    Tucker::MemoryManager::safe_delete_array<int>(rec_size,nd);
+    Tucker::MemoryManager::safe_delete_array<double>(ratios,nd);
   }
 
   //////////////////////////////////////////////////////////
@@ -321,7 +321,7 @@ int main(int argc, char* argv[])
   ///////////////////////////
   std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn +
             "_core.mpi";
-  fact.G = Tucker::safe_new<TuckerMPI::Tensor>(&dist);
+  fact.G = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(&dist);
   TuckerMPI::importTensorBinary(coreFilename.c_str(),fact.G);
 
   //////////////////////////
@@ -332,7 +332,7 @@ int main(int argc, char* argv[])
     std::ostringstream ss;
     ss << sthosvd_dir << "/" << sthosvd_fn << "_mat_" << mode << ".mpi";
 
-    fact.U[mode] = Tucker::safe_new<Tucker::Matrix>((*I_dims)[mode],coreSize[mode]);
+    fact.U[mode] = Tucker::MemoryManager::safe_new<Tucker::Matrix>((*I_dims)[mode],coreSize[mode]);
     TuckerMPI::importTensorBinary(ss.str().c_str(), fact.U[mode]);
   }
 
@@ -352,9 +352,9 @@ int main(int argc, char* argv[])
     // Perform the TTM
     TuckerMPI::Tensor* temp = TuckerMPI::ttm(result,mode,factMat);
 
-    Tucker::safe_delete<Tucker::Matrix>(factMat);
+    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(factMat);
     if(result != fact.G)
-      Tucker::safe_delete<TuckerMPI::Tensor>(result);
+      Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);
     result = temp;
   }
 
@@ -366,12 +366,12 @@ int main(int argc, char* argv[])
   /////////////////
   // Free memory //
   /////////////////
-  Tucker::safe_delete<Tucker::SizeArray>(I_dims);
-  Tucker::safe_delete<Tucker::SizeArray>(proc_grid_dims);
-  Tucker::safe_delete<Tucker::SizeArray>(subs_begin);
-  Tucker::safe_delete<Tucker::SizeArray>(subs_end);
-  Tucker::safe_delete<Tucker::SizeArray>(rec_order);
-  Tucker::safe_delete<TuckerMPI::Tensor>(result);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(I_dims);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(proc_grid_dims);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(subs_begin);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(subs_end);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(rec_order);
+  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);
 
   //////////////////
   // Finalize MPI //

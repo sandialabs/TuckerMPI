@@ -48,8 +48,12 @@
 
 namespace Tucker {
 
+class MemoryManager {
+
+public:
+
 template<typename T, typename... Args>
-T* safe_new(Args&&... args)
+static T* safe_new(Args&&... args)
 {
   T* allocatedPtr;
   try {
@@ -58,6 +62,8 @@ T* safe_new(Args&&... args)
   catch(std::exception& e) {
     std::cout << "Exception: " << e.what() << std::endl;
   }
+  curMemUsage += sizeof(T);
+  maxMemUsage = std::max(maxMemUsage,curMemUsage);
   return allocatedPtr;
 }
 
@@ -67,7 +73,7 @@ T* safe_new(Args&&... args)
  * \exception std::runtime_error \a numToAllocate <= 0
  */
 template<typename T>
-T* safe_new_array(const size_t numToAllocate)
+static T* safe_new_array(const size_t numToAllocate)
 {
   if(numToAllocate <= 0) {
     std::ostringstream oss;
@@ -83,11 +89,13 @@ T* safe_new_array(const size_t numToAllocate)
   catch(std::exception& e) {
     std::cout << "Exception: " << e.what() << std::endl;
   }
+  curMemUsage += (sizeof(T)*numToAllocate);
+  maxMemUsage = std::max(maxMemUsage,curMemUsage);
   return allocatedPtr;
 }
 
 template<typename T>
-void safe_delete(T* t)
+static void safe_delete(T* t)
 {
   try {
     delete t;
@@ -95,10 +103,11 @@ void safe_delete(T* t)
   catch(std::exception& e) {
     std::cout << "Exception: " << e.what() << std::endl;
   }
+  curMemUsage -= sizeof(T);
 }
 
 template<typename T>
-void safe_delete_array(T* t)
+static void safe_delete_array(T* t, const size_t numToDealloc)
 {
   try {
     delete[] t;
@@ -106,7 +115,64 @@ void safe_delete_array(T* t)
   catch(std::exception& e) {
     std::cout << "Exception: " << e.what() << std::endl;
   }
+  curMemUsage -= (numToDealloc*sizeof(T));
 }
+
+static void printCurrentMemUsage()
+{
+  const size_t KB = 1024;
+  const size_t MB = 1048576;
+  const size_t GB = 1073741824;
+  const size_t TB = 1.09951162778e+12;
+
+  if(curMemUsage > TB) {
+    std::cout << curMemUsage / TB << " TB\n";
+  }
+  else if(curMemUsage > GB) {
+    std::cout << curMemUsage / GB << " GB\n";
+  }
+  else if(curMemUsage > MB) {
+    std::cout << curMemUsage / MB << " MB\n";
+  }
+  else if(curMemUsage > KB) {
+    std::cout << curMemUsage / KB << " KB\n";
+  }
+  else {
+    std::cout << curMemUsage << " bytes\n";
+  }
+}
+
+static void printMaxMemUsage()
+{
+  const size_t KB = 1024;
+  const size_t MB = 1048576;
+  const size_t GB = 1073741824;
+  const size_t TB = 1.09951162778e+12;
+
+  if(maxMemUsage > TB) {
+    std::cout << maxMemUsage / TB << " TB\n";
+  }
+  else if(maxMemUsage > GB) {
+    std::cout << maxMemUsage / GB << " GB\n";
+  }
+  else if(maxMemUsage > MB) {
+    std::cout << maxMemUsage / MB << " MB\n";
+  }
+  else if(maxMemUsage > KB) {
+    std::cout << maxMemUsage / KB << " KB\n";
+  }
+  else {
+    std::cout << maxMemUsage << " bytes\n";
+  }
+}
+
+static size_t curMemUsage;
+static size_t maxMemUsage;
+
+private:
+MemoryManager();
+
+}; // end class MemoryManager
 
 } // end namespace Tucker
 

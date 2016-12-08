@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
   TuckerMPI::exportTensorBinary(filename.c_str(), factorization->G);
 
   // Free some memory
-  Tucker::safe_delete<const Tucker::TuckerTensor>(factorization);
+  Tucker::MemoryManager::safe_delete<const Tucker::TuckerTensor>(factorization);
 
   // Finalize MPI
   MPI_Finalize();

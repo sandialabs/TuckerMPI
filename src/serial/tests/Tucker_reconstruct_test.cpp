@@ -50,10 +50,10 @@ int main()
   }
 
   // Free some memory
-  Tucker::safe_delete<const struct Tucker::TuckerTensor>(factorization);
-  Tucker::safe_delete<Tucker::Tensor>(temp);
-  Tucker::safe_delete<Tucker::Tensor>(temp2);
-  Tucker::safe_delete<Tucker::Tensor>(temp3);
+  Tucker::MemoryManager::safe_delete<const struct Tucker::TuckerTensor>(factorization);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(temp);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(temp2);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(temp3);
 
   return EXIT_SUCCESS;
 }

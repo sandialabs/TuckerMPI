@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  Tucker::safe_delete<const Tucker::Matrix>(mat);
+  Tucker::MemoryManager::safe_delete<const Tucker::Matrix>(mat);
 
   // Compute the gram matrix in dimension 1
   mat = TuckerMPI::oldGram(&tensor,1);
@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  Tucker::safe_delete<const Tucker::Matrix>(mat);
+  Tucker::MemoryManager::safe_delete<const Tucker::Matrix>(mat);
 
   // Compute the gram matrix in dimension 2
   mat = TuckerMPI::oldGram(&tensor,2);
@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  Tucker::safe_delete<const Tucker::Matrix>(mat);
+  Tucker::MemoryManager::safe_delete<const Tucker::Matrix>(mat);
 
   // Finalize MPI
   MPI_Finalize();

@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
   ///////////////////////////
   std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn +
             "_core.mpi";
-  fact.G = Tucker::safe_new<TuckerMPI::Tensor>(&dist);
+  fact.G = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(&dist);
   TuckerMPI::importTensorBinary(coreFilename.c_str(),fact.G);
 
   //////////////////////////
@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
     std::ostringstream ss;
     ss << sthosvd_dir << "/" << sthosvd_fn << "_mat_" << mode << ".mpi";
 
-    fact.U[mode] = Tucker::safe_new<Tucker::Matrix>((*I_dims)[mode],coreSize[mode]);
+    fact.U[mode] = Tucker::MemoryManager::safe_new<Tucker::Matrix>((*I_dims)[mode],coreSize[mode]);
     TuckerMPI::importTensorBinary(ss.str().c_str(), fact.U[mode]);
   }
 
@@ -180,7 +180,7 @@ int main(int argc, char* argv[])
       localNorm += (data1[i]*data1[i]);
     }
 
-    Tucker::safe_delete<const TuckerMPI::Tensor>(recTen);
+    Tucker::MemoryManager::safe_delete<const TuckerMPI::Tensor>(recTen);
   }
 
   double maxError, totalError, totalNorm;
@@ -198,8 +198,8 @@ int main(int argc, char* argv[])
   //
   // Free memory
   //
-  Tucker::safe_delete<Tucker::SizeArray>(I_dims);
-  Tucker::safe_delete<Tucker::SizeArray>(proc_grid_dims);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(I_dims);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(proc_grid_dims);
 
   // Finalize MPI
   MPI_Finalize();
