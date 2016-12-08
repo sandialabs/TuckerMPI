@@ -215,11 +215,11 @@ int main()
       }
     }
 
-    delete mets;
+    Tucker::safe_delete<Tucker::MetricData>(mets);
   }
 
   // Free memory
-  delete tensor;
+  Tucker::safe_delete<Tucker::Tensor>(tensor);
 
   return EXIT_SUCCESS;
 }

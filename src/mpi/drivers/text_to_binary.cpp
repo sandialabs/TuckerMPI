@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
   MPI_File_close(&fh);
 
   // Free memory
-  delete t;
+  Tucker::safe_delete<Tucker::Tensor>(t);
 
   // Finalize MPI
   MPI_Finalize();

@@ -268,8 +268,8 @@ int main(int argc, char* argv[])
     if(rank == 0) std::cout << "Reconstruction order: " << *rec_order << std::endl;
 
     // Free the memory
-    delete[] rec_size;
-    delete[] ratios;
+    Tucker::safe_delete_array<int>(rec_size);
+    Tucker::safe_delete_array<double>(ratios);
   }
 
   //////////////////////////////////////////////////////////
@@ -352,9 +352,9 @@ int main(int argc, char* argv[])
     // Perform the TTM
     TuckerMPI::Tensor* temp = TuckerMPI::ttm(result,mode,factMat);
 
-    delete factMat;
+    Tucker::safe_delete<Tucker::Matrix>(factMat);
     if(result != fact.G)
-      delete result;
+      Tucker::safe_delete<TuckerMPI::Tensor>(result);
     result = temp;
   }
 
@@ -366,12 +366,12 @@ int main(int argc, char* argv[])
   /////////////////
   // Free memory //
   /////////////////
-  delete I_dims;
-  delete proc_grid_dims;
-  delete subs_begin;
-  delete subs_end;
-  delete rec_order;
-  delete result;
+  Tucker::safe_delete<Tucker::SizeArray>(I_dims);
+  Tucker::safe_delete<Tucker::SizeArray>(proc_grid_dims);
+  Tucker::safe_delete<Tucker::SizeArray>(subs_begin);
+  Tucker::safe_delete<Tucker::SizeArray>(subs_end);
+  Tucker::safe_delete<Tucker::SizeArray>(rec_order);
+  Tucker::safe_delete<TuckerMPI::Tensor>(result);
 
   //////////////////
   // Finalize MPI //

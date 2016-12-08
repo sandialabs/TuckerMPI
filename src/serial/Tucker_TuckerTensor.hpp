@@ -90,17 +90,17 @@ public:
    */
   ~TuckerTensor()
   {
-    delete G;
+    safe_delete<Tensor>(G);
     for(int i=0; i<N; i++) {
-      delete U[i];
-      delete[] eigenvalues[i];
+      safe_delete<Matrix>(U[i]);
+      safe_delete_array<double>(eigenvalues[i]);
     }
-    delete[] U;
-    delete[] eigenvalues;
+    safe_delete_array<Matrix*>(U);
+    safe_delete_array<double*>(eigenvalues);
 
-    delete[] gram_timer_;
-    delete[] eigen_timer_;
-    delete[] ttm_timer_;
+    safe_delete_array<Timer>(gram_timer_);
+    safe_delete_array<Timer>(eigen_timer_);
+    safe_delete_array<Timer>(ttm_timer_);
   }
 
   /** \brief Prints some runtime information

@@ -39,6 +39,6 @@ int main()
   Tucker::exportTensor(factorization->G,"output_data/core11.txt");
 
   // Free some memory
-  delete factorization;
-  delete t;
+  Tucker::safe_delete<const struct Tucker::TuckerTensor>(factorization);
+  Tucker::safe_delete<Tucker::Tensor>(t);
 }

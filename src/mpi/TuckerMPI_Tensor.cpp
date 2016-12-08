@@ -50,7 +50,7 @@ Tensor::Tensor(const Distribution* dist) :
 
 Tensor::~Tensor()
 {
-  delete localTensor_;
+  Tucker::safe_delete<Tucker::Tensor>(localTensor_);
 }
 
 

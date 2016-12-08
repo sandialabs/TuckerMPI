@@ -106,7 +106,7 @@ int main()
         return EXIT_FAILURE;
       }
     }
-    delete mets;
+    Tucker::safe_delete<Tucker::MetricData>(mets);
   }
 
   return EXIT_SUCCESS;

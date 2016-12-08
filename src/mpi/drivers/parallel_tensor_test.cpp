@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
 //    ofs << std::endl;
   }
 
-  delete[] coords;
+  Tucker::safe_delete_array<int>(coords);
 
   // Create a tensor
   TuckerMPI::Tensor tensor(&dist);
@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
   std::cout << "result:\n";
   result->print();
 
-  delete result;
+  Tucker::safe_delete<TuckerMPI::Tensor>(result);
 
   ofs.close();
 

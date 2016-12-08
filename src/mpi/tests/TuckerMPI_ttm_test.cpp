@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult);
 
   approxEqual = isApproxEqual(result,&expectedResult, 1e-10);
-  delete result;
+  Tucker::safe_delete<TuckerMPI::Tensor>(result);
   if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult2);
 
   approxEqual = isApproxEqual(result,&expectedResult2, 1e-10);
-  delete result;
+  Tucker::safe_delete<TuckerMPI::Tensor>(result);
   if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult3);
 
   approxEqual = isApproxEqual(result,&expectedResult3, 1e-10);
-  delete result;
+  Tucker::safe_delete<TuckerMPI::Tensor>(result);
   if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
@@ -161,7 +161,7 @@ int main(int argc, char* argv[])
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult4);
 
   approxEqual = isApproxEqual(result,&expectedResult4, 1e-10);
-  delete result;
+  Tucker::safe_delete<TuckerMPI::Tensor>(result);
   if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult5);
 
   approxEqual = isApproxEqual(result,&expectedResult5, 1e-10);
-  delete result;
+  Tucker::safe_delete<TuckerMPI::Tensor>(result);
   if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;
@@ -233,7 +233,7 @@ int main(int argc, char* argv[])
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult6);
 
   approxEqual = isApproxEqual(result,&expectedResult6, 1e-10);
-  delete result;
+  Tucker::safe_delete<TuckerMPI::Tensor>(result);
   if(!approxEqual) {
     MPI_Finalize();
     return EXIT_FAILURE;

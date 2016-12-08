@@ -235,10 +235,14 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
   }
 
   // Free memory
-  delete[] sendCounts; delete[] sendDispls;
-  delete[] recvCounts; delete[] recvDispls;
-  if(isPackingNecessary && Y->getLocalNumEntries() > 0) delete[] sendBuf;
-  if(isUnpackingNecessary) delete[] recvBuf;
+  Tucker::safe_delete_array<int>(sendCounts);
+  Tucker::safe_delete_array<int>(sendDispls);
+  Tucker::safe_delete_array<int>(recvCounts);
+  Tucker::safe_delete_array<int>(recvDispls);
+  if(isPackingNecessary && Y->getLocalNumEntries() > 0)
+    Tucker::safe_delete_array<const double>(sendBuf);
+  if(isUnpackingNecessary)
+    Tucker::safe_delete_array<double>(recvBuf);
 
   return redistY;
 }
@@ -496,7 +500,7 @@ void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
   int temp = (int)numEntries;
   dcopy_(&temp, tempMem, &inc, tenData, &inc);
 
-  delete[] tempMem;
+  Tucker::safe_delete_array<double>(tempMem);
 }
 
 } // end namespace TuckerMPI

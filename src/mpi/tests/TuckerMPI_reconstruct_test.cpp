@@ -52,10 +52,10 @@ int main(int argc, char* argv[])
   }
 
   // Free some memory
-  delete factorization;
-  delete temp;
-  delete temp2;
-  delete temp3;
+  Tucker::safe_delete<const struct TuckerMPI::TuckerTensor>(factorization);
+  Tucker::safe_delete<TuckerMPI::Tensor>(temp);
+  Tucker::safe_delete<TuckerMPI::Tensor>(temp2);
+  Tucker::safe_delete<TuckerMPI::Tensor>(temp3);
 
   MPI_Finalize();
 

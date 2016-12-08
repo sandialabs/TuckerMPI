@@ -321,9 +321,9 @@ int main(int argc, char* argv[])
   //
   // Free memory
   //
-  delete I_dims;
-  if(R_dims) delete R_dims;
-  delete proc_grid_dims;
+  Tucker::safe_delete<Tucker::SizeArray>(I_dims);
+  if(R_dims) Tucker::safe_delete<Tucker::SizeArray>(R_dims);
+  Tucker::safe_delete<Tucker::SizeArray>(proc_grid_dims);
 
   // Finalize MPI
   MPI_Finalize();

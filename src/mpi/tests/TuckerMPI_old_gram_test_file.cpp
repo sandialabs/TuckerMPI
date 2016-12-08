@@ -947,7 +947,7 @@ bool runSim(Tucker::SizeArray& procs)
 
   matchesTrueSol = checkUTEqual(matrix->data(), TRUE_SOLUTION_0, 3);
 
-  delete matrix;
+  Tucker::safe_delete<Tucker::Matrix>(matrix);
   if(!matchesTrueSol)
     return false;
 
@@ -963,7 +963,7 @@ bool runSim(Tucker::SizeArray& procs)
 
   matchesTrueSol = checkUTEqual(matrix->data(), TRUE_SOLUTION_1, 5);
 
-  delete matrix;
+  Tucker::safe_delete<Tucker::Matrix>(matrix);
   if(!matchesTrueSol)
     return false;
 
@@ -981,7 +981,7 @@ bool runSim(Tucker::SizeArray& procs)
 
   matchesTrueSol = checkUTEqual(matrix->data(), TRUE_SOLUTION_2, 7);
 
-  delete matrix;
+  Tucker::safe_delete<Tucker::Matrix>(matrix);
   if(!matchesTrueSol)
     return false;
 
@@ -1003,7 +1003,7 @@ bool runSim(Tucker::SizeArray& procs)
 
   matchesTrueSol = checkUTEqual(matrix->data(), TRUE_SOLUTION_3, 11);
 
-  delete matrix;
+  Tucker::safe_delete<Tucker::Matrix>(matrix);
   if(!matchesTrueSol)
     return false;
 

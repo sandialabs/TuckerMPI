@@ -77,8 +77,8 @@ Matrix::Matrix(int nrows, int ncols, const MPI_Comm& comm, bool isBlockRow) :
 
 Matrix::~Matrix()
 {
-  delete localMatrix_;
-  delete map_;
+  Tucker::safe_delete<Tucker::Matrix>(localMatrix_);
+  Tucker::safe_delete<Map>(map_);
 }
 
 

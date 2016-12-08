@@ -127,13 +127,13 @@ public:
    */
   ~MetricData()
   {
-    if(minData_) delete[] minData_;
-    if(maxData_) delete[] maxData_;
-    if(sumData_) delete[] sumData_;
-    if(norm1Data_) delete[] norm1Data_;
-    if(norm2Data_) delete[] norm2Data_;
-    if(meanData_) delete[] meanData_;
-    if(varianceData_) delete[] varianceData_;
+    if(minData_) safe_delete_array<double>(minData_);
+    if(maxData_) safe_delete_array<double>(maxData_);
+    if(sumData_) safe_delete_array<double>(sumData_);
+    if(norm1Data_) safe_delete_array<double>(norm1Data_);
+    if(norm2Data_) safe_delete_array<double>(norm2Data_);
+    if(meanData_) safe_delete_array<double>(meanData_);
+    if(varianceData_) safe_delete_array<double>(varianceData_);
   }
 
   /** \brief Returns the min-data array

@@ -180,7 +180,7 @@ int main(int argc, char* argv[])
       localNorm += (data1[i]*data1[i]);
     }
 
-    delete recTen;
+    Tucker::safe_delete<const TuckerMPI::Tensor>(recTen);
   }
 
   double maxError, totalError, totalNorm;
@@ -198,8 +198,8 @@ int main(int argc, char* argv[])
   //
   // Free memory
   //
-  delete I_dims;
-  delete proc_grid_dims;
+  Tucker::safe_delete<Tucker::SizeArray>(I_dims);
+  Tucker::safe_delete<Tucker::SizeArray>(proc_grid_dims);
 
   // Finalize MPI
   MPI_Finalize();

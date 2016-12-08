@@ -934,8 +934,8 @@ bool runSim(Tucker::SizeArray& procs)
 
   // Compare the computed solution to the true solution
   approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  delete mat;
-  delete mySol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<TuckerMPI::Tensor>(mySol);
   if(!approxEqual)
     return false;
 
@@ -953,8 +953,8 @@ bool runSim(Tucker::SizeArray& procs)
 
   // Compare the computed solution to the true solution
   approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  delete mat;
-  delete mySol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<TuckerMPI::Tensor>(mySol);
   if(!approxEqual)
     return false;
 
@@ -972,8 +972,8 @@ bool runSim(Tucker::SizeArray& procs)
 
   // Compare the computed solution to the true solution
   approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  delete mat;
-  delete mySol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<TuckerMPI::Tensor>(mySol);
   if(!approxEqual)
     return false;
 
@@ -991,8 +991,8 @@ bool runSim(Tucker::SizeArray& procs)
 
   // Compare the computed solution to the true solution
   approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  delete mat;
-  delete mySol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<TuckerMPI::Tensor>(mySol);
   if(!approxEqual)
     return false;
 
@@ -1010,8 +1010,8 @@ bool runSim(Tucker::SizeArray& procs)
 
   // Compare the computed solution to the true solution
   approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  delete mat;
-  delete mySol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<TuckerMPI::Tensor>(mySol);
   if(!approxEqual)
     return false;
 
@@ -1029,8 +1029,8 @@ bool runSim(Tucker::SizeArray& procs)
 
   // Compare the computed solution to the true solution
   approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  delete mat;
-  delete mySol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<TuckerMPI::Tensor>(mySol);
   if(!approxEqual)
     return false;
 
@@ -1048,8 +1048,8 @@ bool runSim(Tucker::SizeArray& procs)
 
   // Compare the computed solution to the true solution
   approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  delete mat;
-  delete mySol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<TuckerMPI::Tensor>(mySol);
   if(!approxEqual)
     return false;
 
@@ -1067,8 +1067,8 @@ bool runSim(Tucker::SizeArray& procs)
 
   // Compare the computed solution to the true solution
   approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  delete mat;
-  delete mySol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<TuckerMPI::Tensor>(mySol);
   if(!approxEqual)
     return false;
 

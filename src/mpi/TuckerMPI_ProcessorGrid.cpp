@@ -76,7 +76,7 @@ ProcessorGrid::ProcessorGrid(const Tucker::SizeArray& sz,
   int reorder = 0;
   MPI_Cart_create(comm, ndims, (int*)sz.data(), periods,
       reorder, &cartComm_);
-  delete[] periods;
+  Tucker::safe_delete_array<int>(periods);
 
   // Allocate memory for subcommunicators
   rowcomms_ = Tucker::safe_new_array<MPI_Comm>(ndims);
@@ -99,7 +99,7 @@ ProcessorGrid::ProcessorGrid(const Tucker::SizeArray& sz,
     MPI_Cart_sub(cartComm_, remainDims, &(rowcomms_[i]));
     remainDims[i] = 1;
   }
-  delete[] remainDims;
+  Tucker::safe_delete_array<int>(remainDims);
 }
 
 
@@ -115,8 +115,8 @@ ProcessorGrid::~ProcessorGrid()
       MPI_Comm_free(colcomms_+i);
     }
   }
-  delete[] rowcomms_;
-  delete[] colcomms_;
+  Tucker::safe_delete_array<MPI_Comm>(rowcomms_);
+  Tucker::safe_delete_array<MPI_Comm>(colcomms_);
   if(squeezed_) {
     if(!finalized) {
       MPI_Comm_free(&cartComm_squeezed_);
@@ -125,8 +125,8 @@ ProcessorGrid::~ProcessorGrid()
         MPI_Comm_free(colcomms_squeezed_+i);
       }
     }
-    delete[] rowcomms_squeezed_;
-    delete[] colcomms_squeezed_;
+    Tucker::safe_delete_array<MPI_Comm>(rowcomms_squeezed_);
+    Tucker::safe_delete_array<MPI_Comm>(colcomms_squeezed_);
   }
 }
 
@@ -216,7 +216,7 @@ void ProcessorGrid::squeeze(const Tucker::SizeArray& sz, const MPI_Comm& comm)
   int reorder = 0;
   MPI_Cart_create(comm, ndims, (int*)sz.data(), periods,
       reorder, &cartComm_squeezed_);
-  delete[] periods;
+  Tucker::safe_delete_array<int>(periods);
 
   // Allocate memory for subcommunicators
   rowcomms_squeezed_ = Tucker::safe_new_array<MPI_Comm>(ndims);
@@ -239,7 +239,7 @@ void ProcessorGrid::squeeze(const Tucker::SizeArray& sz, const MPI_Comm& comm)
     MPI_Cart_sub(cartComm_squeezed_, remainDims, &(rowcomms_squeezed_[i]));
     remainDims[i] = 1;
   }
-  delete[] remainDims;
+  Tucker::safe_delete_array<int>(remainDims);
 }
 
 } /* namespace Tucker */

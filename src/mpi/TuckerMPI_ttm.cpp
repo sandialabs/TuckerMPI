@@ -136,7 +136,7 @@ Tensor* ttm(const Tensor* X, const int n,
       MPI_Reduce_scatter((void*)sendBuf, recvBuf, recvCounts, MPI_DOUBLE,
           MPI_SUM, comm);
       if(reduce_scatter_timer) reduce_scatter_timer->stop();
-      delete localResult;
+      Tucker::safe_delete<Tucker::Tensor>(localResult);
     } // end if(K < std::ceil(Jn/Pn))
     else {
       for(int root=0; root<Pn; root++) {
@@ -184,9 +184,8 @@ Tensor* ttm(const Tensor* X, const int n,
           if(reduce_timer)reduce_timer->stop();
         }
 
-
         // Free memory
-        delete localResult;
+        Tucker::safe_delete<Tucker::Tensor>(localResult);
 
         // Increment the data pointer
         if(Utransp)

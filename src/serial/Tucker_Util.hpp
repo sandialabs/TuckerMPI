@@ -86,6 +86,28 @@ T* safe_new_array(const size_t numToAllocate)
   return allocatedPtr;
 }
 
+template<typename T>
+void safe_delete(T* t)
+{
+  try {
+    delete t;
+  }
+  catch(std::exception& e) {
+    std::cout << "Exception: " << e.what() << std::endl;
+  }
+}
+
+template<typename T>
+void safe_delete_array(T* t)
+{
+  try {
+    delete[] t;
+  }
+  catch(std::exception& e) {
+    std::cout << "Exception: " << e.what() << std::endl;
+  }
+}
+
 } // end namespace Tucker
 
 #endif /* TUCKER_UTIL_HPP_ */

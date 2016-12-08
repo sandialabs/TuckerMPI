@@ -118,14 +118,14 @@ int main(int argc, char* argv[])
       Tucker::Matrix* gram = TuckerMPI::oldGram(&X, mode,
           &mult_timer[mode], &shift_timer[mode],
           &allreduce_timer[mode], &allgather_timer[mode]);
-      delete gram;
+      Tucker::safe_delete<Tucker::Matrix>(gram);
     }
     else {
       Tucker::Matrix* gram = TuckerMPI::newGram(&X, mode,
           &mult_timer[mode], &pack_timer[mode],
           &alltoall_timer[mode], &unpack_timer[mode],
           &allreduce_timer[mode]);
-      delete gram;
+      Tucker::safe_delete<Tucker::Matrix>(gram);
     }
     gram_timer[mode].stop();
   }
@@ -190,10 +190,10 @@ int main(int argc, char* argv[])
   /////////////////
   // Free memory //
   /////////////////
-  if(rank == 0) delete[] gathered_data;
-  delete I_dims;
-  delete ranks;
-  delete proc_grid_dims;
+  if(rank == 0) Tucker::safe_delete_array<double>(gathered_data);
+  Tucker::safe_delete<Tucker::SizeArray>(I_dims);
+  Tucker::safe_delete<Tucker::SizeArray>(ranks);
+  Tucker::safe_delete<Tucker::SizeArray>(proc_grid_dims);
 
   //////////////////
   // Finalize MPI //

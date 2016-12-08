@@ -231,7 +231,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
     }
   }
 
-  delete[] work;
+  safe_delete_array<double>(work);
 }
 
 void computeEigenpairs(Matrix* G, double*& eigenvalues,
@@ -358,14 +358,14 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
     factorization->eigen_timer_[n].stop();
 
     // Free the Gram matrix
-    delete S;
+    safe_delete<Matrix>(S);
 
     // Perform the tensor times matrix multiplication
     factorization->ttm_timer_[n].start();
     Tensor* temp = ttm(Y,n,factorization->U[n],true);
     factorization->ttm_timer_[n].stop();
     if(n > 0) {
-      delete Y;
+      safe_delete<const Tensor>(Y);
     }
     Y = temp;
   }
@@ -431,14 +431,14 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
         factorization->U[n], (*reducedI)[n], flipSign);
     factorization->eigen_timer_[n].stop();
 
-    delete S;
+    safe_delete<Matrix>(S);
 
     // Perform the tensor times matrix multiplication
     factorization->ttm_timer_[n].start();
     Tensor* temp = ttm(Y,n,factorization->U[n],true);
     factorization->ttm_timer_[n].stop();
     if(n > 0) {
-      delete Y;
+      safe_delete<const Tensor>(Y);
     }
     Y = temp;
   }
@@ -677,8 +677,8 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
   double* delta;
   int* nArray;
   if((metrics & MEAN) || (metrics & VARIANCE)) {
-    delta = Tucker::safe_new_array<double>(numSlices);
-    nArray = Tucker::safe_new_array<int>(numSlices);
+    delta = safe_new_array<double>(numSlices);
+    nArray = safe_new_array<int>(numSlices);
   }
   for(int i=0; i<numSlices; i++) {
     if(metrics & MIN) {
@@ -701,8 +701,8 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
 
   if(Y->getNumElements() == 0) {
     if((metrics & MEAN) || (metrics & VARIANCE)) {
-      delete[] delta;
-      delete[] nArray;
+      safe_delete_array<double>(delta);
+      safe_delete_array<int>(nArray);
     }
     return result;
   }
@@ -748,8 +748,8 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
   } // end for(slice=0; slice<numSlices; slice++)
 
   if((metrics & MEAN) || (metrics & VARIANCE)) {
-    delete[] delta;
-    delete[] nArray;
+    safe_delete_array<double>(delta);
+    safe_delete_array<int>(nArray);
   }
   if(metrics & VARIANCE) {
     size_t sizeOfSlice = numContig*numSetsContig;
@@ -806,9 +806,9 @@ void normalizeTensorMinMax(Tensor* Y, int mode)
     shifts[i] = -metrics->getMinData()[i];
   }
   transformSlices(Y,mode,scales,shifts);
-  delete[] scales;
-  delete[] shifts;
-  delete metrics;
+  safe_delete_array<double>(scales);
+  safe_delete_array<double>(shifts);
+  safe_delete<MetricData>(metrics);
 }
 
 void normalizeTensorStandardCentering(Tensor* Y, int mode)
@@ -830,9 +830,9 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode)
     }
   }
   transformSlices(Y,mode,scales,shifts);
-  delete[] scales;
-  delete[] shifts;
-  delete metrics;
+  safe_delete_array<double>(scales);
+  safe_delete_array<double>(shifts);
+  safe_delete<MetricData>(metrics);
 }
 
 

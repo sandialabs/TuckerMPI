@@ -97,7 +97,7 @@ Tensor::Tensor(int nrows, int ncols) :
 Tensor::~Tensor()
 {
   if(data_)
-    delete[] data_;
+    safe_delete_array<double>(data_);
 }
 
 int Tensor::N() const {

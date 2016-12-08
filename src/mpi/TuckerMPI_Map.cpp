@@ -80,8 +80,8 @@ Map::Map(int globalNumEntries, const MPI_Comm& comm) :
 
 Map::~Map()
 {
-  delete numElementsPerProc_;
-  delete offsets_;
+  Tucker::safe_delete<Tucker::SizeArray>(numElementsPerProc_);
+  Tucker::safe_delete<Tucker::SizeArray>(offsets_);
 
   int finalized;
   MPI_Finalized(&finalized);
@@ -183,7 +183,7 @@ void Map::removeEmptyProcs()
     (*newSize)[dest] = (*numElementsPerProc_)[src];
     src++;
   }
-  delete numElementsPerProc_;
+  Tucker::safe_delete<Tucker::SizeArray>(numElementsPerProc_);
   numElementsPerProc_ = newSize;
 
   // Remove them from offsets too
@@ -198,7 +198,7 @@ void Map::removeEmptyProcs()
     (*newOffsets)[dest] = (*offsets_)[src];
     src++;
   }
-  delete offsets_;
+  Tucker::safe_delete<Tucker::SizeArray>(offsets_);
   offsets_ = newOffsets;
 
   assert(emptyProcs.size() <= std::numeric_limits<int>::max());

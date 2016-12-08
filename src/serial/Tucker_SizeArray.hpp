@@ -74,7 +74,7 @@ public:
 
   //! Destructor
   ~SizeArray() {
-    delete[] sz_;
+    safe_delete_array<int>(sz_);
   }
 
   /** \brief Length/Number of entries in the array

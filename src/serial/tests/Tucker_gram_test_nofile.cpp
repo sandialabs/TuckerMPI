@@ -28,7 +28,7 @@ int main()
   trueSol0[2] = 744; trueSol0[3] = 816;
   bool isEqual = checkUTEqual(Gram->data(), trueSol0, 2);
   if(!isEqual) return EXIT_FAILURE;
-  delete Gram;
+  Tucker::safe_delete<Tucker::Matrix>(Gram);
 
   Gram = Tucker::computeGram(&t,1);
   double trueSol1[4];
@@ -36,7 +36,7 @@ int main()
   trueSol1[2] = 732; trueSol1[3] = 884;
   isEqual = checkUTEqual(Gram->data(), trueSol1, 2);
   if(!isEqual) return EXIT_FAILURE;
-  delete Gram;
+  Tucker::safe_delete<Tucker::Matrix>(Gram);
 
   Gram = Tucker::computeGram(&t,2);
   double trueSol2[4];
@@ -44,7 +44,7 @@ int main()
   trueSol2[2] = 684; trueSol2[3] = 1020;
   isEqual = checkUTEqual(Gram->data(), trueSol2, 2);
   if(!isEqual) return EXIT_FAILURE;
-  delete Gram;
+  Tucker::safe_delete<Tucker::Matrix>(Gram);
 
   Gram = Tucker::computeGram(&t,3);
   double trueSol3[4];
@@ -52,7 +52,7 @@ int main()
   trueSol3[2] = 492; trueSol3[3] = 1292;
   isEqual = checkUTEqual(Gram->data(), trueSol3, 2);
   if(!isEqual) return EXIT_FAILURE;
-  delete Gram;
+  Tucker::safe_delete<Tucker::Matrix>(Gram);
 
   return EXIT_SUCCESS;
 }

@@ -110,10 +110,10 @@ Distribution::~Distribution()
 {
   int ndims = globalDims_.size();
   for(int i=0; i<ndims; i++) {
-    delete maps_[i];
+    Tucker::safe_delete<Map>(maps_[i]);
   }
-  delete[] maps_;
-  delete grid_;
+  Tucker::safe_delete_array<Map*>(maps_);
+  Tucker::safe_delete<ProcessorGrid>(grid_);
 }
 
 

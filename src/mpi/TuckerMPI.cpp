@@ -201,10 +201,10 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
         }
         if(shift_timer) shift_timer->stop();
 
-        delete[] recvBuf;
-        delete[] sendRequests;
-        delete[] recvRequests;
-        delete[] sendStatuses;
+        Tucker::safe_delete_array<double>(recvBuf);
+        Tucker::safe_delete_array<MPI_Request>(sendRequests);
+        Tucker::safe_delete_array<MPI_Request>(recvRequests);
+        Tucker::safe_delete_array<MPI_Status>(sendStatuses);
       }
     }
     else {
@@ -226,7 +226,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
       }
     }
 
-    delete localMatrix;
+    Tucker::safe_delete<Tucker::Matrix>(localMatrix);
   }
   else {
   }
@@ -245,8 +245,8 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
     if(allgather_timer) allgather_timer->stop();
 
     // Free memory
-    delete[] recvcounts;
-    delete[] displs;
+    Tucker::safe_delete_array<int>(recvcounts);
+    Tucker::safe_delete_array<int>(displs);
   }
   else {
     size_t nnz = gram->getNumElements();
@@ -255,7 +255,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
   }
 
   // Free memory
-  delete[] allRedBuf;
+  Tucker::safe_delete_array<double>(allRedBuf);
 
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -329,7 +329,7 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
         temp->initialize();
         localGram = temp;
       }
-      delete redistributedY;
+      Tucker::safe_delete<const Matrix>(redistributedY);
     } // end if(!myColEmpty)
   }
   else {
@@ -350,7 +350,7 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
   if(allreduce_timer) allreduce_timer->start();
   Tucker::Matrix* gramMat = reduceForGram(localGram);
   if(allreduce_timer) allreduce_timer->stop();
-  delete localGram;
+  Tucker::safe_delete<const Tucker::Matrix>(localGram);
 
   if(rank == 0) {
     if(mult_timer)
@@ -444,7 +444,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
     }
 
     // Free the Gram matrix
-    delete S;
+    Tucker::safe_delete<Tucker::Matrix>(S);
 
     // Perform the tensor times matrix multiplication
     if(rank == 0) {
@@ -463,7 +463,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
     }
 
     if(n > 0) {
-      delete Y;
+      Tucker::safe_delete<const Tensor>(Y);
     }
     Y = temp;
   }
@@ -537,7 +537,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
           << factorization->eigen_timer_[n].duration() << "s\n";
     }
 
-    delete S;
+    Tucker::safe_delete<Tucker::Matrix>(S);
 
     // Perform the tensor times matrix multiplication
     if(rank == 0) {
@@ -555,7 +555,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
           << factorization->ttm_timer_[n].duration() << "s\n";
     }
     if(n > 0) {
-      delete Y;
+      Tucker::safe_delete<const Tensor>(Y);
     }
     Y = temp;
   }
@@ -649,7 +649,7 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
               (double)localSliceSize*meanDiff[i]*meanDiff[i];
         }
 
-        delete[] meanDiff;
+        Tucker::safe_delete_array<double>(meanDiff);
 
         MPI_Allreduce(sendBuf, recvBuf, numSlices,
             MPI_DOUBLE, MPI_SUM, comm);
@@ -660,8 +660,8 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
       } // end if(metrics & Tucker::VARIANCE)
     } // end if((metrics & Tucker::MEAN) || (metrics & Tucker::VARIANCE))
 
-    delete[] sendBuf;
-    delete[] recvBuf;
+    Tucker::safe_delete_array<double>(sendBuf);
+    Tucker::safe_delete_array<double>(recvBuf);
   } // end if(nprocs > 1)
 
   return result;
@@ -693,9 +693,9 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh)
     }
   }
   transformSlices(Y,mode,scales,shifts);
-  delete[] scales;
-  delete[] shifts;
-  delete metrics;
+  Tucker::safe_delete_array<double>(scales);
+  Tucker::safe_delete_array<double>(shifts);
+  Tucker::safe_delete<Tucker::MetricData>(metrics);
 }
 
 void normalizeTensorMinMax(Tensor* Y, int mode)
@@ -714,9 +714,9 @@ void normalizeTensorMinMax(Tensor* Y, int mode)
     shifts[i] = -metrics->getMinData()[i];
   }
   transformSlices(Y,mode,scales,shifts);
-  delete[] scales;
-  delete[] shifts;
-  delete metrics;
+  Tucker::safe_delete_array<double>(scales);
+  Tucker::safe_delete_array<double>(shifts);
+  Tucker::safe_delete<Tucker::MetricData>(metrics);
 }
 
 void normalizeTensorMax(Tensor* Y, int mode)
@@ -737,9 +737,9 @@ void normalizeTensorMax(Tensor* Y, int mode)
     shifts[i] = 0;
   }
   transformSlices(Y,mode,scales,shifts);
-  delete[] scales;
-  delete[] shifts;
-  delete metrics;
+  Tucker::safe_delete_array<double>(scales);
+  Tucker::safe_delete_array<double>(shifts);
+  Tucker::safe_delete<Tucker::MetricData>(metrics);
 }
 
 const Tensor* reconstructSingleSlice(const TuckerTensor* fact,
@@ -768,7 +768,7 @@ const Tensor* reconstructSingleSlice(const TuckerTensor* fact,
     
     Tensor* temp = ttm(ten, i, fact->U[i]);
 
-    delete ten;
+    Tucker::safe_delete<Tensor>(ten);
     ten = temp;
   }
 
@@ -871,9 +871,9 @@ void importTensorBinary(const char* filename, Tensor* Y)
   MPI_Type_free(&view);
 
   // Free other memory
-  delete[] starts;
-  delete[] lsizes;
-  delete[] gsizes;
+  Tucker::safe_delete_array<int>(starts);
+  Tucker::safe_delete_array<int>(lsizes);
+  Tucker::safe_delete_array<int>(gsizes);
 }
 
 // This function assumes that Y has already been allocated
@@ -992,9 +992,9 @@ void importTimeSeries(const char* filename, Tensor* Y)
   MPI_Type_free(&view);
 
   // Free other memory
-  delete[] starts;
-  delete[] lsizes;
-  delete[] gsizes;
+  Tucker::safe_delete_array<int>(starts);
+  Tucker::safe_delete_array<int>(lsizes);
+  Tucker::safe_delete_array<int>(gsizes);
 }
 
 void writeTensorBinary(std::string& filename, const Tensor& Y)
@@ -1091,9 +1091,9 @@ void exportTensorBinary(const char* filename, const Tensor* Y)
   MPI_Type_free(&view);
 
   // Free other memory
-  delete[] starts;
-  delete[] lsizes;
-  delete[] gsizes;
+  Tucker::safe_delete_array<int>(starts);
+  Tucker::safe_delete_array<int>(lsizes);
+  Tucker::safe_delete_array<int>(gsizes);
 }
 
 void exportTensorBinary(const char* filename, const Tucker::Tensor* Y)
@@ -1209,9 +1209,9 @@ void exportTimeSeries(const char* filename, const Tensor* Y)
   MPI_Type_free(&view);
 
   // Free other memory
-  delete[] starts;
-  delete[] lsizes;
-  delete[] gsizes;
+  Tucker::safe_delete_array<int>(starts);
+  Tucker::safe_delete_array<int>(lsizes);
+  Tucker::safe_delete_array<int>(gsizes);
 }
 
 } // end namespace TuckerMPI

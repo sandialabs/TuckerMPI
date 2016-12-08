@@ -26,8 +26,8 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete tensor;
-  delete true_sol;
+  Tucker::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::safe_delete<Tucker::Tensor>(true_sol);
 
   // Read tensor from file
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
@@ -43,8 +43,8 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete tensor;
-  delete true_sol;
+  Tucker::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::safe_delete<Tucker::Tensor>(true_sol);
 
   // Read tensor from file
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
@@ -60,8 +60,8 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete tensor;
-  delete true_sol;
+  Tucker::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::safe_delete<Tucker::Tensor>(true_sol);
 
   // Read tensor from file
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
@@ -77,8 +77,8 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete tensor;
-  delete true_sol;
+  Tucker::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::safe_delete<Tucker::Tensor>(true_sol);
 
   // Read tensor from file
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
@@ -94,8 +94,8 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete tensor;
-  delete true_sol;
+  Tucker::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::safe_delete<Tucker::Tensor>(true_sol);
 
   // Read tensor from file
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
@@ -111,8 +111,8 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete tensor;
-  delete true_sol;
+  Tucker::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::safe_delete<Tucker::Tensor>(true_sol);
 
   // Read tensor from file
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
@@ -128,8 +128,8 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete tensor;
-  delete true_sol;
+  Tucker::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::safe_delete<Tucker::Tensor>(true_sol);
 
   // Read tensor from file
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
@@ -145,8 +145,8 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete tensor;
-  delete true_sol;
+  Tucker::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::safe_delete<Tucker::Tensor>(true_sol);
 
   return EXIT_SUCCESS;
 }

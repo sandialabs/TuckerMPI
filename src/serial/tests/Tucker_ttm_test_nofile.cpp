@@ -69,7 +69,7 @@ int main()
       return EXIT_FAILURE;
     }
   }
-  delete result;
+  Tucker::safe_delete<Tucker::Tensor>(result);
 
   Tucker::Matrix matt(2,7);
   data = matt.data();
@@ -121,7 +121,7 @@ int main()
       return EXIT_FAILURE;
     }
   }
-  delete result;
+  Tucker::safe_delete<Tucker::Tensor>(result);
 
   Tucker::Matrix mat1(7,3);
   data = mat1.data();
@@ -166,7 +166,7 @@ int main()
       return EXIT_FAILURE;
     }
   }
-  delete result;
+  Tucker::safe_delete<Tucker::Tensor>(result);
 
   Tucker::Matrix mat1t(3,7);
   data = mat1t.data();
@@ -209,9 +209,9 @@ int main()
       return EXIT_FAILURE;
     }
   }
-  delete result;
+  Tucker::safe_delete<Tucker::Tensor>(result);
 
-  delete[] trueData;
+  Tucker::safe_delete_array<double>(trueData);
 
   return EXIT_SUCCESS;
 }

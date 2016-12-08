@@ -30,9 +30,9 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete mat;
-  delete mySol;
-  delete trueSol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<Tucker::Tensor>(mySol);
+  Tucker::safe_delete<Tucker::Tensor>(trueSol);
 
   // Read a matrix to multiply
   mat = Tucker::importMatrix("input_files/4x3.txt");
@@ -49,9 +49,9 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete mat;
-  delete mySol;
-  delete trueSol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<Tucker::Tensor>(mySol);
+  Tucker::safe_delete<Tucker::Tensor>(trueSol);
 
   // Read a matrix to multiply
   mat = Tucker::importMatrix("input_files/5x8.txt");
@@ -68,9 +68,9 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete mat;
-  delete mySol;
-  delete trueSol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<Tucker::Tensor>(mySol);
+  Tucker::safe_delete<Tucker::Tensor>(trueSol);
 
   // Read a matrix to multiply
   mat = Tucker::importMatrix("input_files/2x5.txt");
@@ -87,9 +87,9 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete mat;
-  delete mySol;
-  delete trueSol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<Tucker::Tensor>(mySol);
+  Tucker::safe_delete<Tucker::Tensor>(trueSol);
 
   // Read a matrix to multiply
   mat = Tucker::importMatrix("input_files/7x1.txt");
@@ -106,9 +106,9 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete mat;
-  delete mySol;
-  delete trueSol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<Tucker::Tensor>(mySol);
+  Tucker::safe_delete<Tucker::Tensor>(trueSol);
 
   // Read a matrix to multiply
   mat = Tucker::importMatrix("input_files/1x7.txt");
@@ -125,9 +125,9 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete mat;
-  delete mySol;
-  delete trueSol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<Tucker::Tensor>(mySol);
+  Tucker::safe_delete<Tucker::Tensor>(trueSol);
 
   // Read a matrix to multiply
   mat = Tucker::importMatrix("input_files/11x25.txt");
@@ -144,9 +144,9 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete mat;
-  delete mySol;
-  delete trueSol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<Tucker::Tensor>(mySol);
+  Tucker::safe_delete<Tucker::Tensor>(trueSol);
 
   // Read a matrix to multiply
   mat = Tucker::importMatrix("input_files/17x11.txt");
@@ -163,9 +163,9 @@ int main()
     return EXIT_FAILURE;
   }
 
-  delete mat;
-  delete mySol;
-  delete trueSol;
+  Tucker::safe_delete<Tucker::Matrix>(mat);
+  Tucker::safe_delete<Tucker::Tensor>(mySol);
+  Tucker::safe_delete<Tucker::Tensor>(trueSol);
 
   return EXIT_SUCCESS;
 }

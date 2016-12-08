@@ -89,30 +89,30 @@ public:
   /** Destructor */
   ~TuckerTensor()
   {
-    delete G;
+    Tucker::safe_delete<Tensor>(G);
     for(int i=0; i<N; i++) {
-      if(U[i]) delete U[i];
-      if(eigenvalues[i]) delete[] eigenvalues[i];
+      if(U[i]) Tucker::safe_delete<Tucker::Matrix>(U[i]);
+      if(eigenvalues[i]) Tucker::safe_delete_array<double>(eigenvalues[i]);
     }
-    delete[] U;
-    delete[] eigenvalues;
+    Tucker::safe_delete_array<Tucker::Matrix*>(U);
+    Tucker::safe_delete_array<double*>(eigenvalues);
 
-    delete[] gram_timer_;
-    delete[] gram_matmul_timer_;
-    delete[] gram_shift_timer_;
-    delete[] gram_allreduce_timer_;
-    delete[] gram_allgather_timer_;
-    delete[] gram_pack_timer_;
-    delete[] gram_alltoall_timer_;
-    delete[] gram_unpack_timer_;
+    Tucker::safe_delete_array<Tucker::Timer>(gram_timer_);
+    Tucker::safe_delete_array<Tucker::Timer>(gram_matmul_timer_);
+    Tucker::safe_delete_array<Tucker::Timer>(gram_shift_timer_);
+    Tucker::safe_delete_array<Tucker::Timer>(gram_allreduce_timer_);
+    Tucker::safe_delete_array<Tucker::Timer>(gram_allgather_timer_);
+    Tucker::safe_delete_array<Tucker::Timer>(gram_pack_timer_);
+    Tucker::safe_delete_array<Tucker::Timer>(gram_alltoall_timer_);
+    Tucker::safe_delete_array<Tucker::Timer>(gram_unpack_timer_);
 
-    delete[] eigen_timer_;
+    Tucker::safe_delete_array<Tucker::Timer>(eigen_timer_);
 
-    delete[] ttm_timer_;
-    delete[] ttm_matmul_timer_;
-    delete[] ttm_pack_timer_;
-    delete[] ttm_reducescatter_timer_;
-    delete[] ttm_reduce_timer_;
+    Tucker::safe_delete_array<Tucker::Timer>(ttm_timer_);
+    Tucker::safe_delete_array<Tucker::Timer>(ttm_matmul_timer_);
+    Tucker::safe_delete_array<Tucker::Timer>(ttm_pack_timer_);
+    Tucker::safe_delete_array<Tucker::Timer>(ttm_reducescatter_timer_);
+    Tucker::safe_delete_array<Tucker::Timer>(ttm_reduce_timer_);
   }
 
   Tensor* reconstructTensor() const
@@ -123,7 +123,7 @@ public:
 
       // At iteration 0, temp = G
       if(mode > 0) {
-        delete temp;
+        Tucker::safe_delete<Tensor>(temp);
       }
       temp = t;
     }
@@ -327,12 +327,12 @@ public:
 
       os.close();
 
-      delete[] min_array;
-      delete[] max_array;
-      delete[] mean_array;
+      Tucker::safe_delete_array<double>(min_array);
+      Tucker::safe_delete_array<double>(max_array);
+      Tucker::safe_delete_array<double>(mean_array);
     }
 
-    delete[] raw_array;
+    Tucker::safe_delete_array<double>(raw_array);
   }
 
   Tensor* G; //!< the tensor of reduced size
