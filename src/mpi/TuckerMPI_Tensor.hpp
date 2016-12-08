@@ -52,6 +52,8 @@ public:
    *
    * \param dist Distribution object containing the processor grid
    * and size of the tensor
+   *
+   * \note \a dist is owned by the tensor and will be freed by it
    */
   Tensor(const Distribution* dist);
 

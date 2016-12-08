@@ -50,6 +50,7 @@ Tensor::Tensor(const Distribution* dist) :
 
 Tensor::~Tensor()
 {
+  Tucker::MemoryManager::safe_delete<const Distribution>(dist_);
   Tucker::MemoryManager::safe_delete<Tucker::Tensor>(localTensor_);
 }
 
