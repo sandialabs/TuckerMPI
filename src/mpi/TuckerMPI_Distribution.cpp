@@ -114,6 +114,12 @@ Distribution::~Distribution()
   }
   Tucker::MemoryManager::safe_delete_array<Map*>(maps_,ndims);
   Tucker::MemoryManager::safe_delete<ProcessorGrid>(grid_);
+  if(squeezed_) {
+    for(int d=0; d<ndims; d++) {
+      Tucker::MemoryManager::safe_delete<Map>(maps_squeezed_[d]);
+    }
+    Tucker::MemoryManager::safe_delete_array<Map*>(maps_squeezed_,ndims);
+  }
 }
 
 
