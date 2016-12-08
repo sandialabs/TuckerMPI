@@ -9,6 +9,31 @@
 
 namespace Tucker {
 
+void printBytes(size_t bytes)
+{
+  const size_t KB = 1024;
+  const size_t MB = 1048576;
+  const size_t GB = 1073741824;
+  const size_t TB = 1.09951162778e+12;
+
+  if(bytes > TB) {
+    std::cout << bytes / TB << " TB\n";
+  }
+  else if(bytes > GB) {
+    std::cout << bytes / GB << " GB\n";
+  }
+  else if(bytes > MB) {
+    std::cout << bytes / MB << " MB\n";
+  }
+  else if(bytes > KB) {
+    std::cout << bytes / KB << " KB\n";
+  }
+  else {
+    std::cout << bytes << " bytes\n";
+  }
+}
+
+bool MemoryManager::verbose = false;
 size_t MemoryManager::curMemUsage = 0;
 size_t MemoryManager::maxMemUsage = 0;
 

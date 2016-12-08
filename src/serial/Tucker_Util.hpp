@@ -48,6 +48,8 @@
 
 namespace Tucker {
 
+void printBytes(size_t bytes);
+
 class MemoryManager {
 
 public:
@@ -62,6 +64,11 @@ static T* safe_new(Args&&... args)
   catch(std::exception& e) {
     std::cout << "Exception: " << e.what() << std::endl;
   }
+  if(verbose) {
+    std::cout << "Allocated ";
+    printBytes(sizeof(T));
+  }
+
   curMemUsage += sizeof(T);
   maxMemUsage = std::max(maxMemUsage,curMemUsage);
   return allocatedPtr;
@@ -89,6 +96,10 @@ static T* safe_new_array(const size_t numToAllocate)
   catch(std::exception& e) {
     std::cout << "Exception: " << e.what() << std::endl;
   }
+  if(verbose) {
+    std::cout << "Allocated ";
+    printBytes(sizeof(T)*numToAllocate);
+  }
   curMemUsage += (sizeof(T)*numToAllocate);
   maxMemUsage = std::max(maxMemUsage,curMemUsage);
   return allocatedPtr;
@@ -103,6 +114,10 @@ static void safe_delete(T* t)
   catch(std::exception& e) {
     std::cout << "Exception: " << e.what() << std::endl;
   }
+  if(verbose) {
+    std::cout << "Deallocated ";
+    printBytes(sizeof(T));
+  }
   curMemUsage -= sizeof(T);
 }
 
@@ -115,59 +130,28 @@ static void safe_delete_array(T* t, const size_t numToDealloc)
   catch(std::exception& e) {
     std::cout << "Exception: " << e.what() << std::endl;
   }
+  if(verbose) {
+    std::cout << "Deallocated ";
+    printBytes(numToDealloc*sizeof(T));
+  }
   curMemUsage -= (numToDealloc*sizeof(T));
 }
 
 static void printCurrentMemUsage()
 {
-  const size_t KB = 1024;
-  const size_t MB = 1048576;
-  const size_t GB = 1073741824;
-  const size_t TB = 1.09951162778e+12;
-
-  if(curMemUsage > TB) {
-    std::cout << curMemUsage / TB << " TB\n";
-  }
-  else if(curMemUsage > GB) {
-    std::cout << curMemUsage / GB << " GB\n";
-  }
-  else if(curMemUsage > MB) {
-    std::cout << curMemUsage / MB << " MB\n";
-  }
-  else if(curMemUsage > KB) {
-    std::cout << curMemUsage / KB << " KB\n";
-  }
-  else {
-    std::cout << curMemUsage << " bytes\n";
-  }
+  std::cout << "Current memory usage: ";
+  printBytes(curMemUsage);
 }
 
 static void printMaxMemUsage()
 {
-  const size_t KB = 1024;
-  const size_t MB = 1048576;
-  const size_t GB = 1073741824;
-  const size_t TB = 1.09951162778e+12;
-
-  if(maxMemUsage > TB) {
-    std::cout << maxMemUsage / TB << " TB\n";
-  }
-  else if(maxMemUsage > GB) {
-    std::cout << maxMemUsage / GB << " GB\n";
-  }
-  else if(maxMemUsage > MB) {
-    std::cout << maxMemUsage / MB << " MB\n";
-  }
-  else if(maxMemUsage > KB) {
-    std::cout << maxMemUsage / KB << " KB\n";
-  }
-  else {
-    std::cout << maxMemUsage << " bytes\n";
-  }
+  std::cout << "Maximum memory usage: ";
+  printBytes(maxMemUsage);
 }
 
 static size_t curMemUsage;
 static size_t maxMemUsage;
+static bool verbose;
 
 private:
 MemoryManager();
