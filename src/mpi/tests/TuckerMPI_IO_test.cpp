@@ -895,15 +895,18 @@ bool runSim(Tucker::SizeArray& procs)
 
   Tucker::SizeArray sz(4);
   sz[0] = 3; sz[1] = 5; sz[2] = 7; sz[3] = 11;
-  TuckerMPI::Distribution dist(sz, procs);
-  TuckerMPI::Tensor Y(&dist);
+  TuckerMPI::Distribution* dist =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(sz, procs);
+  TuckerMPI::Tensor Y(dist);
   for(size_t i=0; i<Y.getLocalNumEntries(); i++)
     Y.getLocalTensor()->data()[i] = std::numeric_limits<double>::signaling_NaN();
   std::string filenames = "input_files/input_test_filenames.txt";
   TuckerMPI::readTensorBinary(filenames,Y);
 
   std::string filename = "input_files/input_test_filename.txt";
-  TuckerMPI::Tensor Y2(&dist);
+  TuckerMPI::Distribution* dist2 =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(sz, procs);
+  TuckerMPI::Tensor Y2(dist2);
   for(size_t i=0; i<Y2.getLocalNumEntries(); i++)
     Y2.getLocalTensor()->data()[i] = std::numeric_limits<double>::signaling_NaN();
   TuckerMPI::readTensorBinary(filename,Y2);
@@ -914,12 +917,16 @@ bool runSim(Tucker::SizeArray& procs)
   filenames = "input_files/output_test_filenames.txt";
   TuckerMPI::writeTensorBinary(filenames,Y);
 
-  TuckerMPI::Tensor Y3(&dist);
+  TuckerMPI::Distribution* dist3 =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(sz, procs);
+  TuckerMPI::Tensor Y3(dist3);
   for(size_t i=0; i<Y3.getLocalNumEntries(); i++)
     Y3.getLocalTensor()->data()[i] = std::numeric_limits<double>::signaling_NaN();
   TuckerMPI::readTensorBinary(filename,Y3);
 
-  TuckerMPI::Tensor Y4(&dist);
+  TuckerMPI::Distribution* dist4 =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(sz, procs);
+  TuckerMPI::Tensor Y4(dist4);
   for(size_t i=0; i<Y4.getLocalNumEntries(); i++)
     Y4.getLocalTensor()->data()[i] = std::numeric_limits<double>::signaling_NaN();
   TuckerMPI::readTensorBinary(filenames,Y4);

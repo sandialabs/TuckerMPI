@@ -25,10 +25,11 @@ int main(int argc, char* argv[])
   sz[0] = 2; sz[1] = 6; sz[2] = 3;
   Tucker::SizeArray nprocsPerDim(ndims);
   nprocsPerDim[0] = 1; nprocsPerDim[1] = 3; nprocsPerDim[2] = 1;
-  TuckerMPI::Distribution dist(sz,nprocsPerDim);
+  TuckerMPI::Distribution* dist =
+        Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(sz,nprocsPerDim);
 
   // Create a tensor
-  TuckerMPI::Tensor tensor(&dist);
+  TuckerMPI::Tensor tensor(dist);
 
   // Read the entries from a file
   std::string filename = "input_files/tensor36.mpi";

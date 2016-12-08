@@ -929,10 +929,11 @@ bool runSim(Tucker::SizeArray& procs)
   dims[0] = 3; dims[1] = 5; dims[2] = 7; dims[3] = 11;
 
   // Create a distribution object
-  TuckerMPI::Distribution dist(dims,procs);
+  TuckerMPI::Distribution* dist =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
 
   // Create a tensor with that distribution
-  TuckerMPI::Tensor tensor(&dist);
+  TuckerMPI::Tensor tensor(dist);
 
   // Read the tensor from a binary file
   TuckerMPI::importTensorBinary("input_files/3x5x7x11.mpi",&tensor);

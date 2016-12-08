@@ -29,10 +29,11 @@ int main(int argc, char* argv[])
   nprocsPerDim[2] = 2;
 
   // Create the distribution object
-  TuckerMPI::Distribution dist(size,nprocsPerDim);
+  TuckerMPI::Distribution* dist =
+        Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(size,nprocsPerDim);
 
   // Create the tensor
-  TuckerMPI::Tensor t(&dist);
+  TuckerMPI::Tensor t(dist);
 
   // Read the values from a file
   std::string filename = "input_files/ttm_data.mpi";

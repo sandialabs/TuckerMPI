@@ -136,12 +136,13 @@ int main(int argc, char* argv[])
   ////////////////////////////////
   // Set up distribution object //
   ////////////////////////////////
-  TuckerMPI::Distribution dist(*I_dims, *proc_grid_dims);
+  TuckerMPI::Distribution* dist =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*I_dims, *proc_grid_dims);
 
   ///////////////////////////
   // Read full tensor data //
   ///////////////////////////
-  TuckerMPI::Tensor X(&dist);
+  TuckerMPI::Tensor X(dist);
   TuckerMPI::readTensorBinary(in_fns_file,X);
 
   ////////////////////////
@@ -154,7 +155,7 @@ int main(int argc, char* argv[])
   // Determine whether I need to communicate with rank 0
   int* myCoordinates = Tucker::MemoryManager::safe_new_array<int>(nd);
   int* zeroCoordinates = Tucker::MemoryManager::safe_new_array<int>(nd);
-  const TuckerMPI::ProcessorGrid* grid = dist.getProcessorGrid();
+  const TuckerMPI::ProcessorGrid* grid = dist->getProcessorGrid();
   grid->getCoordinates(myCoordinates);
   grid->getCoordinates(zeroCoordinates,0);
 
@@ -168,7 +169,7 @@ int main(int argc, char* argv[])
     }
   }
 
-  const TuckerMPI::Map* map = dist.getMap(scale_mode,false);
+  const TuckerMPI::Map* map = dist->getMap(scale_mode,false);
   const MPI_Comm& rowComm = grid->getColComm(scale_mode,false);
   if(needToSendToZero) {
     int numEntries = map->getGlobalNumEntries();
