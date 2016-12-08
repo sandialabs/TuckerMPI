@@ -53,20 +53,10 @@ Matrix::Matrix(int nrows, int ncols, const MPI_Comm& comm, bool isBlockRow) :
 
   // Create a map
   if(isBlockRow) {
-    try {
-      map_ = new Map(nrows,comm);
-    }
-    catch(std::exception& e) {
-      std::cout << "Exception: " << e.what() << std::endl;
-    }
+    map_ = Tucker::safe_new<Map>(nrows,comm);
   }
   else {
-    try {
-      map_ = new Map(ncols,comm);
-    }
-    catch(std::exception& e) {
-      std::cout << "Exception: " << e.what() << std::endl;
-    }
+    map_ = Tucker::safe_new<Map>(ncols,comm);
   }
 
   // Get the local number of rows and columns
@@ -81,13 +71,7 @@ Matrix::Matrix(int nrows, int ncols, const MPI_Comm& comm, bool isBlockRow) :
   }
 
   // Create the local portion of the matrix
-
-  try {
-    localMatrix_ = new Tucker::Matrix(localRows,localCols);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  localMatrix_ = Tucker::safe_new<Tucker::Matrix>(localRows,localCols);
 }
 
 

@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
   expectedSize[1] = 3;
   expectedSize[2] = 5;
   TuckerMPI::Distribution* expectedDist =
-      new TuckerMPI::Distribution(expectedSize,nprocsPerDim);
+      Tucker::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult(expectedDist);
   filename = "input_files/ttm_result0.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult);
@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
   expectedSize[1] = 3;
   expectedSize[2] = 5;
   expectedDist =
-      new TuckerMPI::Distribution(expectedSize,nprocsPerDim);
+      Tucker::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult2(expectedDist);
   filename = "input_files/ttm_result0t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult2);
@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
   expectedSize[1] = 7;
   expectedSize[2] = 5;
   expectedDist =
-      new TuckerMPI::Distribution(expectedSize,nprocsPerDim);
+      Tucker::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult3(expectedDist);
   filename = "input_files/ttm_result1.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult3);
@@ -155,7 +155,7 @@ int main(int argc, char* argv[])
   expectedSize[1] = 7;
   expectedSize[2] = 5;
   expectedDist =
-      new TuckerMPI::Distribution(expectedSize,nprocsPerDim);
+      Tucker::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult4(expectedDist);
   filename = "input_files/ttm_result1t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult4);
@@ -191,7 +191,7 @@ int main(int argc, char* argv[])
   expectedSize[1] = 3;
   expectedSize[2] = 7;
   expectedDist =
-      new TuckerMPI::Distribution(expectedSize,nprocsPerDim);
+      Tucker::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult5(expectedDist);
   filename = "input_files/ttm_result2.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult5);
@@ -227,7 +227,7 @@ int main(int argc, char* argv[])
   expectedSize[1] = 3;
   expectedSize[2] = 7;
   expectedDist =
-      new TuckerMPI::Distribution(expectedSize,nprocsPerDim);
+      Tucker::safe_new<TuckerMPI::Distribution>(expectedSize,nprocsPerDim);
   TuckerMPI::Tensor expectedResult6(expectedDist);
   filename = "input_files/ttm_result2t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),&expectedResult6);

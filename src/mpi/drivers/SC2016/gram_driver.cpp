@@ -151,7 +151,7 @@ int main(int argc, char* argv[])
   //////////////////////////////////////
   double* gathered_data;
   if(rank == 0) {
-    gathered_data = Tucker::safe_new<double>(nd*NTIMERS*nprocs);
+    gathered_data = Tucker::safe_new_array<double>(nd*NTIMERS*nprocs);
   }
   else {
     gathered_data = 0;

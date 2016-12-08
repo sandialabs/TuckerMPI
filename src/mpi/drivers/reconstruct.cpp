@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
   ///////////////////////////
   std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn +
             "_core.mpi";
-  fact.G = new TuckerMPI::Tensor(&dist);
+  fact.G = Tucker::safe_new<TuckerMPI::Tensor>(&dist);
   TuckerMPI::importTensorBinary(coreFilename.c_str(),fact.G);
 
   //////////////////////////
@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
     std::ostringstream ss;
     ss << sthosvd_dir << "/" << sthosvd_fn << "_mat_" << mode << ".mpi";
 
-    fact.U[mode] = new Tucker::Matrix((*I_dims)[mode],coreSize[mode]);
+    fact.U[mode] = Tucker::safe_new<Tucker::Matrix>((*I_dims)[mode],coreSize[mode]);
     TuckerMPI::importTensorBinary(ss.str().c_str(), fact.U[mode]);
   }
 

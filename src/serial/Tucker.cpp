@@ -69,13 +69,7 @@ Matrix* computeGram(const Tensor* Y, const int n)
 
   // Allocate memory for the Gram matrix
   int nrows = Y->size(n);
-  Matrix* S;
-  try {
-    S = new Matrix(nrows,nrows);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  Matrix* S = safe_new<Matrix>(nrows,nrows);
 
   computeGram(Y, n, S->data(), nrows);
 
@@ -182,14 +176,14 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
   }
 
   int nrows = G->nrows();
-  eigenvalues = safe_new<double>(nrows);
+  eigenvalues = safe_new_array<double>(nrows);
 
   // Compute the leading eigenvectors of S
   // call dsyev(jobz, uplo, n, a, lda, w, work, lwork, info)
   char jobz = 'V';
   char uplo = 'U';
   int lwork = 8*nrows;
-  double* work = safe_new<double>(lwork);
+  double* work = safe_new_array<double>(lwork);
   int info;
   dsyev_(&jobz, &uplo, &nrows, G->data(), &nrows,
       eigenvalues, work, &lwork, &info);
@@ -269,12 +263,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
 
   // Allocate memory for eigenvectors
   int numRows = G->nrows();
-  try {
-    eigenvectors = new Matrix(numRows,numEvecs);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  eigenvectors = safe_new<Matrix>(numRows,numEvecs);
 
   // Copy appropriate eigenvectors
   int nToCopy = numRows*numEvecs;
@@ -316,12 +305,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
 
   // Allocate memory for eigenvectors
   int numRows = G->nrows();
-  try {
-    eigenvectors = new Matrix(numRows,numEvecs);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  eigenvectors = safe_new<Matrix>(numRows,numEvecs);
 
   // Copy appropriate eigenvectors
   int nToCopy = numRows*numEvecs;
@@ -349,13 +333,7 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
   int ndims = X->N();
 
   // Create a struct to store the factorization
-  struct TuckerTensor* factorization;
-  try {
-    factorization = new struct TuckerTensor(ndims);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  struct TuckerTensor* factorization = safe_new<struct TuckerTensor>(ndims);
   factorization->total_timer_.start();
 
   double tensorNorm = X->norm2();
@@ -432,13 +410,7 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
   }
 
   // Create a struct to store the factorization
-  struct TuckerTensor* factorization;
-  try {
-    factorization = new struct TuckerTensor(X->N());
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  struct TuckerTensor* factorization = safe_new<struct TuckerTensor>(X->N());
   factorization->total_timer_.start();
 
   const Tensor* Y = X;
@@ -521,13 +493,7 @@ Tensor* ttm(const Tensor* X, const int n,
       I[i] = nrows;
     }
   }
-  Tensor* Y;
-  try {
-    Y = new Tensor(I);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  Tensor* Y = safe_new<Tensor>(I);
 
   // Call TTM
   ttm(X, n, U, Y, Utransp);
@@ -551,13 +517,7 @@ Tensor* ttm(const Tensor* const X, const int n,
       I[i] = dimU;
     }
   }
-  Tensor* Y;
-  try {
-    Y = new Tensor(I);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  Tensor* Y = safe_new<Tensor>(I);
 
   // Call TTM
   ttm(X, n, Uptr, strideU, Y, Utransp);
@@ -711,14 +671,14 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
   }
 
   // Allocate memory for the result
-  MetricData* result = new MetricData(metrics, numSlices);
+  MetricData* result = safe_new<MetricData>(metrics, numSlices);
 
   // Initialize the result
   double* delta;
   int* nArray;
   if((metrics & MEAN) || (metrics & VARIANCE)) {
-    delta = Tucker::safe_new<double>(numSlices);
-    nArray = Tucker::safe_new<int>(numSlices);
+    delta = Tucker::safe_new_array<double>(numSlices);
+    nArray = Tucker::safe_new_array<int>(numSlices);
   }
   for(int i=0; i<numSlices; i++) {
     if(metrics & MIN) {
@@ -839,8 +799,8 @@ void normalizeTensorMinMax(Tensor* Y, int mode)
 {
   MetricData* metrics = computeSliceMetrics(Y, mode, MAX+MIN);
   int sizeOfModeDim = Y->size(mode);
-  double* scales = safe_new<double>(sizeOfModeDim);
-  double* shifts = safe_new<double>(sizeOfModeDim);
+  double* scales = safe_new_array<double>(sizeOfModeDim);
+  double* shifts = safe_new_array<double>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
     scales[i] = metrics->getMaxData()[i] - metrics->getMinData()[i];
     shifts[i] = -metrics->getMinData()[i];
@@ -855,8 +815,8 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode)
 {
   MetricData* metrics = computeSliceMetrics(Y, mode, MEAN+VARIANCE);
   int sizeOfModeDim = Y->size(mode);
-  double* scales = safe_new<double>(sizeOfModeDim);
-  double* shifts = safe_new<double>(sizeOfModeDim);
+  double* scales = safe_new_array<double>(sizeOfModeDim);
+  double* shifts = safe_new_array<double>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
     scales[i] = sqrt(metrics->getVarianceData()[i]);
     shifts[i] = -metrics->getMeanData()[i];
@@ -902,13 +862,7 @@ Tensor* importTensor(const char* filename)
   }
 
   // Create a tensor using that SizeArray
-  Tensor* t;
-  try {
-    t = new Tensor(sz);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  Tensor* t = safe_new<Tensor>(sz);
 
   // Read the entries of the tensor
   size_t numEntries = sz.prod();
@@ -982,13 +936,7 @@ Matrix* importMatrix(const char* filename)
     ifs >> nrows >> ncols;
 
   // Create a matrix
-  Matrix* m;
-  try {
-    m = new Matrix(nrows,ncols);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  Matrix* m = safe_new<Matrix>(nrows,ncols);
 
   // Read the entries of the tensor
   size_t numEntries = nrows*ncols;

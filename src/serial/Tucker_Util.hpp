@@ -48,13 +48,26 @@
 
 namespace Tucker {
 
+template<typename T, typename... Args>
+T* safe_new(Args&&... args)
+{
+  T* allocatedPtr;
+  try {
+    allocatedPtr = new T(std::forward<Args>(args)...);
+  }
+  catch(std::exception& e) {
+    std::cout << "Exception: " << e.what() << std::endl;
+  }
+  return allocatedPtr;
+}
+
 /** \brief Allocates memory within a try/catch block
  *
  * \param[in] numToAllocate Number of entries to allocate
  * \exception std::runtime_error \a numToAllocate <= 0
  */
 template<typename T>
-T* safe_new(const size_t numToAllocate=1)
+T* safe_new_array(const size_t numToAllocate)
 {
   if(numToAllocate <= 0) {
     std::ostringstream oss;

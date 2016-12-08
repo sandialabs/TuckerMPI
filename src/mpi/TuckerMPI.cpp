@@ -65,13 +65,8 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
   int numGlobalRows = Y->getGlobalSize(n);
 
   // Create the matrix to return
-  Tucker::Matrix* gram;
-  try {
-    gram = new Tucker::Matrix(numGlobalRows,numGlobalRows);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  Tucker::Matrix* gram =
+      Tucker::safe_new<Tucker::Matrix>(numGlobalRows,numGlobalRows);
 
   // Get the row and column communicators
   const MPI_Comm& rowComm =
@@ -85,7 +80,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
   // Create buffer for all-reduce
   double* allRedBuf;
   if(numLocalRows > 0)
-    allRedBuf = Tucker::safe_new<double>(numGlobalRows*numLocalRows);
+    allRedBuf = Tucker::safe_new_array<double>(numGlobalRows*numLocalRows);
   else
     allRedBuf = 0;
 
@@ -111,12 +106,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
       else
       {
         // Create a matrix to store the local result
-        try {
-          localMatrix = new Tucker::Matrix(numGlobalRows,numLocalRows);
-        }
-        catch(std::exception& e) {
-          std::cout << "Exception: " << e.what() << std::endl;
-        }
+        localMatrix = Tucker::safe_new<Tucker::Matrix>(numGlobalRows,numLocalRows);
 
         // Determine the amount of data being received
         int ndims = Y->getNumDimensions();
@@ -126,11 +116,11 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
         size_t maxEntries = maxNumRows*numCols;
 
         // Create buffer for receiving data
-        double* recvBuf = Tucker::safe_new<double>(maxEntries);
+        double* recvBuf = Tucker::safe_new_array<double>(maxEntries);
 
         // Send data to the next proc in column
         MPI_Request* sendRequests =
-            Tucker::safe_new<MPI_Request>(numColProcsSqueezed);
+            Tucker::safe_new_array<MPI_Request>(numColProcsSqueezed);
         size_t numToSend = Y->getLocalNumEntries();
         assert(numToSend <= std::numeric_limits<int>::max());
         int tag = 0;
@@ -142,7 +132,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
 
         // Receive information from the previous proc in column
         MPI_Request* recvRequests =
-            Tucker::safe_new<MPI_Request>(numColProcsSqueezed);
+            Tucker::safe_new_array<MPI_Request>(numColProcsSqueezed);
         int recvSource =
             (numColProcsSqueezed+myColRankSqueezed-1)%numColProcsSqueezed;
         int numRowsToReceive =
@@ -200,7 +190,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
         }
 
         // Wait for all data to be sent
-        MPI_Status* sendStatuses = Tucker::safe_new<MPI_Status>(numColProcsSqueezed);
+        MPI_Status* sendStatuses = Tucker::safe_new_array<MPI_Status>(numColProcsSqueezed);
         if(shift_timer) shift_timer->start();
         if(myColRankSqueezed > 0) {
           MPI_Waitall(myColRankSqueezed, sendRequests, sendStatuses);
@@ -218,13 +208,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
       }
     }
     else {
-      try {
-        localMatrix = new Tucker::Matrix(numGlobalRows,numLocalRows);
-      }
-      catch(std::exception& e) {
-        std::cout << "Exception: " << e.what() << std::endl;
-      }
-
+      localMatrix = Tucker::safe_new<Tucker::Matrix>(numGlobalRows,numLocalRows);
       localMatrix->initialize();
     }
 
@@ -249,8 +233,8 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
 
   if(numColProcs > 1) {
     // All-gather across column communicator
-    int* recvcounts = Tucker::safe_new<int>(numColProcs);
-    int* displs = Tucker::safe_new<int>(numColProcs);
+    int* recvcounts = Tucker::safe_new_array<int>(numColProcs);
+    int* displs = Tucker::safe_new_array<int>(numColProcs);
     for(int i=0; i<numColProcs; i++) {
       recvcounts[i] = Y->getDistribution()->getMap(n,false)->getNumEntries(i)*numGlobalRows;
       displs[i] = Y->getDistribution()->getMap(n,false)->getOffset(i)*numGlobalRows;
@@ -324,7 +308,7 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
 
     if(myColEmpty) {
       int nGlobalRows = Y->getGlobalSize(n);
-      Tucker::Matrix* temp = new Tucker::Matrix(nGlobalRows,nGlobalRows);
+      Tucker::Matrix* temp = Tucker::safe_new<Tucker::Matrix>(nGlobalRows,nGlobalRows);
       temp->initialize();
       localGram = temp;
     }
@@ -341,7 +325,7 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
       }
       else {
         int nGlobalRows = Y->getGlobalSize(n);
-        Tucker::Matrix* temp = new Tucker::Matrix(nGlobalRows,nGlobalRows);
+        Tucker::Matrix* temp = Tucker::safe_new<Tucker::Matrix>(nGlobalRows,nGlobalRows);
         temp->initialize();
         localGram = temp;
       }
@@ -351,7 +335,7 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
   else {
     if(Y->getDistribution()->ownNothing()) {
       int nGlobalRows = Y->getGlobalSize(n);
-      Tucker::Matrix* temp = new Tucker::Matrix(nGlobalRows,nGlobalRows);
+      Tucker::Matrix* temp = Tucker::safe_new<Tucker::Matrix>(nGlobalRows,nGlobalRows);
       temp->initialize();
       localGram = temp;
     }
@@ -395,13 +379,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   int ndims = X->getNumDimensions();
 
   // Create a struct to store the factorization
-  TuckerTensor* factorization;
-  try {
-    factorization = new TuckerTensor(ndims);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  TuckerTensor* factorization = Tucker::safe_new<TuckerTensor>(ndims);
 
   // Compute the threshold
   double tensorNorm = X->norm2();
@@ -506,13 +484,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   assert(ndims == reducedI->size());
 
   // Create a struct to store the factorization
-  TuckerTensor* factorization;
-  try {
-    factorization = new TuckerTensor(ndims);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  TuckerTensor* factorization = Tucker::safe_new<TuckerTensor>(ndims);
 
   // Barrier for timing
   MPI_Barrier(MPI_COMM_WORLD);
@@ -615,8 +587,8 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
   {
     // Compute the global result
     int numSlices = Y->getLocalSize(mode);
-    double* sendBuf = Tucker::safe_new<double>(numSlices);
-    double* recvBuf = Tucker::safe_new<double>(numSlices);
+    double* sendBuf = Tucker::safe_new_array<double>(numSlices);
+    double* recvBuf = Tucker::safe_new_array<double>(numSlices);
     if(metrics & Tucker::MIN) {
       for(int i=0; i<numSlices; i++) sendBuf[i] = result->getMinData()[i];
       MPI_Allreduce(sendBuf, recvBuf, numSlices, MPI_DOUBLE,
@@ -658,7 +630,7 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
 
       double* meanDiff;
       if(metrics & Tucker::VARIANCE) {
-        meanDiff = Tucker::safe_new<double>(numSlices);
+        meanDiff = Tucker::safe_new_array<double>(numSlices);
         for(int i=0; i<numSlices; i++) {
           meanDiff[i] = result->getMeanData()[i] -
               recvBuf[i] / (double)globalSliceSize;
@@ -711,8 +683,8 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh)
   Tucker::MetricData* metrics =
       computeSliceMetrics(Y, mode, Tucker::MEAN+Tucker::VARIANCE);
   int sizeOfModeDim = Y->getLocalSize(mode);
-  double* scales = Tucker::safe_new<double>(sizeOfModeDim);
-  double* shifts = Tucker::safe_new<double>(sizeOfModeDim);
+  double* scales = Tucker::safe_new_array<double>(sizeOfModeDim);
+  double* shifts = Tucker::safe_new_array<double>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
     scales[i] = sqrt(metrics->getVarianceData()[i]);
     shifts[i] = -metrics->getMeanData()[i];
@@ -735,8 +707,8 @@ void normalizeTensorMinMax(Tensor* Y, int mode)
   Tucker::MetricData* metrics = computeSliceMetrics(Y, mode,
       Tucker::MAX+Tucker::MIN);
   int sizeOfModeDim = Y->getLocalSize(mode);
-  double* scales = Tucker::safe_new<double>(sizeOfModeDim);
-  double* shifts = Tucker::safe_new<double>(sizeOfModeDim);
+  double* scales = Tucker::safe_new_array<double>(sizeOfModeDim);
+  double* shifts = Tucker::safe_new_array<double>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
     scales[i] = metrics->getMaxData()[i] - metrics->getMinData()[i];
     shifts[i] = -metrics->getMinData()[i];
@@ -756,8 +728,8 @@ void normalizeTensorMax(Tensor* Y, int mode)
   Tucker::MetricData* metrics = computeSliceMetrics(Y, mode,
       Tucker::MIN + Tucker::MAX);
   int sizeOfModeDim = Y->getLocalSize(mode);
-  double* scales = Tucker::safe_new<double>(sizeOfModeDim);
-  double* shifts = Tucker::safe_new<double>(sizeOfModeDim);
+  double* scales = Tucker::safe_new_array<double>(sizeOfModeDim);
+  double* shifts = Tucker::safe_new_array<double>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
     double scaleval = std::max(std::abs(metrics->getMinData()[i]),
         std::abs(metrics->getMaxData()[i]));
@@ -852,9 +824,9 @@ void importTensorBinary(const char* filename, Tensor* Y)
   int ndims = Y->getNumDimensions();
 
   // Define data layout parameters
-  int* starts = Tucker::safe_new<int>(ndims);
-  int* lsizes = Tucker::safe_new<int>(ndims);
-  int* gsizes = Tucker::safe_new<int>(ndims);
+  int* starts = Tucker::safe_new_array<int>(ndims);
+  int* lsizes = Tucker::safe_new_array<int>(ndims);
+  int* gsizes = Tucker::safe_new_array<int>(ndims);
 
   for(int i=0; i<ndims; i++) {
     starts[i] = Y->getDistribution()->getMap(i,true)->getGlobalIndex(0);
@@ -953,9 +925,9 @@ void importTimeSeries(const char* filename, Tensor* Y)
 
   // Define data layout parameters
   int ndims = Y->getNumDimensions();
-  int* starts = Tucker::safe_new<int>(ndims-1);
-  int* lsizes = Tucker::safe_new<int>(ndims-1);
-  int* gsizes = Tucker::safe_new<int>(ndims-1);
+  int* starts = Tucker::safe_new_array<int>(ndims-1);
+  int* lsizes = Tucker::safe_new_array<int>(ndims-1);
+  int* gsizes = Tucker::safe_new_array<int>(ndims-1);
 
   for(int i=0; i<ndims-1; i++) {
     starts[i] = Y->getDistribution()->getMap(i,true)->getGlobalIndex(0);
@@ -1073,9 +1045,9 @@ void exportTensorBinary(const char* filename, const Tensor* Y)
   int ndims = Y->getNumDimensions();
 
   // Define data layout parameters
-  int* starts = Tucker::safe_new<int>(ndims);
-  int* lsizes = Tucker::safe_new<int>(ndims);
-  int* gsizes = Tucker::safe_new<int>(ndims);
+  int* starts = Tucker::safe_new_array<int>(ndims);
+  int* lsizes = Tucker::safe_new_array<int>(ndims);
+  int* gsizes = Tucker::safe_new_array<int>(ndims);
 
   for(int i=0; i<ndims; i++) {
     starts[i] = Y->getDistribution()->getMap(i,true)->getGlobalIndex(0);
@@ -1171,9 +1143,9 @@ void exportTimeSeries(const char* filename, const Tensor* Y)
 
   // Define data layout parameters
   int ndims = Y->getNumDimensions();
-  int* starts = Tucker::safe_new<int>(ndims-1);
-  int* lsizes = Tucker::safe_new<int>(ndims-1);
-  int* gsizes = Tucker::safe_new<int>(ndims-1);
+  int* starts = Tucker::safe_new_array<int>(ndims-1);
+  int* lsizes = Tucker::safe_new_array<int>(ndims-1);
+  int* gsizes = Tucker::safe_new_array<int>(ndims-1);
 
   for(int i=0; i<ndims-1; i++) {
     starts[i] = Y->getDistribution()->getMap(i,true)->getGlobalIndex(0);

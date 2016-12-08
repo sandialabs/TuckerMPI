@@ -86,37 +86,37 @@ public:
     assert(dimension > 0);
 
     if(metrics & MIN)
-      minData_ = safe_new<double>(dimension);
+      minData_ = safe_new_array<double>(dimension);
     else
       minData_ = 0;
 
     if(metrics & MAX)
-      maxData_ = safe_new<double>(dimension);
+      maxData_ = safe_new_array<double>(dimension);
     else
       maxData_ = 0;
 
     if(metrics & SUM)
-      sumData_ = safe_new<double>(dimension);
+      sumData_ = safe_new_array<double>(dimension);
     else
       sumData_ = 0;
 
     if(metrics & NORM1)
-      norm1Data_ = safe_new<double>(dimension);
+      norm1Data_ = safe_new_array<double>(dimension);
     else
       norm1Data_ = 0;
 
     if(metrics & NORM2)
-      norm2Data_ = safe_new<double>(dimension);
+      norm2Data_ = safe_new_array<double>(dimension);
     else
       norm2Data_ = 0;
 
     if(metrics & MEAN)
-      meanData_ = safe_new<double>(dimension);
+      meanData_ = safe_new_array<double>(dimension);
     else
       meanData_ = 0;
 
     if(metrics & VARIANCE)
-      varianceData_ = safe_new<double>(dimension);
+      varianceData_ = safe_new_array<double>(dimension);
     else
       varianceData_ = 0;
   }

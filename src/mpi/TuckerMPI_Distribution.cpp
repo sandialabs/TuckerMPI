@@ -57,7 +57,7 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
     globalDims_[i] = dims[i];
   }
 
-  grid_ = new ProcessorGrid(procs,MPI_COMM_WORLD);
+  grid_ = Tucker::safe_new<ProcessorGrid>(procs,MPI_COMM_WORLD);
 
   // Create the maps
   createMaps();
@@ -72,15 +72,10 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
 
   if(squeezed_) {
     // Create a map for each dimension
-    maps_squeezed_ = Tucker::safe_new<Map*>(ndims);
+    maps_squeezed_ = Tucker::safe_new_array<Map*>(ndims);
     for(int d=0; d<ndims; d++) {
       const MPI_Comm& comm = grid_->getColComm(d,false);
-      try {
-        maps_squeezed_[d] = new Map(globalDims_[d],comm);
-      }
-      catch(std::exception& e) {
-        std::cout << "Exception: " << e.what() << std::endl;
-      }
+      maps_squeezed_[d] = Tucker::safe_new<Map>(globalDims_[d],comm);
     }
 
     // Remove the empty processes from the map communicators
@@ -161,15 +156,10 @@ void Distribution::createMaps()
   int ndims = globalDims_.size();
 
   // Create a map for each dimension
-  maps_ = Tucker::safe_new<Map*>(ndims);
+  maps_ = Tucker::safe_new_array<Map*>(ndims);
   for(int d=0; d<ndims; d++) {
     const MPI_Comm& comm = grid_->getColComm(d,false);
-    try {
-      maps_[d] = new Map(globalDims_[d],comm);
-    }
-    catch(std::exception& e) {
-      std::cout << "Exception: " << e.what() << std::endl;
-    }
+    maps_[d] = Tucker::safe_new<Map>(globalDims_[d],comm);
   }
 }
 

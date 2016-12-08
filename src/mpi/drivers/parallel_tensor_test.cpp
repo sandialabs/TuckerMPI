@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 //  }
 
   // What is my location in the grid?
-  int* coords = new int[ndims];
+  int* coords = Tucker::safe_new_array<int>(ndims);
   pg->getCoordinates(coords);
   ofs << "Coordinates: ";
   for(int i=0; i<ndims; i++) {

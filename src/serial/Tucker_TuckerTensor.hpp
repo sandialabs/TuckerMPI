@@ -74,13 +74,13 @@ public:
     }
 
     N = ndims;
-    U = safe_new<Matrix*>(N);
-    eigenvalues = safe_new<double*>(N);
+    U = safe_new_array<Matrix*>(N);
+    eigenvalues = safe_new_array<double*>(N);
     G = 0;
 
-    gram_timer_ = safe_new<Timer>(ndims);
-    eigen_timer_ = safe_new<Timer>(ndims);
-    ttm_timer_ = safe_new<Timer>(ndims);
+    gram_timer_ = safe_new_array<Timer>(ndims);
+    eigen_timer_ = safe_new_array<Timer>(ndims);
+    ttm_timer_ = safe_new_array<Timer>(ndims);
   }
 
   /** \brief Destructor

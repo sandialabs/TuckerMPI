@@ -86,7 +86,7 @@ public:
     int new_nrows = rend-rbegin+1;
     int old_nrows = nrows();
     int myncols = ncols();
-    Matrix* newMat = new Matrix(new_nrows,myncols);
+    Matrix* newMat = safe_new<Matrix>(new_nrows,myncols);
 
     for(int c=0; c<myncols; c++)
     {

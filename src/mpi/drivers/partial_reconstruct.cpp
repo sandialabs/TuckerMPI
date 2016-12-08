@@ -243,14 +243,14 @@ int main(int argc, char* argv[])
   ////////////////////////////////////////////////////////////
   if(rec_order == NULL) {
     // Create the SizeArray
-    rec_order = new Tucker::SizeArray(nd);
+    rec_order = Tucker::safe_new<Tucker::SizeArray>(nd);
     for(int i=0; i<nd; i++) {
       (*rec_order)[i] = i;
     }
 
     // Compute the ratios of reconstructed size to core size
-    int* rec_size = Tucker::safe_new<int>(nd);
-    double* ratios = Tucker::safe_new<double>(nd);
+    int* rec_size = Tucker::safe_new_array<int>(nd);
+    double* ratios = Tucker::safe_new_array<double>(nd);
     for(int i=0; i<nd; i++) {
       rec_size[i] = 1 + (*subs_end)[i] - (*subs_begin)[i];
       ratios[i] = (double)rec_size[i] / coreSize[i];
@@ -321,7 +321,7 @@ int main(int argc, char* argv[])
   ///////////////////////////
   std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn +
             "_core.mpi";
-  fact.G = new TuckerMPI::Tensor(&dist);
+  fact.G = Tucker::safe_new<TuckerMPI::Tensor>(&dist);
   TuckerMPI::importTensorBinary(coreFilename.c_str(),fact.G);
 
   //////////////////////////
@@ -332,7 +332,7 @@ int main(int argc, char* argv[])
     std::ostringstream ss;
     ss << sthosvd_dir << "/" << sthosvd_fn << "_mat_" << mode << ".mpi";
 
-    fact.U[mode] = new Tucker::Matrix((*I_dims)[mode],coreSize[mode]);
+    fact.U[mode] = Tucker::safe_new<Tucker::Matrix>((*I_dims)[mode],coreSize[mode]);
     TuckerMPI::importTensorBinary(ss.str().c_str(), fact.U[mode]);
   }
 

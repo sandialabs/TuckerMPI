@@ -69,7 +69,7 @@ public:
   {
     if(n <= 0)
       throw std::invalid_argument("n must be positive");
-    sz_ = safe_new<int>(nsz_);
+    sz_ = safe_new_array<int>(nsz_);
   }
 
   //! Destructor

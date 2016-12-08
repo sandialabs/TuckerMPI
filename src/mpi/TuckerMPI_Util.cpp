@@ -81,7 +81,7 @@ const double* packForGram(const Tensor* Y, int n, const Map* redistMap)
   int nprocs = Y->getDistribution()->getProcessorGrid()->getNumProcs(n,true);
 
   // Allocate memory for packed data
-  double* sendData = Tucker::safe_new<double>(Y->getLocalNumEntries());
+  double* sendData = Tucker::safe_new_array<double>(Y->getLocalNumEntries());
 
   // Local data is row-major
   if(n == ndims-1) {
@@ -157,13 +157,7 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
   // Create a matrix to store the redistributed Y_n
   // Y_n has a block row distribution
   // We want it to have a block column distribution
-  Matrix* redistY;
-  try {
-    redistY = new Matrix(nrows,(int)ncols,comm,false);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  Matrix* redistY = Tucker::safe_new<Matrix>(nrows,(int)ncols,comm,false);
 
   // Get the column map of the redistributed Y_n
   const Map* redistMap = redistY->getMap();
@@ -176,8 +170,8 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
 
   // Compute the number of entries this rank will send to others,
   // along with their displacements
-  int* sendCounts = Tucker::safe_new<int>(numProcs);
-  int* sendDispls = Tucker::safe_new<int>(numProcs+1); sendDispls[0] = 0;
+  int* sendCounts = Tucker::safe_new_array<int>(numProcs);
+  int* sendDispls = Tucker::safe_new_array<int>(numProcs+1); sendDispls[0] = 0;
   for(int i=0; i<numProcs; i++) {
     sendCounts[i] = nLocalRows * redistMap->getNumEntries(i);
     sendDispls[i+1] = sendDispls[i] + sendCounts[i];
@@ -185,8 +179,8 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
 
   // Compute the number of entries this rank will receive from others,
   // along with their displacements
-  int* recvCounts = Tucker::safe_new<int>(numProcs);
-  int* recvDispls = Tucker::safe_new<int>(numProcs+1); recvDispls[0] = 0;
+  int* recvCounts = Tucker::safe_new_array<int>(numProcs);
+  int* recvDispls = Tucker::safe_new_array<int>(numProcs+1); recvDispls[0] = 0;
   for(int i=0; i<numProcs; i++) {
     recvCounts[i] = nLocalCols * oldMap->getNumEntries(i);
     recvDispls[i+1] = recvDispls[i] + recvCounts[i];
@@ -212,7 +206,7 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
   bool isUnpackingNecessary = isUnpackForGramNecessary(n, ndims, oldMap, redistMap);
   double* recvBuf;
   if(isUnpackingNecessary) {
-    recvBuf = Tucker::safe_new<double>(redistY->getLocalNumEntries());
+    recvBuf = Tucker::safe_new_array<double>(redistY->getLocalNumEntries());
   }
   else {
     // If redistY has no entries, we're not receiving anything
@@ -298,13 +292,7 @@ void unpackForGram(int n, int ndims, Matrix* redistMat,
 const Tucker::Matrix* localRankKForGram(const Matrix* Y, int n, int ndims)
 {
   int nrows = Y->getLocalNumRows();
-  Tucker::Matrix* localResult;
-  try {
-    localResult = new Tucker::Matrix(nrows, nrows);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  Tucker::Matrix* localResult = Tucker::safe_new<Tucker::Matrix>(nrows, nrows);
 
   char uplo = 'U';
   int ncols = Y->getLocalNumCols();
@@ -422,13 +410,7 @@ Tucker::Matrix* reduceForGram(const Tucker::Matrix* U)
   int count = nrows*ncols;
 
   // Create a matrix to store the result
-  Tucker::Matrix* reducedU;
-  try {
-    reducedU = new Tucker::Matrix(nrows,ncols);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  Tucker::Matrix* reducedU = Tucker::safe_new<Tucker::Matrix>(nrows,ncols);
 
   MPI_Allreduce((void*)U->data(), reducedU->data(), count,
       MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -458,7 +440,7 @@ void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
   // TODO: I'm sure there's a more space-efficient way than this
   size_t numEntries = Y->getNumElements();
   assert(numEntries <= std::numeric_limits<int>::max());
-  double* tempMem = Tucker::safe_new<double>(numEntries);
+  double* tempMem = Tucker::safe_new_array<double>(numEntries);
 
   // Get communicator corresponding to this dimension
   const MPI_Comm& comm = map->getComm();

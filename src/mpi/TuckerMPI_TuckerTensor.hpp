@@ -60,30 +60,30 @@ public:
   TuckerTensor(const int numDims)
   {
     N = numDims;
-    U = Tucker::safe_new<Tucker::Matrix*>(N);
-    eigenvalues = Tucker::safe_new<double*>(N);
+    U = Tucker::safe_new_array<Tucker::Matrix*>(N);
+    eigenvalues = Tucker::safe_new_array<double*>(N);
     for(int i=0; i<N; i++) {
       U[i] = 0;
       eigenvalues[i] = 0;
     }
     G = 0;
 
-    gram_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
-    gram_matmul_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
-    gram_shift_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
-    gram_allreduce_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
-    gram_allgather_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
-    gram_pack_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
-    gram_alltoall_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
-    gram_unpack_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
+    gram_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
+    gram_matmul_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
+    gram_shift_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
+    gram_allreduce_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
+    gram_allgather_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
+    gram_pack_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
+    gram_alltoall_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
+    gram_unpack_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
 
-    eigen_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
+    eigen_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
 
-    ttm_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
-    ttm_matmul_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
-    ttm_pack_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
-    ttm_reducescatter_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
-    ttm_reduce_timer_ = Tucker::safe_new<Tucker::Timer>(numDims);
+    ttm_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
+    ttm_matmul_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
+    ttm_pack_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
+    ttm_reducescatter_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
+    ttm_reduce_timer_ = Tucker::safe_new_array<Tucker::Timer>(numDims);
   }
 
   /** Destructor */
@@ -137,7 +137,7 @@ public:
   void printTimers(const std::string& filename) const
   {
     const int ntimers = 14;
-    double* raw_array = Tucker::safe_new<double>(ntimers*N+1);
+    double* raw_array = Tucker::safe_new_array<double>(ntimers*N+1);
 
     // Get the MPI data
     int rank, nprocs;
@@ -171,10 +171,10 @@ public:
     double* max_array;
     double* mean_array;
     if(rank == 0) {
-      min_array = Tucker::safe_new<double>(ntimers*N+1);
-      max_array = Tucker::safe_new<double>(ntimers*N+1);
-      mean_array = Tucker::safe_new<double>(ntimers*N+1);
-      gathered_data = Tucker::safe_new<double>((ntimers*N+1)*nprocs);
+      min_array = Tucker::safe_new_array<double>(ntimers*N+1);
+      max_array = Tucker::safe_new_array<double>(ntimers*N+1);
+      mean_array = Tucker::safe_new_array<double>(ntimers*N+1);
+      gathered_data = Tucker::safe_new_array<double>((ntimers*N+1)*nprocs);
     }
     else {
       min_array = 0;

@@ -44,13 +44,7 @@ namespace TuckerMPI {
 Tensor::Tensor(const Distribution* dist) :
     dist_(dist)
 {
-  try {
-    localTensor_ = new Tucker::Tensor(dist->getLocalDims());
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
-
+  localTensor_ = Tucker::safe_new<Tucker::Tensor>(dist->getLocalDims());
 }
 
 
@@ -145,7 +139,7 @@ void Tensor::rand()
 
 Tensor* Tensor::subtract(const Tensor* t) const
 {
-  Tensor* sub = new Tensor(dist_);
+  Tensor* sub = Tucker::safe_new<Tensor>(dist_);
 
   size_t nnz = getLocalNumEntries();
   if(nnz > 0) {

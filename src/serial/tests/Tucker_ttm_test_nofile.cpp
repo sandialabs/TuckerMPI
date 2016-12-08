@@ -35,7 +35,7 @@ int main()
 
   Tucker::Tensor* result = Tucker::ttm(&t,0,&mat,false);
   data = result->data();
-  double* trueData = new double[105];
+  double* trueData = Tucker::safe_new_array<double>(105);
   trueData[0] = 763; trueData[1] = 793; trueData[2] = 815; trueData[3] = 841;
   trueData[4] = 875; trueData[5] = 893; trueData[6] = 917; trueData[7] = 1824;
   trueData[8] = 1896; trueData[9] = 1948; trueData[10] = 2012; trueData[11] = 2092;

@@ -36,17 +36,11 @@ Tensor* ttm(const Tensor* X, const int n,
   }
 
   // Create a distribution object for it
-  Distribution* dist = new Distribution(newSize,
+  Distribution* dist = Tucker::safe_new<Distribution>(newSize,
           X->getDistribution()->getProcessorGrid()->size());
 
   // Create the new tensor
-  Tensor* Y;
-  try {
-    Y = new Tensor(dist);
-  }
-  catch(std::exception& e) {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
+  Tensor* Y = Tucker::safe_new<Tensor>(dist);
 
   // Get the local part of the tensor
   const Tucker::Tensor* localX = X->getLocalTensor();
@@ -102,7 +96,7 @@ Tensor* ttm(const Tensor* X, const int n,
           sz[i] = X->getLocalSize(i);
         }
         sz[n] = Y->getGlobalSize(n);
-        localResult = new Tucker::Tensor(sz);
+        localResult = Tucker::safe_new<Tucker::Tensor>(sz);
         localResult->initialize();
       }
       else {
@@ -130,7 +124,7 @@ Tensor* ttm(const Tensor* X, const int n,
         recvBuf = 0;
       int nprocs;
       MPI_Comm_size(comm,&nprocs);
-      int* recvCounts = Tucker::safe_new<int>(nprocs);
+      int* recvCounts = Tucker::safe_new_array<int>(nprocs);
       size_t multiplier = Y->getLocalSize().prod(0,n-1,1)*Y->getLocalSize().prod(n+1,ndims-1,1);
       for(int i=0; i<nprocs; i++) {
         size_t temp = multiplier*(yMap->getNumEntries(i));
@@ -160,7 +154,7 @@ Tensor* ttm(const Tensor* X, const int n,
             sz[i] = X->getLocalSize(i);
           }
           sz[n] = uLocalRows;
-          localResult = new Tucker::Tensor(sz);
+          localResult = Tucker::safe_new<Tucker::Tensor>(sz);
           localResult->initialize();
         }
         else {
