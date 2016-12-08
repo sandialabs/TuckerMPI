@@ -89,7 +89,7 @@ public:
   /** Destructor */
   ~TuckerTensor()
   {
-    Tucker::MemoryManager::safe_delete<Tensor>(G);
+    if(G) Tucker::MemoryManager::safe_delete<Tensor>(G);
     for(int i=0; i<N; i++) {
       if(eigenvalues[i]) Tucker::MemoryManager::safe_delete_array<double>(eigenvalues[i],U[i]->nrows());
       if(U[i]) Tucker::MemoryManager::safe_delete<Tucker::Matrix>(U[i]);
