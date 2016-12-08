@@ -85,7 +85,7 @@ Map::~Map()
 
   int finalized;
   MPI_Finalized(&finalized);
-  if(removedEmptyProcs_ && !finalized) {
+  if(removedEmptyProcs_ && getLocalNumEntries() > 0 && !finalized) {
     MPI_Comm_free(&comm_);
   }
 }
