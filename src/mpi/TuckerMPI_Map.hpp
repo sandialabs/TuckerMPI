@@ -50,20 +50,14 @@ namespace TuckerMPI {
  *  the MPI processes accordingly.  For instance, the set of
  *  integers 0..7 would be divided amongst 3 processes as
  *  follows:
- *  - process 0 owns {0,1}
- *  - process 1 owns {2,3,4}
- *  - process 2 owns {5,6,7}
+ *  - process 0 owns {0,1,2}
+ *  - process 1 owns {3,4,5}
+ *  - process 2 owns {6,7}
  *
  *  In the event that the size of the dataset (n) cannot be
  *  divided evenly by np (number of processors), the first
- *  processors will receive floor(n/np) objects, and the last
- *  ones will receive ceil(n/np) objects.
- *
- *  \todo: The old code did the reverse; the first processors
- *  received more data than the last ones.  For consistency,
- *  this code should do the same.  It will only require a single
- *  line change in the constructor.  We may also want to have a
- *  flag switching between the two options.
+ *  processors will receive ceil(n/np) objects, and the last
+ *  ones will receive floor(n/np) objects.
  */
 class Map {
 public:
