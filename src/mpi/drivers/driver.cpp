@@ -145,6 +145,15 @@ int main(int argc, char* argv[])
   TuckerMPI::Tensor X(dist);
   TuckerMPI::readTensorBinary(in_fns_file,X);
 
+  if(rank == 0) {
+    size_t local_nnz = X.getLocalNumEntries();
+    size_t global_nnz = X.getGlobalNumEntries();
+    std::cout << "Local input tensor size: " << X.getLocalSize() << ", or ";
+    Tucker::printBytes(local_nnz*sizeof(double));
+    std::cout << "Global input tensor size: " << X.getGlobalSize() << ", or ";
+    Tucker::printBytes(global_nnz*sizeof(double));
+  }
+
   ////////////////////////
   // Compute statistics //
   ////////////////////////
@@ -283,10 +292,22 @@ int main(int argc, char* argv[])
       // Write the eigenvalues to files
       std::string filePrefix = sv_dir + "/" + sv_fn + "_mode_";
       TuckerMPI::printEigenvalues(solution, filePrefix);
+    }
 
-      // Print the core tensor size
-      std::cout << "Core tensor size: " <<
-          solution->G->getGlobalSize() << std::endl;
+    double xnorm = std::sqrt(X.norm2());
+    double gnorm = std::sqrt(solution->G->norm2());
+    if(rank == 0) {
+      std::cout << "Norm of input tensor: " << xnorm << std::endl;
+      std::cout << "Norm of core tensor: " << gnorm << std::endl;
+
+      // Compute the error bound based on the eigenvalues
+      double eb =0;
+      for(int i=0; i<nd; i++) {
+        for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
+          eb += solution->eigenvalues[i][j];
+        }
+      }
+      std::cout << "Error bound: " << std::sqrt(eb)/xnorm << std::endl;
     }
 
     if(boolWriteSTHOSVD) {
@@ -325,6 +346,10 @@ int main(int argc, char* argv[])
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(I_dims);
   if(R_dims) Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(R_dims);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(proc_grid_dims);
+
+  if(rank == 0) {
+    Tucker::MemoryManager::printMaxMemUsage();
+  }
 
   // Finalize MPI
   MPI_Finalize();

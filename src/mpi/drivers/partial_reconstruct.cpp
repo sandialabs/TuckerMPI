@@ -325,6 +325,14 @@ int main(int argc, char* argv[])
             "_core.mpi";
   fact->G = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
   TuckerMPI::importTensorBinary(coreFilename.c_str(),fact->G);
+  if(rank == 0) {
+    size_t local_nnz = fact->G->getLocalNumEntries();
+    size_t global_nnz = fact->G->getGlobalNumEntries();
+    std::cout << "Local core tensor size: " << fact->G->getLocalSize() << ", or ";
+    Tucker::printBytes(local_nnz*sizeof(double));
+    std::cout << "Global core tensor size: " << fact->G->getGlobalSize() << ", or ";
+    Tucker::printBytes(global_nnz*sizeof(double));
+  }
 
   //////////////////////////
   // Read factor matrices //
@@ -359,6 +367,17 @@ int main(int argc, char* argv[])
       Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);
     }
     result = temp;
+
+    if(rank == 0) {
+      size_t local_nnz = result->getLocalNumEntries();
+      size_t global_nnz = result->getGlobalNumEntries();
+      std::cout << "Local tensor size after reconstruction iteration "
+          << i << ": " << result->getLocalSize() << ", or ";
+      Tucker::printBytes(local_nnz*sizeof(double));
+      std::cout << "Global tensor size after reconstruction iteration "
+          << i << ": " << result->getGlobalSize() << ", or ";
+      Tucker::printBytes(global_nnz*sizeof(double));
+    }
   }
 
   ////////////////////////////////////////////
@@ -381,6 +400,10 @@ int main(int argc, char* argv[])
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();
     MPI_Abort(MPI_COMM_WORLD,1);
+  }
+
+  if(rank == 0) {
+    Tucker::MemoryManager::printMaxMemUsage();
   }
 
   //////////////////

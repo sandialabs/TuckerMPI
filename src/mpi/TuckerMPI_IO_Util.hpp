@@ -56,6 +56,7 @@ void printEigenvalues(const TuckerTensor* factorization,
 
     // Open the file
     std::ofstream ofs(ss.str());
+    std::cout << "Writing eigenvalues to " << ss.str() << std::endl;
 
     // Determine the number of eigenvalues for this mode
     int nevals = factorization->U[mode]->nrows();

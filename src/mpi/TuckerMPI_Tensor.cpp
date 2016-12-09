@@ -114,6 +114,12 @@ size_t Tensor::getLocalNumEntries() const
 }
 
 
+size_t Tensor::getGlobalNumEntries() const
+{
+  return dist_->getGlobalDims().prod();
+}
+
+
 // Compute the norm squared
 double Tensor::norm2() const
 {

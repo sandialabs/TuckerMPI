@@ -96,6 +96,8 @@ public:
    */
   size_t getLocalNumEntries() const;
 
+  size_t getGlobalNumEntries() const;
+
   //! Compute the norm squared
   double norm2() const;
 

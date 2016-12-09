@@ -466,6 +466,17 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       Tucker::MemoryManager::safe_delete<const Tensor>(Y);
     }
     Y = temp;
+
+    if(rank == 0) {
+      size_t local_nnz = Y->getLocalNumEntries();
+      size_t global_nnz = Y->getGlobalNumEntries();
+      std::cout << "Local tensor size after STHOSVD iteration "
+          << n << ": " << Y->getLocalSize() << ", or ";
+      Tucker::printBytes(local_nnz*sizeof(double));
+      std::cout << "Global tensor size after STHOSVD iteration "
+          << n << ": " << Y->getGlobalSize() << ", or ";
+      Tucker::printBytes(global_nnz*sizeof(double));
+    }
   }
 
   factorization->G = const_cast<Tensor*>(Y);
@@ -558,6 +569,17 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       Tucker::MemoryManager::safe_delete<const Tensor>(Y);
     }
     Y = temp;
+
+    if(rank == 0) {
+      size_t local_nnz = Y->getLocalNumEntries();
+      size_t global_nnz = Y->getGlobalNumEntries();
+      std::cout << "Local tensor size after STHOSVD iteration "
+          << n << ": " << Y->getLocalSize() << ", or ";
+      Tucker::printBytes(local_nnz*sizeof(double));
+      std::cout << "Global tensor size after STHOSVD iteration "
+          << n << ": " << Y->getGlobalSize() << ", or ";
+      Tucker::printBytes(global_nnz*sizeof(double));
+    }
   }
 
   factorization->G = const_cast<Tensor*>(Y);
