@@ -988,13 +988,15 @@ void importTimeSeries(const char* filename, Tensor* Y)
     dataPtr += count;
   }
 
+  ifs.close();
+
   // Free the datatype
   MPI_Type_free(&view);
 
   // Free other memory
-  Tucker::MemoryManager::safe_delete_array<int>(starts,ndims);
-  Tucker::MemoryManager::safe_delete_array<int>(lsizes,ndims);
-  Tucker::MemoryManager::safe_delete_array<int>(gsizes,ndims);
+  Tucker::MemoryManager::safe_delete_array<int>(starts,ndims-1);
+  Tucker::MemoryManager::safe_delete_array<int>(lsizes,ndims-1);
+  Tucker::MemoryManager::safe_delete_array<int>(gsizes,ndims-1);
 }
 
 void writeTensorBinary(std::string& filename, const Tensor& Y)
@@ -1209,9 +1211,9 @@ void exportTimeSeries(const char* filename, const Tensor* Y)
   MPI_Type_free(&view);
 
   // Free other memory
-  Tucker::MemoryManager::safe_delete_array<int>(starts,ndims);
-  Tucker::MemoryManager::safe_delete_array<int>(lsizes,ndims);
-  Tucker::MemoryManager::safe_delete_array<int>(gsizes,ndims);
+  Tucker::MemoryManager::safe_delete_array<int>(starts,ndims-1);
+  Tucker::MemoryManager::safe_delete_array<int>(lsizes,ndims-1);
+  Tucker::MemoryManager::safe_delete_array<int>(gsizes,ndims-1);
 }
 
 } // end namespace TuckerMPI
