@@ -59,6 +59,14 @@ int main()
     }
   }
 
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete_array<double>(eigenvalues,5);
+
+  if(Tucker::MemoryManager::curMemUsage > 0) {
+    Tucker::MemoryManager::printCurrentMemUsage();
+    return EXIT_FAILURE;
+  }
+
   return EXIT_SUCCESS;
 }
 

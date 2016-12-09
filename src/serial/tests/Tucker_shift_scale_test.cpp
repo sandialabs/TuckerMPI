@@ -31,6 +31,9 @@ int main()
     return EXIT_FAILURE;
   }
 
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(true_sol);
+
   // Read tensor from file
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
 
@@ -49,6 +52,9 @@ int main()
   if(!isApproxEqual(tensor,true_sol,1e-10)) {
     return EXIT_FAILURE;
   }
+
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(true_sol);
 
   // Read tensor from file
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
@@ -71,6 +77,9 @@ int main()
     return EXIT_FAILURE;
   }
 
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(true_sol);
+
   // Read tensor from file
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
 
@@ -91,6 +100,14 @@ int main()
   Tucker::transformSlices(tensor,3,scales3,shifts3);
 
   if(!isApproxEqual(tensor,true_sol,1e-10)) {
+    return EXIT_FAILURE;
+  }
+
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(true_sol);
+
+  if(Tucker::MemoryManager::curMemUsage > 0) {
+    Tucker::MemoryManager::printCurrentMemUsage();
     return EXIT_FAILURE;
   }
 

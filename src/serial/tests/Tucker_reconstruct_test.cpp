@@ -19,16 +19,18 @@ bool approxEqual(double a, double b, double tol)
 
 int main()
 {
-  Tucker::SizeArray size(3);
-  size[0] = 2;
-  size[1] = 3;
-  size[2] = 5;
-  Tucker::Tensor t(size);
-  double* data = t.data();
+  Tucker::SizeArray* size =
+      Tucker::MemoryManager::safe_new<Tucker::SizeArray>(3);
+  (*size)[0] = 2;
+  (*size)[1] = 3;
+  (*size)[2] = 5;
+  Tucker::Tensor* t =
+      Tucker::MemoryManager::safe_new<Tucker::Tensor>(*size);
+  double* data = t->data();
   for(int i=0; i<30; i++)
     data[i] = i+1;
 
-  const struct Tucker::TuckerTensor* factorization = Tucker::STHOSVD(&t,1e-6);
+  const struct Tucker::TuckerTensor* factorization = Tucker::STHOSVD(t,1e-6);
 
   // Reconstruct the original tensor
   Tucker::Tensor* temp = Tucker::ttm(factorization->G,0,
@@ -38,7 +40,6 @@ int main()
   Tucker::Tensor* temp3 = Tucker::ttm(temp2,2,
         factorization->U[2]);
 
-  data = temp3->data();
   double* newdata = temp3->data();
   for(int i=0; i<30; i++) {
     if(!approxEqual(newdata[i], data[i], 1e-10)) {
@@ -50,10 +51,17 @@ int main()
   }
 
   // Free some memory
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(t);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(size);
   Tucker::MemoryManager::safe_delete<const struct Tucker::TuckerTensor>(factorization);
   Tucker::MemoryManager::safe_delete<Tucker::Tensor>(temp);
   Tucker::MemoryManager::safe_delete<Tucker::Tensor>(temp2);
   Tucker::MemoryManager::safe_delete<Tucker::Tensor>(temp3);
+
+  if(Tucker::MemoryManager::curMemUsage > 0) {
+    Tucker::MemoryManager::printCurrentMemUsage();
+    return EXIT_FAILURE;
+  }
 
   return EXIT_SUCCESS;
 }

@@ -12,11 +12,20 @@ int main(int argc, char* argv[])
   Tucker::exportTensorBinary(Y, filename.c_str());
 
   // Read a tensor from the binary file
-  Tucker::Tensor Y2(Y->size());
-  Tucker::importTensorBinary(filename.c_str(), &Y2);
+  Tucker::Tensor* Y2 =
+      Tucker::MemoryManager::safe_new<Tucker::Tensor>(Y->size());
+  Tucker::importTensorBinary(filename.c_str(), Y2);
 
-  if(!isApproxEqual(Y, &Y2, 1e-10)) {
+  if(!isApproxEqual(Y, Y2, 1e-10)) {
     std::cout << "Y and Y2 are not equal\n";
+    return EXIT_FAILURE;
+  }
+
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(Y);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(Y2);
+
+  if(Tucker::MemoryManager::curMemUsage > 0) {
+    Tucker::MemoryManager::printCurrentMemUsage();
     return EXIT_FAILURE;
   }
 

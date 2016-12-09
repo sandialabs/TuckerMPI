@@ -32,6 +32,11 @@ int main()
               << ", a difference of " << diff << std::endl;
   }
 
+  if(Tucker::MemoryManager::curMemUsage > 0) {
+    Tucker::MemoryManager::printCurrentMemUsage();
+    return EXIT_FAILURE;
+  }
+
   return EXIT_FAILURE;
 }
 

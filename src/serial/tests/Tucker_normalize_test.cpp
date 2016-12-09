@@ -148,5 +148,10 @@ int main()
   Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
   Tucker::MemoryManager::safe_delete<Tucker::Tensor>(true_sol);
 
+  if(Tucker::MemoryManager::curMemUsage > 0) {
+    Tucker::MemoryManager::printCurrentMemUsage();
+    return EXIT_FAILURE;
+  }
+
   return EXIT_SUCCESS;
 }
