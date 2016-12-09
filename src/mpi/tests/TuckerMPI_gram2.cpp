@@ -21,22 +21,27 @@ int main(int argc, char* argv[])
 
   // Create a distribution object
   int ndims = 3;
-  Tucker::SizeArray sz(ndims);
-  sz[0] = 2; sz[1] = 2; sz[2] = 6;
-  Tucker::SizeArray nprocsPerDim(ndims);
-  nprocsPerDim[0] = 1; nprocsPerDim[1] = 1; nprocsPerDim[2] = 3;
+  Tucker::SizeArray* sz =
+      Tucker::MemoryManager::safe_new<Tucker::SizeArray>(ndims);
+  (*sz)[0] = 2; (*sz)[1] = 2; (*sz)[2] = 6;
+  Tucker::SizeArray* nprocsPerDim =
+      Tucker::MemoryManager::safe_new<Tucker::SizeArray>(ndims);
+  (*nprocsPerDim)[0] = 1; (*nprocsPerDim)[1] = 1; (*nprocsPerDim)[2] = 3;
   TuckerMPI::Distribution* dist =
-        Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(sz,nprocsPerDim);
+        Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*sz,*nprocsPerDim);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(sz);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(nprocsPerDim);
 
   // Create a tensor
-  TuckerMPI::Tensor tensor(dist);
+  TuckerMPI::Tensor* tensor =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
 
   // Read the entries from a file
   std::string filename = "input_files/tensor24.mpi";
-  TuckerMPI::importTensorBinary(filename.c_str(),&tensor);
+  TuckerMPI::importTensorBinary(filename.c_str(),tensor);
 
   // Compute the gram matrix in dimension 2
-  const Tucker::Matrix* mat = TuckerMPI::newGram(&tensor,2);
+  const Tucker::Matrix* mat = TuckerMPI::newGram(tensor,2);
 
   double trueData[36] = {14, 38, 62, 86, 110, 134,
                          38, 126, 214, 302, 390, 478,
@@ -49,6 +54,14 @@ int main(int argc, char* argv[])
   if(!equal) {
     MPI_Finalize();
     return EXIT_FAILURE;
+  }
+
+  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(tensor);
+  Tucker::MemoryManager::safe_delete<const Tucker::Matrix>(mat);
+
+  if(Tucker::MemoryManager::curMemUsage > 0) {
+    Tucker::MemoryManager::printCurrentMemUsage();
+    MPI_Abort(MPI_COMM_WORLD,1);
   }
 
   // Finalize MPI
