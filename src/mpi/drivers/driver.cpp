@@ -238,7 +238,7 @@ int main(int argc, char* argv[])
   if(scaling_type == "Max") {
     normalizeTensorMax(&X, scale_mode);
   }
-  if(scaling_type == "MinMax") {
+  else if(scaling_type == "MinMax") {
     normalizeTensorMinMax(&X, scale_mode);
   }
   else if(scaling_type == "StandardCentering") {
