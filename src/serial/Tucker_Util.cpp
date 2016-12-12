@@ -6,6 +6,7 @@
  */
 
 #include "Tucker_Util.hpp"
+#include<iomanip>
 
 namespace Tucker {
 
@@ -17,16 +18,16 @@ void printBytes(size_t bytes)
   const size_t TB = 1.09951162778e+12;
 
   if(bytes > TB) {
-    std::cout << bytes / TB << " TB\n";
+    std::cout << std::setprecision(5) << bytes / (double)TB << " TB\n";
   }
   else if(bytes > GB) {
-    std::cout << bytes / GB << " GB\n";
+    std::cout << std::setprecision(5) << bytes / (double)GB << " GB\n";
   }
   else if(bytes > MB) {
-    std::cout << bytes / MB << " MB\n";
+    std::cout << std::setprecision(5) << bytes / (double)MB << " MB\n";
   }
   else if(bytes > KB) {
-    std::cout << bytes / KB << " KB\n";
+    std::cout << std::setprecision(5) << bytes / (double)KB << " KB\n";
   }
   else {
     std::cout << bytes << " bytes\n";

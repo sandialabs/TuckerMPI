@@ -145,7 +145,7 @@ static void printCurrentMemUsage()
 
 static void printMaxMemUsage()
 {
-  std::cout << "Maximum memory usage: ";
+  std::cout << "Maximum local memory usage: ";
   printBytes(maxMemUsage);
 }
 
