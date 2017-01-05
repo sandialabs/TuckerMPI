@@ -877,6 +877,14 @@ void importTensorBinary(const char* filename, Tensor* Y)
   // Read the file
   size_t count = Y->getLocalNumEntries();
   assert(count <= std::numeric_limits<int>::max());
+  if(rank == 0 && 8*count > std::numeric_limits<int>::max()) {
+    std::cout << "WARNING: We are attempting to call MPI_File_read_all to read ";
+    Tucker::printBytes(8*count);
+    std::cout << "Depending on your MPI implementation, this may fail "
+              << "because you are trying to read over 2.1 GB.\nIf MPI_File_read_all"
+              << " crashes, please try again with a more favorable processor grid.\n";
+  }
+
   MPI_Status status;
   ret = MPI_File_read_all(fh, Y->getLocalTensor()->data(),
       (int)count, MPI_DOUBLE, &status);
@@ -969,6 +977,13 @@ void importTimeSeries(const char* filename, Tensor* Y)
   double* dataPtr = Y->getLocalTensor()->data();
   size_t count = Y->getLocalSize().prod(0,ndims-2);
   assert(count <= std::numeric_limits<int>::max());
+  if(rank == 0 && 8*count > std::numeric_limits<int>::max()) {
+    std::cout << "WARNING: We are attempting to call MPI_File_read_all to read ";
+    Tucker::printBytes(8*count);
+    std::cout << "Depending on your MPI implementation, this may fail "
+              << "because you are trying to read over 2.1 GB.\nIf MPI_File_read_all"
+              << " crashes, please try again with a more favorable processor grid.\n";
+  }
 
   for(int step=0; step<nsteps; step++) {
     std::string stepFilename;
