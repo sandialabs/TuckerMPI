@@ -236,16 +236,30 @@ int main(int argc, char* argv[])
   // Perform preprocessing //
   ///////////////////////////
   if(scaling_type == "Max") {
+    if(rank == 0) {
+      std::cout << "Normalizing the tensor by maximum entry - mode " 
+                << scale_mode << std::endl;
+    }
     normalizeTensorMax(&X, scale_mode);
   }
   else if(scaling_type == "MinMax") {
+    if(rank == 0) {
+      std::cout << "Normalizing the tensor using minmax scaling - mode "
+                << scale_mode << std::endl;
+    }
     normalizeTensorMinMax(&X, scale_mode);
   }
   else if(scaling_type == "StandardCentering") {
+    if(rank == 0) {
+      std::cout << "Normalizing the tensor using standard centering - mode "
+                << scale_mode << std::endl;
+    }
     normalizeTensorStandardCentering(&X, scale_mode, stdThresh);
   }
   else if(scaling_type == "None") {
-
+    if(rank == 0) {
+      std::cout << "Not scaling the tensor\n";
+    }
   }
   else {
     std::cerr << "Error: invalid scaling type: " << scaling_type << std::endl;
