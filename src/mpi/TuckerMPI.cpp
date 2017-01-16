@@ -454,8 +454,8 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
     Tensor* temp = ttm(Y,n,factorization->U[n],true,
         &factorization->ttm_matmul_timer_[n],
         &factorization->ttm_pack_timer_[n],
-        &factorization->ttm_reduce_timer_[n],
-        &factorization->ttm_reducescatter_timer_[n]);
+        &factorization->ttm_reducescatter_timer_[n],
+        &factorization->ttm_reduce_timer_[n]);
     factorization->ttm_timer_[n].stop();
     if(rank == 0) {
       std::cout << "\tAutoST-HOSVD::TTM(" << n << ") time: "
@@ -558,8 +558,8 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
     Tensor* temp = ttm(Y,n,factorization->U[n],true,
             &factorization->ttm_matmul_timer_[n],
             &factorization->ttm_pack_timer_[n],
-            &factorization->ttm_reduce_timer_[n],
-            &factorization->ttm_reducescatter_timer_[n]);
+            &factorization->ttm_reducescatter_timer_[n],
+            &factorization->ttm_reduce_timer_[n]);
     factorization->ttm_timer_[n].stop();
     if(rank == 0) {
       std::cout << "\tAutoST-HOSVD::TTM(" << n << ") time: "

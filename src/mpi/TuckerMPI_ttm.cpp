@@ -182,7 +182,7 @@ Tensor* ttm(const Tensor* X, const int n,
           if(reduce_timer) reduce_timer->start();
           MPI_Reduce((void*)sendBuf, recvBuf, (int)count, MPI_DOUBLE, MPI_SUM,
               root, comm);
-          if(reduce_timer)reduce_timer->stop();
+          if(reduce_timer) reduce_timer->stop();
         }
 
         // Free memory
