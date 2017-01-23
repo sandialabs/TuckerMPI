@@ -71,6 +71,17 @@ int main(int argc, char* argv[])
   int nd = I_dims->size();
   int scale_mode                        = Tucker::stringParse<int>(fileAsString, "Scale mode", nd-1);
 
+
+  //
+  // Assert that we either have automatic rank determination or the user
+  // has supplied their own ranks
+  //
+  if(!boolAuto && !R_dims) {
+    std::cerr << "ERROR: Please either enable Automatic rank determination, "
+              << "or provide the desired core tensor size via the Ranks parameter\n";
+    return EXIT_FAILURE;
+  }
+
   //
   // Print options
   //
