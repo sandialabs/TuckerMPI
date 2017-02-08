@@ -865,7 +865,7 @@ void importTensorBinary(const char* filename, Tensor* Y)
   // Open the file
   MPI_File fh;
   const MPI_Comm& comm = Y->getDistribution()->getComm(true);
-  int ret = MPI_File_open(comm, (char*)filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
+  int ret = MPI_File_open(comm, filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
   if(ret != MPI_SUCCESS) {
     std::cerr << "Error: Could not open file " << filename << std::endl;
   }
