@@ -89,14 +89,36 @@ int main(int argc, char* argv[])
   // Print options //
   ///////////////////
   if (rank == 0 && boolPrintOptions) {
-    std::cout << "STHOSVD directory = " << sthosvd_dir << std::endl;
-    std::cout << "STHOSVD file prefix = " << sthosvd_fn << std::endl;
-    std::cout << "Output file list = " << out_fns_file << std::endl;
-    std::cout << "Global dims = " << *I_dims << std::endl;
-    std::cout << "Grid dims = " << *proc_grid_dims << std::endl;
-    std::cout << "Beginning subscripts = " << *subs_begin << std::endl;
-    std::cout << "Ending subscripts = " << *subs_end << std::endl;
-    if(rec_order != NULL) std::cout << "Reconstruction order = " << *rec_order << std::endl;
+    std::cout << "Global dimensions of the original tensor\n";
+    std::cout << "- Global dims = " << *I_dims << std::endl << std::endl;
+
+    std::cout << "Global dimensions of the processor grid\n";
+    std::cout << "- Grid dims = " << *proc_grid_dims << std::endl << std::endl;
+
+    std::cout << "Start of subscripts to be recomputed\n";
+    std::cout << "- Beginning subscripts = " << *subs_begin << std::endl << std::endl;
+
+    std::cout << "End of subscripts to be recomputed\n";
+    std::cout << "- Ending subscripts = " << *subs_end << std::endl << std::endl;
+
+    std::cout << "Directory location of ST-HOSVD output files\n";
+    std::cout << "- STHOSVD directory = " << sthosvd_dir << std::endl << std::endl;
+
+    std::cout << "Base name of the ST-HOSVD output files\n";
+    std::cout << "- STHOSVD file prefix = " << sthosvd_fn << std::endl << std::endl;
+
+    std::cout << "File containing a list of filenames to output the reconstructed data into\n";
+    std::cout << "- Output file list = " << out_fns_file << std::endl << std::endl;
+
+    if(rec_order != NULL) {
+      std::cout << "Mode order for reconstruction\n";
+      std::cout << "NOTE: if left unspecified, the memory-optimal one will be automatically selected\n";
+      std::cout << "- Reconstruction order = " << *rec_order << std::endl << std::endl;
+    }
+
+    std::cout << "If true, print the parameters\n";
+    std::cout << "- Print options = " << (boolPrintOptions ? "true" : "false") << std::endl << std::endl;
+
     std::cout << std::endl;
   }
 
