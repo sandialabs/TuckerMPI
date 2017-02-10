@@ -86,20 +86,79 @@ int main(int argc, char* argv[])
   // Print options
   //
   if (rank == 0 && boolPrintOptions) {
-    std::cout << "Automatic rank determination = " << boolAuto << std::endl;
-    std::cout << "Perform STHOSVD = " << boolSTHOSVD << std::endl;
-    std::cout << "Write STHOSVD result = " << boolWriteSTHOSVD << std::endl;
-    std::cout << "Stopping tolerance = " << tol << std::endl;
-    std::cout << "STHOSVD directory = " << sthosvd_dir << std::endl;
-    std::cout << "STHOSVD file prefix = " << sthosvd_fn << std::endl;
-    std::cout << "SV directory = " << sv_dir << std::endl;
-    std::cout << "SV file prefix = " << sv_fn << std::endl;
-    std::cout << "Input file list = " << in_fns_file << std::endl;
-    std::cout << "Scale mode = " << scale_mode << std::endl;
+    std::cout << "The global dimensions of the tensor to be scaled or compressed\n";
+    std::cout << "- Global dims = " << *I_dims << std::endl << std::endl;
 
-    std::cout << "Global dims = " << *I_dims << std::endl;
-    if(!boolAuto) std::cout << "Ranks = " << *R_dims << std::endl;
-    std::cout << "Grid dims = " << *proc_grid_dims << std::endl;
+    std::cout << "The global dimensions of the processor grid\n";
+    std::cout << "- Grid dims = " << *proc_grid_dims << std::endl << std::endl;
+
+    std::cout << "If true, automatically determine rank; otherwise, use the user-defined ranks\n";
+    std::cout << "- Automatic rank determination = " << (boolAuto ? "true" : "false") << std::endl << std::endl;
+
+    std::cout << "Used for automatic rank determination; the desired error rate\n";
+    std::cout << "- SV Threshold = " << tol << std::endl << std::endl;
+
+    if(!boolAuto) {
+      std::cout << "Global dimensions of the desired core tensor\n";
+      std::cout << "Not used if \"Automatic rank determination\" is enabled\n";
+      std::cout << "- Ranks = " << *R_dims << std::endl << std::endl;
+    }
+
+    std::cout << "List of filenames of raw data to be read\n";
+    std::cout << "- Input file list = " << in_fns_file << std::endl << std::endl;
+
+    std::cout << "How to scale the tensor\n";
+    std::cout << "- Scaling type = " << scaling_type << std::endl << std::endl;
+
+    std::cout << "Which mode's hyperslices will be scaled\n";
+    std::cout << "- Scale mode = " << scale_mode << std::endl << std::endl;
+
+    std::cout << "Threshold for standard deviation before we simply set it to 1\n";
+    std::cout << "Used in StandardCentering scaling\n";
+    std::cout << "- STD Threshold = " << stdThresh << std::endl << std::endl;
+
+    std::cout << "If true, perform ST-HOSVD\n";
+    std::cout << "- Perform STHOSVD = " << (boolSTHOSVD ? "true" : "false") << std::endl << std::endl;
+
+    std::cout << "If true, use the old Gram algorithm; otherwise use the new one\n";
+    std::cout << "- Use old Gram = " << (boolUseOldGram ? "true" : "false") << std::endl << std::endl;
+
+    std::cout << "Location of statistics file containing min, max, mean, and std of each hyperslice\n";
+    std::cout << "- Stats file = " << stats_file << std::endl << std::endl;
+
+    std::cout << "If true, write the preprocessed data to a file\n";
+    std::cout << "- Write preprocessed data = " << (boolWritePreprocessed ? "true" : "false") << std::endl << std::endl;
+
+    std::cout << "File containing a list of filenames to output the scaled data into\n";
+    std::cout << "- Preprocessed output file list = " << pre_fns_file << std::endl << std::endl;
+
+    std::cout << "If true, record the result of ST-HOSVD (the core tensor and all factors\n";
+    std::cout << "- Write STHOSVD result = " << (boolWriteSTHOSVD ? "true" : "false") << std::endl << std::endl;
+
+    std::cout << "Directory location of ST-HOSVD output files\n";
+    if(boolWriteSTHOSVD) std::cout << "NOTE: Please ensure that this directory actually exists!\n";
+    std::cout << "- STHOSVD directory = " << sthosvd_dir << std::endl << std::endl;
+
+    std::cout << "Base name of ST-HOSVD output files\n";
+    std::cout << "- STHOSVD file prefix = " << sthosvd_fn << std::endl << std::endl;
+
+    std::cout << "Directory to place singular value files into\n";
+    if(boolWriteSTHOSVD) std::cout << "NOTE: Please ensure that this directory actually exists!\n";
+    std::cout << "- SV directory = " << sv_dir << std::endl << std::endl;
+
+    std::cout << "Base name for writing the singular value files\n";
+    std::cout << "- SV file prefix = " << sv_fn << std::endl << std::endl;
+
+    std::cout << "Name of the CSV file holding the timing results\n";
+    std::cout << "- Timing file = " << timing_file << std::endl << std::endl;
+
+    std::cout << "If true, reconstruct an approximation of the original tensor after ST-HOSVD\n";
+    if(boolReconstruct) std::cout << "WARNING: This may require a great deal of memory\n";
+    std::cout << "- Reconstruct tensor = " << (boolReconstruct ? "true" : "false") << std::endl << std::endl;
+
+    std::cout << "If true, print the parameters\n";
+    std::cout << "- Print options = " << (boolPrintOptions ? "true" : "false") << std::endl << std::endl;
+
     std::cout << std::endl;
   }
 
