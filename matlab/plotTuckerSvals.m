@@ -55,7 +55,7 @@ tsz = cellfun(@length, cumsevals);
 cutoff = Xnormsqr * myeps^2 / nd;
 
 % Determine cutoff
-rsz = cellfun(@(x) find(x < cutoff,1,'first'), cumsevals);
+rsz = cellfun(@(x) find(x >= cutoff,1,'last'), cumsevals);
 
 
 %% Plot 
