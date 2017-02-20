@@ -78,6 +78,11 @@ public:
     eigenvalues = MemoryManager::safe_new_array<double*>(N);
     G = 0;
 
+    for(int i=0; i<N; i++) {
+      eigenvalues[i] = 0;
+      U[i] = 0;
+    }
+
     gram_timer_ = MemoryManager::safe_new_array<Timer>(ndims);
     eigen_timer_ = MemoryManager::safe_new_array<Timer>(ndims);
     ttm_timer_ = MemoryManager::safe_new_array<Timer>(ndims);
@@ -92,8 +97,8 @@ public:
   {
     MemoryManager::safe_delete<Tensor>(G);
     for(int i=0; i<N; i++) {
-      MemoryManager::safe_delete_array<double>(eigenvalues[i],U[i]->nrows());
-      MemoryManager::safe_delete<Matrix>(U[i]);
+      if(eigenvalues[i]) MemoryManager::safe_delete_array<double>(eigenvalues[i],U[i]->nrows());
+      if(U[i]) MemoryManager::safe_delete<Matrix>(U[i]);
     }
     MemoryManager::safe_delete_array<Matrix*>(U,N);
     MemoryManager::safe_delete_array<double*>(eigenvalues,N);
