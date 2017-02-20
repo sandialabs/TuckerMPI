@@ -3,3 +3,4 @@ ADD_LIBRARY(serial_tucker ${SOURCES})
 
 ADD_SUBDIRECTORY(tests)
 ADD_SUBDIRECTORY(compare)
+ADD_SUBDIRECTORY(drivers)
