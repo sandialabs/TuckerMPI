@@ -884,7 +884,7 @@ void importTensorBinary(const char* filename, Tensor* t)
   // Get the maximum file size we can read
   const std::streamoff MAX_OFFSET =
       std::numeric_limits<std::streamoff>::max();
-  std::cout << "The maximum file size is " << MAX_OFFSET << " bytes\n";
+//  std::cout << "The maximum file size is " << MAX_OFFSET << " bytes\n";
 
   // Open file
   std::ifstream ifs;
@@ -897,7 +897,7 @@ void importTensorBinary(const char* filename, Tensor* t)
   ifs.seekg(0, std::ios::end);
   end = ifs.tellg();
   size = end - begin;
-  std::cout << "Reading " << size << " bytes...\n";
+//  std::cout << "Reading " << size << " bytes...\n";
 
   // Assert that this size is consistent with the number of tensor entries
   size_t numEntries = t->getNumElements();
@@ -988,12 +988,11 @@ void exportTensorBinary(const Tensor* Y, const char* filename)
   // Get the maximum file size we can write
   const std::streamoff MAX_OFFSET =
       std::numeric_limits<std::streamoff>::max();
-  std::cout << "The maximum file size is " << MAX_OFFSET << " bytes\n";
+//  std::cout << "The maximum file size is " << MAX_OFFSET << " bytes\n";
 
   // Determine how many bytes we are writing
   size_t numEntries = Y->getNumElements();
-  std::cout << "Writing " << numEntries*sizeof(double)
-            << " bytes...\n";
+//  std::cout << "Writing " << numEntries*sizeof(double) << " bytes...\n";
 
   // Open file
   std::ofstream ofs;
