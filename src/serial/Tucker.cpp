@@ -953,6 +953,38 @@ Matrix* importMatrix(const char* filename)
 }
 
 
+void writeTensorBinary(const Tensor* Y, const char* filename)
+{
+  // Count the number of filenames
+   std::ifstream inStream(filename);
+
+   std::string temp;
+   int nfiles = 0;
+   while(inStream >> temp) {
+     nfiles++;
+   }
+
+   inStream.close();
+
+   if(nfiles == 1) {
+     exportTensorBinary(Y,temp.c_str());
+   }
+   else {
+     int ndims = Y->N();
+     if(nfiles != Y->size(ndims-1)) {
+       std::ostringstream oss;
+       oss << "Tucker::writeTensorBinary(const Tensor* Y, const char* filename: "
+           << "The number of filenames you provided is "
+           << nfiles << ", but the dimension of the tensor's last mode is "
+           << Y->size(ndims-1);
+
+       throw std::runtime_error(oss.str());
+     }
+     exportTimeSeries(Y,filename);
+   }
+}
+
+
 void exportTensor(const Tensor* Y, const char* filename)
 {
   // Open the file
@@ -1005,6 +1037,36 @@ void exportTensorBinary(const Tensor* Y, const char* filename)
 
   // Close the file
   ofs.close();
+}
+
+
+void exportTimeSeries(const Tensor* Y, const char* filename)
+{
+  // Open the file
+  std::ifstream ifs;
+  ifs.open(filename);
+
+  // Determine how many bytes we are writing per file
+  int N = Y->N();
+  size_t numEntriesPerTimestep = Y->size().prod(0,N-2);
+
+  int nsteps = Y->size(N-1);
+  size_t offset = 0;
+  for(int step=0; step<nsteps; step++) {
+    std::string stepFilename;
+    ifs >> stepFilename;
+    std::cout << "Writing file " << stepFilename << std::endl;
+
+    std::ofstream ofs;
+    ofs.open(stepFilename.c_str(), std::ios::out | std::ios::binary);
+    assert(ofs.is_open());
+
+    const double* data = Y->data() + offset;
+    ofs.write((char*)data,numEntriesPerTimestep*sizeof(double));
+    ofs.close();
+
+    offset += numEntriesPerTimestep;
+  }
 }
 
 } // end namespace Tucker

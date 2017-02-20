@@ -392,6 +392,8 @@ void importTensorBinary(const char* filename, Tensor* t);
  */
 Matrix* importMatrix(const char* filename);
 
+void writeTensorBinary(const Tensor* Y, const char* filename);
+
 /** \brief Writes a tensor to a text file
  *
  * The output file can be read by the MATLAB tensor toolbox.
@@ -413,6 +415,8 @@ void exportTensor(const Tensor* Y, const char* filename);
  * \todo Ensure that this function outputs matrices correctly
  */
 void exportTensorBinary(const Tensor* Y, const char* filename);
+
+void exportTimeSeries(const Tensor* Y, const char* filename);
 
 } // end of namespace Tucker
 

@@ -321,7 +321,7 @@ int main(int argc, char* argv[])
   ////////////////////////////////////////////
   Tucker::Timer* writeTimer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
   writeTimer->start();
-  Tucker::exportTensorBinary(result, out_fns_file.c_str());
+  Tucker::writeTensorBinary(result, out_fns_file.c_str());
   writeTimer->stop();
   std::cout << "Time spent writing: " << writeTimer->duration() << "s\n";
   Tucker::MemoryManager::safe_delete<Tucker::Timer>(writeTimer);
