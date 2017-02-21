@@ -25,8 +25,8 @@ int main(int argc, char* argv[])
   Tucker::Tensor t2(sz);
 
   // Read the binary files
-  Tucker::importTensorBinary(argv[2], &t1);
-  Tucker::importTensorBinary(argv[3], &t2);
+  Tucker::importTensorBinary(&t1, argv[2]);
+  Tucker::importTensorBinary(&t2, argv[3]);
 
   // Read the tolerance
   double tol = atof(argv[4]);

@@ -262,7 +262,7 @@ int main(int argc, char* argv[])
   std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn +
             "_core.mpi";
   fact->G = Tucker::MemoryManager::safe_new<Tucker::Tensor>(*coreSize);
-  Tucker::importTensorBinary(coreFilename.c_str(),fact->G);
+  Tucker::importTensorBinary(fact->G, coreFilename.c_str());
 
   size_t nnz = fact->G->getNumElements();
   std::cout << "Core tensor size: " << fact->G->size() << ", or ";
@@ -277,7 +277,7 @@ int main(int argc, char* argv[])
     ss << sthosvd_dir << "/" << sthosvd_fn << "_mat_" << mode << ".mpi";
 
     fact->U[mode] = Tucker::MemoryManager::safe_new<Tucker::Matrix>((*I_dims)[mode],(*coreSize)[mode]);
-    Tucker::importTensorBinary(ss.str().c_str(), fact->U[mode]);
+    Tucker::importTensorBinary(fact->U[mode], ss.str().c_str());
   }
   readTimer->stop();
   std::cout << "Time spent reading: " << readTimer->duration() << "s\n";

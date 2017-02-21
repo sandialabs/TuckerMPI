@@ -84,7 +84,7 @@ int main()
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
 
   // Normalize the tensor
-  Tucker::normalizeTensorStandardCentering(tensor,0);
+  Tucker::normalizeTensorStandardCentering(tensor,0,1e-10);
 
   // Read true solution from file
   true_sol = Tucker::importTensor("input_files/3x5x7x11_sc0.txt");
@@ -101,7 +101,7 @@ int main()
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
 
   // Normalize the tensor
-  Tucker::normalizeTensorStandardCentering(tensor,1);
+  Tucker::normalizeTensorStandardCentering(tensor,1,1e-10);
 
   // Read true solution from file
   true_sol = Tucker::importTensor("input_files/3x5x7x11_sc1.txt");
@@ -118,7 +118,7 @@ int main()
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
 
   // Normalize the tensor
-  Tucker::normalizeTensorStandardCentering(tensor,2);
+  Tucker::normalizeTensorStandardCentering(tensor,2,1e-10);
 
   // Read true solution from file
   true_sol = Tucker::importTensor("input_files/3x5x7x11_sc2.txt");
@@ -135,7 +135,7 @@ int main()
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
 
   // Normalize the tensor
-  Tucker::normalizeTensorStandardCentering(tensor,3);
+  Tucker::normalizeTensorStandardCentering(tensor,3,1e-10);
 
   // Read true solution from file
   true_sol = Tucker::importTensor("input_files/3x5x7x11_sc3.txt");

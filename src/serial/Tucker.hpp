@@ -358,7 +358,11 @@ void transformSlices(Tensor* Y, int mode, const double* scales, const double* sh
  */
 void normalizeTensorMinMax(Tensor* Y, int mode);
 
-void normalizeTensorStandardCentering(Tensor* Y, int mode);
+void normalizeTensorMax(Tensor* Y, int mode);
+
+void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh);
+
+void readTensorBinary(Tensor* Y, const char* filename);
 
 /** \brief Imports a tensor from a text file
  *
@@ -382,7 +386,9 @@ Tensor* importTensor(const char* filename);
  * \param[in] filename Name of file to be read
  * \param[in,out] t Tensor to be read
  */
-void importTensorBinary(const char* filename, Tensor* t);
+void importTensorBinary(Tensor* t, const char* filename);
+
+void importTimeSeries(Tensor* Y, const char* filename);
 
 /** \brief Imports a tensor from a text file
  *

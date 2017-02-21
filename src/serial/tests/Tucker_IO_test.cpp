@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
   // Read a tensor from the binary file
   Tucker::Tensor* Y2 =
       Tucker::MemoryManager::safe_new<Tucker::Tensor>(Y->size());
-  Tucker::importTensorBinary(filename.c_str(), Y2);
+  Tucker::importTensorBinary(Y2, filename.c_str());
 
   if(!isApproxEqual(Y, Y2, 1e-10)) {
     std::cout << "Y and Y2 are not equal\n";

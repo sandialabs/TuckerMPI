@@ -811,7 +811,26 @@ void normalizeTensorMinMax(Tensor* Y, int mode)
   MemoryManager::safe_delete<MetricData>(metrics);
 }
 
-void normalizeTensorStandardCentering(Tensor* Y, int mode)
+void normalizeTensorMax(Tensor* Y, int mode)
+{
+  Tucker::MetricData* metrics = computeSliceMetrics(Y, mode,
+      Tucker::MIN + Tucker::MAX);
+  int sizeOfModeDim = Y->size(mode);
+  double* scales = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
+  double* shifts = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
+  for(int i=0; i<sizeOfModeDim; i++) {
+    double scaleval = std::max(std::abs(metrics->getMinData()[i]),
+        std::abs(metrics->getMaxData()[i]));
+    scales[i] = scaleval;
+    shifts[i] = 0;
+  }
+  transformSlices(Y,mode,scales,shifts);
+  Tucker::MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete<Tucker::MetricData>(metrics);
+}
+
+void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh)
 {
   MetricData* metrics = computeSliceMetrics(Y, mode, MEAN+VARIANCE);
   int sizeOfModeDim = Y->size(mode);
@@ -822,10 +841,7 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode)
     shifts[i] = -metrics->getMeanData()[i];
 
     std::cout << shifts[i] << " " << scales[i] << std::endl;
-    if(scales[i] < 1e-10) {
-      std::cout << "Slice " << i
-          << " is below the cutoff. True value is: "
-          << scales[i] << std::endl;
+    if(scales[i] < stdThresh) {
       scales[i] = 1;
     }
   }
@@ -833,6 +849,38 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode)
   MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
   MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
   MemoryManager::safe_delete<MetricData>(metrics);
+}
+
+
+void readTensorBinary(Tensor* Y, const char* filename)
+{
+  // Count the number of filenames
+  std::ifstream inStream(filename);
+
+  std::string temp;
+  int nfiles = 0;
+  while(inStream >> temp) {
+    nfiles++;
+  }
+
+  inStream.close();
+
+  if(nfiles == 1) {
+    importTensorBinary(Y,temp.c_str());
+  }
+  else {
+    int ndims = Y->N();
+    if(nfiles != Y->size(ndims-1)) {
+      std::ostringstream oss;
+      oss << "Tucker::readTensorBinary(Tensor* Y, const char* filename: "
+          << "The number of filenames you provided is "
+          << nfiles << ", but the dimension of the tensor's last mode is "
+          << Y->size(ndims-1);
+
+      throw std::runtime_error(oss.str());
+    }
+    importTimeSeries(Y,filename);
+  }
 }
 
 
@@ -879,7 +927,7 @@ Tensor* importTensor(const char* filename)
 }
 
 /// \todo Investigate potential endian-ness problem
-void importTensorBinary(const char* filename, Tensor* t)
+void importTensorBinary(Tensor* t, const char* filename)
 {
   // Get the maximum file size we can read
   const std::streamoff MAX_OFFSET =
@@ -910,6 +958,54 @@ void importTensorBinary(const char* filename, Tensor* t)
 
   // Close the file
   ifs.close();
+}
+
+
+void importTimeSeries(Tensor* Y, const char* filename)
+{
+   // Open the file
+   std::ifstream ifs;
+   ifs.open(filename);
+
+   // Define data layout parameters
+   int ndims = Y->N();
+
+   int nsteps = Y->size(ndims-1);
+   double* dataPtr = Y->data();
+   size_t count = Y->size().prod(0,ndims-2);
+   assert(count <= std::numeric_limits<int>::max());
+
+   for(int step=0; step<nsteps; step++) {
+     std::string stepFilename;
+     ifs >> stepFilename;
+     std::cout << "Reading file " << stepFilename << std::endl;
+
+     std::ifstream bifs;
+     bifs.open(stepFilename.c_str(), std::ios::in | std::ios::binary);
+     assert(bifs.is_open());
+
+     // Get the size of the file
+     std::streampos begin, end, size;
+     begin = bifs.tellg();
+     bifs.seekg(0, std::ios::end);
+     end = bifs.tellg();
+     size = end - begin;
+
+     // Assert that this size is consistent with the number of tensor entries
+     size_t numEntries = Y->getNumElements();
+     assert(size == numEntries*sizeof(double));
+
+     // Read the file
+     bifs.seekg(0, std::ios::beg);
+     bifs.read((char*)dataPtr,size);
+
+     bifs.close();
+
+     // Increment the pointer
+     dataPtr += count;
+   }
+
+   ifs.close();
 }
 
 
