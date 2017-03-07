@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
     std::cout << "File containing a list of filenames to output the scaled data into\n";
     std::cout << "- Preprocessed output file list = " << pre_fns_file << std::endl << std::endl;
 
-    std::cout << "If true, record the result of ST-HOSVD (the core tensor and all factors\n";
+    std::cout << "If true, record the result of ST-HOSVD (the core tensor and all factors)\n";
     std::cout << "- Write STHOSVD result = " << (boolWriteSTHOSVD ? "true" : "false") << std::endl << std::endl;
 
     std::cout << "Directory location of ST-HOSVD output files\n";
@@ -169,7 +169,7 @@ int main(int argc, char* argv[])
       << std::setw(13) << "Max"
       << std::endl;
 
-  for(int i=0; i<nnz; i++) {
+  for(int i=0; i<X->size(scale_mode); i++) {
     double stdev = sqrt(metrics->getVarianceData()[i]);
 
     if(stdev < stdThresh) {
