@@ -336,8 +336,13 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
   struct TuckerTensor* factorization = MemoryManager::safe_new<struct TuckerTensor>(ndims);
   factorization->total_timer_.start();
 
+  // Compute the threshold
   double tensorNorm = X->norm2();
   double thresh = epsilon*epsilon*tensorNorm/X->N();
+  std::cout << "\tAutoST-HOSVD::Tensor Norm: "
+      << std::sqrt(tensorNorm) << "...\n";
+  std::cout << "\tAutoST-HOSVD::Relative Threshold: "
+      << thresh << "...\n";
 
   const Tensor* Y = X;
 
@@ -346,28 +351,42 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
   {
     // Compute the Gram matrix
     // S = Y_n*Y_n'
+    std::cout << "\tAutoST-HOSVD::Starting Gram(" << n << ")...\n";
     factorization->gram_timer_[n].start();
     Matrix* S = computeGram(Y,n);
     factorization->gram_timer_[n].stop();
+    std::cout << "\tAutoST-HOSVD::Gram(" << n << ") time: "
+        << factorization->gram_timer_[n].duration() << "s\n";
 
     // Compute the leading eigenvectors of S
     // call dsyev(jobz, uplo, n, a, lda, w, work, lwork, info)
+    std::cout << "\tAutoST-HOSVD::Starting Evecs(" << n << ")...\n";
     factorization->eigen_timer_[n].start();
     computeEigenpairs(S, factorization->eigenvalues[n],
         factorization->U[n], thresh, flipSign);
     factorization->eigen_timer_[n].stop();
+    std::cout << "\tAutoST-HOSVD::EVECS(" << n << ") time: "
+        << factorization->eigen_timer_[n].duration() << "s\n";
 
     // Free the Gram matrix
     MemoryManager::safe_delete<Matrix>(S);
 
     // Perform the tensor times matrix multiplication
+    std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
     factorization->ttm_timer_[n].start();
     Tensor* temp = ttm(Y,n,factorization->U[n],true);
     factorization->ttm_timer_[n].stop();
+    std::cout << "\tAutoST-HOSVD::TTM(" << n << ") time: "
+        << factorization->ttm_timer_[n].duration() << "s\n";
     if(n > 0) {
       MemoryManager::safe_delete<const Tensor>(Y);
     }
     Y = temp;
+
+    size_t nnz = Y->getNumElements();
+    std::cout << "Local tensor size after STHOSVD iteration "
+        << n << ": " << Y->size() << ", or ";
+    Tucker::printBytes(nnz*sizeof(double));
   }
 
   factorization->G = const_cast<Tensor*>(Y);
