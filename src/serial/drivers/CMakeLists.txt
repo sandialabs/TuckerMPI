@@ -5,3 +5,6 @@ TARGET_LINK_LIBRARIES(Tucker_reconstruct serial_tucker ${BLAS_LIBRARIES} ${LAPAC
 
 ADD_EXECUTABLE(Tucker_sthosvd Tucker_sthosvd.cpp)
 TARGET_LINK_LIBRARIES(Tucker_sthosvd serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_generate Tucker_generate.cpp)
+TARGET_LINK_LIBRARIES(Tucker_generate serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
