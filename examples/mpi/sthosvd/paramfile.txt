@@ -1,0 +1,5 @@
+Grid dims = 16 1 1 1 1
+Automatic rank determination = true
+Perform STHOSVD = true
+Print options = true
+Global dims = 500 250 50 11 40
