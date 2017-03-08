@@ -93,6 +93,8 @@ int main(int argc, char* argv[])
   // Generate a random core tensor //
   ///////////////////////////////////
   std::cout << "Generating a random core tensor...\n";
+  Tucker::Timer coreTimer;
+  coreTimer.start();
   Tucker::TuckerTensor fact(nd);
   fact.G = Tucker::MemoryManager::safe_new<Tucker::Tensor>(*R_dims);
   size_t nnz = R_dims->prod();
@@ -100,10 +102,14 @@ int main(int argc, char* argv[])
   for(size_t i=0; i<nnz; i++) {
     dataptr[i] = distribution(generator);
   }
+  coreTimer.stop();
+  std::cout << "Time spent generating core tensor: " << coreTimer.duration() << "s\n";
 
   ////////////////////////////////
   // Create the factor matrices //
   ////////////////////////////////
+  Tucker::Timer factorTimer;
+  factorTimer.start();
   for(int d=0; d<nd; d++) {
     std::cout << "Generating factor matrix " << d << "...\n";
     int nrows = (*I_dims)[d];
@@ -115,12 +121,16 @@ int main(int argc, char* argv[])
       dataptr[i] = distribution(generator);
     }
   }
+  factorTimer.stop();
+  std::cout << "Time spent generating factor matrices: " << factorTimer.duration() << "s\n";
 
   ////////////////////////////////////////////////////////
   // Construct the global tensor using a series of TTMs //
   ////////////////////////////////////////////////////////
   Tucker::Tensor* product = fact.G;
   for(int d=0; d<nd; d++) {
+    Tucker::Timer ttmTimer;
+    ttmTimer.start();
     std::cout << "Performing mode " << d << " TTM...\n";
     Tucker::Tensor* temp = Tucker::ttm(product, d, fact.U[d]);
 
@@ -128,6 +138,8 @@ int main(int argc, char* argv[])
       Tucker::MemoryManager::safe_delete<Tucker::Tensor>(product);
     }
     product = temp;
+    ttmTimer.stop();
+    std::cout << "Time spent performing mode " << d << " TTM: " << ttmTimer.duration() << "s\n";
   }
 
   /////////////////////////////////////////////////////////////////////
@@ -135,7 +147,11 @@ int main(int argc, char* argv[])
   // \todo This could be more efficient; see Bader/Kolda for details //
   /////////////////////////////////////////////////////////////////////
   std::cout << "Computing the global tensor norm...\n";
+  Tucker::Timer normTimer;
+  normTimer.start();
   double normM = std::sqrt(product->norm2());
+  normTimer.stop();
+  std::cout << "Time spent computing the tensor norm: " << normTimer.duration() << "s\n";
 
   ///////////////////////////////////////////////////////////////////
   // Compute the estimated norm of the noise matrix                //
@@ -156,16 +172,24 @@ int main(int argc, char* argv[])
   // noise tensor                                                     //
   //////////////////////////////////////////////////////////////////////
   std::cout << "Adding noise...\n";
+  Tucker::Timer noiseTimer;
+  noiseTimer.start();
   dataptr = product->data();
   for(size_t i=0; i<nnz; i++) {
     dataptr[i] += alpha*distribution(generator);
   }
+  noiseTimer.stop();
+  std::cout << "Time spent adding noise: " << noiseTimer.duration() << "s\n";
 
   //////////////////////////////
   // Write the tensor to disk //
   //////////////////////////////
   std::cout << "Writing tensor to disk...\n";
+  Tucker::Timer writeTimer;
+  writeTimer.start();
   Tucker::writeTensorBinary(product, out_fns_file.c_str());
+  writeTimer.stop();
+  std::cout << "Time spent writing to disk: " << writeTimer.duration() << "s\n";
 
   std::cout << "Done!\n";
   return EXIT_SUCCESS;
