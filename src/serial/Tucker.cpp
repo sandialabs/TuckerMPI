@@ -814,7 +814,7 @@ void transformSlices(Tensor* Y, int mode, const double* scales, const double* sh
 }
 
 
-void normalizeTensorMinMax(Tensor* Y, int mode)
+void normalizeTensorMinMax(Tensor* Y, int mode, const char* scale_file)
 {
   MetricData* metrics = computeSliceMetrics(Y, mode, MAX+MIN);
   int sizeOfModeDim = Y->size(mode);
@@ -825,12 +825,13 @@ void normalizeTensorMinMax(Tensor* Y, int mode)
     shifts[i] = -metrics->getMinData()[i];
   }
   transformSlices(Y,mode,scales,shifts);
+  if(scale_file) writeScaleShift(mode,sizeOfModeDim,scales,shifts,scale_file);
   MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
   MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
   MemoryManager::safe_delete<MetricData>(metrics);
 }
 
-void normalizeTensorMax(Tensor* Y, int mode)
+void normalizeTensorMax(Tensor* Y, int mode, const char* scale_file)
 {
   Tucker::MetricData* metrics = computeSliceMetrics(Y, mode,
       Tucker::MIN + Tucker::MAX);
@@ -844,12 +845,13 @@ void normalizeTensorMax(Tensor* Y, int mode)
     shifts[i] = 0;
   }
   transformSlices(Y,mode,scales,shifts);
+  if(scale_file) writeScaleShift(mode,sizeOfModeDim,scales,shifts,scale_file);
   Tucker::MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
   Tucker::MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
   Tucker::MemoryManager::safe_delete<Tucker::MetricData>(metrics);
 }
 
-void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh)
+void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh, const char* scale_file)
 {
   MetricData* metrics = computeSliceMetrics(Y, mode, MEAN+VARIANCE);
   int sizeOfModeDim = Y->size(mode);
@@ -859,15 +861,30 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh)
     scales[i] = sqrt(metrics->getVarianceData()[i]);
     shifts[i] = -metrics->getMeanData()[i];
 
-    std::cout << shifts[i] << " " << scales[i] << std::endl;
     if(scales[i] < stdThresh) {
       scales[i] = 1;
     }
   }
   transformSlices(Y,mode,scales,shifts);
+  if(scale_file) writeScaleShift(mode,sizeOfModeDim,scales,shifts,scale_file);
   MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
   MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
   MemoryManager::safe_delete<MetricData>(metrics);
+}
+
+void writeScaleShift(const int mode, const int sizeOfModeDim, const double* scales,
+    const double* shifts, const char* scale_file)
+{
+  std::ofstream outStream(scale_file);
+
+  outStream << mode << std::endl;
+
+  for(int i=0; i<sizeOfModeDim; i++)
+  {
+    outStream << scales[i] << " " << shifts[i] << std::endl;
+  }
+
+  outStream.close();
 }
 
 

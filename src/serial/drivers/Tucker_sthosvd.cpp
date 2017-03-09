@@ -188,24 +188,25 @@ int main(int argc, char* argv[])
 
   statStream.close();
 
-
   ///////////////////////////
   // Perform preprocessing //
   ///////////////////////////
+  std::string scale_file = sthosvd_dir + "/" + sthosvd_fn +
+      "_scale.txt";
   if(scaling_type == "Max") {
     std::cout << "Normalizing the tensor by maximum entry - mode "
               << scale_mode << std::endl;
-    normalizeTensorMax(X, scale_mode);
+    normalizeTensorMax(X, scale_mode, scale_file.c_str());
   }
   else if(scaling_type == "MinMax") {
     std::cout << "Normalizing the tensor using minmax scaling - mode "
               << scale_mode << std::endl;
-    normalizeTensorMinMax(X, scale_mode);
+    normalizeTensorMinMax(X, scale_mode, scale_file.c_str());
   }
   else if(scaling_type == "StandardCentering") {
     std::cout << "Normalizing the tensor using standard centering - mode "
               << scale_mode << std::endl;
-    normalizeTensorStandardCentering(X, scale_mode, stdThresh);
+    normalizeTensorStandardCentering(X, scale_mode, stdThresh, scale_file.c_str());
   }
   else if(scaling_type == "None") {
     std::cout << "Not scaling the tensor\n";
@@ -256,6 +257,15 @@ int main(int argc, char* argv[])
       std::ofstream of(dimFilename);
       for(int mode=0; mode<nd; mode++) {
         of << solution->G->size(mode) << std::endl;
+      }
+      of.close();
+
+      // Write dimension of global tensor
+      std::string sizeFilename = sthosvd_dir + "/" + sthosvd_fn +
+          "_size.txt";
+      of.open(sizeFilename);
+      for(int mode=0; mode<nd; mode++) {
+        of << (*I_dims)[mode] << std::endl;
       }
       of.close();
 

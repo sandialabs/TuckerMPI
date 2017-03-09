@@ -29,7 +29,6 @@ int main(int argc, char* argv[])
   std::vector<std::string> fileAsString = Tucker::getFileAsStrings(paramfn);
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
 
-  Tucker::SizeArray* I_dims             = Tucker::stringParseSizeArray(fileAsString, "Global dims");
   Tucker::SizeArray* subs_begin         = Tucker::stringParseSizeArray(fileAsString, "Beginning subscripts");
   Tucker::SizeArray* subs_end           = Tucker::stringParseSizeArray(fileAsString, "Ending subscripts");
   Tucker::SizeArray* rec_order          = Tucker::stringParseSizeArray(fileAsString, "Reconstruction order");
@@ -41,11 +40,6 @@ int main(int argc, char* argv[])
   /////////////////////////////////////////////////
   // Assert that none of the SizeArrays are null //
   /////////////////////////////////////////////////
-  if(I_dims == NULL) {
-    std::cerr << "Error: Global dims is a required parameter\n";
-    return EXIT_FAILURE;
-  }
-
   if(subs_begin == NULL) {
     std::cerr << "Error: Beginning subscripts is a required parameter\n";
     return EXIT_FAILURE;
@@ -60,9 +54,6 @@ int main(int argc, char* argv[])
   // Print options //
   ///////////////////
   if (boolPrintOptions) {
-    std::cout << "Global dimensions of the original tensor\n";
-    std::cout << "- Global dims = " << *I_dims << std::endl << std::endl;
-
     std::cout << "Start of subscripts to be recomputed\n";
     std::cout << "- Beginning subscripts = " << *subs_begin << std::endl << std::endl;
 
@@ -93,18 +84,11 @@ int main(int argc, char* argv[])
   ///////////////////////
   // Check array sizes //
   ///////////////////////
-  int nd = I_dims->size();
-
-  if (nd != subs_begin->size()) {
-    std::cerr << "Error: The size of the subs_begin array (" << subs_begin->size();
-    std::cerr << ") must be equal to the size of the global dimension array ("
-        << nd << ")" << std::endl;
-    return EXIT_FAILURE;
-  }
+  int nd = subs_begin->size();
 
   if (nd != subs_end->size()) {
     std::cerr << "Error: The size of the subs_end array (" << subs_end->size();
-    std::cerr << ") must be equal to the size of the global dimension array ("
+    std::cerr << ") must be equal to the size of the subs_begin array ("
         << nd << ")" << std::endl;
 
     return EXIT_FAILURE;
@@ -112,7 +96,7 @@ int main(int argc, char* argv[])
 
   if (rec_order != NULL && nd != rec_order->size()) {
     std::cerr << "Error: The size of the rec_order array (" << rec_order->size();
-    std::cerr << ") must be equal to the size of the processor grid ("
+    std::cerr << ") must be equal to the size of the subs_begin array ("
         << nd << ")" << std::endl;
 
     return EXIT_FAILURE;
@@ -136,14 +120,6 @@ int main(int argc, char* argv[])
 
       return EXIT_FAILURE;
     }
-
-    if((*subs_end)[i] >= (*I_dims)[i]) {
-      std::cerr << "Error: subs_end[" << i << "] = "
-          << (*subs_end)[i] << " >= I_dims[" << i << "] = "
-          << (*I_dims)[i] << std::endl;
-
-      return EXIT_FAILURE;
-    }
   }
 
   ////////////////////////////////////
@@ -163,6 +139,26 @@ int main(int argc, char* argv[])
 
   for(int mode=0; mode<nd; mode++) {
     ifs >> (*coreSize)[mode];
+  }
+  ifs.close();
+
+  //////////////////////////////////////
+  // Read the global size from a file //
+  //////////////////////////////////////
+  Tucker::SizeArray* I_dims = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
+  std::string sizeFilename = sthosvd_dir + "/" + sthosvd_fn +
+      "_size.txt";
+  ifs.open(sizeFilename);
+
+  if(!ifs.is_open()) {
+    std::cerr << "Failed to open global size file: " << sizeFilename
+              << std::endl;
+
+    return EXIT_FAILURE;
+  }
+
+  for(int mode=0; mode<nd; mode++) {
+    ifs >> (*I_dims)[mode];
   }
   ifs.close();
 
@@ -313,8 +309,48 @@ int main(int argc, char* argv[])
     Tucker::printBytes(nnz*sizeof(double));
   }
   reconstructTimer->stop();
-  std::cout << "Time spent reconstructing: " << readTimer->duration() << "s\n";
+  std::cout << "Time spent reconstructing: " << reconstructTimer->duration() << "s\n";
   Tucker::MemoryManager::safe_delete<Tucker::Timer>(reconstructTimer);
+
+  ///////////////////////////////////////////////////////
+  // Scale and shift if necessary                      //
+  // This step only happens if the scaling file exists //
+  ///////////////////////////////////////////////////////
+  Tucker::Timer* scaleTimer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
+  scaleTimer->start();
+  std::string scaleFilename = sthosvd_dir + "/" + sthosvd_fn +
+      "_scale.txt";
+  ifs.open(scaleFilename);
+
+  if(ifs.is_open()) {
+    int scale_mode;
+    ifs >> scale_mode;
+    std::cout << "Scaling mode " << scale_mode << std::endl;
+    int scale_size = 1 + (*subs_end)[scale_mode] - (*subs_begin)[scale_mode];
+    double* scales = Tucker::MemoryManager::safe_new_array<double>(scale_size);
+    double* shifts = Tucker::MemoryManager::safe_new_array<double>(scale_size);
+    for(int i=0; i<(*I_dims)[scale_mode]; i++) {
+      double scale, shift;
+      ifs >> scale >> shift;
+      if(i >= (*subs_begin)[scale_mode] && i <= (*subs_end)[scale_mode]) {
+        scales[i-(*subs_begin)[scale_mode]] = 1./scale;
+        shifts[i-(*subs_begin)[scale_mode]] = -shift/scale;
+      }
+    }
+    ifs.close();
+
+    Tucker::transformSlices(result, scale_mode, scales, shifts);
+
+    Tucker::MemoryManager::safe_delete_array<double>(scales, scale_size);
+    Tucker::MemoryManager::safe_delete_array<double>(shifts, scale_size);
+  }
+  else {
+    std::cerr << "Failed to open scaling and shifting file: " << scaleFilename
+              << "\nAssuming no scaling and shifting was performed\n";
+  }
+  scaleTimer->stop();
+  std::cout << "Time spent shifting and scaling: " << scaleTimer->duration() << "s\n";
+  Tucker::MemoryManager::safe_delete<Tucker::Timer>(scaleTimer);
 
   ////////////////////////////////////////////
   // Write the reconstructed tensor to disk //
