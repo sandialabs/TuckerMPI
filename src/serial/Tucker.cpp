@@ -964,7 +964,6 @@ Tensor* importTensor(const char* filename)
   return t;
 }
 
-/// \todo Investigate potential endian-ness problem
 void importTensorBinary(Tensor* t, const char* filename)
 {
   // Get the maximum file size we can read
@@ -1058,7 +1057,7 @@ Matrix* importMatrix(const char* filename)
   // If the type is not "tensor", that's bad
   std::string tensorStr;
   ifs >> tensorStr;
-  assert(tensorStr == "tensor");
+  assert(tensorStr == "tensor" || tensorStr == "matrix");
 
   // Read the number of dimensions
   int ndims;

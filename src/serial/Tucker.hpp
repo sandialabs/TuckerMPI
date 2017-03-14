@@ -396,8 +396,6 @@ void importTimeSeries(Tensor* Y, const char* filename);
 /** \brief Imports a tensor from a text file
  *
  * \param[in] filename Name of file to be read
- * \todo This function currently rejects files of type "matrix"
- * and only accepts those of type "tensor"
  */
 Matrix* importMatrix(const char* filename);
 
@@ -409,8 +407,6 @@ void writeTensorBinary(const Tensor* Y, const char* filename);
  *
  * \param[in] Y tensor to be written to file
  * \param[in] filename Name of file to be written to
- *
- * \todo Ensure that this function outputs matrices correctly
  */
 void exportTensor(const Tensor* Y, const char* filename);
 
@@ -420,8 +416,6 @@ void exportTensor(const Tensor* Y, const char* filename);
  *
  * \param[in] Y tensor to be written to file
  * \param[in] filename Name of file to be written to
- *
- * \todo Ensure that this function outputs matrices correctly
  */
 void exportTensorBinary(const Tensor* Y, const char* filename);
 
