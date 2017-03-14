@@ -43,6 +43,7 @@ namespace Tucker {
 Timer::Timer()
 {
   duration_ = 0;
+  start_called_ = false;
 }
 
 Timer::~Timer()
@@ -53,10 +54,12 @@ Timer::~Timer()
 void Timer::start()
 {
   start_ = std::chrono::steady_clock::now();
+  start_called_ = true;
 }
 
 void Timer::stop()
 {
+  assert(start_called_);
   end_ = std::chrono::steady_clock::now();
   std::chrono::duration<double> time_span = end_ - start_;
   duration_ += time_span.count();

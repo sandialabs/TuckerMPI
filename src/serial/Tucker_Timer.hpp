@@ -64,8 +64,6 @@ public:
   /** \brief Stops the timer and computes the elapsed time
    *
    * Uses std::chrono::steady_clock
-   *
-   * \todo This function should check whether start was called
    */
   void stop();
 
@@ -76,6 +74,9 @@ private:
   /// @cond EXCLUDE
   Timer(const Timer&);
   /// @endcond
+
+  /// \brief Whether start has been called
+  bool start_called_;
 
   /// \brief Time when start was called
   std::chrono::steady_clock::time_point start_;
