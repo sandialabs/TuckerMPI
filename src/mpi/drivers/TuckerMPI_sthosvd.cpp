@@ -298,6 +298,39 @@ int main(int argc, char* argv[])
       }
 
       statStream.close();
+
+      if(scaling_type != "None") {
+        std::string scale_file = sthosvd_dir + "/" + sthosvd_fn +
+            "_scale.txt";
+        std::ofstream outStream(scale_file);
+
+        outStream << scale_mode << std::endl;
+
+        for(int i=0; i<numEntries; i++)
+        {
+          double scales, shifts;
+          if(scaling_type == "Max") {
+            scales = maxs[i] - mins[i];
+            shifts = -mins[i];
+          }
+          else if(scaling_type == "MinMax") {
+            scales = std::max(-mins[i], maxs[i]);
+            shifts = 0;
+          }
+          else if(scaling_type == "StandardCentering") {
+            scales = sqrt(vars[i]);
+            shifts = -means[i];
+
+            if(scales < stdThresh) {
+              scales = 1;
+            }
+          }
+
+          outStream << scales << " " << shifts << std::endl;
+        }
+
+        outStream.close();
+      }
     }
   }
 
@@ -420,6 +453,15 @@ int main(int argc, char* argv[])
               << ".mpi";       // Open the file
           TuckerMPI::exportTensorBinary(ss.str().c_str(), solution->U[mode]);
         }
+
+        // Write dimension of global tensor
+        std::string sizeFilename = sthosvd_dir + "/" + sthosvd_fn +
+            "_size.txt";
+        std::ofstream of(sizeFilename);
+        for(int mode=0; mode<nd; mode++) {
+          of << (*I_dims)[mode] << std::endl;
+        }
+        of.close();
       }
     }
   }

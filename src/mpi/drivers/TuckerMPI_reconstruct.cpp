@@ -45,7 +45,6 @@ int main(int argc, char* argv[])
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
 
   Tucker::SizeArray* proc_grid_dims     = Tucker::stringParseSizeArray(fileAsString, "Grid dims");
-  Tucker::SizeArray* I_dims             = Tucker::stringParseSizeArray(fileAsString, "Global dims");
   Tucker::SizeArray* subs_begin         = Tucker::stringParseSizeArray(fileAsString, "Beginning subscripts");
   Tucker::SizeArray* subs_end           = Tucker::stringParseSizeArray(fileAsString, "Ending subscripts");
   Tucker::SizeArray* rec_order          = Tucker::stringParseSizeArray(fileAsString, "Reconstruction order");
@@ -60,13 +59,6 @@ int main(int argc, char* argv[])
   if(proc_grid_dims == NULL) {
     if(rank == 0)
       std::cerr << "Error: Grid dims is a required parameter\n";
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-  }
-
-  if(I_dims == NULL) {
-    if(rank == 0)
-      std::cerr << "Error: Global dims is a required parameter\n";
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Abort(MPI_COMM_WORLD,1);
   }
@@ -89,9 +81,6 @@ int main(int argc, char* argv[])
   // Print options //
   ///////////////////
   if (rank == 0 && boolPrintOptions) {
-    std::cout << "Global dimensions of the original tensor\n";
-    std::cout << "- Global dims = " << *I_dims << std::endl << std::endl;
-
     std::cout << "Global dimensions of the processor grid\n";
     std::cout << "- Grid dims = " << *proc_grid_dims << std::endl << std::endl;
 
@@ -132,16 +121,6 @@ int main(int argc, char* argv[])
     if (rank==0) {
       std::cerr << "Processor grid dimensions do not multiply to nprocs" << std::endl;
       std::cout << "Processor grid dimensions: " << *proc_grid_dims << std::endl;
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD, 1);
-  }
-
-  if (nd != I_dims->size()) {
-    if (rank == 0) {
-      std::cerr << "Error: The size of global dimension array (" << I_dims->size();
-      std::cerr << ") must be equal to the size of the processor grid ("
-          << nd << ")" << std::endl;
     }
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Abort(MPI_COMM_WORLD, 1);
@@ -199,16 +178,6 @@ int main(int argc, char* argv[])
       MPI_Barrier(MPI_COMM_WORLD);
       MPI_Abort(MPI_COMM_WORLD, 1);
     }
-
-    if((*subs_end)[i] >= (*I_dims)[i]) {
-      if(rank == 0) {
-        std::cerr << "Error: subs_end[" << i << "] = "
-            << (*subs_end)[i] << " >= I_dims[" << i << "] = "
-            << (*I_dims)[i] << std::endl;
-      }
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD, 1);
-    }
   }
 
   ////////////////////////////////////
@@ -236,6 +205,29 @@ int main(int argc, char* argv[])
     ifs.close();
   }
   MPI_Bcast(coreSize->data(),nd,MPI_INT,0,MPI_COMM_WORLD);
+
+  //////////////////////////////////////
+  // Read the global size from a file //
+  //////////////////////////////////////
+  Tucker::SizeArray* I_dims = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
+  if(rank == 0) {
+    std::string sizeFilename = sthosvd_dir + "/" + sthosvd_fn +
+        "_size.txt";
+    std::ifstream ifs(sizeFilename);
+
+    if(!ifs.is_open()) {
+      std::cerr << "Failed to open global size file: " << sizeFilename
+                << std::endl;
+
+      return EXIT_FAILURE;
+    }
+
+    for(int mode=0; mode<nd; mode++) {
+      ifs >> (*I_dims)[mode];
+    }
+    ifs.close();
+  }
+  MPI_Bcast(I_dims->data(),nd,MPI_INT,0,MPI_COMM_WORLD);
 
   //////////////////////////////////////////////
   // Make sure the core size data makes sense //
@@ -401,6 +393,59 @@ int main(int argc, char* argv[])
       Tucker::printBytes(global_nnz*sizeof(double));
     }
   }
+
+  ///////////////////////////////////////////////////////
+  // Scale and shift if necessary                      //
+  // This step only happens if the scaling file exists //
+  ///////////////////////////////////////////////////////
+
+  // Get the mode number
+  std::ifstream ifs;
+  int scale_mode;
+  if(rank == 0) {
+    std::string scaleFilename = sthosvd_dir + "/" + sthosvd_fn +
+        "_scale.txt";
+    ifs.open(scaleFilename);
+
+    if(ifs.is_open()) {
+      ifs >> scale_mode;
+    }
+    else {
+      std::cerr << "Failed to open scaling and shifting file: " << scaleFilename
+                << "\nAssuming no scaling and shifting was performed\n";
+      scale_mode = nd;
+    }
+  }
+  MPI_Bcast(&scale_mode,1,MPI_INT,0,MPI_COMM_WORLD);
+
+  // If the scale_mode < nd, we are scaling
+  if(scale_mode < nd) {
+
+    // \todo This could involve a scatterv.  I have replaced it with an all-gather for simplicity
+    int scale_size = 1 + (*subs_end)[scale_mode] - (*subs_begin)[scale_mode];
+    double* scales = Tucker::MemoryManager::safe_new_array<double>(scale_size);
+    double* shifts = Tucker::MemoryManager::safe_new_array<double>(scale_size);
+    if(rank == 0) {
+      for(int i=0; i<(*I_dims)[scale_mode]; i++) {
+        double scale, shift;
+        ifs >> scale >> shift;
+        if(i >= (*subs_begin)[scale_mode] && i <= (*subs_end)[scale_mode]) {
+          scales[i-(*subs_begin)[scale_mode]] = 1./scale;
+          shifts[i-(*subs_begin)[scale_mode]] = -shift/scale;
+        }
+      }
+      ifs.close();
+    } // end if(rank == 0)
+
+    MPI_Bcast(scales,scale_size,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Bcast(shifts,scale_size,MPI_DOUBLE,0,MPI_COMM_WORLD);
+
+    int row_begin = result->getDistribution()->getMap(scale_mode,false)->getGlobalIndex(0);
+    if(row_begin >= 0) TuckerMPI::transformSlices(result, scale_mode, scales+row_begin, shifts+row_begin);
+
+    Tucker::MemoryManager::safe_delete_array<double>(scales, scale_size);
+    Tucker::MemoryManager::safe_delete_array<double>(shifts, scale_size);
+  } // end if(scale_mode < nd)
 
   ////////////////////////////////////////////
   // Write the reconstructed tensor to disk //
