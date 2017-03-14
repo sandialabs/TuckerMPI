@@ -1,6 +1,5 @@
 Print options = true
 Grid dims = 1 2 2 3
-Global dims = 19 17 13 11
 Beginning subscripts = 2 0 8 2
 Ending subscripts = 4 2 12 2
 STHOSVD directory = ../tests/input_files/reconstruction
