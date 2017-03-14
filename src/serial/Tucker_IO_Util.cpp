@@ -56,8 +56,8 @@ std::string parseString(const int argc, const char* argv[],
     if (cl_arg == string(argv[arg])) {
       // get next cl_arg
       arg++;
-            if (arg >= argc)
-                return "";
+      if (arg >= argc)
+        return "";
       // convert to string
       tmp = string(argv[arg]);
       // return tkr_real if everything is OK

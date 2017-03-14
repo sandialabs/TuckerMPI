@@ -98,13 +98,13 @@ T stringParse(const std::vector<std::string>& lines,
       // In both, the second clause makes sure that filenames with "true" or "false" in them
       // are not replaced by 0 or 1
       if (valueSubstring.find("true") != std::string::npos &&
-        valueSubstring.find_first_not_of("true \t") == std::string::npos) {
+          valueSubstring.find_first_not_of("true \t") == std::string::npos) {
 
-          valueSubstring = "1";
+        valueSubstring = "1";
       } else if (valueSubstring.find("false") != std::string::npos &&
-        valueSubstring.find_first_not_of("true \t") == std::string::npos) {
+          valueSubstring.find_first_not_of("true \t") == std::string::npos) {
 
-          valueSubstring = "0";
+        valueSubstring = "0";
       }
 
       std::stringstream valueStream(valueSubstring);
