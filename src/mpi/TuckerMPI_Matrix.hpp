@@ -75,39 +75,25 @@ public:
    */
   const Tucker::Matrix* getLocalMatrix() const;
 
-  /** \brief Returns the number of entries owned by the calling process
-   *
-   * \todo: Should this be a function?  The user can get the same information
-   * from getLocalMatrix.
-   */
+  //! Returns the number of entries owned by the calling process
   size_t getLocalNumEntries() const;
 
   //! Returns the global number of rows
   int getGlobalNumRows() const;
 
-  /** \brief Returns the number of rows owned by the calling process
-   *
-   * \todo: Should this be a function?  The user can get the same information
-   * from getLocalMatrix.
-   */
+  //! Returns the number of rows owned by the calling process
   int getLocalNumRows() const;
 
   //! Returns the global number of columns
   int getGlobalNumCols() const;
 
-  /** \brief Returns the number of columns owned by the calling process
-   *
-   * \todo: Should this be a function?  The user can get the same information
-   * from getLocalMatrix.
-   */
+  //! Returns the number of columns owned by the calling process
   int getLocalNumCols() const;
 
   /** \brief Returns the map describing the data distribution
    *
    * If the matrix has a block row distribution, this is the row map.
    * Otherwise, it is the column map.
-   *
-   * \todo: Do I actually support both cases correctly?
    */
   const Map* getMap() const;
 

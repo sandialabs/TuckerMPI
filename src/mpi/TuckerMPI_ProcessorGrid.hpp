@@ -59,8 +59,6 @@ public:
    * \param[in] sz Defines the number of processes in each direction
    * \note This class stores a COPY of \a sz
    * \param[in] comm MPI communicator
-   *
-   * \todo Should we assume the communicator is MPI_COMM_WORLD?
    */
   ProcessorGrid(const Tucker::SizeArray& sz, const MPI_Comm& comm);
 
@@ -121,10 +119,7 @@ public:
    */
   int getRank(const int* coords) const;
 
-  /** \brief Gets the number of MPI processors in a given dimension
-   *
-   * \todo Am I calling this everywhere I should?
-   */
+  //! Gets the number of MPI processors in a given dimension
   int getNumProcs(int d, bool squeezed) const;
 
   void squeeze(const Tucker::SizeArray& sz, const MPI_Comm& comm);

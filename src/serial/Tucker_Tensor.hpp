@@ -58,7 +58,6 @@ extern "C" void dgemm_(const char*, const char*, const int*,
  * of which is \f$I_n \times \prod\limits_{k=0}^{n-1}I_k\f$.
  *
  * Example: a \f$3 \times 4 \times 2\f$ tensor
- * \todo Insert tensor picture here
  *
  * Mode 0 unfolding: \n
  * \f$\left[\begin{array}{cccccccc}
@@ -169,7 +168,7 @@ public:
    * \param t2 A tensor to compare
    * \param tol The maximum allowable difference between entries
    *
-   * \todo This doesn't actually need to be a friend function; it should
+   * \note This doesn't actually need to be a friend function; it should
    * probably be a related function.
    */
   friend bool isApproxEqual(const Tensor* t1, const Tensor* t2,

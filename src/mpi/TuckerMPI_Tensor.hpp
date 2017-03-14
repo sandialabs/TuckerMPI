@@ -69,19 +69,13 @@ public:
   //! Returns the global size
   const Tucker::SizeArray& getGlobalSize() const;
 
-  /** \brief Returns the size of the locally owned tensor
-   *
-   * \todo This could also be obtained by getLocalTensor().
-   */
+  //! Returns the size of the locally owned tensor
   const Tucker::SizeArray& getLocalSize() const;
 
   //! Returns the global size of dimension n
   int getGlobalSize(int n) const;
 
-  /** \brief Returns the local size of dimension n
-   *
-   * \todo This could also be obtained by getLocalTensor().
-   */
+  //! Returns the local size of dimension n
   int getLocalSize(int n) const;
 
   //! Returns the number of dimensions
@@ -90,10 +84,7 @@ public:
   //! Returns the distribution object
   const Distribution* getDistribution() const;
 
-  /** \brief Returns the local number of entries
-   *
-   * \todo This could also be obtained by getLocalTensor().
-   */
+  //! Returns the local number of entries
   size_t getLocalNumEntries() const;
 
   size_t getGlobalNumEntries() const;
