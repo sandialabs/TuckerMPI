@@ -144,6 +144,7 @@ void Tensor::rand()
   localTensor_->rand();
 }
 
+// \todo This function is never tested
 Tensor* Tensor::subtract(const Tensor* t) const
 {
   Tensor* sub = Tucker::MemoryManager::safe_new<Tensor>(dist_);
@@ -161,6 +162,7 @@ Tensor* Tensor::subtract(const Tensor* t) const
   return sub;
 }
 
+// \todo This function is never tested
 double Tensor::maxEntry() const
 {
   double localMax = std::numeric_limits<double>::lowest();
@@ -178,6 +180,7 @@ double Tensor::maxEntry() const
   return globalMax;
 }
 
+// \todo This function is never tested
 double Tensor::minEntry() const
 {
   double localMin = std::numeric_limits<double>::max();

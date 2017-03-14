@@ -831,6 +831,7 @@ void normalizeTensorMinMax(Tensor* Y, int mode, const char* scale_file)
   MemoryManager::safe_delete<MetricData>(metrics);
 }
 
+// \todo This function is not being tested at all
 void normalizeTensorMax(Tensor* Y, int mode, const char* scale_file)
 {
   Tucker::MetricData* metrics = computeSliceMetrics(Y, mode,
@@ -872,6 +873,7 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh, con
   MemoryManager::safe_delete<MetricData>(metrics);
 }
 
+// \todo This function is not being tested
 void writeScaleShift(const int mode, const int sizeOfModeDim, const double* scales,
     const double* shifts, const char* scale_file)
 {
@@ -887,7 +889,7 @@ void writeScaleShift(const int mode, const int sizeOfModeDim, const double* scal
   outStream.close();
 }
 
-
+// \todo This function is not being tested
 void readTensorBinary(Tensor* Y, const char* filename)
 {
   // Count the number of filenames
@@ -996,7 +998,7 @@ void importTensorBinary(Tensor* t, const char* filename)
   ifs.close();
 }
 
-
+// \todo This function never gets tested
 void importTimeSeries(Tensor* Y, const char* filename)
 {
    // Open the file
@@ -1084,7 +1086,7 @@ Matrix* importMatrix(const char* filename)
   return m;
 }
 
-
+// \todo This function never gets tested
 void writeTensorBinary(const Tensor* Y, const char* filename)
 {
   // Count the number of filenames
@@ -1116,7 +1118,7 @@ void writeTensorBinary(const Tensor* Y, const char* filename)
    }
 }
 
-
+// \todo This function never gets tested
 void exportTensor(const Tensor* Y, const char* filename)
 {
   // Open the file
@@ -1171,7 +1173,7 @@ void exportTensorBinary(const Tensor* Y, const char* filename)
   ofs.close();
 }
 
-
+// \todo This function never gets tested
 void exportTimeSeries(const Tensor* Y, const char* filename)
 {
   // Open the file

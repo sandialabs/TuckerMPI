@@ -369,6 +369,7 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
   return gramMat;
 }
 
+// \todo STHOSVD is never tested with the new Gram computation
 const TuckerTensor* STHOSVD(const Tensor* const X,
     const double epsilon, bool useOldGram, bool flipSign)
 {
@@ -484,6 +485,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   return factorization;
 }
 
+// \todo This function is never tested
 const TuckerTensor* STHOSVD(const Tensor* const X,
     const Tucker::SizeArray* const reducedI, bool useOldGram,
     bool flipSign)
@@ -741,6 +743,7 @@ void normalizeTensorMinMax(Tensor* Y, int mode)
   Tucker::MemoryManager::safe_delete<Tucker::MetricData>(metrics);
 }
 
+// \todo This function is never tested
 void normalizeTensorMax(Tensor* Y, int mode)
 {
   // I don't have to do any work because I don't own any data

@@ -80,6 +80,8 @@ public:
    *
    * \param[in] metrics A sum of Metric values
    * \param[in] dimension Size of array
+   *
+   * \todo NORM1 and NORM2 are never tested
    */
   MetricData(const int metrics, const int dimension) :
     dimension_(dimension)

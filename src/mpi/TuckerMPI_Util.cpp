@@ -124,7 +124,7 @@ const double* packForGram(const Tensor* Y, int n, const Map* redistMap)
   return sendData;
 }
 
-
+// \todo This function is never tested with 1 MPI process
 const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
     Tucker::Timer* pack_timer, Tucker::Timer* alltoall_timer,
     Tucker::Timer* unpack_timer)

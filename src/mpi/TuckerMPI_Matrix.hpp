@@ -47,6 +47,8 @@ namespace TuckerMPI {
 /** \brief Parallel matrix class
  *
  * Used by the new Gram routine
+ *
+ * \todo Block row distribution is never tested
  */
 class Matrix {
 public:

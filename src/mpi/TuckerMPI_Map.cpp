@@ -146,11 +146,13 @@ const MPI_Comm& Map::getComm() const
   return comm_;
 }
 
+// \todo This function doesn't seem to get used, and it's definitely not tested
 const Tucker::SizeArray* Map::getNumElementsPerProc() const
 {
   return numElementsPerProc_;
 }
 
+// \todo This function doesn't seem to get used, and it's definitely not tested
 const Tucker::SizeArray* Map::getOffsets() const
 {
   return offsets_;
