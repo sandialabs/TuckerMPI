@@ -37,6 +37,7 @@
  */
 
 #include "Tucker_Timer.hpp"
+#include <cassert>
 
 namespace Tucker {
 
