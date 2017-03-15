@@ -97,6 +97,13 @@ public:
     return newMat;
   }
 
+protected:
+  Matrix(const int nrows) :
+    Tensor(nrows)
+  {
+
+  }
+
 private:
   /// @cond EXCLUDE
   // Disables the copy constructor

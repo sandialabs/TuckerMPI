@@ -94,6 +94,25 @@ Tensor::Tensor(int nrows, int ncols) :
     data_ = 0;
 }
 
+Tensor::Tensor(int nrows) :
+    I_(1)
+{
+  I_[0] = nrows;
+
+  if(nrows < 0) {
+    std::ostringstream oss;
+    oss << "Tucker::Tensor::Tensor(int nrows): nrows = "
+        << nrows << " < 0";
+    throw std::length_error(oss.str());
+  }
+
+  size_t numEntries = nrows;
+  if(numEntries > 0)
+    data_ = MemoryManager::safe_new_array<double>(numEntries);
+  else
+    data_ = 0;
+}
+
 Tensor::~Tensor()
 {
   if(data_)

@@ -43,6 +43,7 @@
 #include <cmath>
 #include <cassert>
 #include <chrono>
+#include <iomanip>
 
 /** \namespace Tucker \brief Contains the data structures and functions
  * necessary for a sequential tucker decomposition
@@ -881,6 +882,7 @@ void writeScaleShift(const int mode, const int sizeOfModeDim, const double* scal
 
   outStream << mode << std::endl;
 
+  outStream << std::fixed << std::setprecision(16);
   for(int i=0; i<sizeOfModeDim; i++)
   {
     outStream << scales[i] << " " << shifts[i] << std::endl;
@@ -1085,6 +1087,49 @@ Matrix* importMatrix(const char* filename)
   return m;
 }
 
+
+SparseMatrix* importSparseMatrix(const char* filename)
+{
+  // Open file
+  std::ifstream ifs;
+  ifs.open(filename);
+  assert(ifs.is_open());
+
+  // Read the type of object
+  // If the type is not "sptensor", that's bad
+  std::string tensorStr;
+  ifs >> tensorStr;
+  assert(tensorStr == "sptensor");
+
+  // Read the number of dimensions
+  int ndims;
+  ifs >> ndims;
+  assert(ndims == 2);
+
+  // Read the dimensions
+  int nrows, ncols, nnz;
+    ifs >> nrows >> ncols >> nnz;
+
+  // Create a matrix
+  SparseMatrix* m = MemoryManager::safe_new<SparseMatrix>(nrows,ncols,nnz);
+
+  // Read the entries of the tensor
+  int* rows = m->rows();
+  int* cols = m->cols();
+  double* vals = m->vals();
+  for(size_t i=0; i<nnz; i++) {
+    ifs >> rows[i] >> cols[i] >> vals[i];
+    rows[i]--;
+    cols[i]--;
+  }
+
+  // Close the file
+  ifs.close();
+
+  // Return the sparse matrix
+  return m;
+}
+
 // \todo This function never gets tested
 void writeTensorBinary(const Tensor* Y, const char* filename)
 {
@@ -1199,6 +1244,22 @@ void exportTimeSeries(const Tensor* Y, const char* filename)
     ofs.close();
 
     offset += numEntriesPerTimestep;
+  }
+}
+
+
+void premultByDiag(const Vector* diag, Matrix* mat)
+{
+  double* mydata = mat->data();
+  int myrows = mat->nrows();
+  int mycols = mat->ncols();
+
+  assert(myrows == diag->nrows());
+
+  for(int r=0; r<myrows; r++) {
+    for(int c=0; c<mycols; c++) {
+      mydata[r+c*myrows] *= (*diag)[r];
+    }
   }
 }
 

@@ -43,6 +43,8 @@
 #include "string.h"
 #include "Tucker_TuckerTensor.hpp"
 #include "Tucker_Metric.hpp"
+#include "Tucker_SparseMatrix.hpp"
+#include "Tucker_Vector.hpp"
 
 namespace Tucker {
 
@@ -399,6 +401,12 @@ void importTimeSeries(Tensor* Y, const char* filename);
  */
 Matrix* importMatrix(const char* filename);
 
+/** \brief Imports a sparse matrix from a text file
+ *
+ * \param[in] filename Name of file to be read
+ */
+SparseMatrix* importSparseMatrix(const char* filename);
+
 void writeTensorBinary(const Tensor* Y, const char* filename);
 
 /** \brief Writes a tensor to a text file
@@ -420,6 +428,9 @@ void exportTensor(const Tensor* Y, const char* filename);
 void exportTensorBinary(const Tensor* Y, const char* filename);
 
 void exportTimeSeries(const Tensor* Y, const char* filename);
+
+/// Premultiply a dense matrix by a diagonal matrix
+void premultByDiag(const Vector* diag, Matrix* mat);
 
 } // end of namespace Tucker
 

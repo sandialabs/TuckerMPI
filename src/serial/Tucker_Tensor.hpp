@@ -217,6 +217,8 @@ protected:
    */
   Tensor(int nrows, int ncols);
 
+  Tensor(int nrows);
+
   //! Tensor size
   SizeArray I_;
 
