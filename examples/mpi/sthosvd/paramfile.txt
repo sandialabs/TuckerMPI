@@ -5,3 +5,4 @@ Write STHOSVD result = true
 Print options = true
 Global dims = 500 250 50 11 40
 Scaling type = StandardCentering
+Scale mode = 2
