@@ -254,7 +254,9 @@ int main(int argc, char* argv[])
       // Write dimension of core tensor
       std::string dimFilename = sthosvd_dir + "/" + sthosvd_fn +
           "_ranks.txt";
+      std::cout << "Writing core tensor dimensions to " << dimFilename << std::endl;
       std::ofstream of(dimFilename);
+      assert(of.is_open());
       for(int mode=0; mode<nd; mode++) {
         of << solution->G->size(mode) << std::endl;
       }
@@ -263,7 +265,9 @@ int main(int argc, char* argv[])
       // Write dimension of global tensor
       std::string sizeFilename = sthosvd_dir + "/" + sthosvd_fn +
           "_size.txt";
+      std::cout << "Writing global tensor dimensions to " << sizeFilename << std::endl;
       of.open(sizeFilename);
+      assert(of.is_open());
       for(int mode=0; mode<nd; mode++) {
         of << (*I_dims)[mode] << std::endl;
       }
@@ -272,6 +276,7 @@ int main(int argc, char* argv[])
       // Write core tensor
       std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn +
           "_core.mpi";
+      std::cout << "Writing core tensor to " << coreFilename << std::endl;
       Tucker::exportTensorBinary(solution->G, coreFilename.c_str());
 
       // Write each factor
@@ -280,6 +285,7 @@ int main(int argc, char* argv[])
         std::ostringstream ss;
         ss << sthosvd_dir << "/" << sthosvd_fn << "_mat_" << mode
             << ".mpi";       // Open the file
+        std::cout << "Writing factor " << mode << " to " << ss.str() << std::endl;
         Tucker::exportTensorBinary(solution->U[mode], ss.str().c_str());
       }
     }

@@ -172,7 +172,7 @@ public:
    * probably be a related function.
    */
   friend bool isApproxEqual(const Tensor* t1, const Tensor* t2,
-      double tol);
+      double tol, bool verbose=false);
 
   /** \brief Prints the tensor to std::cout
    *

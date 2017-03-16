@@ -41,6 +41,7 @@ TARGET_LINK_LIBRARIES(Tucker_slice_test_nofile serial_tucker ${BLAS_LIBRARIES} $
 
 
 ENABLE_TESTING()
+ADD_TEST(Tucker_noscale_fullrec_test ${CMAKE_CURRENT_BINARY_DIR}/Tucker_noscale_fullrec.py)
 ADD_TEST(Tucker_serial_IO_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_IO_test)
 ADD_TEST(Tucker_serial_shift_scale_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_shift_scale_test)
 ADD_TEST(Tucker_serial_eig_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_eig_test)
@@ -55,6 +56,7 @@ ADD_TEST(Tucker_serial_ttm_test_nofile ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_
 ADD_TEST(Tucker_serial_slice_test_file ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_slice_test_file)
 ADD_TEST(Tucker_serial_slice_test_nofile ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_slice_test_nofile)
 
+SET_PROPERTY(TEST Tucker_noscale_fullrec_test PROPERTY LABELS SystemTest LongTest)
 SET_PROPERTY(TEST Tucker_serial_shift_scale_test PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST Tucker_serial_eig_test PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST Tucker_serial_norm_test PROPERTY LABELS UnitTest)
@@ -68,6 +70,7 @@ SET_PROPERTY(TEST Tucker_serial_slice_test_nofile PROPERTY LABELS UnitTest)
 
 FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/input_files)
 FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/output_files)
+FILE(COPY "${CMAKE_CURRENT_SOURCE_DIR}/Tucker_noscale_fullrec.py" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/5x5.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/3x5x7x11.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/3x5x7x11_ss0.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
@@ -98,3 +101,6 @@ FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/3x5x7x11_mm1.txt" DESTINATION "${CMAK
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/3x5x7x11_mm3.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/3x5x7x11_sc1.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/3x5x7x11_sc3.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
+
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/system/serial_noscale_fullrec" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files/system")
+FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/input_files/system/serial_noscale_fullrec/sthosvd/compressed)

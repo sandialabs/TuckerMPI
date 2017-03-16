@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
   // Read the tolerance
   double tol = atof(argv[4]);
 
-  bool approxEqual = isApproxEqual(&t1, &t2, tol);
+  bool approxEqual = isApproxEqual(&t1, &t2, tol, true);
 
   if(approxEqual)
     return EXIT_SUCCESS;

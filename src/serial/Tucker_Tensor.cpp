@@ -173,7 +173,7 @@ const double* Tensor::data() const
 }
 
 bool isApproxEqual(const Tensor* t1, const Tensor* t2,
-    double tol)
+    double tol, bool verbose)
 {
   // If neither owns any data, they're not NOT equal...
   if(t1->getNumElements() == 0 && t2->getNumElements() == 0) {
@@ -184,26 +184,32 @@ bool isApproxEqual(const Tensor* t1, const Tensor* t2,
     std::cerr << "t1 and t2 are different sizes\n";
     return false;
   }
+
+  double origNorm2 = t1->norm2();
+
   size_t numElements = t1->getNumElements();
   const double* t1Data = t1->data();
   const double* t2Data = t2->data();
+  double errNorm2 = 0;
   for(size_t i=0; i<numElements; i++) {
     double err = std::abs(t1Data[i] - t2Data[i]);
-    if(std::abs(t1Data[i] - t2Data[i]) > tol) {
-      std::cerr << "Element " << i << " is not the same: "
-          << t1Data[i] << " - " << t2Data[i] << " = "
-          << t1Data[i] - t2Data[i] << std::endl;
-
-      return false;
-    }
-    else if(std::isnan(err)) {
+    if(std::isnan(err)) {
       std::cerr << "Difference " << i << " is nan: "
           << t1Data[i] << " - " << t2Data[i] << " = "
           << t1Data[i] - t2Data[i] << std::endl;
 
       return false;
     }
+    errNorm2 += (err*err);
   }
+
+  double relErr = std::sqrt(errNorm2/origNorm2);
+  if(verbose) {
+    std::cout << "Relative error: " << relErr << std::endl;
+  }
+
+  if(relErr > tol)
+    return false;
   return true;
 }
 
