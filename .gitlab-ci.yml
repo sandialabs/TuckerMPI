@@ -19,7 +19,7 @@ test:
   stage: test
   script:
   - cd build
-  - ctest
+  - ctest --verbose
   dependencies:
   - build
 
