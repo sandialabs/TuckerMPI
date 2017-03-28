@@ -212,10 +212,20 @@ int main(int argc, char* argv[])
   ///////////////////////////
   // Read full tensor data //
   ///////////////////////////
+  Tucker::Timer readTimer;
+  readTimer.start();
   TuckerMPI::Tensor X(dist);
   TuckerMPI::readTensorBinary(in_fns_file,X);
+  readTimer.stop();
+
+  double localReadTime = readTimer.duration();
+  double globalReadTime;
+
+  MPI_Reduce(&localReadTime,&globalReadTime,1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD);
 
   if(rank == 0) {
+    std::cout << "Time to read tensor: " << globalReadTime << " s\n";
+
     size_t local_nnz = X.getLocalNumEntries();
     size_t global_nnz = X.getGlobalNumEntries();
     std::cout << "Local input tensor size: " << X.getLocalSize() << ", or ";
@@ -428,6 +438,9 @@ int main(int argc, char* argv[])
     }
 
     if(boolWriteSTHOSVD) {
+      Tucker::Timer writeTimer;
+      writeTimer.start();
+
       // Write dimension of core tensor
       if(rank == 0) {
         std::string dimFilename = sthosvd_dir + "/" + sthosvd_fn +
@@ -463,8 +476,20 @@ int main(int argc, char* argv[])
         }
         of.close();
       }
-    }
-  }
+
+      writeTimer.stop();
+
+      double localWriteTime = writeTimer.duration();
+      double globalWriteTime;
+
+      MPI_Reduce(&localWriteTime,&globalWriteTime,1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD);
+
+      if(rank == 0) {
+        std::cout << "Time to write factorization: " << globalWriteTime << " s\n";
+      }
+
+    } // end if(boolWriteSTHOSVD)
+  } // end if(boolSTHOSVD)
 
   //
   // Free memory
