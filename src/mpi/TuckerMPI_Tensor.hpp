@@ -106,9 +106,6 @@ public:
   //! Returns the minimum entry of the tensor
   double minEntry() const;
 
-  friend bool isApproxEqual(const Tensor* t1, const Tensor* t2,
-      double tol);
-
 private:
   /// @cond EXCLUDE
   Tensor(const Tensor& t);
@@ -119,6 +116,9 @@ private:
   //! Distribution object
   const Distribution* dist_;
 };
+
+bool isApproxEqual(const Tensor* t1, const Tensor* t2,
+    double tol);
 
 } /* namespace TuckerMPI */
 #endif /* TENSOR_MPI_HPP_ */

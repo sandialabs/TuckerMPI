@@ -155,25 +155,6 @@ public:
    */
   const double* data() const;
 
-  /** \brief Determines whether two tensors are approximately the same
-   *
-   * This method first checks to see whether the two tensors are the
-   * same dimension.  If not, returns false.  If they are the same size,
-   * it checks every entry to see whether the entries are approximately
-   * the same.  The maximum allowable difference between entries is
-   * defined by the user.  This method is meant to be used for testing
-   * the Tucker code, since bitwise comparison is a bad idea.
-   *
-   * \param t1 A tensor to compare
-   * \param t2 A tensor to compare
-   * \param tol The maximum allowable difference between entries
-   *
-   * \note This doesn't actually need to be a friend function; it should
-   * probably be a related function.
-   */
-  friend bool isApproxEqual(const Tensor* t1, const Tensor* t2,
-      double tol, bool verbose=false);
-
   /** \brief Prints the tensor to std::cout
    *
    * Tensor is printed as a single-dimensional array.
@@ -232,6 +213,22 @@ private:
   Tensor(const Tensor& t);
   /// @endcond
 };
+
+/** \brief Determines whether two tensors are approximately the same
+ *
+ * This method first checks to see whether the two tensors are the
+ * same dimension.  If not, returns false.  If they are the same size,
+ * it checks every entry to see whether the entries are approximately
+ * the same.  The maximum allowable difference between entries is
+ * defined by the user.  This method is meant to be used for testing
+ * the Tucker code, since bitwise comparison is a bad idea.
+ *
+ * \param t1 A tensor to compare
+ * \param t2 A tensor to compare
+ * \param tol The maximum allowable difference between entries
+ */
+bool isApproxEqual(const Tensor* t1, const Tensor* t2,
+    double tol, bool verbose=false);
 
 } // end of namespace Tucker
 
