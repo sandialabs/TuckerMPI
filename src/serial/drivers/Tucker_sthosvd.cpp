@@ -15,6 +15,9 @@
 
 int main(int argc, char* argv[])
 {
+  Tucker::Timer totalTimer;
+  totalTimer.start();
+
   //
   // Get the name of the input file
   //
@@ -145,8 +148,11 @@ int main(int argc, char* argv[])
   ///////////////////////////
   // Read full tensor data //
   ///////////////////////////
+  Tucker::Timer readTimer;
+  readTimer.start();
   Tucker::Tensor* X = Tucker::MemoryManager::safe_new<Tucker::Tensor>(*I_dims);
   Tucker::readTensorBinary(X,in_fns_file.c_str());
+  readTimer.stop();
 
   size_t nnz = X->getNumElements();
   std::cout << "Input tensor size: " << X->size() << ", or ";
@@ -191,6 +197,8 @@ int main(int argc, char* argv[])
   ///////////////////////////
   // Perform preprocessing //
   ///////////////////////////
+  Tucker::Timer preprocessTimer;
+  preprocessTimer.start();
   std::string scale_file = sthosvd_dir + "/" + sthosvd_fn +
       "_scale.txt";
   if(scaling_type == "Max") {
@@ -214,6 +222,7 @@ int main(int argc, char* argv[])
   else {
     std::cerr << "Error: invalid scaling type: " << scaling_type << std::endl;
   }
+  preprocessTimer.stop();
 
   if(boolWritePreprocessed) {
     Tucker::writeTensorBinary(X,pre_fns_file.c_str());
@@ -222,15 +231,18 @@ int main(int argc, char* argv[])
   /////////////////////
   // Perform STHOSVD //
   /////////////////////
+  Tucker::Timer sthosvdTimer, writeTimer;
   if(boolSTHOSVD) {
     const Tucker::TuckerTensor* solution;
 
+    sthosvdTimer.start();
     if(boolAuto) {
       solution = Tucker::STHOSVD(X, tol);
     }
     else {
       solution = Tucker::STHOSVD(X, R_dims);
     }
+    sthosvdTimer.stop();
 
     // Write the eigenvalues to files
     std::string filePrefix = sv_dir + "/" + sv_fn + "_mode_";
@@ -250,6 +262,7 @@ int main(int argc, char* argv[])
     }
     std::cout << "Error bound: " << std::sqrt(eb)/xnorm << std::endl;
 
+    writeTimer.start();
     if(boolWriteSTHOSVD) {
       // Write dimension of core tensor
       std::string dimFilename = sthosvd_dir + "/" + sthosvd_fn +
@@ -289,6 +302,7 @@ int main(int argc, char* argv[])
         Tucker::exportTensorBinary(solution->U[mode], ss.str().c_str());
       }
     }
+    writeTimer.stop();
   }
 
   //
@@ -298,6 +312,13 @@ int main(int argc, char* argv[])
   if(R_dims) Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(R_dims);
 
   Tucker::MemoryManager::printMaxMemUsage();
+
+  totalTimer.stop();
+  std::cout << "Read time: " << readTimer.duration() << std::endl;
+  std::cout << "Preprocessing time: " << preprocessTimer.duration() << std::endl;
+  std::cout << "STHOSVD time: " << sthosvdTimer.duration() << std::endl;
+  std::cout << "Write time: " << writeTimer.duration() << std::endl;
+  std::cout << "Total time: " << totalTimer.duration() << std::endl;
 
   return EXIT_SUCCESS;
 }

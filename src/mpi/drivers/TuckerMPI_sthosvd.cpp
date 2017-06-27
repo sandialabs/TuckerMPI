@@ -348,6 +348,9 @@ int main(int argc, char* argv[])
   ///////////////////////////
   // Perform preprocessing //
   ///////////////////////////
+  MPI_Barrier(MPI_COMM_WORLD);
+  Tucker::Timer preprocessTimer;
+  preprocessTimer.start();
   if(scaling_type == "Max") {
     if(rank == 0) {
       std::cout << "Normalizing the tensor by maximum entry - mode " 
@@ -376,6 +379,11 @@ int main(int argc, char* argv[])
   }
   else {
     std::cerr << "Error: invalid scaling type: " << scaling_type << std::endl;
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
+  preprocessTimer.stop();
+  if(rank == 0) {
+    std::cout << "Time to preprocess: " << preprocessTimer.duration() << std::endl;
   }
 
   if(boolWritePreprocessed) {
