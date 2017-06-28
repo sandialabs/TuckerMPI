@@ -7,6 +7,7 @@
 
 #include "Tucker.hpp"
 #include "Tucker_IO_Util.hpp"
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <iomanip>
@@ -185,35 +186,53 @@ int main(int argc, char* argv[])
   // Create the optimal reconstruction order if unspecified //
   ////////////////////////////////////////////////////////////
   if(rec_order == NULL) {
+    // Compute the size of the final tensor
+    Tucker::SizeArray* rec_size =
+        Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
+    for(int i=0; i<nd; i++) {
+      (*rec_size)[i] = 1 + (*subs_end)[i] - (*subs_begin)[i];
+    }
+
+
     // Create the SizeArray
     rec_order = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
+    Tucker::SizeArray* temp_order =
+        Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
     for(int i=0; i<nd; i++) {
       (*rec_order)[i] = i;
+      (*temp_order)[i] = i;
     }
 
-    // Compute the ratios of reconstructed size to core size
-    int* rec_size = Tucker::MemoryManager::safe_new_array<int>(nd);
-    double* ratios = Tucker::MemoryManager::safe_new_array<double>(nd);
-    for(int i=0; i<nd; i++) {
-      rec_size[i] = 1 + (*subs_end)[i] - (*subs_begin)[i];
-      ratios[i] = (double)rec_size[i] / (*coreSize)[i];
-    }
+    size_t min_flops = -1;
+    Tucker::SizeArray* current_dims =
+        Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
+    do {
+      // Initialize current dimensions
+      for(int i=0; i<nd; i++) {
+        (*current_dims)[i] = (*coreSize)[i];
+      }
 
-    // Sort the ratios
-    for(int i=1; i<nd; i++) {
-      for(int j=0; j<nd-i; j++) {
-        if(ratios[j] > ratios[j+1]) {
-          std::swap(ratios[j],ratios[j+1]);
-          std::swap((*rec_order)[j],(*rec_order)[j+1]);
+      // Compute the number of flops
+      size_t flops = 0;
+      for(int i=0; i<nd; i++) {
+        flops += (*rec_size)[(*temp_order)[i]] * current_dims->prod();
+        (*current_dims)[(*temp_order)[i]] = (*rec_size)[(*temp_order)[i]];
+      }
+
+      if(min_flops == -1 || flops < min_flops) {
+        min_flops = flops;
+        for(int i=0; i<nd; i++) {
+          (*rec_order)[i] = (*temp_order)[i];
         }
       }
-    }
+    } while( std::next_permutation(temp_order->data(),temp_order->data()+nd) );
 
     std::cout << "Reconstruction order: " << *rec_order << std::endl;
 
     // Free the memory
-    Tucker::MemoryManager::safe_delete_array<int>(rec_size,nd);
-    Tucker::MemoryManager::safe_delete_array<double>(ratios,nd);
+    Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(temp_order);
+    Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(current_dims);
+    Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(rec_size);
   }
 
   //////////////////////////////////////////////////////////
