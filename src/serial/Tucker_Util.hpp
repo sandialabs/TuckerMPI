@@ -106,10 +106,11 @@ static T* safe_new_array(const size_t numToAllocate)
 }
 
 template<typename T>
-static void safe_delete(T* t)
+static void safe_delete(T*& t)
 {
   try {
     delete t;
+    t=0;
   }
   catch(std::exception& e) {
     std::cout << "Exception: " << e.what() << std::endl;
@@ -122,10 +123,11 @@ static void safe_delete(T* t)
 }
 
 template<typename T>
-static void safe_delete_array(T* t, const size_t numToDealloc)
+static void safe_delete_array(T*& t, const size_t numToDealloc)
 {
   try {
     delete[] t;
+    t=0;
   }
   catch(std::exception& e) {
     std::cout << "Exception: " << e.what() << std::endl;

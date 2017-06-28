@@ -293,6 +293,7 @@ int main(int argc, char* argv[])
     int end_subs = (*subs_end)[mode];
     Tucker::Matrix* factMat =
         fact->U[mode]->getSubmatrix(start_subs, end_subs);
+    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(fact->U[mode]);
 
     // Perform the TTM
     Tucker::Tensor* temp = Tucker::ttm(result,mode,factMat);
@@ -300,6 +301,9 @@ int main(int argc, char* argv[])
     Tucker::MemoryManager::safe_delete<Tucker::Matrix>(factMat);
     if(result != fact->G) {
       Tucker::MemoryManager::safe_delete<Tucker::Tensor>(result);
+    }
+    else {
+      Tucker::MemoryManager::safe_delete<Tucker::Tensor>(fact->G);
     }
     result = temp;
 
