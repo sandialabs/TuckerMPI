@@ -186,6 +186,9 @@ int main(int argc, char* argv[])
   // Create the optimal reconstruction order if unspecified //
   ////////////////////////////////////////////////////////////
   if(rec_order == NULL) {
+    Tucker::Timer orderTimer;
+    orderTimer.start();
+
     // Compute the size of the final tensor
     Tucker::SizeArray* rec_size =
         Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
@@ -233,6 +236,9 @@ int main(int argc, char* argv[])
     Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(temp_order);
     Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(current_dims);
     Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(rec_size);
+
+    orderTimer.stop();
+    std::cout << "Computing the optimal reconstruction order: " << orderTimer.duration() << " s\n";
   }
 
   //////////////////////////////////////////////////////////
