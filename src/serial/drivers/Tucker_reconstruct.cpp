@@ -12,6 +12,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <numeric>
 #include "assert.h"
 
 int main(int argc, char* argv[])
@@ -29,6 +30,7 @@ int main(int argc, char* argv[])
   //
   std::vector<std::string> fileAsString = Tucker::getFileAsStrings(paramfn);
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
+  bool boolOptimizeFlops                = Tucker::stringParse<bool>(fileAsString, "Optimize flops", true);
 
   Tucker::SizeArray* subs_begin         = Tucker::stringParseSizeArray(fileAsString, "Beginning subscripts");
   Tucker::SizeArray* subs_end           = Tucker::stringParseSizeArray(fileAsString, "Ending subscripts");
@@ -74,6 +76,11 @@ int main(int argc, char* argv[])
       std::cout << "Mode order for reconstruction\n";
       std::cout << "NOTE: if left unspecified, the memory-optimal one will be automatically selected\n";
       std::cout << "- Reconstruction order = " << *rec_order << std::endl << std::endl;
+    }
+    else {
+      std::cout << "If true, choose the reconstruction ordering that requires the minimum number of flops\n";
+      std::cout << "Otherwise, choose the one that will require the least memory\n";
+      std::cout << "- Optimize flops = " << (boolOptimizeFlops ? "true" : "false") << std::endl << std::endl;
     }
 
     std::cout << "If true, print the parameters\n";
@@ -207,6 +214,7 @@ int main(int argc, char* argv[])
     }
 
     size_t min_flops = -1;
+    size_t min_mem = -1;
     Tucker::SizeArray* current_dims =
         Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
     do {
@@ -215,17 +223,39 @@ int main(int argc, char* argv[])
         (*current_dims)[i] = (*coreSize)[i];
       }
 
-      // Compute the number of flops
-      size_t flops = 0;
-      for(int i=0; i<nd; i++) {
-        flops += (*rec_size)[(*temp_order)[i]] * current_dims->prod();
-        (*current_dims)[(*temp_order)[i]] = (*rec_size)[(*temp_order)[i]];
-      }
-
-      if(min_flops == -1 || flops < min_flops) {
-        min_flops = flops;
+      if(boolOptimizeFlops) {
+        // Compute the number of flops
+        size_t flops = 0;
         for(int i=0; i<nd; i++) {
-          (*rec_order)[i] = (*temp_order)[i];
+          flops += (*rec_size)[(*temp_order)[i]] * current_dims->prod();
+          (*current_dims)[(*temp_order)[i]] = (*rec_size)[(*temp_order)[i]];
+        }
+
+        if(min_flops == -1 || flops < min_flops) {
+          min_flops = flops;
+          for(int i=0; i<nd; i++) {
+            (*rec_order)[i] = (*temp_order)[i];
+          }
+        }
+      }
+      else {
+        // Compute the memory footprint
+        size_t mem = std::inner_product(rec_size->data(),
+            rec_size->data()+nd,current_dims->data(),0);
+        size_t max_mem = mem;
+        for(int i=0; i<nd; i++) {
+          mem += current_dims->prod();
+          (*current_dims)[(*temp_order)[i]] = (*rec_size)[(*temp_order)[i]];
+          mem += current_dims->prod();
+          mem -= (*coreSize)[(*temp_order)[i]]*(*rec_size)[(*temp_order)[i]];
+          max_mem = std::max(mem,max_mem);
+        }
+
+        if(min_mem == -1 || max_mem < min_mem) {
+          min_mem = max_mem;
+          for(int i=0; i<nd; i++) {
+            (*rec_order)[i] = (*temp_order)[i];
+          }
         }
       }
     } while( std::next_permutation(temp_order->data(),temp_order->data()+nd) );
