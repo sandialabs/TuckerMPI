@@ -41,13 +41,8 @@
 
 #include <cassert>
 #include <iostream>
+#include "Tucker_BlasWrapper.hpp"
 #include "Tucker_Tensor.hpp"
-
-/// @cond EXCLUDE
-// Copy from one array to another
-extern "C" void dcopy_(const int*, const double*, const int*,
-    double*, const int*);
-/// @endcond
 
 namespace Tucker {
 
@@ -90,7 +85,7 @@ public:
 
     for(int c=0; c<myncols; c++)
     {
-      dcopy_(&new_nrows, data()+c*old_nrows+rbegin, &ONE,
+      Tucker::copy(&new_nrows, data()+c*old_nrows+rbegin, &ONE,
           newMat->data()+c*new_nrows, &ONE);
     }
 

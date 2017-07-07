@@ -41,34 +41,13 @@
 
 #include <iostream>
 #include "string.h"
+#include "Tucker_BlasWrapper.hpp"
 #include "Tucker_TuckerTensor.hpp"
 #include "Tucker_Metric.hpp"
 #include "Tucker_SparseMatrix.hpp"
 #include "Tucker_Vector.hpp"
 
 namespace Tucker {
-
-/// @cond EXCLUDE
-// Symmetric rank-k update
-extern "C" void dsyrk_(const char*, const char*, const int*,
-    const int*, const double*, const double*, const int*,
-    const double*, double*, const int*);
-
-// Symmetric eigenvalue solver
-extern "C" void dsyev_(const char*, const char*, const int*,
-    double *, const int*, double*, double*, int*, int*);
-
-// Swap two arrays
-extern "C" void dswap_(const int*, double*, const int*,
-    double*, const int*);
-
-// Copy from one array to another
-extern "C" void dcopy_(const int*, const double*, const int*,
-    double*, const int*);
-
-// Scale an array
-extern "C" void dscal_(const int*, const double*, double*, const int*);
-/// @endcond
 
 /** \brief Compute the Gram matrix \f$Y_n Y_n^T\f$
  *

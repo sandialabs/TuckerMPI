@@ -127,7 +127,7 @@ void computeGram(const Tensor* Y, const int n, double* gram,
     char trans = 'N';
     double alpha = 1;
     double beta = 0;
-    dsyrk_(&uplo, &trans, &nrows, &ncols, &alpha,
+    syrk(&uplo, &trans, &nrows, &ncols, &alpha,
         Y->data(), &nrows, &beta, gram, &stride);
   }
   else
@@ -158,7 +158,7 @@ void computeGram(const Tensor* Y, const int n, double* gram,
         beta = 0;
       else
         beta = 1;
-      dsyrk_(&uplo, &trans, &nrows, &ncols, &alpha,
+      syrk(&uplo, &trans, &nrows, &ncols, &alpha,
           Y->data()+i*nrows*ncols, &ncols, &beta,
           gram, &stride);
     }
@@ -186,7 +186,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
   int lwork = 8*nrows;
   double* work = MemoryManager::safe_new_array<double>(lwork);
   int info;
-  dsyev_(&jobz, &uplo, &nrows, G->data(), &nrows,
+  syev(&jobz, &uplo, &nrows, G->data(), &nrows,
       eigenvalues, work, &lwork, &info);
 
   // Check the error code
@@ -205,7 +205,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
   double* Gptr = G->data();
   const int ONE = 1;
   for(int esubs=0; esubs<nrows-esubs-1; esubs++) {
-    dswap_(&nrows, Gptr+esubs*nrows, &ONE,
+    Tucker::swap(&nrows, Gptr+esubs*nrows, &ONE,
         Gptr+(nrows-esubs-1)*nrows, &ONE);
   }
 
@@ -227,7 +227,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
 
       if(Gptr[c*nrows+maxIndex] < 0) {
         const double NEGONE = -1;
-        dscal_(&nrows, &NEGONE, Gptr+c*nrows, &ONE);
+        scal(&nrows, &NEGONE, Gptr+c*nrows, &ONE);
       }
     }
   }
@@ -269,7 +269,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
   // Copy appropriate eigenvectors
   int nToCopy = numRows*numEvecs;
   const int ONE = 1;
-  dcopy_(&nToCopy, G->data(), &ONE, eigenvectors->data(), &ONE);
+  Tucker::copy(&nToCopy, G->data(), &ONE, eigenvectors->data(), &ONE);
 }
 
 
@@ -311,7 +311,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
   // Copy appropriate eigenvectors
   int nToCopy = numRows*numEvecs;
   const int ONE = 1;
-  dcopy_(&nToCopy, G->data(), &ONE, eigenvectors->data(), &ONE);
+  Tucker::copy(&nToCopy, G->data(), &ONE, eigenvectors->data(), &ONE);
 }
 
 
@@ -628,7 +628,7 @@ void ttm(const Tensor* const X, const int n,
     } else {
       transa = 'N';
     }
-    dgemm_(&transa, &transb, &m, &blas_n, &k, &alpha, Uptr,
+    gemm(&transa, &transb, &m, &blas_n, &k, &alpha, Uptr,
         &lda, X->data(), &ldb, &beta, Y->data(), &ldc);
   }
   else
@@ -671,7 +671,7 @@ void ttm(const Tensor* const X, const int n,
         transb = 'T';
         k = Uncols;
       }
-      dgemm_(&transa, &transb, &m, &blas_n, &k, &alpha,
+      gemm(&transa, &transb, &m, &blas_n, &k, &alpha,
           X->data()+i*k*m, &lda, Uptr, &ldb, &beta,
           Y->data()+i*m*blas_n, &ldc);
     }

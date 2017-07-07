@@ -43,12 +43,6 @@
 
 namespace Tucker {
 
-/// @cond EXCLUDE
-extern "C" void dgemm_(const char*, const char*, const int*,
-    const int*, const int*, const double*, const double*, const int*,
-    const double*, const int*, const double*, double*, const int*);
-/// @endcond
-
 /** \brief A sequential tensor
  *
  * Data is stored such that the unfolding \f$Y_0\f$ is column

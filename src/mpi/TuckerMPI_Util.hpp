@@ -45,20 +45,6 @@
 
 namespace TuckerMPI {
 
-/// @cond EXCLUDE
-extern "C" void dcopy_(const int*, const double*, const int*,
-    double*, const int*);
-
-extern "C" void dsyrk_(const char*, const char*, const int*, const int*,
-    const double*, const double*, const int*, const double*, double*,
-    const int*);
-
-extern "C" void dgemm_(const char*, const char*, const int*,
-    const int*, const int*, const double*, const double*,
-    const int*, const double*, const int*, const double*,
-    double*, const int*);
-/// @endcond
-
 /** \brief Determines whether packing is necessary for computing the Gram matrix
  */
 bool isPackForGramNecessary(int n, const Map* origMap, const Map* redistMap);

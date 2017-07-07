@@ -37,6 +37,7 @@
  */
 
 #include "assert.h"
+#include "Tucker_BlasWrapper.hpp"
 #include "TuckerMPI_Util.hpp"
 
 namespace TuckerMPI {
@@ -91,7 +92,7 @@ const double* packForGram(const Tensor* Y, int n, const Map* redistMap)
     for(int b=0; b<nprocs; b++) {
       int n = redistMap->getNumEntries(b);
       for(int r=0; r<localNumRows; r++) {
-        dcopy_(&n, YnData+redistMap->getOffset(b)+globalNumCols*r, &ONE,
+        Tucker::copy(&n, YnData+redistMap->getOffset(b)+globalNumCols*r, &ONE,
                sendData+offset, &ONE);
         offset += n;
       }
@@ -114,7 +115,7 @@ const double* packForGram(const Tensor* Y, int n, const Map* redistMap)
       // Copy one row at a time
       for(int r=0; r<localNumRows; r++) {
         int temp = (int)ncolsPerLocalBlock;
-        dcopy_(&temp, src, &ONE, dest, &localNumRows);
+        Tucker::copy(&temp, src, &ONE, dest, &localNumRows);
         src += ncolsPerLocalBlock;
         dest += 1;
       }
@@ -287,7 +288,7 @@ void unpackForGram(int n, int ndims, Matrix* redistMat,
     for(int b=0; b<nprocs; b++) {
       int nLocalRows=origMap->getNumEntries(b);
       const double* src = dataToUnpack + origMap->getOffset(b)*nLocalCols + c*nLocalRows;
-      dcopy_(&nLocalRows, src, &ONE, dest, &ONE);
+      Tucker::copy(&nLocalRows, src, &ONE, dest, &ONE);
       dest += nLocalRows;
     }
   }
@@ -310,13 +311,13 @@ const Tucker::Matrix* localRankKForGram(const Matrix* Y, int n, int ndims)
     // Local matrix is column major
     char trans = 'N';
     int lda = nrows;
-    dsyrk_(&uplo, &trans, &nrows, &ncols, &alpha, A, &lda, &beta, C, &ldc);
+    Tucker::syrk(&uplo, &trans, &nrows, &ncols, &alpha, A, &lda, &beta, C, &ldc);
   }
   else {
     // Local matrix is row major
     char trans = 'T';
     int lda = ncols;
-    dsyrk_(&uplo, &trans, &nrows, &ncols, &alpha, A, &lda, &beta, C, &ldc);
+    Tucker::syrk(&uplo, &trans, &nrows, &ncols, &alpha, A, &lda, &beta, C, &ldc);
   }
 
   return localResult;
@@ -347,7 +348,7 @@ void localGEMMForGram(const double* Y1, int nrowsY1, int n,
     double beta = 0;
     int ldc = numGlobalRows;
 
-    dgemm_(&transa, &transb, &crows, &ccols, &interDim,
+    Tucker::gemm(&transa, &transb, &crows, &ccols, &interDim,
         &alpha, Aptr, &lda, Bptr, &ldb, &beta, result, &ldc);
   }
   else if(n == ndims-1) {
@@ -365,7 +366,7 @@ void localGEMMForGram(const double* Y1, int nrowsY1, int n,
     double beta = 0;
     int ldc = numGlobalRows;
 
-    dgemm_(&transa, &transb, &crows, &ccols, &interDim,
+    Tucker::gemm(&transa, &transb, &crows, &ccols, &interDim,
         &alpha, Aptr, &lda, Bptr, &ldb, &beta, result, &ldc);
   }
   else {
@@ -396,7 +397,7 @@ void localGEMMForGram(const double* Y1, int nrowsY1, int n,
       }
 
       // Call dgemm
-      dgemm_(&transa, &transb, &crows, &ccols, &interDim,
+      Tucker::gemm(&transa, &transb, &crows, &ccols, &interDim,
           &alpha, Aptr, &lda, Bptr, &ldb, &beta, result, &ldc);
 
       // Update pointers
@@ -488,7 +489,7 @@ void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
 
       // Copy block to destination
       int tbs = (int)blockSize;
-      dcopy_(&tbs, tenData+tensorOffset, &inc,
+      Tucker::copy(&tbs, tenData+tensorOffset, &inc,
           tempMem+tempMemOffset, &inc);
 
       // Update the offset
@@ -498,7 +499,7 @@ void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
 
   // Copy data from temporary memory back to tensor
   int temp = (int)numEntries;
-  dcopy_(&temp, tempMem, &inc, tenData, &inc);
+  Tucker::copy(&temp, tempMem, &inc, tenData, &inc);
 
   Tucker::MemoryManager::safe_delete_array<double>(tempMem,numEntries);
 }
