@@ -124,7 +124,6 @@ const double* packForGram(const Tensor* Y, int n, const Map* redistMap)
   return sendData;
 }
 
-// \todo This function is never tested with 1 MPI process
 const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
     Tucker::Timer* pack_timer, Tucker::Timer* alltoall_timer,
     Tucker::Timer* unpack_timer)
@@ -157,10 +156,10 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
   // Create a matrix to store the redistributed Y_n
   // Y_n has a block row distribution
   // We want it to have a block column distribution
-  Matrix* redistY = Tucker::MemoryManager::safe_new<Matrix>(nrows,(int)ncols,comm,false);
+  Matrix* recvY = Tucker::MemoryManager::safe_new<Matrix>(nrows,(int)ncols,comm,false);
 
   // Get the column map of the redistributed Y_n
-  const Map* redistMap = redistY->getMap();
+  const Map* redistMap = recvY->getMap();
 
   // Get the number of local rows of the matrix Y_n
   int nLocalRows = Y->getLocalSize(n);
@@ -202,25 +201,13 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
       sendBuf = Y->getLocalTensor()->data();
   }
 
-  // Determine whether the data needs to be unpacked
-  bool isUnpackingNecessary = isUnpackForGramNecessary(n, ndims, oldMap, redistMap);
   double* recvBuf;
-  if(isUnpackingNecessary) {
-    recvBuf = Tucker::MemoryManager::safe_new_array<double>(redistY->getLocalNumEntries());
+  if(recvY->getLocalNumEntries() == 0) {
+    recvBuf = 0;
   }
   else {
-    // If redistY has no entries, we're not receiving anything
-    if(redistY->getLocalNumEntries() == 0)
-      recvBuf = 0;
-    else
-      recvBuf = redistY->getLocalMatrix()->data();
+    recvBuf = recvY->getLocalMatrix()->data();
   }
-
-//  std::cout << rank << ": " << numProcs << std::endl;
-//  for(int i=0; i<numProcs; i++) {
-//    std::cout << rank << ": " << sendCounts[i] << " " << sendDispls[i]
-//              << " " << recvCounts[i] << " " << recvDispls[i] << std::endl;
-//  }
 
   // Perform the all-to-all communication
   if(alltoall_timer) alltoall_timer->start();
@@ -228,10 +215,25 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
       recvBuf, recvCounts, recvDispls, MPI_DOUBLE, comm);
   if(alltoall_timer) alltoall_timer->stop();
 
+  // Free the send buffer if necessary
+  if(isPackingNecessary && Y->getLocalNumEntries() > 0)
+    Tucker::MemoryManager::safe_delete_array<const double>(sendBuf,Y->getLocalNumEntries());
+
+  // Determine whether the data needs to be unpacked
+  bool isUnpackingNecessary = isUnpackForGramNecessary(n, ndims, oldMap, redistMap);
+  Matrix* redistY;
   if(isUnpackingNecessary) {
+    redistY = Tucker::MemoryManager::safe_new<Matrix>(nrows,(int)ncols,comm,false);
+
     if(unpack_timer) unpack_timer->start();
     unpackForGram(n, ndims, redistY, recvBuf, oldMap);
     if(unpack_timer) unpack_timer->stop();
+
+    // Free receive buffer
+    Tucker::MemoryManager::safe_delete<Matrix>(recvY);
+  }
+  else {
+    redistY = recvY;
   }
 
   // Free memory
@@ -239,10 +241,6 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
   Tucker::MemoryManager::safe_delete_array<int>(sendDispls,numProcs+1);
   Tucker::MemoryManager::safe_delete_array<int>(recvCounts,numProcs);
   Tucker::MemoryManager::safe_delete_array<int>(recvDispls,numProcs+1);
-  if(isPackingNecessary && Y->getLocalNumEntries() > 0)
-    Tucker::MemoryManager::safe_delete_array<const double>(sendBuf,Y->getLocalNumEntries());
-  if(isUnpackingNecessary)
-    Tucker::MemoryManager::safe_delete_array<double>(recvBuf,redistY->getLocalNumEntries());
 
   return redistY;
 }
