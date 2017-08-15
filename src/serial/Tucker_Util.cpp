@@ -12,10 +12,10 @@ namespace Tucker {
 
 void printBytes(size_t bytes)
 {
-  const size_t KB = 1024;
-  const size_t MB = 1048576;
-  const size_t GB = 1073741824;
-  const size_t TB = 1.09951162778e+12;
+  const size_t KB = 1e3;
+  const size_t MB = 1e6;
+  const size_t GB = 1e9;
+  const size_t TB = 1e12;
 
   if(bytes > TB) {
     std::cout << std::setprecision(5) << bytes / (double)TB << " TB\n";
