@@ -47,6 +47,24 @@ please follow these instructions.
 When running your code, please ensure that you load the same gcc module 
 (<tt>gcc/4.8.2</tt>) in your script; otherwise, you will get an error.
    
+\section kahuna_sec Installation on Kahuna
+
+Testing passed using the following steps:
+-# Load CMake, GCC, BLAS/LAPACK, MPI. 
+<tt>
+   module load cmake/3.8.1 \n
+   module load gcc/6.3.0 \n
+   module load openblas/0.2.19 \n
+   module load openmpi/1.10.3 \n
+</tt>
+-# Use CMake, Make.
+<tt>
+   mkdir build \n
+   cd build \n
+   cmake ../src/ \n
+   make \n
+</tt>
+
 \section test_sec Testing
 
 %TuckerMPI comes with a collection of tests.  To run the test suite, simply type 
@@ -60,6 +78,25 @@ When running your code, please ensure that you load the same gcc module
 -# Run the tests using ctest \n
    <tt>ctest</tt>
    
+\subsection mpi_test Running standard mpi tests
+-# (Optional) Grab a compute node.
+<tt>
+   salloc -n 24 \n
+   squeue \n
+   ssh [node-assigned-to-you] \n
+</tt>
+-# Go into mpi testing directory. \n
+   <tt>cd [...]/build/mpi \n</tt>
+-# Run tests. \n
+<tt>
+   ctest
+</tt>
+-# (Optional) Exit ssh session and release compute if using salloc. \n
+<tt>
+   exit \n
+   exit \n
+</tt>
+
 \subsection small_test_sec Running only the "small" tests
 
 Some of the tests use 24 MPI processes, which may be impractical on 
