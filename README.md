@@ -1,5 +1,5 @@
 [![build status](https://gitlab.com/tensors/TuckerMPI/badges/master/build.svg)](https://gitlab.com/tensors/TuckerMPI/commits/master)
-[![coverage report](https://gitlab.com/tensors/TuckerMPI/badges/master/coverage.svg)](https://gitlab.com/tensors/TuckerMPI/commits/master)
+[![codecov](https://codecov.io/gl/tensors/tuckermpi/branch/master/graph/badge.svg)](https://codecov.io/gl/tensors/tuckermpi)
 <a href="https://scan.coverity.com/projects/tuckermpi">
   <img alt="Coverity Scan Build Status"
        src="https://scan.coverity.com/projects/10762/badge.svg"/>
