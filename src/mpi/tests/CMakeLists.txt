@@ -61,6 +61,7 @@ ADD_EXECUTABLE(TuckerMPI_ttm_test_file TuckerMPI_ttm_test_file.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test_file mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ENABLE_TESTING()
+ADD_TEST(TuckerMPI_noscale_fullrec_test ${CMAKE_CURRENT_BINARY_DIR}/TuckerMPI_noscale_fullrec.py)
 ADD_TEST(TuckerMPI_part_rec_test ${CMAKE_CURRENT_BINARY_DIR}/TuckerMPI_part_rec_test.pl "${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12")
 ADD_TEST(TuckerMPI_IO_test2 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test)
 ADD_TEST(TuckerMPI_IO_test3 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test)
@@ -233,6 +234,7 @@ ADD_TEST(TuckerMPI_ttm_test_file15 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 15 ${CMAKE
 ADD_TEST(TuckerMPI_ttm_test_file16 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 16 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_ttm_test_file)
 ADD_TEST(TuckerMPI_ttm_test_file24 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 24 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_ttm_test_file)
 
+SET_PROPERTY(TEST TuckerMPI_noscale_fullrec_test PROPERTY LABELS SystemTest ManyProcs)
 SET_PROPERTY(TEST TuckerMPI_part_rec_test PROPERTY LABELS SystemTest ManyProcs)
 SET_PROPERTY(TEST TuckerMPI_IO_test2 PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST TuckerMPI_IO_test3 PROPERTY LABELS UnitTest)
@@ -398,6 +400,7 @@ SET_PROPERTY(TEST TuckerMPI_ttm_test_file24 PROPERTY LABELS UnitTest ManyProcs)
 SET(CMAKE_TUCKER_BINARY_INPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/input_files CACHE INTERNAL "directory of binary input files")
 FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/input_files)
 FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/output_files)
+FILE(COPY "${CMAKE_CURRENT_SOURCE_DIR}/TuckerMPI_noscale_fullrec.py" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 FILE(COPY "${CMAKE_CURRENT_SOURCE_DIR}/TuckerMPI_part_rec_test.pl" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/input_test_filenames.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/input_test_filename.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
@@ -443,3 +446,7 @@ FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/reconstruction/sthosvd_mat_1.txt" DES
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/reconstruction/sthosvd_mat_2.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files/reconstruction")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/reconstruction/sthosvd_mat_3.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files/reconstruction")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/reconstruction/reconstructed.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files/reconstruction")
+
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/system/mpi_noscale_fullrec" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files/system")
+FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/input_files/system/mpi_noscale_fullrec/sthosvd/compressed)
+
