@@ -369,7 +369,6 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
   return gramMat;
 }
 
-// \todo STHOSVD is never tested with the new Gram computation
 const TuckerTensor* STHOSVD(const Tensor* const X,
     const double epsilon, bool useOldGram, bool flipSign)
 {
