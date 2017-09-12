@@ -9,6 +9,9 @@ TARGET_LINK_LIBRARIES(general_reconstruct mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_
 ADD_EXECUTABLE(sthosvd TuckerMPI_sthosvd.cpp)
 TARGET_LINK_LIBRARIES(sthosvd mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
+ADD_EXECUTABLE(scaling TuckerMPI_scaling.cpp)
+TARGET_LINK_LIBRARIES(scaling mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 ADD_EXECUTABLE(generate TuckerMPI_generate.cpp)
 TARGET_LINK_LIBRARIES(generate mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
