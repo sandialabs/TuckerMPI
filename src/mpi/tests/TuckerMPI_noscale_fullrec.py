@@ -2,16 +2,19 @@
 
 import os
 import subprocess
+import sys
 
 # Generate the data
 os.chdir("input_files/system/mpi_noscale_fullrec/generate")
-print "../../../../../drivers/bin/generate"
-subprocess.check_call('../../../../../drivers/bin/generate')
+cmd = sys.argv[1:]+['../../../../../drivers/bin/generate']
+print "Command line: ", str(cmd)
+subprocess.check_call(cmd)
 
 # Compress the data
 os.chdir("../sthosvd")
-print "../../../../../drivers/bin/sthosvd"
-subprocess.check_call('../../../../../drivers/bin/sthosvd')
+cmd = sys.argv[1:]+['../../../../../drivers/bin/sthosvd']
+print "Command line: ", str(cmd)
+subprocess.check_call(cmd)
 
 # Make sure the data is sufficiently compressed
 with open("compressed/sthosvd_ranks.txt") as f:
@@ -23,8 +26,9 @@ assert(not cmp(true_ranks,computed_ranks))
 
 # Un-compress the data
 os.chdir("../reconstruct")
-print "../../../../../drivers/bin/reconstruct"
-subprocess.check_call('../../../../../drivers/bin/reconstruct')
+cmd = sys.argv[1:]+['../../../../../drivers/bin/reconstruct']
+print "Command line: ", str(cmd)
+subprocess.check_call(cmd)
 
 # Compare the outputs using serial compare
 print "../../../../../../serial/compare/bin/compare"
