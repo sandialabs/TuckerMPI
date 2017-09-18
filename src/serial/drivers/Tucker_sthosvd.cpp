@@ -204,12 +204,12 @@ int main(int argc, char* argv[])
   if(scaling_type == "Max") {
     std::cout << "Normalizing the tensor by maximum entry - mode "
               << scale_mode << std::endl;
-    normalizeTensorMax(X, scale_mode, scale_file.c_str());
+    normalizeTensorMax(X, scale_mode, stdThresh, scale_file.c_str());
   }
   else if(scaling_type == "MinMax") {
     std::cout << "Normalizing the tensor using minmax scaling - mode "
               << scale_mode << std::endl;
-    normalizeTensorMinMax(X, scale_mode, scale_file.c_str());
+    normalizeTensorMinMax(X, scale_mode, stdThresh, scale_file.c_str());
   }
   else if(scaling_type == "StandardCentering") {
     std::cout << "Normalizing the tensor using standard centering - mode "

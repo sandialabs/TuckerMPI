@@ -358,9 +358,9 @@ void transformSlices(Tensor* Y, int mode, const double* scales, const double* sh
  * \param Y The tensor whose slices are being normalized
  * \param mode The mode which determines the slices
  */
-void normalizeTensorMinMax(Tensor* Y, int mode, const char* scale_file=0);
+void normalizeTensorMinMax(Tensor* Y, int mode, double stdThresh, const char* scale_file=0);
 
-void normalizeTensorMax(Tensor* Y, int mode, const char* scale_file=0);
+void normalizeTensorMax(Tensor* Y, int mode, double stdThresh, const char* scale_file=0);
 
 void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh, const char* scale_file=0);
 

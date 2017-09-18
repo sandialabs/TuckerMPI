@@ -16,7 +16,7 @@ int main()
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
 
   // Normalize the tensor
-  Tucker::normalizeTensorMinMax(tensor,0);
+  Tucker::normalizeTensorMinMax(tensor,0,1e-10);
 
   // Read true solution from file
   true_sol = Tucker::importTensor("input_files/3x5x7x11_mm0.txt");
@@ -33,7 +33,7 @@ int main()
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
 
   // Normalize the tensor
-  Tucker::normalizeTensorMinMax(tensor,1);
+  Tucker::normalizeTensorMinMax(tensor,1,1e-10);
 
   // Read true solution from file
   true_sol = Tucker::importTensor("input_files/3x5x7x11_mm1.txt");
@@ -50,7 +50,7 @@ int main()
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
 
   // Normalize the tensor
-  Tucker::normalizeTensorMinMax(tensor,2);
+  Tucker::normalizeTensorMinMax(tensor,2,1e-10);
 
   // Read true solution from file
   true_sol = Tucker::importTensor("input_files/3x5x7x11_mm2.txt");
@@ -67,7 +67,7 @@ int main()
   tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
 
   // Normalize the tensor
-  Tucker::normalizeTensorMinMax(tensor,3);
+  Tucker::normalizeTensorMinMax(tensor,3,1e-10);
 
   // Read true solution from file
   true_sol = Tucker::importTensor("input_files/3x5x7x11_mm3.txt");

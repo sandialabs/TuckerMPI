@@ -815,7 +815,7 @@ void transformSlices(Tensor* Y, int mode, const double* scales, const double* sh
 }
 
 
-void normalizeTensorMinMax(Tensor* Y, int mode, const char* scale_file)
+void normalizeTensorMinMax(Tensor* Y, int mode, double stdThresh, const char* scale_file)
 {
   MetricData* metrics = computeSliceMetrics(Y, mode, MAX+MIN);
   int sizeOfModeDim = Y->size(mode);
@@ -824,6 +824,10 @@ void normalizeTensorMinMax(Tensor* Y, int mode, const char* scale_file)
   for(int i=0; i<sizeOfModeDim; i++) {
     scales[i] = metrics->getMaxData()[i] - metrics->getMinData()[i];
     shifts[i] = -metrics->getMinData()[i];
+
+    if(scales[i] < stdThresh) {
+      scales[i] = 1;
+    }
   }
   transformSlices(Y,mode,scales,shifts);
   if(scale_file) writeScaleShift(mode,sizeOfModeDim,scales,shifts,scale_file);
@@ -833,7 +837,7 @@ void normalizeTensorMinMax(Tensor* Y, int mode, const char* scale_file)
 }
 
 // \todo This function is not being tested at all
-void normalizeTensorMax(Tensor* Y, int mode, const char* scale_file)
+void normalizeTensorMax(Tensor* Y, int mode, double stdThresh, const char* scale_file)
 {
   Tucker::MetricData* metrics = computeSliceMetrics(Y, mode,
       Tucker::MIN + Tucker::MAX);
@@ -845,6 +849,10 @@ void normalizeTensorMax(Tensor* Y, int mode, const char* scale_file)
         std::abs(metrics->getMaxData()[i]));
     scales[i] = scaleval;
     shifts[i] = 0;
+
+    if(scales[i] < stdThresh) {
+      scales[i] = 1;
+    }
   }
   transformSlices(Y,mode,scales,shifts);
   if(scale_file) writeScaleShift(mode,sizeOfModeDim,scales,shifts,scale_file);

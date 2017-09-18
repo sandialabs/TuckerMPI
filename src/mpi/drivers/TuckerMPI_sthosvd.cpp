@@ -331,9 +331,9 @@ int main(int argc, char* argv[])
             scales = sqrt(vars[i]);
             shifts = -means[i];
 
-            if(scales < stdThresh) {
-              scales = 1;
-            }
+          }
+          if(scales < stdThresh) {
+            scales = 1;
           }
 
           outStream << scales << " " << shifts << std::endl;
