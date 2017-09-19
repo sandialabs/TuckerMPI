@@ -29,7 +29,7 @@ Tensor* ttm(const Tensor* X, const int n,
     const Tucker::Matrix* const U, bool Utransp=false,
     Tucker::Timer* mult_timer=0, Tucker::Timer* pack_timer=0,
     Tucker::Timer* reduce_scatter_timer=0,
-    Tucker::Timer* reduce_timer=0);
+    Tucker::Timer* reduce_timer=0, size_t nnz_limit=0);
 
 } // end namespace TuckerMPI
 

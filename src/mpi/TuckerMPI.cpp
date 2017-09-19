@@ -392,6 +392,12 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
         << thresh << "...\n";
   }
 
+  // Compute the nnz of the largest tensor piece being stored by any process
+  size_t max_lcl_nnz_x = 1;
+  for(int i=0; i<ndims; i++) {
+    max_lcl_nnz_x *= X->getDistribution()->getMap(i,false)->getMaxNumEntries();
+  }
+
   // Barrier for timing
   MPI_Barrier(MPI_COMM_WORLD);
   factorization->total_timer_.start();
@@ -456,7 +462,8 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
         &factorization->ttm_matmul_timer_[n],
         &factorization->ttm_pack_timer_[n],
         &factorization->ttm_reducescatter_timer_[n],
-        &factorization->ttm_reduce_timer_[n]);
+        &factorization->ttm_reduce_timer_[n],
+        max_lcl_nnz_x);
     factorization->ttm_timer_[n].stop();
     if(rank == 0) {
       std::cout << "\tAutoST-HOSVD::TTM(" << n << ") time: "
@@ -498,6 +505,12 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
 
   // Create a struct to store the factorization
   TuckerTensor* factorization = Tucker::MemoryManager::safe_new<TuckerTensor>(ndims);
+
+  // Compute the nnz of the largest tensor piece being stored by any process
+  size_t max_lcl_nnz_x = 1;
+  for(int i=0; i<ndims; i++) {
+    max_lcl_nnz_x *= X->getDistribution()->getMap(i,false)->getMaxNumEntries();
+  }
 
   // Barrier for timing
   MPI_Barrier(MPI_COMM_WORLD);
@@ -561,7 +574,8 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
             &factorization->ttm_matmul_timer_[n],
             &factorization->ttm_pack_timer_[n],
             &factorization->ttm_reducescatter_timer_[n],
-            &factorization->ttm_reduce_timer_[n]);
+            &factorization->ttm_reduce_timer_[n],
+            max_lcl_nnz_x);
     factorization->ttm_timer_[n].stop();
     if(rank == 0) {
       std::cout << "\tAutoST-HOSVD::TTM(" << n << ") time: "

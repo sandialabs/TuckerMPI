@@ -379,12 +379,19 @@ int main(int argc, char* argv[])
   // Reconstruct the requested pieces of the tensor //
   ////////////////////////////////////////////////////
   TuckerMPI::Tensor* result = fact->G;
+
+  // Compute the nnz of the largest tensor piece being stored by any process
+  size_t max_lcl_nnz = 1;
+  for(int i=0; i<nd; i++) {
+    max_lcl_nnz *= result->getDistribution()->getMap(i,false)->getMaxNumEntries();
+  }
+
   for(int i=0; i<nd; i++)
   {
     int mode = (*rec_order)[i];
 
     // Perform the TTM
-    TuckerMPI::Tensor* temp = TuckerMPI::ttm(result,mode,fact->U[mode]);
+    TuckerMPI::Tensor* temp = TuckerMPI::ttm(result,mode,fact->U[mode],false,0,0,0,0,max_lcl_nnz);
 
     if(result != fact->G) {
       Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);

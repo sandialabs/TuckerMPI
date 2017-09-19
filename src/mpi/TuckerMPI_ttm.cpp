@@ -14,7 +14,7 @@ Tensor* ttm(const Tensor* X, const int n,
     const Tucker::Matrix* const U, bool Utransp,
     Tucker::Timer* mult_timer, Tucker::Timer* pack_timer,
     Tucker::Timer* reduce_scatter_timer,
-    Tucker::Timer* reduce_timer)
+    Tucker::Timer* reduce_timer, size_t nnz_limit)
 {
   // Compute the number of rows for the resulting "matrix"
   int nrows;
@@ -86,8 +86,28 @@ Tensor* ttm(const Tensor* X, const int n,
     else
       stride = uGlobalRows;
 
+    // We can do the TTM either by doing a single reduce_scatter, or a
+    // series of reductions.
+    // Reduce_scatter tends to be faster, so we try to use it if the
+    // memory requirements are not prohibitive.
+
+    // Compute the nnz of the largest tensor piece being stored by any process
+    size_t max_lcl_nnz_x = 1;
+    for(int i=0; i<ndims; i++) {
+      max_lcl_nnz_x *= X->getDistribution()->getMap(i,false)->getMaxNumEntries();
+    }
+
+    // Compute the nnz required for the reduce_scatter
+    size_t nnz_reduce_scatter = 1;
+    for(int i=0; i<ndims; i++) {
+      if(i == n)
+        nnz_reduce_scatter *= Y->getGlobalSize(n);
+      else
+        nnz_reduce_scatter *= X->getDistribution()->getMap(i,false)->getMaxNumEntries();
+    }
+
     // If the required memory is small, we can do a single reduce_scatter
-    if(K < std::ceil(Jn/Pn)) {
+    if(nnz_reduce_scatter <= std::max(max_lcl_nnz_x,nnz_limit)) {
       // Compute the TTM
       Tucker::Tensor* localResult;
       if(X->getDistribution()->ownNothing()) {
