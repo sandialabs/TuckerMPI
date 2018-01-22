@@ -1,5 +1,5 @@
 FILE(GLOB SOURCES "*.cpp")
-ADD_LIBRARY(serial_tucker ${SOURCES})
+ADD_LIBRARY(serial_tucker SHARED ${SOURCES})
 
 ADD_SUBDIRECTORY(tests)
 ADD_SUBDIRECTORY(compare)
