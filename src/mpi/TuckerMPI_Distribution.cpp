@@ -105,6 +105,69 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
   }
 }
 
+Distribution::Distribution(const Tucker::SizeArray& dims,
+    const Tucker::SizeArray& procs, const MPI_Comm& custom_comm) :
+        localDims_(dims.size()),
+        globalDims_(dims.size()),
+        maps_squeezed_(0),
+        squeezed_(false)
+{
+  // Get number of dimensions
+  int ndims = dims.size();
+
+  // Copy the global dimensions
+  for(int i=0; i<ndims; i++) {
+    globalDims_[i] = dims[i];
+  }
+
+  grid_ = Tucker::MemoryManager::safe_new<ProcessorGrid>(procs,custom_comm);
+
+  // Create the maps
+  createMaps();
+
+  // Copy local dimensions to localDims_
+  for(int d=0; d<ndims; d++) {
+    localDims_[d] = maps_[d]->getLocalNumEntries();
+  }
+
+  MPI_Comm comm;
+  findAndEliminateEmptyProcs(comm);
+
+  if(squeezed_) {
+    // Create a map for each dimension
+    maps_squeezed_ = Tucker::MemoryManager::safe_new_array<Map*>(ndims);
+    for(int d=0; d<ndims; d++) {
+      const MPI_Comm& comm = grid_->getColComm(d,false);
+      maps_squeezed_[d] = Tucker::MemoryManager::safe_new<Map>(globalDims_[d],comm);
+    }
+
+    // Remove the empty processes from the map communicators
+    for(int i=0; i<ndims; i++) {
+      maps_squeezed_[i]->removeEmptyProcs();
+    }
+
+    // Determine whether I own nothing
+    ownNothing_ = false;
+    for(int i=0; i<ndims; i++) {
+      if(maps_[i]->getLocalNumEntries() == 0) {
+        ownNothing_ = true;
+        break;
+      }
+    }
+
+    // Re-create the processor grid without lazy processes
+    if(!ownNothing_)
+      updateProcessorGrid(comm);
+  } // end if(squeezed_)
+  else {
+    ownNothing_ = false;
+  }
+
+  if(comm != MPI_COMM_WORLD && !ownNothing()) {
+    MPI_Comm_free(&comm);
+  }
+}
+
 
 Distribution::~Distribution()
 {
