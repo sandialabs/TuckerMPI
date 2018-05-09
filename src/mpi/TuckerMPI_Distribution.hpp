@@ -62,6 +62,22 @@ public:
   Distribution(const Tucker::SizeArray& dims,
       const Tucker::SizeArray& procs);
 
+  /** \brief Constructor
+   *
+   * The constructor will create a set of N maps, where N is the number
+   * of dimensions, each of which describes how the data will be mapped
+   * to the supplied processor grid.
+   *
+   * \param dims an array whose i-th entry is the number of points in the
+   * Cartesian grid in dimension i.
+   * \param procs an array whose i-th entry is the number of MPI processes
+   * in the i-th dimension.
+   * \param custom_comm is the user specified custom MPI communicator to use
+   * for setting up the object instead of the default MPI_WORLD_COMM
+   */
+  Distribution(const Tucker::SizeArray& dims,
+      const Tucker::SizeArray& procs, const MPI_Comm& custom_comm);
+
   //! Destructor
   ~Distribution();
 
