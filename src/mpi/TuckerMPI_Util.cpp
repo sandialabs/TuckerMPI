@@ -129,7 +129,7 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
     Tucker::Timer* unpack_timer)
 {
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  MPI_Comm_rank(Y->getDistribution()->getWorldComm() ,&rank);
 
   // Get the original Tensor map
   const Map* oldMap = Y->getDistribution()->getMap(n,false);
@@ -481,8 +481,8 @@ void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
         tensorOffset < numEntries;
         tensorOffset += stride)
     {
-      int RANK;
-      MPI_Comm_rank(MPI_COMM_WORLD,&RANK);
+//HK      int RANK;
+//HK      MPI_Comm_rank(MPI_COMM_WORLD,&RANK);
 
       // Copy block to destination
       int tbs = (int)blockSize;

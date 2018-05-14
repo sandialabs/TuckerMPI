@@ -258,7 +258,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
   Tucker::MemoryManager::safe_delete_array<double>(allRedBuf,numGlobalRows*numLocalRows);
 
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  MPI_Comm_rank(Y->getDistribution()->getWorldComm(),&rank);
   if(rank == 0) {
     if(mult_timer)
       std::cout << "\t\tGram(" << n << ")::Local Matmul time: " << mult_timer->duration() << "s\n";
@@ -282,7 +282,7 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
     Tucker::Timer* allreduce_timer)
 {
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  MPI_Comm_rank(Y->getDistribution()->getWorldComm(),&rank);
 
   // Get the number of dimensions
   int ndims = Y->getNumDimensions();
@@ -375,7 +375,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
 {
   // Get this rank
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(X->getDistribution()->getWorldComm(), &rank);
 
   int ndims = X->getNumDimensions();
 
@@ -399,7 +399,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   }
 
   // Barrier for timing
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(X->getDistribution()->getWorldComm());
   factorization->total_timer_.start();
 
   const Tensor* Y = X;
@@ -498,7 +498,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
     bool flipSign)
 {
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  MPI_Comm_rank(X->getDistribution()->getWorldComm(),&rank);
 
   int ndims = X->getNumDimensions();
   assert(ndims == reducedI->size());
@@ -513,7 +513,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   }
 
   // Barrier for timing
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(X->getDistribution()->getWorldComm());
   factorization->total_timer_.start();
 
   const Tensor* Y = X;
@@ -834,13 +834,13 @@ void readTensorBinary(std::string& filename, Tensor& Y)
     int ndims = Y.getNumDimensions();
     if(nfiles != Y.getGlobalSize(ndims-1)) {
       int rank;
-      MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+      MPI_Comm_rank(Y.getDistribution()->getWorldComm(),&rank);
       if(rank == 0) {
         std::cerr << "ERROR: The number of filenames you provided is "
             << nfiles << ", but the dimension of the tensor's last mode is "
             << Y.getGlobalSize(ndims-1) << ".\nCalling MPI_Abort...\n";
       }
-      MPI_Abort(MPI_COMM_WORLD,1);
+      MPI_Abort(Y.getDistribution()->getWorldComm(),1);
     }
     importTimeSeries(filename.c_str(),&Y);
   }
@@ -850,7 +850,7 @@ void readTensorBinary(std::string& filename, Tensor& Y)
 void importTensorBinary(const char* filename, Tensor* Y)
 {
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  MPI_Comm_rank(Y->getDistribution()->getWorldComm(),&rank);
 
   if(rank == 0) {
     std::cout << "Reading file " << filename << std::endl;
@@ -960,7 +960,7 @@ void importTensorBinary(const char* filename, Tucker::Tensor* Y)
 void importTimeSeries(const char* filename, Tensor* Y)
 {
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  MPI_Comm_rank(Y->getDistribution()->getWorldComm(),&rank);
 
   // Open the file
   std::ifstream ifs;
@@ -1073,13 +1073,13 @@ void writeTensorBinary(std::string& filename, const Tensor& Y)
      int ndims = Y.getNumDimensions();
      if(nfiles != Y.getGlobalSize(ndims-1)) {
        int rank;
-       MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+       MPI_Comm_rank(Y.getDistribution()->getWorldComm(),&rank);
        if(rank == 0) {
          std::cerr << "ERROR: The number of filenames you provided is "
              << nfiles << ", but the dimension of the tensor's last mode is "
              << Y.getGlobalSize(ndims-1) << ".\nCalling MPI_Abort...\n";
        }
-       MPI_Abort(MPI_COMM_WORLD,1);
+       MPI_Abort(Y.getDistribution()->getWorldComm(),1);
      }
      exportTimeSeries(filename.c_str(),&Y);
    }
@@ -1088,7 +1088,7 @@ void writeTensorBinary(std::string& filename, const Tensor& Y)
 void exportTensorBinary(const char* filename, const Tensor* Y)
 {
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  MPI_Comm_rank(Y->getDistribution()->getWorldComm(),&rank);
 
   if(rank == 0) {
     std::cout << "Writing file " << filename << std::endl;
@@ -1187,7 +1187,7 @@ void exportTensorBinary(const char* filename, const Tucker::Tensor* Y)
 void exportTimeSeries(const char* filename, const Tensor* Y)
 {
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  MPI_Comm_rank(Y->getDistribution()->getWorldComm(),&rank);
 
   if(Y->getDistribution()->ownNothing()) {
     return;

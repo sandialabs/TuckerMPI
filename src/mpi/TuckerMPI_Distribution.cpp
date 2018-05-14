@@ -43,11 +43,12 @@
 namespace TuckerMPI {
 
 Distribution::Distribution(const Tucker::SizeArray& dims,
-    const Tucker::SizeArray& procs) :
+    const Tucker::SizeArray& procs, const MPI_Comm& custom_comm) :
         localDims_(dims.size()),
         globalDims_(dims.size()),
         maps_squeezed_(0),
-        squeezed_(false)
+        squeezed_(false),
+        WORLD_COMM_(custom_comm)
 {
   // Get number of dimensions
   int ndims = dims.size();
@@ -57,7 +58,7 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
     globalDims_[i] = dims[i];
   }
 
-  grid_ = Tucker::MemoryManager::safe_new<ProcessorGrid>(procs,MPI_COMM_WORLD);
+  grid_ = Tucker::MemoryManager::safe_new<ProcessorGrid>(procs,WORLD_COMM_);
 
   // Create the maps
   createMaps();
@@ -100,7 +101,7 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
     ownNothing_ = false;
   }
 
-  if(comm != MPI_COMM_WORLD && !ownNothing()) {
+  if(comm != WORLD_COMM_ && !ownNothing()) {
     MPI_Comm_free(&comm);
   }
 }
@@ -151,6 +152,12 @@ const MPI_Comm& Distribution::getComm(bool squeezed) const
 {
   return grid_->getComm(squeezed);
 }
+
+const MPI_Comm& Distribution::getWorldComm() const
+{
+  return WORLD_COMM_;
+}
+
 
 bool Distribution::ownNothing() const
 {
@@ -209,9 +216,9 @@ void Distribution::findAndEliminateEmptyProcs(MPI_Comm& newcomm)
         std::unique(emptyProcs.begin(), emptyProcs.end());
     emptyProcs.resize(std::distance(emptyProcs.begin(),it));
 
-    // Get the group corresponding to MPI_COMM_WORLD
+    // Get the group corresponding to WORLD_COMM_
     MPI_Group group, newgroup;
-    MPI_Comm_group(MPI_COMM_WORLD, &group);
+    MPI_Comm_group(WORLD_COMM_, &group);
 
     assert(emptyProcs.size() <= std::numeric_limits<int>::max());
 
@@ -220,11 +227,11 @@ void Distribution::findAndEliminateEmptyProcs(MPI_Comm& newcomm)
         emptyProcs.data(), &newgroup);
 
     // Create a new MPI_Comm without the slacker MPI processes
-    MPI_Comm_create (MPI_COMM_WORLD, newgroup, &newcomm);
+    MPI_Comm_create (WORLD_COMM_, newgroup, &newcomm);
     squeezed_ = true;
   }
   else {
-    newcomm = MPI_COMM_WORLD;
+    newcomm = WORLD_COMM_;
   }
 }
 
@@ -236,7 +243,7 @@ void Distribution::updateProcessorGrid(const MPI_Comm& newcomm)
   Tucker::SizeArray newProcs(ndims);
   for(int i=0; i<ndims; i++) {
     int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_rank(WORLD_COMM_, &rank);
     const MPI_Comm& comm = maps_squeezed_[i]->getComm();
     int nprocs;
     MPI_Comm_size(comm,&nprocs);

@@ -129,7 +129,7 @@ double Tensor::norm2() const
   // Perform a reduction
   double globalNorm2;
   MPI_Allreduce(&localNorm2, &globalNorm2, 1,
-      MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_DOUBLE, MPI_SUM, dist_->getWorldComm() );
   return globalNorm2;
 }
 
@@ -176,7 +176,7 @@ double Tensor::maxEntry() const
 
   double globalMax;
   MPI_Allreduce(&localMax, &globalMax, 1, MPI_DOUBLE,
-            MPI_MAX, MPI_COMM_WORLD);
+            MPI_MAX, dist_->getWorldComm() );
   return globalMax;
 }
 
@@ -194,7 +194,7 @@ double Tensor::minEntry() const
 
   double globalMin;
   MPI_Allreduce(&localMin, &globalMin, 1, MPI_DOUBLE,
-            MPI_MIN, MPI_COMM_WORLD);
+            MPI_MIN, dist_->getWorldComm() );
   return globalMin;
 }
 

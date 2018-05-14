@@ -37,7 +37,7 @@ Tensor* ttm(const Tensor* X, const int n,
 
   // Create a distribution object for it
   Distribution* dist = Tucker::MemoryManager::safe_new<Distribution>(newSize,
-          X->getDistribution()->getProcessorGrid()->size());
+          X->getDistribution()->getProcessorGrid()->size(), X->getDistribution()->getWorldComm());
 
   // Create the new tensor
   Tensor* Y = Tucker::MemoryManager::safe_new<Tensor>(dist);
