@@ -64,8 +64,8 @@ Tensor* ttm(const Tensor* X, const int n,
 
     // Determine whether we must block the result
     // If the temporary storage is bigger than the tensor, we block instead
-    int K = U->ncols();
-    int Jn = U->nrows();
+    int K = nrows;
+    int Jn = Utransp ? U->nrows() : U->ncols();
 
     int uGlobalRows = Y->getGlobalSize(n);
     int uGlobalCols = X->getGlobalSize(n);
