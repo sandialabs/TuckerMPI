@@ -8,11 +8,14 @@
 This is the GIT repo for the work on building a parallel Tucker for combustion data.                                                   
 
 For more information:  
-[Alicia Klinvex](mailto:amklinv@sandia.gov)  
 [Grey Ballard](mailto:ballard@wfu.edu)  
 [Tamara Kolda](mailto:tgkolda@sandia.gov)  
-[Woody Austin](mailto:austinwn@cs.utexas.edu)  
 [Hemanth Kolla](mailto:hnkolla@sandia.gov)  
+
+We would live to also acknowledge important contributions to this code by the following persons:
+* Woody Austin - Author of the original code, built using an older tensor codebase from Sandia
+* Alicia Klinvex - Author of second version of code, which was rewritten from scratch on a new codebase
+* Casey Battaglino - Important bug fix for computing TTMs in the case where the result is bigger than the input tensor
 
 WARNING
 -------
