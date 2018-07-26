@@ -9,10 +9,12 @@
 #include "Tucker.hpp"
 #include "Tucker_IO_Util.hpp"
 #include "TuckerMPI_IO_Util.hpp"
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <numeric>
 #include "assert.h"
 
 int main(int argc, char* argv[])
@@ -43,6 +45,7 @@ int main(int argc, char* argv[])
   //
   std::vector<std::string> fileAsString = Tucker::getFileAsStrings(paramfn);
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
+  bool boolOptimizeFlops                = Tucker::stringParse<bool>(fileAsString, "Optimize flops", true);
 
   Tucker::SizeArray* proc_grid_dims     = Tucker::stringParseSizeArray(fileAsString, "Grid dims");
   Tucker::SizeArray* subs_begin         = Tucker::stringParseSizeArray(fileAsString, "Beginning subscripts");
@@ -103,6 +106,11 @@ int main(int argc, char* argv[])
       std::cout << "Mode order for reconstruction\n";
       std::cout << "NOTE: if left unspecified, the memory-optimal one will be automatically selected\n";
       std::cout << "- Reconstruction order = " << *rec_order << std::endl << std::endl;
+    }
+    else {
+      std::cout << "If true, choose the reconstruction ordering that requires the minimum number of flops\n";
+      std::cout << "Otherwise, choose the one that will require the least memory\n";
+      std::cout << "- Optimize flops = " << (boolOptimizeFlops ? "true" : "false") << std::endl << std::endl;
     }
 
     std::cout << "If true, print the parameters\n";
@@ -255,35 +263,84 @@ int main(int argc, char* argv[])
   ////////////////////////////////////////////////////////////
   // Create the optimal reconstruction order if unspecified //
   ////////////////////////////////////////////////////////////
+
   if(rec_order == NULL) {
+    Tucker::Timer orderTimer;
+    orderTimer.start();
+
+    // Compute the size of the final tensor
+    Tucker::SizeArray* rec_size =
+        Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
+    for(int i=0; i<nd; i++) {
+      (*rec_size)[i] = 1 + (*subs_end)[i] - (*subs_begin)[i];
+    }
+
+
     // Create the SizeArray
     rec_order = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
+    Tucker::SizeArray* temp_order =
+        Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
     for(int i=0; i<nd; i++) {
       (*rec_order)[i] = i;
+      (*temp_order)[i] = i;
     }
 
-    // Compute the ratios of reconstructed size to core size
-    int* rec_size = Tucker::MemoryManager::safe_new_array<int>(nd);
-    double* ratios = Tucker::MemoryManager::safe_new_array<double>(nd);
-    for(int i=0; i<nd; i++) {
-      rec_size[i] = 1 + (*subs_end)[i] - (*subs_begin)[i];
-      ratios[i] = (double)rec_size[i] / (*coreSize)[i];
-    }
+    size_t min_flops = -1;
+    size_t min_mem = -1;
+    Tucker::SizeArray* current_dims =
+        Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
+    do {
+      // Initialize current dimensions
+      for(int i=0; i<nd; i++) {
+        (*current_dims)[i] = (*coreSize)[i];
+      }
 
-    // Sort the ratios
-    for(int i=1; i<nd; i++) {
-      for(int j=0; j<nd-i; j++) {
-        if(ratios[j] > ratios[j+1]) {
-          std::swap(ratios[j],ratios[j+1]);
-          std::swap((*rec_order)[j],(*rec_order)[j+1]);
+      if(boolOptimizeFlops) {
+        // Compute the number of flops
+        size_t flops = 0;
+        for(int i=0; i<nd; i++) {
+          flops += (*rec_size)[(*temp_order)[i]] * current_dims->prod();
+          (*current_dims)[(*temp_order)[i]] = (*rec_size)[(*temp_order)[i]];
+        }
+
+        if(min_flops == -1 || flops < min_flops) {
+          min_flops = flops;
+          for(int i=0; i<nd; i++) {
+            (*rec_order)[i] = (*temp_order)[i];
+          }
         }
       }
-    }
-    if(rank == 0) std::cout << "Reconstruction order: " << *rec_order << std::endl;
+      else {
+        // Compute the memory footprint
+        size_t mem = std::inner_product(rec_size->data(),
+            rec_size->data()+nd,current_dims->data(),0);
+        size_t max_mem = mem;
+        for(int i=0; i<nd; i++) {
+          mem += current_dims->prod();
+          (*current_dims)[(*temp_order)[i]] = (*rec_size)[(*temp_order)[i]];
+          mem += current_dims->prod();
+          mem -= (*coreSize)[(*temp_order)[i]]*(*rec_size)[(*temp_order)[i]];
+          max_mem = std::max(mem,max_mem);
+        }
+
+        if(min_mem == -1 || max_mem < min_mem) {
+          min_mem = max_mem;
+          for(int i=0; i<nd; i++) {
+            (*rec_order)[i] = (*temp_order)[i];
+          }
+        }
+      }
+    } while( std::next_permutation(temp_order->data(),temp_order->data()+nd) );
+
+    std::cout << "Reconstruction order: " << *rec_order << std::endl;
 
     // Free the memory
-    Tucker::MemoryManager::safe_delete_array<int>(rec_size,nd);
-    Tucker::MemoryManager::safe_delete_array<double>(ratios,nd);
+    Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(temp_order);
+    Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(current_dims);
+    Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(rec_size);
+
+    orderTimer.stop();
+    std::cout << "Computing the optimal reconstruction order: " << orderTimer.duration() << " s\n";
   }
 
   //////////////////////////////////////////////////////////
