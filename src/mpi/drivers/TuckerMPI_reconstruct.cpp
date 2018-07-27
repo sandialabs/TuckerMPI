@@ -419,7 +419,9 @@ int main(int argc, char* argv[])
     TuckerMPI::importTensorBinary(ss.str().c_str(), fact->U[mode]);
   }
   readTimer->stop();
-  std::cout << "Time spent reading: " << readTimer->duration() << "s\n";
+  if(rank == 0) {
+    std::cout << "Time spent reading: " << readTimer->duration() << "s\n";
+  }
   Tucker::MemoryManager::safe_delete<Tucker::Timer>(readTimer);
 
   ////////////////////////////////////////////////////
@@ -458,7 +460,9 @@ int main(int argc, char* argv[])
     }
   }
   reconstructTimer->stop();
-  std::cout << "Time spent reconstructing: " << reconstructTimer->duration() << "s\n";
+  if(rank == 0) {
+    std::cout << "Time spent reconstructing: " << reconstructTimer->duration() << "s\n";
+  }
   Tucker::MemoryManager::safe_delete<Tucker::Timer>(reconstructTimer);
 
   ///////////////////////////////////////////////////////
@@ -516,7 +520,9 @@ int main(int argc, char* argv[])
     Tucker::MemoryManager::safe_delete_array<double>(shifts, scale_size);
   } // end if(scale_mode < nd)
   scaleTimer->stop();
-  std::cout << "Time spent shifting and scaling: " << scaleTimer->duration() << "s\n";
+  if(rank == 0) {
+    std::cout << "Time spent shifting and scaling: " << scaleTimer->duration() << "s\n";
+  }
   Tucker::MemoryManager::safe_delete<Tucker::Timer>(scaleTimer);
 
   ////////////////////////////////////////////
@@ -526,7 +532,9 @@ int main(int argc, char* argv[])
   writeTimer->start();
   TuckerMPI::writeTensorBinary(out_fns_file, *result);
   writeTimer->stop();
-  std::cout << "Time spent writing: " << writeTimer->duration() << "s\n";
+  if(rank == 0) {
+    std::cout << "Time spent writing: " << writeTimer->duration() << "s\n";
+  }
   Tucker::MemoryManager::safe_delete<Tucker::Timer>(writeTimer);
 
   /////////////////
