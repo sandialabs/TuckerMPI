@@ -392,6 +392,8 @@ int main(int argc, char* argv[])
   ///////////////////////////
   // Read core tensor data //
   ///////////////////////////
+  Tucker::Timer* readTimer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
+  readTimer->start();
   std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn +
             "_core.mpi";
   fact->G = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
@@ -416,10 +418,15 @@ int main(int argc, char* argv[])
     fact->U[mode] = Tucker::MemoryManager::safe_new<Tucker::Matrix>((*I_dims)[mode],(*coreSize)[mode]);
     TuckerMPI::importTensorBinary(ss.str().c_str(), fact->U[mode]);
   }
+  readTimer->stop();
+  std::cout << "Time spent reading: " << readTimer->duration() << "s\n";
+  Tucker::MemoryManager::safe_delete<Tucker::Timer>(readTimer);
 
   ////////////////////////////////////////////////////
   // Reconstruct the requested pieces of the tensor //
   ////////////////////////////////////////////////////
+  Tucker::Timer* reconstructTimer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
+  reconstructTimer->start();
   TuckerMPI::Tensor* result = fact->G;
   for(int i=0; i<nd; i++)
   {
@@ -450,11 +457,16 @@ int main(int argc, char* argv[])
       Tucker::printBytes(global_nnz*sizeof(double));
     }
   }
+  reconstructTimer->stop();
+  std::cout << "Time spent reconstructing: " << reconstructTimer->duration() << "s\n";
+  Tucker::MemoryManager::safe_delete<Tucker::Timer>(reconstructTimer);
 
   ///////////////////////////////////////////////////////
   // Scale and shift if necessary                      //
   // This step only happens if the scaling file exists //
   ///////////////////////////////////////////////////////
+  Tucker::Timer* scaleTimer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
+  scaleTimer->start();
 
   // Get the mode number
   std::ifstream ifs;
@@ -503,11 +515,19 @@ int main(int argc, char* argv[])
     Tucker::MemoryManager::safe_delete_array<double>(scales, scale_size);
     Tucker::MemoryManager::safe_delete_array<double>(shifts, scale_size);
   } // end if(scale_mode < nd)
+  scaleTimer->stop();
+  std::cout << "Time spent shifting and scaling: " << scaleTimer->duration() << "s\n";
+  Tucker::MemoryManager::safe_delete<Tucker::Timer>(scaleTimer);
 
   ////////////////////////////////////////////
   // Write the reconstructed tensor to disk //
   ////////////////////////////////////////////
+  Tucker::Timer* writeTimer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
+  writeTimer->start();
   TuckerMPI::writeTensorBinary(out_fns_file, *result);
+  writeTimer->stop();
+  std::cout << "Time spent writing: " << writeTimer->duration() << "s\n";
+  Tucker::MemoryManager::safe_delete<Tucker::Timer>(writeTimer);
 
   /////////////////
   // Free memory //
