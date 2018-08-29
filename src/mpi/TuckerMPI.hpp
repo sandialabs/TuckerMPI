@@ -146,7 +146,7 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh=1e-9
 
 void normalizeTensorMinMax(Tensor* Y, int mode);
 
-void normalizeTensorMax(Tensor* Y, int mode);
+void normalizeTensorMax(Tensor* Y, int mode, double stdThresh=1e-9);
 
 const Tensor* reconstructSingleSlice(const TuckerTensor* fact,
     const int mode, const int sliceNum);

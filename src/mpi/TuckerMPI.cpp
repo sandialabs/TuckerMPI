@@ -758,7 +758,7 @@ void normalizeTensorMinMax(Tensor* Y, int mode)
 }
 
 // \todo This function is never tested
-void normalizeTensorMax(Tensor* Y, int mode)
+void normalizeTensorMax(Tensor* Y, int mode, double stdThresh)
 {
   // I don't have to do any work because I don't own any data
   if(Y->getLocalSize(mode) == 0)
@@ -774,6 +774,9 @@ void normalizeTensorMax(Tensor* Y, int mode)
         std::abs(metrics->getMaxData()[i]));
     scales[i] = scaleval;
     shifts[i] = 0;
+    if(std::abs(scales[i]) < stdThresh) {
+      scales[i] = 1;
+    }
   }
   transformSlices(Y,mode,scales,shifts);
   Tucker::MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
