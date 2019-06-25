@@ -1,5 +1,6 @@
 FILE(GLOB SOURCES "*.cpp")
 ADD_LIBRARY(serial_tucker SHARED ${SOURCES})
+target_link_libraries(serial_tucker PUBLIC ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_SUBDIRECTORY(tests)
 ADD_SUBDIRECTORY(compare)

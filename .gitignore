@@ -1,1 +1,4 @@
 build
+src/.clangd
+src/compile_commands.json
+.nvimrc
