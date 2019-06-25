@@ -191,6 +191,11 @@ int main(int argc, char* argv[])
   writeTimer.stop();
   std::cout << "Time spent writing to disk: " << writeTimer.duration() << "s\n";
 
+  // Do some cleanup
+  Tucker::MemoryManager::safe_delete(product);
+  Tucker::MemoryManager::safe_delete(I_dims);
+  Tucker::MemoryManager::safe_delete(R_dims);
+
   std::cout << "Done!\n";
   return EXIT_SUCCESS;
 }

@@ -191,6 +191,7 @@ int main(int argc, char* argv[])
         << std::setw(13) << metrics->getMinData()[i]
         << std::setw(13) << metrics->getMaxData()[i] << std::endl;
   }
+  Tucker::MemoryManager::safe_delete(metrics);
 
   statStream.close();
 
@@ -303,7 +304,10 @@ int main(int argc, char* argv[])
       }
     }
     writeTimer.stop();
+    Tucker::MemoryManager::safe_delete(solution);
   }
+    Tucker::MemoryManager::safe_delete(X);
+
 
   //
   // Free memory
