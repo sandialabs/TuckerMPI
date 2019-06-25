@@ -114,6 +114,7 @@ ProcessorGrid::~ProcessorGrid()
       MPI_Comm_free(rowcomms_+i);
       MPI_Comm_free(colcomms_+i);
     }
+    MPI_Comm_free(&cartComm_);
   }
   Tucker::MemoryManager::safe_delete_array<MPI_Comm>(rowcomms_,ndims);
   Tucker::MemoryManager::safe_delete_array<MPI_Comm>(colcomms_,ndims);
