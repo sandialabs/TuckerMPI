@@ -258,6 +258,9 @@ int main(int argc, char* argv[])
     }
   }
 
+  Tucker::MemoryManager::safe_delete_array(myCoordinates, nd);
+  Tucker::MemoryManager::safe_delete_array(zeroCoordinates, nd);
+
   const TuckerMPI::Map* map = dist->getMap(scale_mode,false);
   const MPI_Comm& rowComm = grid->getColComm(scale_mode,false);
   if(needToSendToZero) {
@@ -342,7 +345,12 @@ int main(int argc, char* argv[])
         outStream.close();
       }
     }
+    Tucker::MemoryManager::safe_delete_array(mins, numEntries);
+    Tucker::MemoryManager::safe_delete_array(maxs, numEntries);
+    Tucker::MemoryManager::safe_delete_array(vars, numEntries);
+    Tucker::MemoryManager::safe_delete_array(means, numEntries);
   }
+  Tucker::MemoryManager::safe_delete(metrics);
 
 
   ///////////////////////////
@@ -497,6 +505,7 @@ int main(int argc, char* argv[])
       }
 
     } // end if(boolWriteSTHOSVD)
+    Tucker::MemoryManager::safe_delete(solution);
   } // end if(boolSTHOSVD)
 
   //

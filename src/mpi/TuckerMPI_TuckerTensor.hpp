@@ -330,6 +330,7 @@ public:
       Tucker::MemoryManager::safe_delete_array<double>(min_array,ntimers*N+1);
       Tucker::MemoryManager::safe_delete_array<double>(max_array,ntimers*N+1);
       Tucker::MemoryManager::safe_delete_array<double>(mean_array,ntimers*N+1);
+      Tucker::MemoryManager::safe_delete_array<double>(gathered_data,(ntimers*N+1)*nprocs);
     }
 
     Tucker::MemoryManager::safe_delete_array<double>(raw_array,ntimers*N+1);
