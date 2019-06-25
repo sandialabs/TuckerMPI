@@ -214,6 +214,8 @@ void Map::removeEmptyProcs()
   MPI_Group_excl (old_group, (int)emptyProcs.size(),
       emptyProcs.data(), &new_group);
   MPI_Comm_create (comm_, new_group, &new_comm);
+  MPI_Group_free(&new_group);
+  MPI_Group_free(&old_group);
   comm_ = new_comm;
   removedEmptyProcs_ = true;
 }

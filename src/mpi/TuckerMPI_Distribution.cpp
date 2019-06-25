@@ -221,6 +221,7 @@ void Distribution::findAndEliminateEmptyProcs(MPI_Comm& newcomm)
 
     // Create a new MPI_Comm without the slacker MPI processes
     MPI_Comm_create (MPI_COMM_WORLD, newgroup, &newcomm);
+    MPI_Group_free(&newgroup);
     squeezed_ = true;
   }
   else {
