@@ -50,6 +50,101 @@
  */
 namespace Tucker {
 
+Matrix* computeLQ(const Tensor* Y, const int n){
+  if(Y == 0) {
+    throw std::runtime_error("Tucker::computeLQ(const Tensor* Y, const int n): Y is a null pointer");
+  }
+  if(Y->getNumElements() == 0) {
+    throw std::runtime_error("Tucker::computeLQ(const Tensor* Y, const int n): Y->getNumElements() == 0");
+  }
+  if(n < 0 || n >= Y->N()) {
+    std::ostringstream oss;
+    oss << "Tucker::computeLQ(const Tensor* Y, const int n): n = "
+        << n << " is not in the range [0," << Y->N() << ")";
+    throw std::runtime_error(oss.str());
+  }
+
+  int nrows = Y->size(n);
+  if(n == 0){
+    // Compute number of columns of Y_n
+    int ncols =1;
+    for(int i=0; i<Y->N(); i++) {
+      if(i != n) {
+        ncols *= Y->size(i);
+      }
+    }
+    int info;
+    int sizeOfY = nrows*ncols;
+    int ONE = 1;
+    Matrix * A = MemoryManager::safe_new<Matrix>(nrows,ncols);
+    dcopy_(&sizeOfY, Y->data(), &ONE, A->data(), &ONE);
+    double * work = MemoryManager::safe_new<double>(nrows*ncols);
+    //call dgelqf
+    double * tau = Tucker::MemoryManager::safe_new_array<double>(nrows);
+    dgelqf_(&nrows, &ncols, A->data(), &nrows, tau, work, &sizeOfY, &info);
+    if(info == 0){
+      return A;
+    }
+    else{
+      std::ostringstream oss;
+        oss << "the" << info*-1 << "th argument to dgelqf is invalid.";
+      throw std::runtime_error(oss.str());
+    }
+  }
+  else{
+    //Serial TSQR:
+    int ncols = 1; //this becomes the number of rows in each submatrix AFTER transposing
+    int nmats = 1;
+
+    // Count the number of columns
+    for(int i=0; i<n; i++) {
+      ncols *= Y->size(i);
+    }
+
+    // Count the number of matrices
+    for(int i=n+1; i<Y->N(); i++) {
+      nmats *= Y->size(i);
+    }
+    //make the first R matrix
+    int info;
+    int sizeOfA = nrows*ncols;
+    int ONE = 1;
+    Matrix * A = MemoryManager::safe_new<Matrix>(ncols,nrows);
+    dcopy_(&sizeOfA, Y->data(), &ONE, A->data(), &ONE);
+    double * work = MemoryManager::safe_new<double>(nrows*ncols);
+    double * tau = Tucker::MemoryManager::safe_new_array<double>(ncols);
+    //call dgeqrf(M, N, A, LDA, TAU, WORK, LWORK, INFO)
+    dgeqrf_(&ncols, &nrows, A->data(), &ncols, tau, work, &sizeOfA, &info);
+    if(info != 0){
+      std::ostringstream oss;
+        oss << "the" << info*-1 << "th argument to dgelqf is invalid.";
+      throw std::runtime_error(oss.str());
+    }
+    MemoryManager::safe_delete_array<double>(work, nrows*ncols);
+    MemoryManager::safe_delete_array<double>(tau, ncols);
+    //
+    Matrix* B;
+    Matrix* T;
+    for(int currentSubmatrixIndex=1; currentSubmatrixIndex < nmats; currentSubmatrixIndex ++){
+      B = MemoryManager::safe_new<Matrix>(ncols, nrows);
+      dcopy_(&sizeOfA, Y->data()+currentSubmatrixIndex*sizeOfA, &ONE, B->data(), &ONE);
+      work = MemoryManager::safe_new<double>(nrows*nrows);
+      T = MemoryManager::safe_new<Matrix>(nrows, nrows);
+      int ZERO = 0;
+      //call dtpqrt(M, N, L, NB, A, LDA)
+      dtpqrt_(&ncols, &nrows, &ZERO, &nrows, A->data(), &ncols, B->data(), &ncols, T->data() ,&nrows, work, &info);
+      if(info != 0){
+        std::ostringstream oss;
+        oss << "the" << info*-1 << "th argument to dgelqf is invalid.";
+        throw std::runtime_error(oss.str());
+      }
+    }
+    return A;
+
+  }
+}
+
+
 /** \example Tucker_gram_test_file.cpp
  * \example Tucker_gram_test_nofile.cpp
  */

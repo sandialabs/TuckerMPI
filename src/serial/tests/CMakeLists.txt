@@ -1,4 +1,6 @@
 INCLUDE_DIRECTORIES(..)
+ADD_EXECUTABLE(Tucker_LQ_test Tucker_LQ_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_LQ_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(Tucker_IO_test Tucker_IO_test.cpp)
 TARGET_LINK_LIBRARIES(Tucker_IO_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
@@ -42,6 +44,7 @@ TARGET_LINK_LIBRARIES(Tucker_slice_test_nofile serial_tucker ${BLAS_LIBRARIES} $
 
 ENABLE_TESTING()
 ADD_TEST(Tucker_noscale_fullrec_test ${CMAKE_CURRENT_BINARY_DIR}/Tucker_noscale_fullrec.py)
+ADD_TEST(Tucker_serial_LQ_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_LQ_test)
 ADD_TEST(Tucker_serial_IO_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_IO_test)
 ADD_TEST(Tucker_serial_shift_scale_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_shift_scale_test)
 ADD_TEST(Tucker_serial_eig_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_eig_test)
@@ -57,6 +60,7 @@ ADD_TEST(Tucker_serial_slice_test_file ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_
 ADD_TEST(Tucker_serial_slice_test_nofile ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_slice_test_nofile)
 
 SET_PROPERTY(TEST Tucker_noscale_fullrec_test PROPERTY LABELS SystemTest LongTest)
+SET_PROPERTY(TEST Tucker_serial_LQ_test PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST Tucker_serial_shift_scale_test PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST Tucker_serial_eig_test PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST Tucker_serial_norm_test PROPERTY LABELS UnitTest)

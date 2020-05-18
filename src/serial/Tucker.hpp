@@ -49,6 +49,18 @@
 namespace Tucker {
 
 /// @cond EXCLUDE
+//general QR factorization
+extern "C" void dtpqrt_(const int*, const int*, const int*, 
+const int*, double*, const int*, double*, const int*, double*,
+const int*, double*, int*);
+
+extern "C" void dgeqrf_(const int*, const int*, double*, 
+    const int*, double*, double*, const int*, int*);
+    
+//general LQ factorization
+extern "C" void dgelqf_(const int*, const int*, double*, 
+    const int*, double*, double*, const int*, int*);
+
 // Symmetric rank-k update
 extern "C" void dsyrk_(const char*, const char*, const int*,
     const int*, const double*, const double*, const int*,
@@ -69,6 +81,10 @@ extern "C" void dcopy_(const int*, const double*, const int*,
 // Scale an array
 extern "C" void dscal_(const int*, const double*, double*, const int*);
 /// @endcond
+
+/**
+ */
+Matrix* computeLQ(const Tensor* Y, const int);
 
 /** \brief Compute the Gram matrix \f$Y_n Y_n^T\f$
  *
