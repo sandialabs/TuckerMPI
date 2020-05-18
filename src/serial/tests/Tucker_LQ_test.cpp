@@ -7,7 +7,7 @@ bool checkTEqual(const double* arr1, const double* arr2, int nrows, int ncols, i
     int ind = 0;
     for(int r=0; r<nrows; r++) {
       for(int c=r; c<ncols; c++) {
-        std::cout << "matching:  arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
+        //std::cout << "matching:  arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
         if(abs(arr1[r+c*nrows]) - abs(arr2[ind]) > 1e-10) {
           return false;
         }
@@ -47,39 +47,43 @@ int main(){
   double R1[3] = {-13.453624047073712, -11.595388681455795, 6.822533351033680};
   double R2[6] = {-11.747340124470732,-7.661308776828736,-8.001811389132236,5.225356239156038,5.491616429686285,-6.619151265982165};
   double R3[3] = {-13.453624047073712, -9.811482730462597, 9.205151092178458};
+  bool isEqual0 = false;
+  bool isEqual1 = false;
+  bool isEqual2 = false;
+  bool isEqual3 = false;
   Tucker::Matrix* r = Tucker::computeLQ(Y, 0); 
   std::cout << "R0: " << std::endl;
-  for(int i=0; i<r->ncols()*r->nrows();i++ ){
-    std::cout << r->data()[i] << ", "; 
-  }
-  std::cout << std::endl;
-  bool isEqual0 = checkTEqual(r->data(), R0, r->nrows(), r->ncols(), 0);
+  // for(int i=0; i<r->ncols()*r->nrows();i++ ){
+  //   std::cout << r->data()[i] << ", "; 
+  // }
+  // std::cout << std::endl;
+  isEqual0 = checkTEqual(r->data(), R0, r->nrows(), r->ncols(), 0);
   r = Tucker::computeLQ(Y, 1); 
-  std::cout << "R1" << "(" << r->nrows() << "*" << r->ncols() <<") " << std::endl;
-    for(int i=0; i<r->ncols()*r->nrows();i++ ){
-    std::cout << r->data()[i] << ", "; 
-  }
-  std::cout << std::endl;
-  bool isEqual1 = checkTEqual(r->data(), R1, r->nrows(), r->ncols(), 1);
+  // std::cout << "R1" << "(" << r->nrows() << "*" << r->ncols() <<") " << std::endl;
+  //   for(int i=0; i<r->ncols()*r->nrows();i++ ){
+  //   std::cout << r->data()[i] << ", "; 
+  // }
+  // std::cout << std::endl;
+  isEqual1 = checkTEqual(r->data(), R1, r->nrows(), r->ncols(), 1);
   r = Tucker::computeLQ(Y, 2); 
-  std::cout << "R2: " << std::endl;
-    for(int i=0; i<r->ncols()*r->nrows();i++ ){
-    std::cout << r->data()[i] << ", "; 
-  }
-  std::cout << std::endl;
-  bool isEqual2 = checkTEqual(r->data(), R2, r->nrows(), r->ncols(), 1);
+  // std::cout << "R2: " << std::endl;
+  //   for(int i=0; i<r->ncols()*r->nrows();i++ ){
+  //   std::cout << r->data()[i] << ", "; 
+  // }
+  // std::cout << std::endl;
+  isEqual2 = checkTEqual(r->data(), R2, r->nrows(), r->ncols(), 1);
   r = Tucker::computeLQ(Y, 3); 
-  std::cout << "R3: " << std::endl;
-    for(int i=0; i<r->ncols()*r->nrows();i++ ){
-    std::cout << r->data()[i] << ", "; 
-  }
-  std::cout << std::endl;
-  bool isEqual3 = checkTEqual(r->data(), R3, r->nrows(), r->ncols(), 1);
-  // Tucker::MemoryManager::safe_delete<Tucker::Matrix>(r);
-  // Tucker::MemoryManager::safe_delete<Tucker::Tensor>(Y);
-  // Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(size);
+  // std::cout << "R3: " << std::endl;
+  //   for(int i=0; i<r->ncols()*r->nrows();i++ ){
+  //   std::cout << r->data()[i] << ", "; 
+  // }
+  // std::cout << std::endl;
+  isEqual3 = checkTEqual(r->data(), R3, r->nrows(), r->ncols(), 1);
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(r);
+  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(Y);
+  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(size);
   if(!isEqual0 || !isEqual1 || !isEqual2 || !isEqual3){
-    return EXIT_FAILURE;
+     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
 }

@@ -78,10 +78,12 @@ Matrix* computeLQ(const Tensor* Y, const int n){
     int ONE = 1;
     Matrix * A = MemoryManager::safe_new<Matrix>(nrows,ncols);
     dcopy_(&sizeOfY, Y->data(), &ONE, A->data(), &ONE);
-    double * work = MemoryManager::safe_new<double>(nrows*ncols);
+    double * work = MemoryManager::safe_new_array<double>(nrows*ncols);
     //call dgelqf
-    double * tau = Tucker::MemoryManager::safe_new_array<double>(nrows);
+    double * tau = MemoryManager::safe_new_array<double>(nrows);
     dgelqf_(&nrows, &ncols, A->data(), &nrows, tau, work, &sizeOfY, &info);
+    MemoryManager::safe_delete_array(tau, nrows);
+    MemoryManager::safe_delete_array(work, nrows*ncols);
     if(info == 0){
       return A;
     }
@@ -111,7 +113,7 @@ Matrix* computeLQ(const Tensor* Y, const int n){
     int ONE = 1;
     Matrix * A = MemoryManager::safe_new<Matrix>(ncols,nrows);
     dcopy_(&sizeOfA, Y->data(), &ONE, A->data(), &ONE);
-    double * work = MemoryManager::safe_new<double>(nrows*ncols);
+    double * work = MemoryManager::safe_new_array<double>(nrows*ncols);
     double * tau = Tucker::MemoryManager::safe_new_array<double>(ncols);
     //call dgeqrf(M, N, A, LDA, TAU, WORK, LWORK, INFO)
     dgeqrf_(&ncols, &nrows, A->data(), &ncols, tau, work, &sizeOfA, &info);
@@ -122,16 +124,15 @@ Matrix* computeLQ(const Tensor* Y, const int n){
     }
     MemoryManager::safe_delete_array<double>(work, nrows*ncols);
     MemoryManager::safe_delete_array<double>(tau, ncols);
-    //
     Matrix* B;
     Matrix* T;
     for(int currentSubmatrixIndex=1; currentSubmatrixIndex < nmats; currentSubmatrixIndex ++){
       B = MemoryManager::safe_new<Matrix>(ncols, nrows);
       dcopy_(&sizeOfA, Y->data()+currentSubmatrixIndex*sizeOfA, &ONE, B->data(), &ONE);
-      work = MemoryManager::safe_new<double>(nrows*nrows);
+      work = MemoryManager::safe_new_array<double>(nrows*nrows);
       T = MemoryManager::safe_new<Matrix>(nrows, nrows);
       int ZERO = 0;
-      //call dtpqrt(M, N, L, NB, A, LDA)
+      //call dtpqrt(M, N, L, NB, A, LDA, B, LDB, T, LDT, WORK, INFO)
       dtpqrt_(&ncols, &nrows, &ZERO, &nrows, A->data(), &ncols, B->data(), &ncols, T->data() ,&nrows, work, &info);
       if(info != 0){
         std::ostringstream oss;
@@ -139,6 +140,9 @@ Matrix* computeLQ(const Tensor* Y, const int n){
         throw std::runtime_error(oss.str());
       }
     }
+    MemoryManager::safe_delete<Matrix>(B);
+    MemoryManager::safe_delete<Matrix>(T);
+    MemoryManager::safe_delete_array<double>(work, nrows*ncols);
     return A;
 
   }
