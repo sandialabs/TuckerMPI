@@ -82,9 +82,12 @@ extern "C" void dcopy_(const int*, const double*, const int*,
 extern "C" void dscal_(const int*, const double*, double*, const int*);
 /// @endcond
 
+void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n);
 /**
  */
 Matrix* computeLQ(const Tensor* Y, const int);
+
+void computeLQ(const Tensor* Y, const int, Matrix* T, Matrix* L);
 
 /** \brief Compute the Gram matrix \f$Y_n Y_n^T\f$
  *
