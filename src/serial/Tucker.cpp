@@ -125,9 +125,9 @@ Matrix* computeLQ(const Tensor* Y, const int n){
       //std::cout << "Rnrows(after): " << Rnrows << std::endl;
     }
     R = MemoryManager::safe_new<Matrix>(Rnrows, modeNDimension);
-    std::cout << "R shape: " << R->nrows() << " by " << R->ncols() << std::endl;
+    // std::cout << "R shape: " << R->nrows() << " by " << R->ncols() << std::endl;
     L = MemoryManager::safe_new<Matrix>(modeNDimension, modeNDimension);
-    std::cout << "L shape: " << L->nrows() << " by " << L->ncols() << std::endl;
+    // std::cout << "L shape: " << L->nrows() << " by " << L->ncols() << std::endl;
     computeLQ(Y, n, R, L);
     MemoryManager::safe_delete<Matrix>(R);
   }
@@ -186,13 +186,13 @@ void computeLQ(const Tensor* Y, const int n, Matrix* R, Matrix* L){
     //edge case:
     if(submatrixNrows < Rncols){
       combineColumnMajorBlocks(Y, R, n);
-      std::cout <<"R " << Rnrows << "-"<< R->nrows() << " by "<< Rncols<< "-"<< R->ncols()<< ": ";
-      for(int c=0; c<Rncols; c++){
-        for(int r=0; r<Rnrows;r++){
-          std::cout << R->data()[c*Rnrows + r]<< ", ";
-        }
-      }
-      std::cout << std::endl;
+      // std::cout <<"R " << Rnrows << "-"<< R->nrows() << " by "<< Rncols<< "-"<< R->ncols()<< ": ";
+      // for(int c=0; c<Rncols; c++){
+      //   for(int r=0; r<Rnrows;r++){
+      //     std::cout << R->data()[c*Rnrows + r]<< ", ";
+      //   }
+      // }
+      // std::cout << std::endl;
     }
     //normal case:
     else{
@@ -218,8 +218,6 @@ void computeLQ(const Tensor* Y, const int n, Matrix* R, Matrix* L){
       nmats *= Y->size(i);
     }
     int nmatsInPL = Rnrows / submatrixNrows;
-    std::cout << "nmatsInPL: " << nmatsInPL << std::endl;
-    std::cout << "nmats: " << nmats << std::endl;
     for(int currentSubmatrixIndex=nmatsInPL; currentSubmatrixIndex < nmats; currentSubmatrixIndex ++){
       dcopy_(&sizeOfB, Y->data()+currentSubmatrixIndex*sizeOfB, &ONE, B->data(), &ONE);
       // std::cout <<"B " << B->nrows() << " by "<< B->ncols()<< ": ";
@@ -258,7 +256,8 @@ void computeLQ(const Tensor* Y, const int n, Matrix* R, Matrix* L){
     //     std::cout << L->data()[c*L->nrows() + r]<< ", ";
     //   }
     // }
-    std::cout << std::endl;
+    // std::cout << std::endl;
+
     //put 0s in the upper triangle of L
     for(int r=0; r<Rncols; r++){
       for(int c=r+1; c<Rncols; c++){

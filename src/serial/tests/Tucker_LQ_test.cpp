@@ -42,29 +42,34 @@ int main(){
   bool isEqual2 = false;
   bool isEqual3 = false;
   Tucker::Matrix* r = Tucker::computeLQ(Y, 0); 
-  std::cout << "R0: " << r->nrows() << " by " << r->ncols() << std::endl;
+  // std::cout << "R0: " << r->nrows() << " by " << r->ncols() << std::endl;
   // for(int i=0; i<r->ncols()*r->nrows();i++ ){
   //   std::cout << r->data()[i] << ", "; 
   // }
   // std::cout << std::endl;
   isEqual0 = checkEqual(r->data(), R0, r->nrows(), r->ncols());
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(r);
 
   r = Tucker::computeLQ(Y, 1); 
-  std::cout << "R1" << "(" << r->nrows() << "*" << r->ncols() <<") " << std::endl;
-  for(int i=0; i<r->ncols()*r->nrows();i++ ){
-    std::cout << r->data()[i] << ", "; 
-  }
-  std::cout << std::endl;
+  // std::cout << "R1" << "(" << r->nrows() << "*" << r->ncols() <<") " << std::endl;
+  // for(int i=0; i<r->ncols()*r->nrows();i++ ){
+  //   std::cout << r->data()[i] << ", "; 
+  // }
+  // std::cout << std::endl;
   isEqual1 = checkEqual(r->data(), R1, r->nrows(), r->ncols());
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(r);
+
   r = Tucker::computeLQ(Y, 2); 
-   std::cout << "R2: " << std::endl;
+  // std::cout << "R2: " << std::endl;
   //   for(int i=0; i<r->ncols()*r->nrows();i++ ){
   //   std::cout << r->data()[i] << ", "; 
   // }
   // std::cout << std::endl;
   isEqual2 = checkEqual(r->data(), R2, r->nrows(), r->ncols());
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(r);
+
   r = Tucker::computeLQ(Y, 3); 
-   std::cout << "R3: " << std::endl;
+  // std::cout << "R3: " << std::endl;
   //   for(int i=0; i<r->ncols()*r->nrows();i++ ){
   //   std::cout << r->data()[i] << ", "; 
   // }
