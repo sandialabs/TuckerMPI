@@ -40,6 +40,56 @@
 #include "TuckerMPI_Util.hpp"
 
 namespace TuckerMPI {
+//Similar to sequential LQ this is going to assume that M is short and fat or at least sqaure
+//so Mtranspose is tall and skinny.
+//The returned Matrix is going to be the square containing the R.
+Tucker::Matrix* localQR(const Matrix* M, bool isLastMode){
+  int ONE = 1;
+  int globalRank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
+  int nrowsM = M->getLocalNumRows();
+  int ncolsM = M->getLocalNumCols();
+  if(nrowsM > ncolsM){
+    std::ostringstream oss;
+    oss << "Edge case where unfolding of Y is tall and skinny. Solutioin not implemented yet.";
+    throw std::runtime_error(oss.str());
+  }
+  for(int i=0; i< nrowsM*ncolsM; i++){
+      std::cout << M->getLocalMatrix()->data()[i] << ", ";
+  }
+  std::cout <<std::endl;
+  int sizeOfM = ncolsM*nrowsM;
+  //Tranpose of the M in column major
+  Tucker::Matrix* Mtranspose = Tucker::MemoryManager::safe_new<Tucker::Matrix>(ncolsM, nrowsM);
+  //M is row major in the last mode and column major otherwise, thus the different copying method.
+  if(isLastMode){
+    dcopy_(&sizeOfM, M->getLocalMatrix()->data(), &ONE, Mtranspose->data(), &ONE);
+  }
+  else{
+    for(int i=0; i<ncolsM; i++){
+      dcopy_(&nrowsM, M->getLocalMatrix()->data()+i*nrowsM, &ONE, Mtranspose->data()+i, &ncolsM);
+    }
+  }
+  std::cout << "Processor["<<globalRank<<"] local matrix size: " << nrowsM << " by "<< ncolsM << " : "; 
+  for(int i=0; i< nrowsM*ncolsM; i++){
+      std::cout << Mtranspose->data()[i] << ", ";
+  }
+  std::cout <<std::endl; 
+  int info;
+  double* tau = Tucker::MemoryManager::safe_new_array<double>(std::min(ncolsM, nrowsM));
+  double* work = Tucker::MemoryManager::safe_new_array<double>(ncolsM*nrowsM);
+  dgeqrf_(&ncolsM, &nrowsM, Mtranspose->data(), &ncolsM, tau, work, &sizeOfM, &info);
+  Tucker::MemoryManager::safe_delete_array<double>(tau, std::min(ncolsM, nrowsM));
+  Tucker::MemoryManager::safe_delete_array<double>(work, ncolsM*nrowsM);
+  //post process, only take the top square containing R:
+  Tucker::Matrix* R = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrowsM, nrowsM);
+  //copy the first nrowsM rows one row at a time.
+  for(int i=0; i<nrowsM; i++){
+    dcopy_(&nrowsM, Mtranspose->data()+i, &ncolsM, R->data()+i, &nrowsM);
+  }
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Mtranspose);
+  return R;
+}
 
 bool isPackForGramNecessary(int n, const Map* origMap, const Map* redistMap)
 {
@@ -83,7 +133,8 @@ const double* packForGram(const Tensor* Y, int n, const Map* redistMap)
   // Allocate memory for packed data
   double* sendData = Tucker::MemoryManager::safe_new_array<double>(Y->getLocalNumEntries());
 
-  // Local data is row-major
+  // Local data is row-major    
+  //after packing the local data should have block column pattern where each block is row major.
   if(n == ndims-1) {
     const double* YnData = Y->getLocalTensor()->data();
 
@@ -130,7 +181,6 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
 {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-
   // Get the original Tensor map
   const Map* oldMap = Y->getDistribution()->getMap(n,false);
 
@@ -164,7 +214,8 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
   // Get the number of local rows of the matrix Y_n
   int nLocalRows = Y->getLocalSize(n);
 
-  // Get the number of local columns of the matrix Y_n
+  // Get the number of local columns of the redistributed matrix Y_n
+  // Same as: int nLocalCols = recvY->getLocalNumCols();
   int nLocalCols = redistMap->getLocalNumEntries();
 
   // Compute the number of entries this rank will send to others,
@@ -233,6 +284,7 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
     Tucker::MemoryManager::safe_delete<Matrix>(recvY);
   }
   else {
+    std::cout << "Processor["<<rank<<"] packing not necessary: " << std::endl; 
     redistY = recvY;
   }
 

@@ -50,6 +50,13 @@
  * functions necessary for a parallel tucker decomposition
  */
 namespace TuckerMPI {
+/** \brief Compute LQ defactorization
+ *
+ * \param Y A parallel tensor
+ * \param n The dimension for the tensor unfolding
+ */
+Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* pack_timer=0,
+    Tucker::Timer* alltoall_timer=0, Tucker::Timer* unpack_timer=0);
 
 /** \brief Computes the Gram matrix using the old algorithm
  *

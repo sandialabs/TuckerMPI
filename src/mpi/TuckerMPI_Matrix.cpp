@@ -40,7 +40,6 @@
 
 namespace TuckerMPI {
 
-// TODO: isBlockRow currently does NOTHING
 Matrix::Matrix(int nrows, int ncols, const MPI_Comm& comm, bool isBlockRow) :
   globalRows_(nrows),
   globalCols_(ncols),

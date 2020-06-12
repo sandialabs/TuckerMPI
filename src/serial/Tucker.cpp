@@ -83,58 +83,14 @@ void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n){
  */
 Matrix* computeLQ(const Tensor* Y, const int n){
   int modeNDimension = Y->size(n);
-  //T is the output matrix of lapack subroutine. 
-  Matrix* R;
   //Return value of the function. It will always be a lower triangle matrix.
-  Matrix* L;
-  int ONE = 1;
-  if(n == 0){
-    //get number of columns of Y0
-    int ncols = 1;
-    for(int i=0; i<Y->N(); i++) {
-      if(i != n) {
-        ncols *= Y->size(i);
-      }
-    }
-    if(modeNDimension > ncols){
-      std::ostringstream oss;
-      oss << "mode 0 unfolding of Y is tall. compute gram matrix to get SVD instead.";
-      throw std::runtime_error(oss.str());
-    }
-    R = MemoryManager::safe_new<Matrix>(modeNDimension, ncols);
-    L = MemoryManager::safe_new<Matrix>(modeNDimension, modeNDimension);
-    computeLQ(Y, n, R, L);
-    MemoryManager::safe_delete<Matrix>(R);
-  }
-  else{
-    //number of rows of each column major submatrix of Yn'
-    int Rnrows = 1;
-    for(int i=0; i<n; i++) {
-      Rnrows *= Y->size(i);
-    }
-    int nmats = 1;
-    for(int i=n+1; i<Y->N(); i++) {
-      nmats *= Y->size(i);
-    }
-    //We have to guarentee: # of rows of Yn' > Tnrows >= Tncols. The following is how.
-    if(Rnrows < modeNDimension){
-      //std::cout << "Rnrows(before): " << Rnrows << std::endl;
-      int ceil = (int)std::ceil((double)modeNDimension/(double)Rnrows);
-      int min = std::min(nmats, ceil);
-      Rnrows = min * Rnrows;
-      //std::cout << "Rnrows(after): " << Rnrows << std::endl;
-    }
-    R = MemoryManager::safe_new<Matrix>(Rnrows, modeNDimension);
-    // std::cout << "R shape: " << R->nrows() << " by " << R->ncols() << std::endl;
-    L = MemoryManager::safe_new<Matrix>(modeNDimension, modeNDimension);
-    // std::cout << "L shape: " << L->nrows() << " by " << L->ncols() << std::endl;
-    computeLQ(Y, n, R, L);
-    MemoryManager::safe_delete<Matrix>(R);
-  }
+  Matrix* L = MemoryManager::safe_new<Matrix>(modeNDimension, modeNDimension);
+  // std::cout << "L shape: " << L->nrows() << " by " << L->ncols() << std::endl;
+  computeLQ(Y, n, L);
   return L;
 }
 
-void computeLQ(const Tensor* Y, const int n, Matrix* R, Matrix* L){
+void computeLQ(const Tensor* Y, const int n, Matrix* L){
   if(Y == 0) {
     throw std::runtime_error("Tucker::computeLQ(const Tensor* Y, const int n): Y is a null pointer");
   }
@@ -148,10 +104,26 @@ void computeLQ(const Tensor* Y, const int n, Matrix* R, Matrix* L){
     throw std::runtime_error(oss.str());
   }
   int ONE = 1;
-  int Rnrows = R->nrows();
-  int Rncols = R->ncols();
-  int sizeOfR = Rnrows*Rncols;
+
+  // int sizeOfR = Rnrows*Rncols;
+  int modeNDimension = Y->size(n);
   if(n == 0){
+    //get number of columns of Y0
+    int ncols = 1;
+    for(int i=0; i<Y->N(); i++) {
+      if(i != n) {
+        ncols *= Y->size(i);
+      }
+    }
+    if(modeNDimension > ncols){
+      std::ostringstream oss;
+      oss << "mode 0 unfolding of Y is tall and skinny. Compute gram matrix to get SVD instead.";
+      throw std::runtime_error(oss.str());
+    }
+    Matrix* R = MemoryManager::safe_new<Matrix>(modeNDimension, ncols);
+    int Rnrows = R->nrows();
+    int Rncols = R->ncols();
+    int sizeOfR = Rnrows*Rncols;
     int info;
     dcopy_(&sizeOfR, Y->data(), &ONE, R->data(), &ONE);
     double * work = MemoryManager::safe_new_array<double>(sizeOfR);
@@ -168,23 +140,39 @@ void computeLQ(const Tensor* Y, const int n, Matrix* R, Matrix* L){
     //post process the result:
     int sizeOfL = L->ncols()*L->nrows();
     dcopy_(&sizeOfL, R->data(), &ONE, L->data(), &ONE);
-
+    MemoryManager::safe_delete<Matrix>(R);
     //fill in 0s on the upper triangle
-    for(int r=0; r<Rnrows; r++){
-      for(int c=r+1; c<Rnrows; c++){
-        L->data()[r+c*Rnrows] = 0;
-      }
-    }
+    // for(int r=0; r<Rnrows; r++){
+    //   for(int c=r+1; c<Rnrows; c++){
+    //     L->data()[r+c*Rnrows] = 0;
+    //   }
+    // }
   }
   else{//Serial TSQR:
     //get number of rows of each column major submatrix of Yn transpose.
-    //Depending on whether Yn submatrices are fat, L gets copied from Y differently.
     int submatrixNrows = 1;
     for(int i=0; i<n; i++) {
       submatrixNrows *= Y->size(i);
     }
-    //edge case:
-    if(submatrixNrows < Rncols){
+    int nmats = 1;
+    for(int i=n+1; i<Y->N(); i++) {
+      nmats *= Y->size(i);
+    }
+    Matrix* R;
+    int Rnrows, Rncols, sizeOfR;
+    //Handle edge case when the colun major submatrices are short and fat.
+    if(submatrixNrows < modeNDimension){
+      //The number of submatrice we need to stack to get a tall matrix.
+      int ceil = (int)std::ceil((double)modeNDimension/(double)submatrixNrows);
+      if(ceil > nmats){
+        std::ostringstream oss;
+        oss << "Mode "<< n << " unfolding of Y is tall. compute gram matrix to get SVD instead." << std::endl;
+        throw std::runtime_error(oss.str());
+      }
+      Rnrows = ceil * submatrixNrows;
+      R = MemoryManager::safe_new<Matrix>(Rnrows, modeNDimension);
+      Rncols = R->ncols();
+      sizeOfR = Rnrows * Rncols;
       combineColumnMajorBlocks(Y, R, n);
       // std::cout <<"R " << Rnrows << "-"<< R->nrows() << " by "<< Rncols<< "-"<< R->ncols()<< ": ";
       // for(int c=0; c<Rncols; c++){
@@ -194,10 +182,15 @@ void computeLQ(const Tensor* Y, const int n, Matrix* R, Matrix* L){
       // }
       // std::cout << std::endl;
     }
-    //normal case:
     else{
+      R = MemoryManager::safe_new<Matrix>(submatrixNrows, modeNDimension);
+      Rnrows = R->nrows();
+      Rncols = R->ncols();
+      sizeOfR = Rnrows * Rncols;
       dcopy_(&sizeOfR, Y->data(), &ONE, R->data(), &ONE);
     }
+    //std::cout << "R is " << submatrixNrows << " by " << modeNDimension << std::endl;
+
     int info;
     double * work = MemoryManager::safe_new_array<double>(Rnrows*Rncols);
     double * tau = Tucker::MemoryManager::safe_new_array<double>(std::min(Rnrows, Rncols));
@@ -213,20 +206,16 @@ void computeLQ(const Tensor* Y, const int n, Matrix* R, Matrix* L){
     int sizeOfB = submatrixNrows*Rncols;
     Matrix* T = MemoryManager::safe_new<Matrix>(Rnrows, Rnrows);
     int ZERO = 0;
-    int nmats = 1;
-    for(int i=n+1; i<Y->N(); i++) {
-      nmats *= Y->size(i);
-    }
-    int nmatsInPL = Rnrows / submatrixNrows;
-    for(int currentSubmatrixIndex=nmatsInPL; currentSubmatrixIndex < nmats; currentSubmatrixIndex ++){
+    int nmatsInR = Rnrows / submatrixNrows;
+    for(int currentSubmatrixIndex = nmatsInR; currentSubmatrixIndex < nmats; currentSubmatrixIndex ++){
       dcopy_(&sizeOfB, Y->data()+currentSubmatrixIndex*sizeOfB, &ONE, B->data(), &ONE);
-      // std::cout <<"B " << B->nrows() << " by "<< B->ncols()<< ": ";
-      // for(int c=0; c<B->ncols(); c++){
-      //   for(int r=0; r<B->nrows();r++){
-      //     std::cout << B->data()[c*B->nrows() + r]<< ", ";
-      //   }
-      // }
-      // std::cout << std::endl;
+      std::cout <<"B " << B->nrows() << " by "<< B->ncols()<< ": ";
+      for(int c=0; c<B->ncols(); c++){
+        for(int r=0; r<B->nrows();r++){
+          std::cout << B->data()[c*B->nrows() + r]<< ", ";
+        }
+      }
+      std::cout << std::endl;
       //call dtpqrt(M, N, L, NB, A, LDA, B, LDB, T, LDT, WORK, INFO)
       dtpqrt_(&submatrixNrows, &Rncols, &ZERO, &Rncols, R->data(), &Rnrows, B->data(), &submatrixNrows, T->data() ,&Rncols, work, &info);
       if(info != 0){
@@ -243,10 +232,10 @@ void computeLQ(const Tensor* Y, const int n, Matrix* R, Matrix* L){
     for(int r=0; r<Rncols; r++){
       dcopy_(&Rncols, R->data()+r, &Rnrows, L->data()+(r*L->nrows()), &ONE);
     }
-    // std::cout <<"PL " << PLnrows << "-"<< PL->nrows() << " by "<< PLncols<< "-"<< PL->ncols()<< ": ";
-    // for(int c=0; c<PLncols; c++){
-    //   for(int r=0; r<PLnrows;r++){
-    //     std::cout << PL->data()[c*PLnrows + r]<< ", ";
+    // std::cout <<"R " << Rnrows << "-"<< R->nrows() << " by "<< Rncols<< "-"<< R->ncols()<< ": ";
+    // for(int c=0; c<Rncols; c++){
+    //   for(int r=0; r<Rnrows;r++){
+    //     std::cout << R->data()[c*Rnrows + r]<< ", ";
     //   }
     // }
     // std::cout << std::endl;
@@ -257,12 +246,12 @@ void computeLQ(const Tensor* Y, const int n, Matrix* R, Matrix* L){
     //   }
     // }
     // std::cout << std::endl;
-
-    //put 0s in the upper triangle of L
-    for(int r=0; r<Rncols; r++){
-      for(int c=r+1; c<Rncols; c++){
-        L->data()[r+c*Rnrows] = 0;
-      }
+    MemoryManager::safe_delete<Matrix>(R);
+  }
+  //Final step of postprocessing: put 0s in the upper triangle of L
+  for(int r=0; r<L->nrows(); r++){
+    for(int c=r+1; c<L->ncols(); c++){
+      L->data()[r+c*L->nrows()] = 0;
     }
   }
 }

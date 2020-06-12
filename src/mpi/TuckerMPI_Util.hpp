@@ -46,6 +46,9 @@
 namespace TuckerMPI {
 
 /// @cond EXCLUDE
+extern "C" void dgeqrf_(const int*, const int*, double*, 
+    const int*, double*, double*, const int*, int*);
+
 extern "C" void dcopy_(const int*, const double*, const int*,
     double*, const int*);
 
@@ -58,6 +61,8 @@ extern "C" void dgemm_(const char*, const char*, const int*,
     const int*, const double*, const int*, const double*,
     double*, const int*);
 /// @endcond
+
+Tucker::Matrix* localQR(const Matrix* M, bool isLastMode);
 
 /** \brief Determines whether packing is necessary for computing the Gram matrix
  */
