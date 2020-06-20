@@ -82,12 +82,23 @@ extern "C" void dcopy_(const int*, const double*, const int*,
 extern "C" void dscal_(const int*, const double*, double*, const int*);
 /// @endcond
 
-void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n);
-/**
+/** \brief Yn'(l by m)(The transpose of mode n unfolding of Y) consists of several column major submatrices stacked
+ * vertically. R(h by m) should have the same number of columns as Yn'. R can be think of as a window that select 
+ * elements from Yn'. This function then copies the elements of Yn' selected by the top window and reoders those 
+ * elements in column major order 
  */
-Matrix* computeLQ(const Tensor* Y, const int);
+void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n);
 
-void computeLQ(const Tensor* Y, const int, Matrix* L);
+/** \brief wrapper of computeLQ(const Tensor* Y, const int n, Matrix* L) which get the LQ of the mode n unfolding
+ * of Y. A square matrix is returned with the L stored in the lower triangle in column major. The upper triangle
+ * is filled with 0.
+ */
+Matrix* computeLQ(const Tensor* Y, const int n);
+
+/** \brief Get the LQ of the mode n unfolding of Y. The result lower triangluar matrix is stored in L in column 
+ * major. The upper triangle is filled with 0.
+ */
+void computeLQ(const Tensor* Y, const int n, Matrix* L);
 
 /** \brief Compute the Gram matrix \f$Y_n Y_n^T\f$
  *

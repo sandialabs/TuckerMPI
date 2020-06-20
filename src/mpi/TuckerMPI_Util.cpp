@@ -40,54 +40,85 @@
 #include "TuckerMPI_Util.hpp"
 
 namespace TuckerMPI {
-//Similar to sequential LQ this is going to assume that M is short and fat or at least sqaure
-//so Mtranspose is tall and skinny.
-//The returned Matrix is going to be the square containing the R.
-Tucker::Matrix* localQR(const Matrix* M, bool isLastMode){
+Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_timer, 
+  Tucker::Timer* decompose_timer, double* decompose_time, Tucker::Timer* transpose_timer){
   int ONE = 1;
   int globalRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
   int nrowsM = M->getLocalNumRows();
   int ncolsM = M->getLocalNumCols();
+  int sizeOfM = ncolsM*nrowsM;
   if(nrowsM > ncolsM){
     std::ostringstream oss;
     oss << "Edge case where unfolding of Y is tall and skinny. Solutioin not implemented yet.";
     throw std::runtime_error(oss.str());
   }
-  for(int i=0; i< nrowsM*ncolsM; i++){
-      std::cout << M->getLocalMatrix()->data()[i] << ", ";
-  }
-  std::cout <<std::endl;
-  int sizeOfM = ncolsM*nrowsM;
-  //Tranpose of the M in column major
-  Tucker::Matrix* Mtranspose = Tucker::MemoryManager::safe_new<Tucker::Matrix>(ncolsM, nrowsM);
-  //M is row major in the last mode and column major otherwise, thus the different copying method.
-  if(isLastMode){
-    dcopy_(&sizeOfM, M->getLocalMatrix()->data(), &ONE, Mtranspose->data(), &ONE);
-  }
-  else{
-    for(int i=0; i<ncolsM; i++){
-      dcopy_(&nrowsM, M->getLocalMatrix()->data()+i*nrowsM, &ONE, Mtranspose->data()+i, &ncolsM);
-    }
-  }
-  std::cout << "Processor["<<globalRank<<"] local matrix size: " << nrowsM << " by "<< ncolsM << " : "; 
-  for(int i=0; i< nrowsM*ncolsM; i++){
-      std::cout << Mtranspose->data()[i] << ", ";
-  }
-  std::cout <<std::endl; 
+  // {
+  //   for(int i=0; i< nrowsM*ncolsM; i++){
+  //     std::cout << M->getLocalMatrix()->data()[i] << ", ";
+  //   }
+  //   std::cout <<std::endl;
+  // }
   int info;
   double* tau = Tucker::MemoryManager::safe_new_array<double>(std::min(ncolsM, nrowsM));
   double* work = Tucker::MemoryManager::safe_new_array<double>(ncolsM*nrowsM);
-  dgeqrf_(&ncolsM, &nrowsM, Mtranspose->data(), &ncolsM, tau, work, &sizeOfM, &info);
+  Tucker::Matrix* R = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrowsM, nrowsM);
+  if(isLastMode){
+    Tucker::Matrix* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(ncolsM, nrowsM);
+    if(dcopy_timer) dcopy_timer->start();
+    dcopy_(&sizeOfM, M->getLocalMatrix()->data(), &ONE, Mcopy->data(), &ONE);
+    if(dcopy_timer) dcopy_timer->stop();
+    if(globalRank == 0) std::cout << "ncolsM: "<< ncolsM << ", nrowsM: " << nrowsM << "\n";
+    //if(decompose_timer) decompose_timer->start();
+    clock_t start;
+    if(decompose_time) start = clock();
+    dgeqrf_(&ncolsM, &nrowsM, Mcopy->data(), &ncolsM, tau, work, &sizeOfM, &info);
+    if(decompose_time) *decompose_time = ((double)clock() - start) / (CLOCKS_PER_SEC);
+    //if(decompose_timer) decompose_timer->stop();
+    if(transpose_timer) transpose_timer->start();
+    for(int i=0; i<nrowsM; i++){
+      dcopy_(&nrowsM, Mcopy->data()+i*ncolsM, &ONE, R->data()+i*nrowsM, &ONE);
+    }
+    if(transpose_timer) transpose_timer->stop();
+    // {
+    //   std::cout << "Processor["<<globalRank<<"] local matrix size: " << nrowsM << " by "<< ncolsM << " : "; 
+    //   for(int i=0; i< nrowsM*ncolsM; i++){
+    //       std::cout << Mcopy->data()[i] << ", ";
+    //   }
+    //   std::cout <<std::endl; 
+    // }
+    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Mcopy);
+  }
+  else{
+    Tucker::Matrix* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrowsM, ncolsM);
+    if(dcopy_timer) dcopy_timer->start();
+    dcopy_(&sizeOfM, M->getLocalMatrix()->data(), &ONE, Mcopy->data(), &ONE);
+    if(dcopy_timer) dcopy_timer->stop();
+    //if(decompose_timer) decompose_timer->start();
+    clock_t start;
+    if(decompose_time) start = clock();
+    dgelqf_(&nrowsM, &ncolsM, Mcopy->data(), &nrowsM, tau, work, &sizeOfM, &info);
+    if(decompose_time) *decompose_time = ((double)clock() - start) / (CLOCKS_PER_SEC);
+    //if(decompose_timer) decompose_timer->stop();
+    if(transpose_timer) transpose_timer->start();
+    for(int i=0; i<nrowsM; i++){
+      dcopy_(&nrowsM, Mcopy->data()+i*nrowsM, &ONE, R->data()+i, &nrowsM);
+    }
+    if(transpose_timer) transpose_timer->stop();
+    // {
+    //   std::cout << "Processor["<<globalRank<<"] local matrix size: " << nrowsM << " by "<< ncolsM << " : "; 
+    //   for(int i=0; i< nrowsM*ncolsM; i++){
+    //       std::cout << Mcopy->data()[i] << ", ";
+    //   }
+    //   std::cout <<std::endl; 
+    // }
+    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Mcopy);
+  }
   Tucker::MemoryManager::safe_delete_array<double>(tau, std::min(ncolsM, nrowsM));
   Tucker::MemoryManager::safe_delete_array<double>(work, ncolsM*nrowsM);
-  //post process, only take the top square containing R:
-  Tucker::Matrix* R = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrowsM, nrowsM);
+  
   //copy the first nrowsM rows one row at a time.
-  for(int i=0; i<nrowsM; i++){
-    dcopy_(&nrowsM, Mtranspose->data()+i, &ncolsM, R->data()+i, &nrowsM);
-  }
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Mtranspose);
+
   return R;
 }
 

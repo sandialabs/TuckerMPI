@@ -50,11 +50,6 @@
  */
 namespace Tucker {
 
-/** Yn'(l by m)(The transpose of mode n unfolding of Y) consists of several column major submatrices stacked
- *  vertically. R(h by m) should be a square matrix with the same number of columns as Yn'. R can be think 
- *  of as a window that select elements from Yn'.
- *  This function copies the elements of Yn' selected by the top window and reoders those elements in column major order 
- */
 void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n){
   int h = R->ncols();
   int m = R->nrows();
@@ -79,8 +74,6 @@ void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n){
   }
 }
 
-/**Wrapper function that does memory allocation and postprocess the results.
- */
 Matrix* computeLQ(const Tensor* Y, const int n){
   int modeNDimension = Y->size(n);
   //Return value of the function. It will always be a lower triangle matrix.

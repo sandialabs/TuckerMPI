@@ -54,67 +54,69 @@ namespace TuckerMPI
 {
 //There isn't a check for this since we might handle this case later but for now
 //it is assumed that the processor grid is never bigger than the tensor in any mode.
-Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* pack_timer,
-    Tucker::Timer* alltoall_timer, Tucker::Timer* unpack_timer){
+Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
+    Tucker::Timer* local_qr_timer, Tucker::Timer* pack_timer,
+    Tucker::Timer* alltoall_timer, Tucker::Timer* unpack_timer,
+    Tucker::Timer* localqr_dcopy_timer, Tucker::Timer* localqr_decompose_timer, 
+    double* localqr_decompose_time, Tucker::Timer* localqr_transpose_timer){
   int ONE = 1;
   int globalRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
   int globalnp;
   MPI_Comm_size(MPI_COMM_WORLD, &globalnp);
-  int size = Y->getLocalTensor()->getNumElements();
   const Matrix* redistYn = redistributeTensorForGram(Y, n, pack_timer, alltoall_timer, unpack_timer);
-  Tucker::Matrix* tempT;
-  int tempTnrows;
-  int tempTncols;
+  //R of the transpose of the local unfolding in column major.
+  Tucker::Matrix* R;
+  int Rnrows;
+  int Rncols;
+  if(local_qr_timer) local_qr_timer->start();
   if(!redistYn){
-    Tucker::Matrix* tempTTranspose = Tucker::computeLQ(Y->getLocalTensor(), n);
-    tempTnrows = tempTTranspose->nrows();
-    tempTncols = tempTTranspose->ncols(); 
-    std::cout << "Processor["<<globalRank<<"] finished local qr result: " << tempTnrows << " by " << tempTncols << std::endl;  
-    { 
-      std::cout << "Processor["<<globalRank<<"] local qr result: " << tempTnrows << " by " << tempTncols << " : "; 
-      for(int i=0; i< tempTnrows*tempTncols; i++){
-          std::cout << tempTTranspose->data()[i] << ", ";
-      }
-      std::cout << std::endl;
-    }
+    Tucker::Matrix* LTranspose = Tucker::computeLQ(Y->getLocalTensor(), n);
+    Rnrows = LTranspose->nrows();
+    Rncols = LTranspose->ncols(); 
+    // { 
+    //   std::cout << "Processor["<<globalRank<<"] local qr result: " << tempTnrows << " by " << tempTncols << " : "; 
+    //   for(int i=0; i< tempTnrows*tempTncols; i++){
+    //       std::cout << tempTTranspose->data()[i] << ", ";
+    //   }
+    //   std::cout << std::endl;
+    // }
     //Do an explicit transpose of tempT.
-    tempT = Tucker::MemoryManager::safe_new<Tucker::Matrix>(tempTnrows, tempTncols);
-    int sizeOfTempT = tempTnrows*tempTncols;
-    for(int i=0; i<tempTncols; i++){
-      dcopy_(&tempTnrows, tempTTranspose->data()+i*tempTnrows, &ONE, tempT->data()+i, &tempTnrows);
+    R = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rnrows, Rncols);
+    int sizeOfTempT = Rnrows*Rncols;
+    for(int i=0; i<Rncols; i++){
+      dcopy_(&Rnrows, LTranspose->data()+i*Rnrows, &ONE, R->data()+i, &Rnrows);
     }
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(tempTTranspose);
+    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(LTranspose);
   }
   else{
     bool isLastMode = n == Y->getNumDimensions()-1;
-    tempT = localQR(redistYn, isLastMode);
-    tempTnrows = tempT->nrows();
-    tempTncols = tempT->ncols();  
+    R = localQR(redistYn, isLastMode, localqr_dcopy_timer, localqr_decompose_timer, localqr_decompose_time, localqr_transpose_timer);
+    Rnrows = R->nrows();
+    Rncols = R->ncols();  
   }
+  if(local_qr_timer) local_qr_timer->stop();
   //std::cout << "Processor["<<globalRank<<"] QR done." << std::endl; 
-
-
-  int sizeOfTempT = tempTnrows*tempTncols;
+  int sizeOfR = Rnrows*Rncols;
   Tucker::Matrix* tempB;
   MPI_Status status;
   int treeDepth = (int)ceil(log2(globalnp));
-
+  if(tsqr_timer) tsqr_timer->start();
   for(int i=0; i < treeDepth; i++){
     if(globalRank % (int)pow(2, i+1) == 0){
       if(globalRank+ pow(2, i) < globalnp){
-        //int tempBnrows = redistYn->getMap()->getNumEntries(globalRank+pow(2, i));
-        //the matrix received might have different dimension than tempT.
-        tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix>(tempTncols, tempTncols);
-        MPI_Recv(tempB->data(), tempTncols*tempTncols, MPI_DOUBLE, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
-{       
-        std::cout << "Processor["<<globalRank<<"] in iteration["<<i<<"] received matrix " << tempTncols <<  " by " << tempTncols;
-        for(int a=0; a<tempTncols; a++){
-          for(int b=0; b<tempTncols;b++){
-            std::cout << tempB->data()[b+a*tempTncols] << ", ";
-          }
-        }
-        std::cout << std::endl;}
+        tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rncols, Rncols);
+        MPI_Recv(tempB->data(), Rncols*Rncols, MPI_DOUBLE, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
+        // {       
+        //   std::cout << "Processor["<<globalRank<<"] in iteration["<<i<<"] received matrix " << tempTncols <<  " by " << tempTncols;
+        //   for(int a=0; a<tempTncols; a++){
+        //     for(int b=0; b<tempTncols;b++){
+        //       std::cout << tempB->data()[b+a*tempTncols] << ", ";
+        //     }
+        //   }
+        //   std::cout << std::endl;
+        // }
+        
         //make tempT square if it is short and fat so that it has enough space to store the R.
         // if(tempTnrows < tempTncols){
         //   std::cout << "Processor["<<globalRank<<"] in iteration["<<i<<"] enter special copy block because R is in shape "<< tempTnrows << " by "<< tempTncols<< std::endl;
@@ -136,47 +138,49 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* pack_timer,
         //   tempT = squareTempT;
         //   tempTnrows = tempT->nrows();
         // }
-
-        Tucker::Matrix* T = Tucker::MemoryManager::safe_new<Tucker::Matrix>(tempTncols, tempTncols);
-        double* work = Tucker::MemoryManager::safe_new_array<double>(tempTncols*tempTncols);
+        Tucker::Matrix* T = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rncols, Rncols);
+        double* work = Tucker::MemoryManager::safe_new_array<double>(Rncols*Rncols);
         int info;
-        Tucker::dtpqrt_(&tempTncols, &tempTncols, &tempTncols, &tempTncols, tempT->data(), &tempTnrows, tempB->data(),
-          &tempTncols, T->data(), &tempTncols, work, &info);
-        std::cout << "Processor["<<globalRank<<"]  dtpqrt result " << tempTnrows << " by " << tempTncols << ": \n"; 
-        for(int a=0; a< tempTnrows; a++){
-          for(int b=0; b<tempTncols; b++){
-            std::cout << tempT->data()[a+b*tempTnrows] << ", ";
-          }
-          std::cout << std::endl;
-        }
-        std::cout << std::endl;
+        Tucker::dtpqrt_(&Rncols, &Rncols, &Rncols, &Rncols, R->data(), &Rnrows, tempB->data(),
+          &Rncols, T->data(), &Rncols, work, &info);
+        // {
+        //   std::cout << "Processor["<<globalRank<<"]  dtpqrt result " << tempTnrows << " by " << tempTncols << ": \n"; 
+        //   for(int a=0; a< tempTnrows; a++){
+        //     for(int b=0; b<tempTncols; b++){
+        //       std::cout << tempT->data()[a+b*tempTnrows] << ", ";
+        //     }
+        //     std::cout << std::endl;
+        //   }
+        //   std::cout << std::endl;
+        // }
         Tucker::MemoryManager::safe_delete<Tucker::Matrix>(T);
         Tucker::MemoryManager::safe_delete<Tucker::Matrix>(tempB);
-        Tucker::MemoryManager::safe_delete_array<double>(work, tempTncols* tempTncols);
+        Tucker::MemoryManager::safe_delete_array<double>(work, Rncols* Rncols);
       }
     }
     else if(globalRank % (int)pow(2, i) == 0){
-      MPI_Send(tempT->data(), sizeOfTempT, MPI_DOUBLE, globalRank-pow(2, i), globalRank, MPI_COMM_WORLD);
+      MPI_Send(R->data(), sizeOfR, MPI_DOUBLE, globalRank-pow(2, i), globalRank, MPI_COMM_WORLD);
     }
   }
-  std::cout << "Processor["<<globalRank<<"] returning tempT" << std::endl; 
-  //postprocess tempT, for now only in processor 0.
+  if(tsqr_timer) tsqr_timer->stop();
   if(globalRank == 0){
     //tempTnrows should equal tempTncols here.
-    Tucker::Matrix* L = Tucker::MemoryManager::safe_new<Tucker::Matrix>(tempTnrows, tempTncols);
-    for(int i=0; i<tempTncols; i++){
-      for(int j=i+1; j<tempTnrows; j++){
-        tempT->data()[j+i*tempTnrows] = 0;
+    Tucker::Matrix* L = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rnrows, Rncols);
+    //Add explicit zeros below diagonal of R.
+    for(int i=0; i<Rncols; i++){
+      for(int j=i+1; j<Rnrows; j++){
+        R->data()[j+i*Rnrows] = 0;
       }
     }
-    //explicit transpose
-    for(int i=0; i<tempTncols; i++){
-      dcopy_(&tempTnrows, tempT->data(), &ONE, L->data(), &tempTnrows); 
+    //transpose
+    for(int i=0; i<Rncols; i++){
+      dcopy_(&Rnrows, R->data(), &ONE, L->data(), &Rnrows); 
     }
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(tempT);
-    tempT = L;
+    //switch between R and L here since other processors don't have L and would return R instead.
+    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(R);
+    R = L;
   }
-  return tempT;
+  return R;
 }
 
 /**

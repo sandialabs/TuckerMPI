@@ -5,9 +5,9 @@ bool checkEqual(const double* arr1, const double* arr2, int nrows, int ncols)
     int ind = 0;
     for(int c=0; c<ncols; c++) {
       for(int r=0; r<nrows; r++) {
-        std::cout << "matching:  arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
+        //std::cout << "matching:  arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
         if(abs(arr1[r+c*nrows]) - abs(arr2[ind]) > 1e-10) {
-          std::cout << arr1[r+c*nrows] << ", " << arr2[r+c] << std::endl;
+          //std::cout << arr1[r+c*nrows] << ", " << arr2[r+c] << std::endl;
           return false;
         }
         ind++;
@@ -81,26 +81,18 @@ int main(int argc, char* argv[])
   bool t1l0Correct = false;
   bool t1l2Correct = false;
   bool t2l3Correct = false;
-//   {
-//     std::cout << "Processor["<<rank<<"] data (" << tensor->getLocalTensor()->getNumElements() << "): "; 
-//     const double* a =  tensor->getLocalTensor()->data();
-//     for(int i=0; i< tensor->getLocalTensor()->getNumElements(); i++){
-//         std::cout << a[i] << ", ";
-//     }
-//     std::cout << std::endl;
-//   }
   Tucker::Matrix* L0 = TuckerMPI::LQ(tensor1, 0);
   if(rank == 0){
-    { 
-      std::cout << "Mode 0 final result: " << std::endl; 
-      for(int i=0; i< L0->nrows(); i++){
-          for(int j=0; j<L0->ncols(); j++){
-              std::cout << L0->data()[i+j*L0->nrows()] << ", ";
-          }
-          std::cout << std::endl;
-      }
-      std::cout << std::endl;
-    }
+    // { 
+    //   std::cout << "Mode 0 final result: " << std::endl; 
+    //   for(int i=0; i< L0->nrows(); i++){
+    //       for(int j=0; j<L0->ncols(); j++){
+    //           std::cout << L0->data()[i+j*L0->nrows()] << ", ";
+    //       }
+    //       std::cout << std::endl;
+    //   }
+    //   std::cout << std::endl;
+    // }
     t1l0Correct = checkEqual(L0->data(), trueL0, 5, 5);
 
     if(!t1l0Correct){
@@ -113,18 +105,17 @@ int main(int argc, char* argv[])
 
   Tucker::Matrix* L2 = TuckerMPI::LQ(tensor1, 2);
   if(rank == 0){
-    {    
-      std::cout << "Mode 2 final result: " << std::endl; 
-      for(int i=0; i< L2->nrows(); i++){
-        for(int j=0; j<L2->ncols(); j++){
-          std::cout << L2->data()[j+i*L2->nrows()] << ", ";
-        }
-        std::cout << std::endl;
-      }
-      std::cout << std::endl;
-    }
+    // {    
+    //   std::cout << "Mode 2 final result: " << std::endl; 
+    //   for(int i=0; i< L2->nrows(); i++){
+    //     for(int j=0; j<L2->ncols(); j++){
+    //       std::cout << L2->data()[j+i*L2->nrows()] << ", ";
+    //     }
+    //     std::cout << std::endl;
+    //   }
+    //   std::cout << std::endl;
+    // }
     t1l2Correct = checkEqual(L2->data(), trueL2, 4, 4);
-    std::cout << "Mode 2 final result correct !!!!!!!!!!" << std::endl; 
     if(!t1l2Correct){
       Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(tensor1);
       MPI_Finalize();
