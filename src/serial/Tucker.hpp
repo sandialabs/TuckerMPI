@@ -47,12 +47,26 @@
 #include "Tucker_Vector.hpp"
 
 namespace Tucker {
-
 /// @cond EXCLUDE
-//general QR factorization
+extern "C" void dgelq_(const int*, const int*, double*, const int*,
+    double*, const int*, double*, const int*, const int*);
+
+extern "C" void dgelqt_(const int*, const int*, const int*, double*,
+    const int*, double*, const int*, double*, const int*);
+
+extern "C" void dgeqr_(const int*, const int*, double*, const int*, 
+    double*, const int*, double*, const int*, const int*);
+
+extern "C" void dlatsqr_(const int*, const int*, const int*, 
+    const int*, double*, const int*, double*, const int*, double*, 
+    const int*, const int*);
+
+extern "C" void dgeqrt_(const int*, const int*, const int*, 
+    double*, const int*, double*, const int*, double*, const int*);
+
 extern "C" void dtpqrt_(const int*, const int*, const int*, 
-const int*, double*, const int*, double*, const int*, double*,
-const int*, double*, int*);
+    const int*, double*, const int*, double*, const int*, double*,
+    const int*, double*, int*);
 
 extern "C" void dgeqrf_(const int*, const int*, double*, 
     const int*, double*, double*, const int*, int*);

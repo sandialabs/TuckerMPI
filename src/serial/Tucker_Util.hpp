@@ -88,7 +88,6 @@ static T* safe_new_array(const size_t numToAllocate)
         << numToAllocate << " <= 0";
     throw std::runtime_error(oss.str());
   }
-
   T* allocatedPtr;
   try {
     allocatedPtr = new T[numToAllocate];

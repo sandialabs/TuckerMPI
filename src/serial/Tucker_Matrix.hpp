@@ -41,6 +41,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <string>
 #include "Tucker_Tensor.hpp"
 
 /// @cond EXCLUDE
@@ -95,6 +96,28 @@ public:
     }
 
     return newMat;
+  }
+
+  Matrix* getTranspose()
+  {
+    Matrix* T = MemoryManager::safe_new<Matrix>(ncols(), nrows());
+    const int ONE = 1;
+    for(int i=0; i<nrows(); i++){
+      dcopy_(&I_[1], data()+i, &I_[0], T->data()+(i*T->nrows()), &ONE);
+    }
+    return T;
+  }
+
+  std::string prettyPrint()
+  {
+    std::string s = "";
+    for(int i=0; i<nrows(); i++){
+      for(int j=0; j<ncols(); j++){
+        s = s + std::to_string(data()[i+j*ncols()]) + ", ";
+      }
+      s = s + "\n";
+    }
+    return s;
   }
 
 protected:
