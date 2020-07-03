@@ -108,12 +108,15 @@ public:
     return T;
   }
 
+  /**
+   * This function returns the string that shows the matrix in row major.
+   */
   std::string prettyPrint()
   {
     std::string s = "";
     for(int i=0; i<nrows(); i++){
       for(int j=0; j<ncols(); j++){
-        s = s + std::to_string(data()[i+j*ncols()]) + ", ";
+        s = s + std::to_string(data()[i+j*nrows()]) + ", ";
       }
       s = s + "\n";
     }

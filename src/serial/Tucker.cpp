@@ -96,50 +96,49 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L){
         << n << " is not in the range [0," << Y->N() << ")";
     throw std::runtime_error(oss.str());
   }
-  int ONE = 1;
-
+  int one = 1;
+  int negOne = -1;
   // int sizeOfR = Rnrows*Rncols;
   int modeNDimension = Y->size(n);
   if(n == 0){
     //get number of columns of Y0
-    int ncols = 1;
+    int Y0ncols = 1;
     for(int i=0; i<Y->N(); i++) {
       if(i != n) {
-        ncols *= Y->size(i);
+        Y0ncols *= Y->size(i);
       }
     }
-    if(modeNDimension > ncols){
+    if(modeNDimension > Y0ncols){
       std::ostringstream oss;
-      oss << "mode 0 unfolding of Y is tall and skinny. Compute gram matrix to get SVD instead.";
+      oss << "mode 0 unfolding of Y is tall and skinny. Not handled here.";
       throw std::runtime_error(oss.str());
     }
-    Matrix* R = MemoryManager::safe_new<Matrix>(modeNDimension, ncols);
-    int Rnrows = R->nrows();
-    int Rncols = R->ncols();
-    int sizeOfR = Rnrows*Rncols;
+    Matrix* Y0 = MemoryManager::safe_new<Matrix>(modeNDimension, Y0ncols);
+    int Y0nrows = Y0->nrows();
+    int sizeOfY0 = Y0nrows*Y0ncols;
+    dcopy_(&sizeOfY0, Y->data(), &one, Y0->data(), &one);
     int info;
-    dcopy_(&sizeOfR, Y->data(), &ONE, R->data(), &ONE);
-    double * work = MemoryManager::safe_new_array<double>(sizeOfR);
-    double * tau = MemoryManager::safe_new_array<double>(Rnrows);
-    //call dgelqf(M, N, A, LDA, TAU, WORK, LWORK, INFO)
-    dgelqf_(&Rnrows, &Rncols, R->data(), &Rnrows, tau, work, &sizeOfR, &info);
-    MemoryManager::safe_delete_array(tau, Rnrows);
-    MemoryManager::safe_delete_array(work, sizeOfR);
+    //workspace query
+    double * work = MemoryManager::safe_new_array<double>(1);
+    double * T = MemoryManager::safe_new_array<double>(5);
+    Tucker::dgelq_(&Y0nrows, &Y0ncols, Y0->data(), &Y0nrows, T, &negOne, work, &negOne, &info);
+    int lwork = work[0];
+    int TSize = T[0];
+    Tucker::MemoryManager::safe_delete_array<double>(work, 1);
+    Tucker::MemoryManager::safe_delete_array<double>(T, 5);
+    work = MemoryManager::safe_new_array<double>(lwork);
+    T = MemoryManager::safe_new_array<double>(TSize);
+    dgelq_(&Y0nrows, &Y0ncols, Y0->data(), &Y0nrows, T, &TSize, work, &lwork, &info);
+    MemoryManager::safe_delete_array(T, TSize);
+    MemoryManager::safe_delete_array(work, lwork);
     if(info != 0){
       std::ostringstream oss;
         oss << "the" << info*-1 << "th argument to dgelqf is invalid.";
       throw std::runtime_error(oss.str());
     }
-    //post process the result:
+    //copy the lower triangle of Y0 to L
     int sizeOfL = L->ncols()*L->nrows();
-    dcopy_(&sizeOfL, R->data(), &ONE, L->data(), &ONE);
-    MemoryManager::safe_delete<Matrix>(R);
-    //fill in 0s on the upper triangle
-    // for(int r=0; r<Rnrows; r++){
-    //   for(int c=r+1; c<Rnrows; c++){
-    //     L->data()[r+c*Rnrows] = 0;
-    //   }
-    // }
+    dcopy_(&sizeOfL, Y0->data(), &one, L->data(), &one);
   }
   else{//Serial TSQR:
     //get number of rows of each column major submatrix of Yn transpose.
@@ -155,6 +154,7 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L){
     int Rnrows, Rncols, sizeOfR;
     //Handle edge case when the colun major submatrices are short and fat.
     if(submatrixNrows < modeNDimension){
+
       //The number of submatrice we need to stack to get a tall matrix.
       int ceil = (int)std::ceil((double)modeNDimension/(double)submatrixNrows);
       if(ceil > nmats){
@@ -180,50 +180,54 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L){
       Rnrows = R->nrows();
       Rncols = R->ncols();
       sizeOfR = Rnrows * Rncols;
-      dcopy_(&sizeOfR, Y->data(), &ONE, R->data(), &ONE);
+      //std::cout << "on the right path" << std::endl;
+      dcopy_(&sizeOfR, Y->data(), &one, R->data(), &one);
+      //std::cout << R->prettyPrint() << "\n" << std::endl;
     }
-    //std::cout << "R is " << submatrixNrows << " by " << modeNDimension << std::endl;
 
     int info;
-    double * work = MemoryManager::safe_new_array<double>(Rnrows*Rncols);
-    double * tau = Tucker::MemoryManager::safe_new_array<double>(std::min(Rnrows, Rncols));
-    //call dgeqrf(M, N, A, LDA, TAU, WORK, LWORK, INFO)
-    dgeqrf_(&Rnrows, &Rncols, R->data(), &Rnrows, tau, work, &sizeOfR, &info);
+    //workspace query
+    double * work = MemoryManager::safe_new_array<double>(1);
+    double * TforGeqr = Tucker::MemoryManager::safe_new_array<double>(5);
+    dgeqr_(&Rnrows, &Rncols, R->data(), &Rnrows, TforGeqr, &negOne, work, &negOne, &info);
+    int lwork = work[0];
+    int TSize = TforGeqr[0];
+    Tucker::MemoryManager::safe_delete_array<double>(work, 1);
+    Tucker::MemoryManager::safe_delete_array<double>(TforGeqr, 5);
+    work = MemoryManager::safe_new_array<double>(lwork);
+    TforGeqr = Tucker::MemoryManager::safe_new_array<double>(TSize);    
+    dgeqr_(&Rnrows, &Rncols, R->data(), &Rnrows, TforGeqr, &TSize, work, &lwork, &info);
     if(info != 0){
       std::ostringstream oss;
-        oss << "the" << info*-1 << "th argument to dgeqrf is invalid.";
+        oss << "the" << info*-1 << "th argument to dgeqr is invalid.";
       throw std::runtime_error(oss.str());
     }
-    MemoryManager::safe_delete_array<double>(tau, std::min(Rnrows,Rncols));
+    MemoryManager::safe_delete_array<double>(work, lwork);
+    MemoryManager::safe_delete_array<double>(TforGeqr, TSize);
     Matrix* B = MemoryManager::safe_new<Matrix>(submatrixNrows, Rncols);
     int sizeOfB = submatrixNrows*Rncols;
-    Matrix* T = MemoryManager::safe_new<Matrix>(Rnrows, Rnrows);
+    int nb = (Rncols > 32)? 32 : Rncols;
+    Matrix* TforTpqrt = MemoryManager::safe_new<Matrix>(nb, Rnrows);
+    work = MemoryManager::safe_new_array<double>(nb*Rnrows);
     int ZERO = 0;
     int nmatsInR = Rnrows / submatrixNrows;
     for(int currentSubmatrixIndex = nmatsInR; currentSubmatrixIndex < nmats; currentSubmatrixIndex ++){
-      dcopy_(&sizeOfB, Y->data()+currentSubmatrixIndex*sizeOfB, &ONE, B->data(), &ONE);
-      std::cout <<"B " << B->nrows() << " by "<< B->ncols()<< ": ";
-      for(int c=0; c<B->ncols(); c++){
-        for(int r=0; r<B->nrows();r++){
-          std::cout << B->data()[c*B->nrows() + r]<< ", ";
-        }
-      }
-      std::cout << std::endl;
+      dcopy_(&sizeOfB, Y->data()+currentSubmatrixIndex*sizeOfB, &one, B->data(), &one);
       //call dtpqrt(M, N, L, NB, A, LDA, B, LDB, T, LDT, WORK, INFO)
-      dtpqrt_(&submatrixNrows, &Rncols, &ZERO, &Rncols, R->data(), &Rnrows, B->data(), &submatrixNrows, T->data() ,&Rncols, work, &info);
+      dtpqrt_(&submatrixNrows, &Rncols, &ZERO, &nb, R->data(), &Rnrows, B->data(), &submatrixNrows, TforTpqrt->data() ,&nb, work, &info);
       if(info != 0){
         std::ostringstream oss;
         oss << "the " << info*-1 << "th argument to dtpqrt is invalid.";
         throw std::runtime_error(oss.str());
       }
     }
-    MemoryManager::safe_delete_array<double>(work, Rnrows*Rncols);
+    MemoryManager::safe_delete_array<double>(work, nb*Rncols);
     MemoryManager::safe_delete<Matrix>(B);
-    MemoryManager::safe_delete<Matrix>(T);
+    MemoryManager::safe_delete<Matrix>(TforTpqrt);
     //post process the R to L
     //Make L the transpose of T
     for(int r=0; r<Rncols; r++){
-      dcopy_(&Rncols, R->data()+r, &Rnrows, L->data()+(r*L->nrows()), &ONE);
+      dcopy_(&Rncols, R->data()+r, &Rnrows, L->data()+(r*L->nrows()), &one);
     }
     // std::cout <<"R " << Rnrows << "-"<< R->nrows() << " by "<< Rncols<< "-"<< R->ncols()<< ": ";
     // for(int c=0; c<Rncols; c++){

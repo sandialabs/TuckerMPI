@@ -7,7 +7,7 @@ bool checkEqual(const double* arr1, const double* arr2, int nrows, int ncols)
     for(int c=0; c<ncols; c++) {
       for(int r=0; r<nrows; r++) {
         //std::cout << "matching:  arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
-        if(abs(arr1[r+c*nrows]) - abs(arr2[ind]) > 1e-10) {
+        if(abs(abs(arr1[r+c*nrows]) - abs(arr2[ind])) > 1e-10) {
           //std::cout << arr1[r+c*nrows] << ", " << arr2[r+c] << std::endl;
           return false;
         }

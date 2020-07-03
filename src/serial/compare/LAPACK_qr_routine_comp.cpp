@@ -12,13 +12,13 @@ int main(int argc, char* argv[])
   std::string paramfn = Tucker::parseString(argc, (const char**)argv,
     "--parameter-file", "paramfile.txt");
   std::vector<std::string> fileAsString = Tucker::getFileAsStrings(paramfn);
-  int nrows                             = Tucker::stringParse<int>(fileAsString, "Nrows", 0);
-  int ncols                             = Tucker::stringParse<int>(fileAsString, "Ncols", 0);
+  int YNrows                             = Tucker::stringParse<int>(fileAsString, "Nrows", 0);
+  int YNcols                             = Tucker::stringParse<int>(fileAsString, "Ncols", 0);
   int nb                                = Tucker::stringParse<int>(fileAsString, "NB", 1);
   int avgIteration                      = Tucker::stringParse<int>(fileAsString, "AvgIteration", 10);
   std::cout << "NB: " << nb << std::endl;
-  std::cout << "Nrows: " << nrows << std::endl;
-  std::cout << "Ncols: " << ncols << std::endl;
+  std::cout << "YNrows: " << YNrows << std::endl;
+  std::cout << "YNcols: " << YNcols << std::endl;
   std::cout << "AvgIteration: " << avgIteration << std::endl;
 
   Tucker::Timer transposeTimer;
@@ -33,20 +33,20 @@ int main(int argc, char* argv[])
   Tucker::Timer lqtTimer;
   Tucker::Timer lqTimer;
 
-  Tucker::Matrix* Y = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrows, ncols);
-  int sizeOfY = nrows*ncols;
+  Tucker::Matrix* Y = Tucker::MemoryManager::safe_new<Tucker::Matrix>(YNrows, YNcols);
+  int sizeOfY = YNrows*YNcols;
   Y->rand();
-  Tucker::Matrix* YCopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrows, ncols);
+  Tucker::Matrix* YCopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(YNrows, YNcols);
 
   int info;
   //this tau is for both dgeqrf and dgelqf.
-  double* tau = Tucker::MemoryManager::safe_new_array<double>(std::min(nrows, ncols));
+  double* tau = Tucker::MemoryManager::safe_new_array<double>(std::min(YNrows, YNcols));
   double* work = Tucker::MemoryManager::safe_new_array<double>(1);
 
   //dgeqrf
   //workspace query
   qrfWorkSpaceQueryTimer.start();
-  Tucker::dgeqrf_(&nrows, &ncols, Y->data(), &nrows, tau, work, &negOne, &info);
+  Tucker::dgeqrf_(&YNrows, &YNcols, Y->data(), &YNrows, tau, work, &negOne, &info);
   qrfWorkSpaceQueryTimer.stop();
   int lwork = work[0];
   Tucker::MemoryManager::safe_delete_array<double>(work, 1);
@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
   for(int i=0; i<avgIteration; i++){
     dcopy_(&sizeOfY, Y->data(), &one, YCopy->data(), &one);
     qrfTimer.start();
-    Tucker::dgeqrf_(&nrows, &ncols, YCopy->data(), &nrows, tau, work, &lwork, &info);
+    Tucker::dgeqrf_(&YNrows, &YNcols, YCopy->data(), &YNrows, tau, work, &lwork, &info);
     qrfTimer.stop();
   }
   double avgQrfTime = qrfTimer.duration() / avgIteration;
@@ -63,17 +63,17 @@ int main(int argc, char* argv[])
   std::cout << "qrf lwork: " << lwork << std::endl;
   
   //dgeqrt
-  double* T = Tucker::MemoryManager::safe_new_array<double>(nb*ncols);
-  work = Tucker::MemoryManager::safe_new_array<double>(nb*ncols);
+  double* T = Tucker::MemoryManager::safe_new_array<double>(nb*YNcols);
+  work = Tucker::MemoryManager::safe_new_array<double>(nb*YNcols);
   for(int i=0; i<avgIteration; i++){
     dcopy_(&sizeOfY, Y->data(), &one, YCopy->data(), &one);
     qrtTimer.start();
-    Tucker::dgeqrt_(&nrows, &ncols, &nb, YCopy->data(), &nrows, T, &nb, work, &info);
+    Tucker::dgeqrt_(&YNrows, &YNcols, &nb, YCopy->data(), &YNrows, T, &nb, work, &info);
     qrtTimer.stop();
   }
   double avgQrtTime = qrtTimer.duration() /avgIteration;
-  Tucker::MemoryManager::safe_delete_array<double>(work, nb*ncols);
-  Tucker::MemoryManager::safe_delete_array<double>(T, nb*ncols);
+  Tucker::MemoryManager::safe_delete_array<double>(work, nb*YNcols);
+  Tucker::MemoryManager::safe_delete_array<double>(T, nb*YNcols);
 
   //dgeqr
   qrWorkSpaceQueryTimer.start();
@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
   work = Tucker::MemoryManager::safe_new_array<double>(1);
   //T has to have space for at least 5 doubles, see dgeqr.
   T = Tucker::MemoryManager::safe_new_array<double>(5);
-  Tucker::dgeqr_(&nrows, &ncols, Y->data(), &nrows, T, &negOne, work, &negOne, &info);
+  Tucker::dgeqr_(&YNrows, &YNcols, Y->data(), &YNrows, T, &negOne, work, &negOne, &info);
   lwork = work[0];
   int TSize = T[0];
   Tucker::MemoryManager::safe_delete_array<double>(work, 1);
@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
   for(int i=0; i<avgIteration; i++){
     dcopy_(&sizeOfY, Y->data(), &one, YCopy->data(), &one);
     qrTimer.start();
-    Tucker::dgeqr_(&nrows, &ncols, YCopy->data(), &nrows, T, &TSize, work, &lwork, &info);
+    Tucker::dgeqr_(&YNrows, &YNcols, YCopy->data(), &YNrows, T, &TSize, work, &lwork, &info);
     qrTimer.stop();
   }
   double avgQrTime = qrTimer.duration() / avgIteration;
@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
   //workspace query
   lqfWorkSpaceQueryTimer.start();
   work = Tucker::MemoryManager::safe_new_array<double>(1);
-  Tucker::dgelqf_(&ncols, &nrows, YTranspose->data(), &ncols, tau, work, &negOne, &info);
+  Tucker::dgelqf_(&YNcols, &YNrows, YTranspose->data(), &YNcols, tau, work, &negOne, &info);
   lwork = work[0];
   lqfWorkSpaceQueryTimer.stop();
   std::cout << "lqf lwork: " << lwork << std::endl;
@@ -122,31 +122,31 @@ int main(int argc, char* argv[])
   for(int i=0; i<avgIteration; i++){
     dcopy_(&sizeOfY, YTranspose->data(), &one, YTransposeCopy->data(), &one);
     lqfTimer.start();
-    Tucker::dgelqf_(&ncols, &nrows, YTransposeCopy->data(), &ncols, tau, work, &lwork, &info);
+    Tucker::dgelqf_(&YNcols, &YNrows, YTransposeCopy->data(), &YNcols, tau, work, &lwork, &info);
     lqfTimer.stop();
   }
   double avgLqfTime = lqfTimer.duration() / avgIteration;
   Tucker::MemoryManager::safe_delete_array<double>(work, lwork);  
-  Tucker::MemoryManager::safe_delete_array<double>(tau, std::min(nrows, ncols));
+  Tucker::MemoryManager::safe_delete_array<double>(tau, std::min(YNrows, YNcols));
 
   //dgelqt
-  T = Tucker::MemoryManager::safe_new_array<double>(nb*nrows);
-  work = Tucker::MemoryManager::safe_new_array<double>(nb*nrows);
+  T = Tucker::MemoryManager::safe_new_array<double>(nb*YNrows);
+  work = Tucker::MemoryManager::safe_new_array<double>(nb*YNrows);
   for(int i=0; i<avgIteration; i++){
     dcopy_(&sizeOfY, YTranspose->data(), &one, YTransposeCopy->data(), &one);
     lqtTimer.start();
-    Tucker::dgelqt_(&ncols, &nrows, &nb, YTransposeCopy->data(), &ncols, T, &nb, work, &info);
+    Tucker::dgelqt_(&YNcols, &YNrows, &nb, YTransposeCopy->data(), &YNcols, T, &nb, work, &info);
     lqtTimer.stop();
   }
   double avgLqtTime = lqtTimer.duration() / avgIteration;
-  Tucker::MemoryManager::safe_delete_array<double>(T, nb*nrows);
-  Tucker::MemoryManager::safe_delete_array<double>(work, nb*nrows);
+  Tucker::MemoryManager::safe_delete_array<double>(T, nb*YNrows);
+  Tucker::MemoryManager::safe_delete_array<double>(work, nb*YNrows);
 
   //dgelq
   lqWorkSpaceQueryTimer.start();
   work = Tucker::MemoryManager::safe_new_array<double>(1);
   T = Tucker::MemoryManager::safe_new_array<double>(5);
-  Tucker::dgelq_(&ncols, &nrows, YTranspose->data(), &ncols, T, &negOne, work, &negOne, &info);
+  Tucker::dgelq_(&YNcols, &YNrows, YTranspose->data(), &YNcols, T, &negOne, work, &negOne, &info);
   lwork = work[0];
   TSize = T[0];
   Tucker::MemoryManager::safe_delete_array<double>(work, 1);
@@ -158,7 +158,7 @@ int main(int argc, char* argv[])
   for(int i=0; i<avgIteration; i++){
     dcopy_(&sizeOfY, YTranspose->data(), &one, YTransposeCopy->data(), &one);
     lqTimer.start();
-    Tucker::dgelq_(&ncols, &nrows, YTransposeCopy->data(), &ncols, T, &TSize, work, &lwork, &info);
+    Tucker::dgelq_(&YNcols, &YNrows, YTransposeCopy->data(), &YNcols, T, &TSize, work, &lwork, &info);
     lqTimer.stop();
   }
   double avgLqTime = lqTimer.duration() / avgIteration;

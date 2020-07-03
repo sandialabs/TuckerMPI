@@ -41,8 +41,9 @@
 
 namespace TuckerMPI {
 Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_timer, 
-  Tucker::Timer* decompose_timer, double* decompose_time, Tucker::Timer* transpose_timer){
-  int ONE = 1;
+  Tucker::Timer* decompose_timer, Tucker::Timer* transpose_timer){
+  int one = 1;
+  int negOne = -1;
   int globalRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
   int nrowsM = M->getLocalNumRows();
@@ -53,32 +54,32 @@ Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_t
     oss << "Edge case where unfolding of Y is tall and skinny. Solutioin not implemented yet.";
     throw std::runtime_error(oss.str());
   }
-  // {
-  //   for(int i=0; i< nrowsM*ncolsM; i++){
-  //     std::cout << M->getLocalMatrix()->data()[i] << ", ";
-  //   }
-  //   std::cout <<std::endl;
-  // }
   int info;
-  double* tau = Tucker::MemoryManager::safe_new_array<double>(std::min(ncolsM, nrowsM));
-  double* work = Tucker::MemoryManager::safe_new_array<double>(ncolsM*nrowsM);
   Tucker::Matrix* R = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrowsM, nrowsM);
+  double* tempT = Tucker::MemoryManager::safe_new_array<double>(5);
+  double* tempWork = Tucker::MemoryManager::safe_new_array<double>(1);
   if(isLastMode){
     Tucker::Matrix* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(ncolsM, nrowsM);
     if(dcopy_timer) dcopy_timer->start();
-    dcopy_(&sizeOfM, M->getLocalMatrix()->data(), &ONE, Mcopy->data(), &ONE);
+    dcopy_(&sizeOfM, M->getLocalMatrix()->data(), &one, Mcopy->data(), &one);
     if(dcopy_timer) dcopy_timer->stop();
-    if(globalRank == 0) std::cout << "ncolsM: "<< ncolsM << ", nrowsM: " << nrowsM << "\n";
-    //if(decompose_timer) decompose_timer->start();
-    clock_t start;
-    if(decompose_time) start = clock();
-    dgeqrf_(&ncolsM, &nrowsM, Mcopy->data(), &ncolsM, tau, work, &sizeOfM, &info);
-    if(decompose_time) *decompose_time = ((double)clock() - start) / (CLOCKS_PER_SEC);
-    //if(decompose_timer) decompose_timer->stop();
+    if(decompose_timer) decompose_timer->start();
+    dgeqr_(&ncolsM, &nrowsM, Mcopy->data(), &ncolsM, tempT, &negOne, tempWork, &negOne, &info);
+    int lwork = tempWork[0];
+    int TSize = tempT[0];
+    Tucker::MemoryManager::safe_delete_array<double>(tempWork, 1);
+    Tucker::MemoryManager::safe_delete_array<double>(tempT, 5);
+    double* T = Tucker::MemoryManager::safe_new_array<double>(TSize);
+    double* work = Tucker::MemoryManager::safe_new_array<double>(lwork);    
+    dgeqr_(&ncolsM, &nrowsM, Mcopy->data(), &ncolsM, T, &TSize, work, &lwork, &info);
+    if(decompose_timer) decompose_timer->stop();
+    Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
+    Tucker::MemoryManager::safe_delete_array<double>(T, TSize);
     if(transpose_timer) transpose_timer->start();
     for(int i=0; i<nrowsM; i++){
-      dcopy_(&nrowsM, Mcopy->data()+i*ncolsM, &ONE, R->data()+i*nrowsM, &ONE);
+      dcopy_(&nrowsM, Mcopy->data()+i*ncolsM, &one, R->data()+i*nrowsM, &one);
     }
+
     if(transpose_timer) transpose_timer->stop();
     // {
     //   std::cout << "Processor["<<globalRank<<"] local matrix size: " << nrowsM << " by "<< ncolsM << " : "; 
@@ -92,33 +93,30 @@ Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_t
   else{
     Tucker::Matrix* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrowsM, ncolsM);
     if(dcopy_timer) dcopy_timer->start();
-    dcopy_(&sizeOfM, M->getLocalMatrix()->data(), &ONE, Mcopy->data(), &ONE);
+    dcopy_(&sizeOfM, M->getLocalMatrix()->data(), &one, Mcopy->data(), &one);
     if(dcopy_timer) dcopy_timer->stop();
-    //if(decompose_timer) decompose_timer->start();
-    clock_t start;
-    if(decompose_time) start = clock();
-    dgelqf_(&nrowsM, &ncolsM, Mcopy->data(), &nrowsM, tau, work, &sizeOfM, &info);
-    if(decompose_time) *decompose_time = ((double)clock() - start) / (CLOCKS_PER_SEC);
-    //if(decompose_timer) decompose_timer->stop();
+    if(decompose_timer) decompose_timer->start();
+    dgelq_(&nrowsM, &ncolsM, Mcopy->data(), &nrowsM, tempT, &negOne, tempWork, &negOne, &info);
+    int lwork = tempWork[0];
+    int TSize = tempT[0];
+    Tucker::MemoryManager::safe_delete_array<double>(tempWork, 1);
+    Tucker::MemoryManager::safe_delete_array<double>(tempT, 5);
+    double* T = Tucker::MemoryManager::safe_new_array<double>(TSize);
+    double* work = Tucker::MemoryManager::safe_new_array<double>(lwork);  
+    dgelq_(&nrowsM, &ncolsM, Mcopy->data(), &nrowsM, T, &TSize, work, &lwork, &info);
+
+    if(decompose_timer) decompose_timer->stop();
+    Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
+    Tucker::MemoryManager::safe_delete_array<double>(T, TSize);  
     if(transpose_timer) transpose_timer->start();
+    //transpose the leftmost square of Mcopy one column at a time.
     for(int i=0; i<nrowsM; i++){
-      dcopy_(&nrowsM, Mcopy->data()+i*nrowsM, &ONE, R->data()+i, &nrowsM);
+      dcopy_(&nrowsM, Mcopy->data()+i*nrowsM, &one, R->data()+i, &nrowsM);
     }
+
     if(transpose_timer) transpose_timer->stop();
-    // {
-    //   std::cout << "Processor["<<globalRank<<"] local matrix size: " << nrowsM << " by "<< ncolsM << " : "; 
-    //   for(int i=0; i< nrowsM*ncolsM; i++){
-    //       std::cout << Mcopy->data()[i] << ", ";
-    //   }
-    //   std::cout <<std::endl; 
-    // }
     Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Mcopy);
   }
-  Tucker::MemoryManager::safe_delete_array<double>(tau, std::min(ncolsM, nrowsM));
-  Tucker::MemoryManager::safe_delete_array<double>(work, ncolsM*nrowsM);
-  
-  //copy the first nrowsM rows one row at a time.
-
   return R;
 }
 
@@ -221,7 +219,6 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
   // Get the number of MPI processes in this communicator
   int numProcs;
   MPI_Comm_size(comm,&numProcs);
-
   // If the communicator only has one MPI process, no redistribution is needed
   if(numProcs < 2) {
     return 0;
@@ -315,7 +312,6 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
     Tucker::MemoryManager::safe_delete<Matrix>(recvY);
   }
   else {
-    std::cout << "Processor["<<rank<<"] packing not necessary: " << std::endl; 
     redistY = recvY;
   }
 

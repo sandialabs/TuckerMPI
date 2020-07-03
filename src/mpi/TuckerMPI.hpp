@@ -59,7 +59,7 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer=0,
     Tucker::Timer* local_qr_timer=0, Tucker::Timer* pack_timer=0,
     Tucker::Timer* alltoall_timer=0, Tucker::Timer* unpack_timer=0,
     Tucker::Timer* localqr_dcopy_timer=0, Tucker::Timer* localqr_decompose_timer=0,
-    double* localqr_decompose_time=0, Tucker::Timer* localqr_transpose_timer=0);
+    Tucker::Timer* localqr_transpose_timer=0);
 
 /** \brief Computes the Gram matrix using the old algorithm
  *

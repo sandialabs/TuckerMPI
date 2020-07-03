@@ -46,6 +46,12 @@
 namespace TuckerMPI {
 
 /// @cond EXCLUDE
+extern "C" void dgelq_(const int*, const int*, double*, const int*,
+    double*, const int*, double*, const int*, const int*);
+
+extern "C" void dgeqr_(const int*, const int*, double*, const int*, 
+    double*, const int*, double*, const int*, const int*);
+
 extern "C" void dgelqf_(const int*, const int*, double*, 
     const int*, double*, double*, const int*, int*);
 
@@ -68,7 +74,7 @@ extern "C" void dgemm_(const char*, const char*, const int*,
 /** \brief Compute QR of M transpose. M is assumed to be short and fat. The R is returned in a square matrix.
  */
 Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_timer=0, 
-    Tucker::Timer* decompose_timer=0, double* decompose_time=0, Tucker::Timer* transpose_timer=0);
+    Tucker::Timer* decompose_timer=0, Tucker::Timer* transpose_timer=0);
 
 /** \brief Determines whether packing is necessary for computing the Gram matrix
  */
