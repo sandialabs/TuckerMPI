@@ -305,7 +305,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
  * \exception std::runtime_error epsilon < 0
  */
 const struct TuckerTensor* STHOSVD(const Tensor* X,
-    const double epsilon, bool flipSign=false);
+    const double epsilon, bool flipSign=false, bool useQR=false);
 
 /** \brief Compute the Tucker decomposition of a tensor X
  *
@@ -336,7 +336,7 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
  * \exception std::runtime_error reducedI specifies a size larger than X
  */
 const struct TuckerTensor* STHOSVD(const Tensor* X,
-    const SizeArray* reducedI, bool flipSign=false);
+    const SizeArray* reducedI, bool flipSign=false, bool useQR=false);
 
 /** \brief Compute \f$Y := X \times_n U\f$, where X and Y are
  * tensors, and U is a small dense matrix

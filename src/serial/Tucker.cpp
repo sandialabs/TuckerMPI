@@ -520,7 +520,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
 
 
 const struct TuckerTensor* STHOSVD(const Tensor* X,
-    const double epsilon, bool flipSign)
+    const double epsilon, bool flipSign, bool useQR)
 {
   if(X == 0) {
     throw std::runtime_error("Tucker::STHOSVD(const Tensor* X, const double epsilon, bool flipSign): X is a null pointer");
@@ -601,7 +601,7 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
 
 
 const struct TuckerTensor* STHOSVD(const Tensor* X,
-    const SizeArray* reducedI, bool flipSign)
+    const SizeArray* reducedI, bool flipSign, bool useQR)
 {
   if(X == 0) {
     throw std::runtime_error("Tucker::STHOSVD(const Tensor* X, const SizeArray* reducedI, bool flipSign): X is a null pointer");
