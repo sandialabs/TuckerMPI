@@ -1,4 +1,7 @@
 INCLUDE_DIRECTORIES(..)
+ADD_EXECUTABLE(Tucker_svd_test Tucker_svd_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_svd_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 ADD_EXECUTABLE(Tucker_LQ_edgecase_test Tucker_LQ_edgecase_test.cpp)
 TARGET_LINK_LIBRARIES(Tucker_LQ_edgecase_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
@@ -47,6 +50,7 @@ TARGET_LINK_LIBRARIES(Tucker_slice_test_nofile serial_tucker ${BLAS_LIBRARIES} $
 
 ENABLE_TESTING()
 ADD_TEST(Tucker_noscale_fullrec_test ${CMAKE_CURRENT_BINARY_DIR}/Tucker_noscale_fullrec.py)
+ADD_TEST(Tucker_serial_svd_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_svd_test)
 ADD_TEST(Tucker_serial_LQ_edgecase_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_LQ_edgecase_test)
 ADD_TEST(Tucker_serial_LQ_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_LQ_test)
 ADD_TEST(Tucker_serial_IO_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_IO_test)
@@ -64,6 +68,7 @@ ADD_TEST(Tucker_serial_slice_test_file ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_
 ADD_TEST(Tucker_serial_slice_test_nofile ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_slice_test_nofile)
 
 SET_PROPERTY(TEST Tucker_noscale_fullrec_test PROPERTY LABELS SystemTest LongTest)
+SET_PROPERTY(TEST Tucker_serial_svd_test PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST Tucker_serial_LQ_edgecase_test PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST Tucker_serial_LQ_test PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST Tucker_serial_shift_scale_test PROPERTY LABELS UnitTest)
@@ -80,6 +85,8 @@ SET_PROPERTY(TEST Tucker_serial_slice_test_nofile PROPERTY LABELS UnitTest)
 FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/input_files)
 FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/output_files)
 FILE(COPY "${CMAKE_CURRENT_SOURCE_DIR}/Tucker_noscale_fullrec.py" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/svd_test_input.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/svd_test_outputU.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/5x5.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/3x5x7x11.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/3x5x7x11_ss0.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
