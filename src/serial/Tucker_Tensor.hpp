@@ -228,7 +228,7 @@ private:
  * \param tol The maximum allowable difference between entries
  */
 bool isApproxEqual(const Tensor* t1, const Tensor* t2,
-    double tol, bool verbose=false);
+    double tol, bool verbose=false, bool ignoreSign = false);
 
 } // end of namespace Tucker
 

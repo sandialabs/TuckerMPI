@@ -280,14 +280,21 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
 void computeEigenpairs(Matrix* G, double*& eigenvalues,
     Matrix*& eigenvectors, const double thresh, const bool flipSign=false);
 
-void computeSingularPairs(Matrix* L, double* singularValues, 
-  Matrix* allSingularVectors);
+/**This function does not return right singular vectors.
+ */ 
+void computeSVD(Matrix* L, double* singularValues, 
+  Matrix* leftSingularVectors);
 
-void computeSingularPairs(Matrix* L, double*& singularValues, 
-  Matrix*& singularVectors, const double thresh);
+/**This function does not return right singular vectors.
+ */ 
+void computeSVD(Matrix* L, double*& singularValues, 
+  Matrix*& leadingLeftSingularVectors, const double thresh);
 
-void computeSingularPairs(Matrix* L, double*& singularValues, 
-  Matrix*& singularVectors, const int numSingularVector);  
+/**This function does not return right singular vectors.
+ * numSingularVector specifies how many left singular vectors to keep.
+ */ 
+void computeSVD(Matrix* L, double*& singularValues, 
+  Matrix*& leadingLeftSingularVectors, const int numSingularVector);  
 /** \brief Compute the Tucker decomposition of a tensor X
  *
  * This is an implementation of the sequentially truncated

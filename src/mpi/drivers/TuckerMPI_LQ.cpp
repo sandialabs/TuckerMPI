@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
   Tucker::Timer localqr_transpose_timer;
   if(rank == 0) total_timer.start();
   Tucker::Matrix* L0 = TuckerMPI::LQ(&X, 0, &tsqr_timer, &local_qr_timer, &pack_timer, &alltoall_timer, &unpack_timer,
-    &localqr_dcopy_timer, &localqr_decompose_timer, &localqr_decompose_time, &localqr_transpose_timer);
+    &localqr_dcopy_timer, &localqr_decompose_timer, &localqr_transpose_timer);
   if(rank == 0){
     total_timer.stop();
     std::cout << "total time used: " << total_timer.duration()

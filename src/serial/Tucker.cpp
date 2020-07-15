@@ -154,7 +154,6 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L){
     int Rnrows, Rncols, sizeOfR;
     //Handle edge case when the colun major submatrices are short and fat.
     if(submatrixNrows < modeNDimension){
-
       //The number of submatrice we need to stack to get a tall matrix.
       int ceil = (int)std::ceil((double)modeNDimension/(double)submatrixNrows);
       if(ceil > nmats){
@@ -517,8 +516,8 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
   dcopy_(&nToCopy, G->data(), &ONE, eigenvectors->data(), &ONE);
 }
 
-void computeSingularPairs(Matrix* L, double* singularValues, 
-  Matrix* allSingularVectors){
+void computeSVD(Matrix* L, double* singularValues, 
+  Matrix* leftSingularVectors){
   if(L == 0) {
     throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, const bool flipSign): G is a null pointer");
   }
@@ -535,17 +534,17 @@ void computeSingularPairs(Matrix* L, double* singularValues,
   int info;
   //workspace query
   dgesvd_(&JOBU, &JOBVT, &Lnrows, &Lncols, L->data(), &Lnrows, singularValues, 
-    allSingularVectors->data(), &Lnrows, VT, &one, work, &negOne, &info);
+    leftSingularVectors->data(), &Lnrows, VT, &one, work, &negOne, &info);
   int lwork = work[0];
   Tucker::MemoryManager::safe_delete_array<double>(work, 1);
   work = Tucker::MemoryManager::safe_new_array<double>(lwork);
   dgesvd_(&JOBU, &JOBVT, &Lnrows, &Lncols, L->data(), &Lnrows, singularValues, 
-    allSingularVectors->data(), &Lnrows, VT, &one, work, &lwork, &info);
+    leftSingularVectors->data(), &Lnrows, VT, &one, work, &lwork, &info);
   Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
 }
 
-void computeSingularPairs(Matrix* L, double*& singularValues, 
-  Matrix*& singularVectors, const double thresh){
+void computeSVD(Matrix* L, double*& singularValues, 
+  Matrix*& leadingLeftSingularVectors, const double thresh){
     if(L == 0) {
       throw std::runtime_error("Tucker::computeSingularPairs(Matrix* G, double*& singularValues, Matrix*& singularVectors, const double thresh): L is a null pointer");
     }
@@ -564,25 +563,25 @@ void computeSingularPairs(Matrix* L, double*& singularValues,
     int Lncols = L->ncols();
     singularValues = Tucker::MemoryManager::safe_new_array<double>(std::min(Lnrows, Lncols));
     //TODO: Lnrows and Lncols should be the same as of now. If this remains so the min is useless.
-    Matrix* allSingularVectors = Tucker::MemoryManager::safe_new<Matrix>(Lnrows, Lnrows);
-    computeSingularPairs(L, singularValues, allSingularVectors);
+    Matrix* leftSingularVectors = Tucker::MemoryManager::safe_new<Matrix>(Lnrows, Lnrows);
+    computeSVD(L, singularValues, leftSingularVectors);
     int numSingularVector = Lnrows;
     double sum = 0;
     for(int i=Lnrows-1; i>=0; i--) {
-      sum += singularValues[i];
+      sum += singularValues[i]*singularValues[i];
       if(sum > thresh) {
         break;
       }
       numSingularVector--;
     }
-    singularVectors = Tucker::MemoryManager::safe_new<Matrix>(Lnrows, numSingularVector);
+    leadingLeftSingularVectors = Tucker::MemoryManager::safe_new<Matrix>(Lnrows, numSingularVector);
     int nToCopy = Lnrows*numSingularVector;
-    dcopy_(&nToCopy, allSingularVectors->data(), &one, singularVectors->data(), &one);
-    Tucker::MemoryManager::safe_delete<Matrix>(allSingularVectors);
+    dcopy_(&nToCopy, leftSingularVectors->data(), &one, leadingLeftSingularVectors->data(), &one);
+    Tucker::MemoryManager::safe_delete<Matrix>(leftSingularVectors);
 }
 
-void computeSingularPairs(Matrix* L, double*& singularValues, 
-  Matrix*& singularVectors, const int numSingularVecotr){
+void computeSVD(Matrix* L, double*& singularValues, 
+  Matrix*& leadingLeftSingularVectors, const int numSingularVecotr){
     if(L == 0) {
       throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G is a null pointer");
     }
@@ -610,12 +609,12 @@ void computeSingularPairs(Matrix* L, double*& singularValues,
     int Lncols = L->ncols();
     singularValues = Tucker::MemoryManager::safe_new_array<double>(std::min(Lnrows, Lncols));
     //TODO: Lnrows and Lncols should be the same as of now. If this remains so the min is useless.
-    Matrix* allSingularVectors = Tucker::MemoryManager::safe_new<Matrix>(Lnrows, Lnrows);
-    computeSingularPairs(L, singularValues, allSingularVectors);
+    Matrix* leftSingularVectors = Tucker::MemoryManager::safe_new<Matrix>(Lnrows, Lnrows);
+    computeSVD(L, singularValues, leftSingularVectors);
 
     int nToCopy = Lnrows*numSingularVecotr;
-    dcopy_(&nToCopy, allSingularVectors->data(), &one, singularVectors->data(), &one);
-    Tucker::MemoryManager::safe_delete<Matrix>(allSingularVectors);
+    dcopy_(&nToCopy, leftSingularVectors->data(), &one, leadingLeftSingularVectors->data(), &one);
+    Tucker::MemoryManager::safe_delete<Matrix>(leftSingularVectors);
 }
 
 const struct TuckerTensor* STHOSVD(const Tensor* X,
@@ -667,6 +666,9 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
       computeEigenpairs(S, factorization->eigenvalues[n],
           factorization->U[n], thresh, flipSign);
       factorization->eigen_timer_[n].stop();
+      std::cout << "eigenvectors for S" << n << ": ";
+      std::cout << factorization->U[n]->prettyPrint();
+      std::cout << std::endl;
       std::cout << "\tAutoST-HOSVD::EVECS(" << n << ") time: "
           << factorization->eigen_timer_[n].duration() << "s\n";
 
@@ -675,8 +677,16 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
     }
     else{
       Matrix* L = computeLQ(Y, n);
-      computeSingularPairs(L, factorization->eigenvalues[n],
+      computeSVD(L, factorization->eigenvalues[n],
           factorization->U[n], thresh);
+      // std::cout << "eigenvalues for L" << n << ": ";
+      // for(int i=0; i< L->nrows(); i++){
+      //     std::cout << factorization->eigenvalues[n][i] << ", ";
+      // }
+      // std::cout << std::endl;
+      std::cout << "eigenvectors for S" << n << ": ";
+      std::cout << factorization->U[n]->prettyPrint();
+      std::cout << std::endl;
       MemoryManager::safe_delete<Matrix>(L);
     }
 
@@ -748,7 +758,7 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
   {
     if(useQR){
       Matrix* L = computeLQ(Y, n);
-      computeSingularPairs(L, factorization->eigenvalues[n],
+      computeSVD(L, factorization->eigenvalues[n],
           factorization->U[n], (*reducedI)[n]);
       MemoryManager::safe_delete<Matrix>(L);
     }
@@ -1299,10 +1309,11 @@ void importTensorBinary(Tensor* t, const char* filename)
   ifs.seekg(0, std::ios::end);
   end = ifs.tellg();
   size = end - begin;
-//  std::cout << "Reading " << size << " bytes...\n";
+  //std::cout << "Reading " << size << " bytes...\n";
 
   // Assert that this size is consistent with the number of tensor entries
   size_t numEntries = t->getNumElements();
+  //std::cout << "should be " << numEntries*sizeof(double) << "bytes. \n";
   assert(size == numEntries*sizeof(double));
 
   // Read the file

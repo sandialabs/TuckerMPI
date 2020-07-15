@@ -12,7 +12,7 @@ int main()
   int ncols = matrix->ncols();
   double* singularValues = Tucker::MemoryManager::safe_new_array<double>(nrows);
   Tucker::Matrix* singularVectors = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrows, ncols);
-  Tucker::computeSingularPairs(matrix, singularValues, singularVectors);
+  Tucker::computeSVD(matrix, singularValues, singularVectors);
 
   for(int i=0; i<nrows; i++) {
     double diff = std::abs(singularValues[i]-trueSingularValues[i]);

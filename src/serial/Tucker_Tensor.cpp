@@ -173,7 +173,7 @@ const double* Tensor::data() const
 }
 
 bool isApproxEqual(const Tensor* t1, const Tensor* t2,
-    double tol, bool verbose)
+    double tol, bool verbose, bool ignoreSign)
 {
   // If neither owns any data, they're not NOT equal...
   if(t1->getNumElements() == 0 && t2->getNumElements() == 0) {
@@ -192,7 +192,9 @@ bool isApproxEqual(const Tensor* t1, const Tensor* t2,
   const double* t2Data = t2->data();
   double errNorm2 = 0;
   for(size_t i=0; i<numElements; i++) {
-    double err = std::abs(t1Data[i] - t2Data[i]);
+    double err;
+    if(ignoreSign) err = std::abs(std::abs(t1Data[i]) - std::abs(t2Data[i]));
+    else err = std::abs(t1Data[i] - t2Data[i]);
     if(std::isnan(err)) {
       std::cerr << "Difference " << i << " is nan: "
           << t1Data[i] << " - " << t2Data[i] << " = "

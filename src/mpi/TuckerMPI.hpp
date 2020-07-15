@@ -105,7 +105,7 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
  */
 const TuckerTensor* STHOSVD(const Tensor* const X,
     const double epsilon, bool useOldGram=true,
-    bool flipSign=false);
+    bool flipSign=false, bool useLQ=false);
 
 /** \brief Computes a Tucker decomposition
  *
@@ -122,7 +122,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
  */
 const TuckerTensor* STHOSVD(const Tensor* const X,
     const Tucker::SizeArray* const reducedI, bool useOldGram=true,
-    bool flipSign=false);
+    bool flipSign=false, bool useLQ=false);
 
 /** \brief Compute some information about slices of a tensor
  *
