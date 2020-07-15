@@ -154,7 +154,6 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L){
     int Rnrows, Rncols, sizeOfR;
     //Handle edge case when the colun major submatrices are short and fat.
     if(submatrixNrows < modeNDimension){
-
       //The number of submatrice we need to stack to get a tall matrix.
       int ceil = (int)std::ceil((double)modeNDimension/(double)submatrixNrows);
       if(ceil > nmats){
@@ -476,21 +475,20 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
   dcopy_(&nToCopy, G->data(), &ONE, eigenvectors->data(), &ONE);
 }
 
-
 void computeEigenpairs(Matrix* G, double*& eigenvalues,
     Matrix*& eigenvectors, const double thresh, const bool flipSign)
 {
   if(G == 0) {
-    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G is a null pointer");
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const double thresh, const bool flipSign): G is a null pointer");
   }
   if(G->getNumElements() == 0) {
-    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G has no entries");
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const double thresh, const bool flipSign): G has no entries");
   }
   if(thresh < 0) {
     std::ostringstream oss;
     oss << "Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, "
-        << "Matrix*& eigenvectors, const int numEvecs, "
-        << "const bool flipSigyuuuugn): thresh = " << thresh << " < 0";
+        << "Matrix*& eigenvectors, const double thresh, "
+        << "const bool flipSign): thresh = " << thresh << " < 0";
     throw std::runtime_error(oss.str());
   }
 
@@ -518,9 +516,109 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
   dcopy_(&nToCopy, G->data(), &ONE, eigenvectors->data(), &ONE);
 }
 
+void computeSVD(Matrix* L, double* singularValues, 
+  Matrix* leftSingularVectors){
+  if(L == 0) {
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, const bool flipSign): G is a null pointer");
+  }
+  if(L->getNumElements() == 0) {
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, const bool flipSign): G has no entries");
+  }
+  char JOBU = 'A';
+  char JOBVT = 'N';
+  int Lnrows = L->nrows();
+  int Lncols = L->ncols();
+  double* VT = 0;
+  double* work = Tucker::MemoryManager::safe_new_array<double>(1);
+  const int negOne = -1; const int zero = 0; const int one = 1;
+  int info;
+  //workspace query
+  dgesvd_(&JOBU, &JOBVT, &Lnrows, &Lncols, L->data(), &Lnrows, singularValues, 
+    leftSingularVectors->data(), &Lnrows, VT, &one, work, &negOne, &info);
+  int lwork = work[0];
+  Tucker::MemoryManager::safe_delete_array<double>(work, 1);
+  work = Tucker::MemoryManager::safe_new_array<double>(lwork);
+  dgesvd_(&JOBU, &JOBVT, &Lnrows, &Lncols, L->data(), &Lnrows, singularValues, 
+    leftSingularVectors->data(), &Lnrows, VT, &one, work, &lwork, &info);
+  Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
+}
+
+void computeSVD(Matrix* L, double*& singularValues, 
+  Matrix*& leadingLeftSingularVectors, const double thresh){
+    if(L == 0) {
+      throw std::runtime_error("Tucker::computeSingularPairs(Matrix* G, double*& singularValues, Matrix*& singularVectors, const double thresh): L is a null pointer");
+    }
+    if(L->getNumElements() == 0) {
+      throw std::runtime_error("Tucker::computeSingularPairs(Matrix* G, double*& singularValues, Matrix*& singularVectors, const double thresh): L has no entries");
+    }
+    if(thresh < 0) {
+      std::ostringstream oss;
+      oss << "Tucker::computeSingularPairs(Matrix* G, double*& singularValues, "
+          << "Matrix*& singularVectors, const double thresh, "
+          << "): thresh = " << thresh << " < 0";
+      throw std::runtime_error(oss.str());
+    }
+    const int one = 1;
+    int Lnrows = L->nrows();
+    int Lncols = L->ncols();
+    singularValues = Tucker::MemoryManager::safe_new_array<double>(std::min(Lnrows, Lncols));
+    //TODO: Lnrows and Lncols should be the same as of now. If this remains so the min is useless.
+    Matrix* leftSingularVectors = Tucker::MemoryManager::safe_new<Matrix>(Lnrows, Lnrows);
+    computeSVD(L, singularValues, leftSingularVectors);
+    int numSingularVector = Lnrows;
+    double sum = 0;
+    for(int i=Lnrows-1; i>=0; i--) {
+      sum += singularValues[i]*singularValues[i];
+      if(sum > thresh) {
+        break;
+      }
+      numSingularVector--;
+    }
+    leadingLeftSingularVectors = Tucker::MemoryManager::safe_new<Matrix>(Lnrows, numSingularVector);
+    int nToCopy = Lnrows*numSingularVector;
+    dcopy_(&nToCopy, leftSingularVectors->data(), &one, leadingLeftSingularVectors->data(), &one);
+    Tucker::MemoryManager::safe_delete<Matrix>(leftSingularVectors);
+}
+
+void computeSVD(Matrix* L, double*& singularValues, 
+  Matrix*& leadingLeftSingularVectors, const int numSingularVecotr){
+    if(L == 0) {
+      throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G is a null pointer");
+    }
+    if(L->getNumElements() == 0) {
+      throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G has no entries");
+    }
+    if(numSingularVecotr < 1) {
+      std::ostringstream oss;
+      oss << "Tucker::computeSingularPairs(Matrix* L, double*& singularValues, "
+          << "Matrix*& singularVectors, const int numSingularVecotr, "
+          << "): numSingularVecotr = " << numSingularVecotr << " < 1";
+      throw std::runtime_error(oss.str());
+    }
+    if(numSingularVecotr > L->nrows()) {
+      std::ostringstream oss;
+      oss << "Tucker::computeSingularPairs(Matrix* L, double*& singularValues, "
+          << "Matrix*& singularVectors, const int numSingularVecotr, "
+          << "): numSingularVecotr = " << numSingularVecotr
+          << " > L->nrows() = " << L->nrows();
+      throw std::runtime_error(oss.str());
+    }
+
+    const int one = 1;
+    int Lnrows = L->nrows();
+    int Lncols = L->ncols();
+    singularValues = Tucker::MemoryManager::safe_new_array<double>(std::min(Lnrows, Lncols));
+    //TODO: Lnrows and Lncols should be the same as of now. If this remains so the min is useless.
+    Matrix* leftSingularVectors = Tucker::MemoryManager::safe_new<Matrix>(Lnrows, Lnrows);
+    computeSVD(L, singularValues, leftSingularVectors);
+
+    int nToCopy = Lnrows*numSingularVecotr;
+    dcopy_(&nToCopy, leftSingularVectors->data(), &one, leadingLeftSingularVectors->data(), &one);
+    Tucker::MemoryManager::safe_delete<Matrix>(leftSingularVectors);
+}
 
 const struct TuckerTensor* STHOSVD(const Tensor* X,
-    const double epsilon, bool flipSign)
+    const double epsilon, bool useQR, bool flipSign)
 {
   if(X == 0) {
     throw std::runtime_error("Tucker::STHOSVD(const Tensor* X, const double epsilon, bool flipSign): X is a null pointer");
@@ -550,31 +648,47 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
       << thresh << "...\n";
 
   const Tensor* Y = X;
-
   // For each dimension...
-  for(int n=0; n<X->N(); n++)
-  {
-    // Compute the Gram matrix
-    // S = Y_n*Y_n'
-    std::cout << "\tAutoST-HOSVD::Starting Gram(" << n << ")...\n";
-    factorization->gram_timer_[n].start();
-    Matrix* S = computeGram(Y,n);
-    factorization->gram_timer_[n].stop();
-    std::cout << "\tAutoST-HOSVD::Gram(" << n << ") time: "
-        << factorization->gram_timer_[n].duration() << "s\n";
+  for(int n=0; n<X->N(); n++){
+    if(!useQR){
+      // Compute the Gram matrix
+      // S = Y_n*Y_n'
+      std::cout << "\tAutoST-HOSVD::Starting Gram(" << n << ")...\n";
+      factorization->gram_timer_[n].start();
+      Matrix* S = computeGram(Y,n);
+      factorization->gram_timer_[n].stop();
+      std::cout << "\tAutoST-HOSVD::Gram(" << n << ") time: "
+          << factorization->gram_timer_[n].duration() << "s\n";
+      // Compute the leading eigenvectors of S
+      // call dsyev(jobz, uplo, n, a, lda, w, work, lwork, info)
+      std::cout << "\tAutoST-HOSVD::Starting Evecs(" << n << ")...\n";
+      factorization->eigen_timer_[n].start();
+      computeEigenpairs(S, factorization->eigenvalues[n],
+          factorization->U[n], thresh, flipSign);
+      factorization->eigen_timer_[n].stop();
+      std::cout << "eigenvectors for S" << n << ": ";
+      std::cout << factorization->U[n]->prettyPrint();
+      std::cout << std::endl;
+      std::cout << "\tAutoST-HOSVD::EVECS(" << n << ") time: "
+          << factorization->eigen_timer_[n].duration() << "s\n";
 
-    // Compute the leading eigenvectors of S
-    // call dsyev(jobz, uplo, n, a, lda, w, work, lwork, info)
-    std::cout << "\tAutoST-HOSVD::Starting Evecs(" << n << ")...\n";
-    factorization->eigen_timer_[n].start();
-    computeEigenpairs(S, factorization->eigenvalues[n],
-        factorization->U[n], thresh, flipSign);
-    factorization->eigen_timer_[n].stop();
-    std::cout << "\tAutoST-HOSVD::EVECS(" << n << ") time: "
-        << factorization->eigen_timer_[n].duration() << "s\n";
-
-    // Free the Gram matrix
-    MemoryManager::safe_delete<Matrix>(S);
+      // Free the Gram matrix
+      MemoryManager::safe_delete<Matrix>(S);
+    }
+    else{
+      Matrix* L = computeLQ(Y, n);
+      computeSVD(L, factorization->eigenvalues[n],
+          factorization->U[n], thresh);
+      // std::cout << "eigenvalues for L" << n << ": ";
+      // for(int i=0; i< L->nrows(); i++){
+      //     std::cout << factorization->eigenvalues[n][i] << ", ";
+      // }
+      // std::cout << std::endl;
+      std::cout << "eigenvectors for S" << n << ": ";
+      std::cout << factorization->U[n]->prettyPrint();
+      std::cout << std::endl;
+      MemoryManager::safe_delete<Matrix>(L);
+    }
 
     // Perform the tensor times matrix multiplication
     std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
@@ -593,6 +707,7 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
         << n << ": " << Y->size() << ", or ";
     Tucker::printBytes(nnz*sizeof(double));
   }
+  
 
   factorization->G = const_cast<Tensor*>(Y);
   factorization->total_timer_.stop();
@@ -601,7 +716,7 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
 
 
 const struct TuckerTensor* STHOSVD(const Tensor* X,
-    const SizeArray* reducedI, bool flipSign)
+    const SizeArray* reducedI, bool useQR, bool flipSign)
 {
   if(X == 0) {
     throw std::runtime_error("Tucker::STHOSVD(const Tensor* X, const SizeArray* reducedI, bool flipSign): X is a null pointer");
@@ -638,25 +753,31 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
   factorization->total_timer_.start();
 
   const Tensor* Y = X;
-
   // For each dimension...
   for(int n=0; n<X->N(); n++)
   {
-    // Compute the Gram matrix
-    // S = Y_n*Y_n'
-    factorization->gram_timer_[n].start();
-    Matrix* S = computeGram(Y,n);
-    factorization->gram_timer_[n].stop();
+    if(useQR){
+      Matrix* L = computeLQ(Y, n);
+      computeSVD(L, factorization->eigenvalues[n],
+          factorization->U[n], (*reducedI)[n]);
+      MemoryManager::safe_delete<Matrix>(L);
+    }
+    else{
+      // Compute the Gram matrix
+      // S = Y_n*Y_n'
+      factorization->gram_timer_[n].start();
+      Matrix* S = computeGram(Y,n);
+      factorization->gram_timer_[n].stop();
 
-    // Compute the leading eigenvectors of S
-    // call dsyev(jobz, uplo, n, a, lda, w, work, lwork, info)
-    factorization->eigen_timer_[n].start();
-    computeEigenpairs(S, factorization->eigenvalues[n],
-        factorization->U[n], (*reducedI)[n], flipSign);
-    factorization->eigen_timer_[n].stop();
+      // Compute the leading eigenvectors of S
+      // call dsyev(jobz, uplo, n, a, lda, w, work, lwork, info)
+      factorization->eigen_timer_[n].start();
+      computeEigenpairs(S, factorization->eigenvalues[n],
+          factorization->U[n], (*reducedI)[n], flipSign);
+      factorization->eigen_timer_[n].stop();
 
-    MemoryManager::safe_delete<Matrix>(S);
-
+      MemoryManager::safe_delete<Matrix>(S);
+    }
     // Perform the tensor times matrix multiplication
     factorization->ttm_timer_[n].start();
     Tensor* temp = ttm(Y,n,factorization->U[n],true);
@@ -1188,10 +1309,11 @@ void importTensorBinary(Tensor* t, const char* filename)
   ifs.seekg(0, std::ios::end);
   end = ifs.tellg();
   size = end - begin;
-//  std::cout << "Reading " << size << " bytes...\n";
+  //std::cout << "Reading " << size << " bytes...\n";
 
   // Assert that this size is consistent with the number of tensor entries
   size_t numEntries = t->getNumElements();
+  //std::cout << "should be " << numEntries*sizeof(double) << "bytes. \n";
   assert(size == numEntries*sizeof(double));
 
   // Read the file

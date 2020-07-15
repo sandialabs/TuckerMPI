@@ -35,6 +35,7 @@ int main(int argc, char* argv[])
   bool boolWriteSTHOSVD                 = Tucker::stringParse<bool>(fileAsString, "Write STHOSVD result", false);
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
   bool boolWritePreprocessed            = Tucker::stringParse<bool>(fileAsString, "Write preprocessed data", false);
+  bool useLQ                            = Tucker::stringParse<bool>(fileAsString, "Compute SVD via LQ", false);
 
   double tol                            = Tucker::stringParse<double>(fileAsString, "SV Threshold", 1e-6);
   double stdThresh                      = Tucker::stringParse<double>(fileAsString, "STD Threshold", 1e-9);
@@ -237,10 +238,10 @@ int main(int argc, char* argv[])
 
     sthosvdTimer.start();
     if(boolAuto) {
-      solution = Tucker::STHOSVD(X, tol);
+      solution = Tucker::STHOSVD(X, tol, useLQ);
     }
     else {
-      solution = Tucker::STHOSVD(X, R_dims);
+      solution = Tucker::STHOSVD(X, R_dims, useLQ);
     }
     sthosvdTimer.stop();
 
@@ -260,7 +261,7 @@ int main(int argc, char* argv[])
         eb += solution->eigenvalues[i][j];
       }
     }
-    std::cout << "Error bound: " << std::sqrt(eb)/xnorm << std::endl;
+    std::cout << "Error bound: " << eb << ", " << std::sqrt(eb) << " / " << xnorm << std::endl;
 
     writeTimer.start();
     if(boolWriteSTHOSVD) {

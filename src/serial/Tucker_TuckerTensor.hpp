@@ -154,13 +154,13 @@ public:
    * TuckerTensor so that the timers can remain private
    */
   friend const struct TuckerTensor* STHOSVD(const Tensor* const X,
-      const double epsilon, bool flipSign);
+      const double epsilon, bool flipSign, bool useQR);
 
   /** \note STHOSVD has been declared as a friend function of
    * TuckerTensor so that the timers can remain private
    */
   friend const struct TuckerTensor* STHOSVD(const Tensor* const X,
-      const SizeArray* const reducedI, bool flipSign);
+      const SizeArray* const reducedI, bool flipSign, bool useQR);
 
 private:
   /// @cond EXCLUDE

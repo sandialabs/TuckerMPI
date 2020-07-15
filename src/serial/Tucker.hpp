@@ -48,6 +48,10 @@
 
 namespace Tucker {
 /// @cond EXCLUDE
+extern "C" void dgesvd_(const char*, const char*, const int*, 
+    const int*, double*, const int*, double*, double*, const int*,
+    double*, const int*, double*, const int*, const int*);
+
 extern "C" void dgelq_(const int*, const int*, double*, const int*,
     double*, const int*, double*, const int*, const int*);
 
@@ -276,6 +280,21 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
 void computeEigenpairs(Matrix* G, double*& eigenvalues,
     Matrix*& eigenvectors, const double thresh, const bool flipSign=false);
 
+/**This function does not return right singular vectors.
+ */ 
+void computeSVD(Matrix* L, double* singularValues, 
+  Matrix* leftSingularVectors);
+
+/**This function does not return right singular vectors.
+ */ 
+void computeSVD(Matrix* L, double*& singularValues, 
+  Matrix*& leadingLeftSingularVectors, const double thresh);
+
+/**This function does not return right singular vectors.
+ * numSingularVector specifies how many left singular vectors to keep.
+ */ 
+void computeSVD(Matrix* L, double*& singularValues, 
+  Matrix*& leadingLeftSingularVectors, const int numSingularVector);  
 /** \brief Compute the Tucker decomposition of a tensor X
  *
  * This is an implementation of the sequentially truncated
@@ -305,7 +324,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
  * \exception std::runtime_error epsilon < 0
  */
 const struct TuckerTensor* STHOSVD(const Tensor* X,
-    const double epsilon, bool flipSign=false);
+    const double epsilon, bool useQR=false, bool flipSign=false);
 
 /** \brief Compute the Tucker decomposition of a tensor X
  *
@@ -336,7 +355,7 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
  * \exception std::runtime_error reducedI specifies a size larger than X
  */
 const struct TuckerTensor* STHOSVD(const Tensor* X,
-    const SizeArray* reducedI, bool flipSign=false);
+    const SizeArray* reducedI, bool useQR=false, bool flipSign=false);
 
 /** \brief Compute \f$Y := X \times_n U\f$, where X and Y are
  * tensors, and U is a small dense matrix
