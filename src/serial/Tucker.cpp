@@ -587,25 +587,25 @@ void computeSVD(Matrix* L, double*& singularValues,
 }
 
 void computeSVD(Matrix* L, double*& singularValues, 
-  Matrix*& leadingLeftSingularVectors, const int numSingularVecotr){
+  Matrix*& leadingLeftSingularVectors, const int numSingularVector){
     if(L == 0) {
       throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G is a null pointer");
     }
     if(L->getNumElements() == 0) {
       throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G has no entries");
     }
-    if(numSingularVecotr < 1) {
+    if(numSingularVector < 1) {
       std::ostringstream oss;
       oss << "Tucker::computeSingularPairs(Matrix* L, double*& singularValues, "
           << "Matrix*& singularVectors, const int numSingularVecotr, "
-          << "): numSingularVecotr = " << numSingularVecotr << " < 1";
+          << "): numSingularVecotr = " << numSingularVector << " < 1";
       throw std::runtime_error(oss.str());
     }
-    if(numSingularVecotr > L->nrows()) {
+    if(numSingularVector > L->nrows()) {
       std::ostringstream oss;
       oss << "Tucker::computeSingularPairs(Matrix* L, double*& singularValues, "
           << "Matrix*& singularVectors, const int numSingularVecotr, "
-          << "): numSingularVecotr = " << numSingularVecotr
+          << "): numSingularVecotr = " << numSingularVector
           << " > L->nrows() = " << L->nrows();
       throw std::runtime_error(oss.str());
     }
@@ -617,8 +617,8 @@ void computeSVD(Matrix* L, double*& singularValues,
     //TODO: Lnrows and Lncols should be the same as of now. If this remains so the min is useless.
     Matrix* leftSingularVectors = Tucker::MemoryManager::safe_new<Matrix>(Lnrows, Lnrows);
     computeSVD(L, singularValues, leftSingularVectors);
-
-    int nToCopy = Lnrows*numSingularVecotr;
+    leadingLeftSingularVectors = Tucker::MemoryManager::safe_new<Matrix>(Lnrows, numSingularVector);
+    int nToCopy = Lnrows*numSingularVector;
     dcopy_(&nToCopy, leftSingularVectors->data(), &one, leadingLeftSingularVectors->data(), &one);
     Tucker::MemoryManager::safe_delete<Matrix>(leftSingularVectors);
 }
@@ -1319,7 +1319,8 @@ void importTensorBinary(Tensor* t, const char* filename)
 
   // Assert that this size is consistent with the number of tensor entries
   size_t numEntries = t->getNumElements();
-  //std::cout << "should be " << numEntries*sizeof(double) << "bytes. \n";
+  //std::cout << "Size is: "<< size << "bytes" << std::endl;
+  //std::cout << "should be " << numEntries*sizeof(double) << "bytes." << std::endl;
   assert(size == numEntries*sizeof(double));
 
   // Read the file
