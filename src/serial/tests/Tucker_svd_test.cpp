@@ -25,7 +25,7 @@ int main()
   }
 
   for(int i=0; i<nrows*nrows; i++) {
-    double diff = std::abs(abs(U->data()[i])-abs(singularVectors->data()[i]));
+    double diff = std::abs(std::abs(U->data()[i])-std::abs(singularVectors->data()[i]));
     if(diff > 1e-10) {
       std::cerr << "ERROR: The true solution is " << U->data()[i]
                 << ", but the computed solution was " << singularVectors->data()[i]

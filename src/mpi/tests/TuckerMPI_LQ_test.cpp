@@ -1,13 +1,14 @@
 #include<cstdlib>
 #include "TuckerMPI.hpp"
+#include<cmath>
 bool checkEqual(const double* arr1, const double* arr2, int nrows, int ncols)
 {
     int ind = 0;
     for(int c=0; c<ncols; c++) {
       for(int r=0; r<nrows; r++) {
-        std::cout << "matching:  arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
-        if(abs(abs(arr1[r+c*nrows]) - abs(arr2[ind])) > 1e-10) {
-          std::cout << "mismatch :" << "arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
+        //std::cout << "matching:  arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
+        if(std::abs(std::abs(arr1[r+c*nrows]) - std::abs(arr2[ind])) > 1e-10) {
+          //std::cout << "mismatch :" << "arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
           return false;
         }
         ind++;
@@ -267,6 +268,7 @@ int main(int argc, char* argv[])
 
     Tucker::Matrix* L0 = TuckerMPI::LQ(tensor, 0);
     if(rank == 0){
+      std::cout << L0->prettyPrint();
       compareResultBuff = (int)checkEqual(L0->data(), trueL0, LSize, LSize);
     }
     MPI_Bcast(&compareResultBuff, 1, MPI_INT, root, MPI_COMM_WORLD);
@@ -318,5 +320,5 @@ int main(int argc, char* argv[])
   }
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(sz);
   MPI_Finalize();
-  return EXIT_SUCCESS;
+  return EXIT_FAILURE;
 }

@@ -201,6 +201,19 @@ void exportTensorBinary(const char* filename, const Tucker::Tensor* Y);
 
 void exportTimeSeries(const char* filename, const Tensor* Y);
 
+/** \brief Generate core tensor and factor matrices. Combine them with a 
+ * series of ttm and then add noise to generate the output tensor. 
+ * 
+ * \param[in] seed for the random generator
+ * \param[in/out] TuckerTensor that will store the original core tensor and
+ * factor matrices
+ * \param[in] dimensions of the desired output tensor
+ * \param[in] dimensions of the core tensor
+ * \param[in] noise to be added. 
+ */
+Tensor* generateTensor(int seed, TuckerTensor* fact, Tucker::SizeArray* proc_dims, 
+  Tucker::SizeArray* tensor_dims, Tucker::SizeArray* core_dims,
+  double noise);
 } // end namespace TuckerMPI
 
 #endif /* TUCKER_MPI_HPP_ */

@@ -535,12 +535,18 @@ void computeSVD(Matrix* L, double* singularValues,
   //workspace query
   dgesvd_(&JOBU, &JOBVT, &Lnrows, &Lncols, L->data(), &Lnrows, singularValues, 
     leftSingularVectors->data(), &Lnrows, VT, &one, work, &negOne, &info);
+  if(info != 0){
+    std::cout << "error in dgesvd_ in computeSVD()" << std::endl;
+  }
   int lwork = work[0];
   Tucker::MemoryManager::safe_delete_array<double>(work, 1);
   work = Tucker::MemoryManager::safe_new_array<double>(lwork);
   dgesvd_(&JOBU, &JOBVT, &Lnrows, &Lncols, L->data(), &Lnrows, singularValues, 
     leftSingularVectors->data(), &Lnrows, VT, &one, work, &lwork, &info);
   Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
+  if(info != 0){
+    std::cout << "error in dgesvd_ in computeSVD()" << std::endl;
+  }
 }
 
 void computeSVD(Matrix* L, double*& singularValues, 
@@ -667,7 +673,7 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
           factorization->U[n], thresh, flipSign);
       factorization->eigen_timer_[n].stop();
       std::cout << "eigenvectors for S" << n << ": ";
-      std::cout << factorization->U[n]->prettyPrint();
+      //std::cout << factorization->U[n]->prettyPrint();
       std::cout << std::endl;
       std::cout << "\tAutoST-HOSVD::EVECS(" << n << ") time: "
           << factorization->eigen_timer_[n].duration() << "s\n";
@@ -684,8 +690,8 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
       //     std::cout << factorization->eigenvalues[n][i] << ", ";
       // }
       // std::cout << std::endl;
-      std::cout << "eigenvectors for S" << n << ": ";
-      std::cout << factorization->U[n]->prettyPrint();
+      //std::cout << "eigenvectors for S" << n << ": ";
+      //std::cout << factorization->U[n]->prettyPrint();
       std::cout << std::endl;
       MemoryManager::safe_delete<Matrix>(L);
     }
@@ -1587,6 +1593,12 @@ void premultByDiag(const Vector* diag, Matrix* mat)
       mydata[r+c*myrows] *= (*diag)[r];
     }
   }
+}
+
+Tensor* generateTensor(int seed, TuckerTensor* fact, SizeArray* tensor_dims,
+ SizeArray* core_dims, double noise){
+
+
 }
 
 } // end namespace Tucker

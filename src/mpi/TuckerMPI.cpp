@@ -49,6 +49,8 @@
 #include <cmath>
 #include <chrono>
 #include <fstream>
+#include <random>
+#include <iomanip>
 
 namespace TuckerMPI
 {
@@ -139,7 +141,12 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
   }
   if(tsqr_timer) tsqr_timer->stop();
   if(globalRank == 0){
-    //std::cout << R->prettyPrint();
+    //add zeros at the lower triangle
+    for(int c=0; c<R->ncols(); c++){
+      for(int r=c+1; r<R->nrows(); r++){
+        R->data()[r+c*R->nrows()] = 0;
+      }
+    }
     //transpose
     for(int i=0; i<Rncols; i++){
       dcopy_(&Rnrows, R->data()+i*Rnrows, &one, L->data()+i, &Rnrows); 
@@ -512,10 +519,28 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       Tucker::Matrix* L = LQ(Y, n);
       int SizeOfL = L->nrows()*L->ncols();
       MPI_Bcast(L->data(), SizeOfL, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      std::cout << "L is "<< L->nrows()<< " by " <<L->ncols()<<". First 100 elements in processor " << rank << ": "; 
+      for(int i=0; i< 100; i++){
+        std::cout << std::setprecision(8) << L->data()[i] << ", ";
+      }
+      std::cout << std::endl;
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << n << ")...\n";
       }
       Tucker::computeSVD(L, factorization->eigenvalues[n], factorization->U[n], thresh);
+      // if(rank == 0){
+      //   std::cout << "eigenvalues for L" << n << ": ";
+      //   for(int i=0; i< L->nrows(); i++){
+      //       std::cout << std::setprecision(15)<< factorization->eigenvalues[n][i] << ", ";
+      //   }
+      //   std::cout << std::endl;
+      // }
+      // if(rank == 0){
+      //   std::cout << "eigenvectors for L" << n << ": ";
+      //   for(int i=0; i< L->nrows(); i++){
+      //       std::cout << std::setprecision(15)<< factorization->U[n]->prettyPrint();
+      //   }
+      // }
       // Free the Gram matrix
       Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L);
     }
@@ -555,6 +580,20 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       Tucker::computeEigenpairs(S, factorization->eigenvalues[n],
           factorization->U[n], thresh, flipSign);
       factorization->eigen_timer_[n].stop();
+      // if(rank == 0){
+      //   std::cout << "eigenvalues for S" << n << ": ";
+      //   for(int i=0; i< S->nrows(); i++){
+      //       std::cout << factorization->eigenvalues[n][i];
+      //   }
+      //   std::cout << std::endl;
+      // }
+      // if(rank == 0){
+      //   std::cout << "eigen vectors for S" << n << ": ";
+      //   for(int i=0; i< S->nrows(); i++){
+      //       std::cout << factorization->U[n]->prettyPrint();
+      //   }
+      //   std::cout << std::endl;
+      // }
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::EVECS(" << n << ") time: "
             << factorization->eigen_timer_[n].duration() << "s\n";
@@ -634,20 +673,24 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   // For each dimension...
   for(int n=0; n<ndims; n++)
   {
-    Tucker::Matrix* S;
     if(useLQ){
+      Tucker::Matrix* L;
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::Starting LQ(" << n << ")...\n";
       }
-      S = LQ(Y, n);
+      L = LQ(Y, n);
+      int SizeOfL = L->nrows()*L->ncols();
+      MPI_Bcast(L->data(), SizeOfL, MPI_DOUBLE, 0, MPI_COMM_WORLD);
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << n << ")...\n";
       }
-      Tucker::computeSVD(S, factorization->eigenvalues[n], factorization->U[n], (*reducedI)[n]);
+      Tucker::computeSVD(L, factorization->eigenvalues[n], factorization->U[n], (*reducedI)[n]);
+      Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L);
     }
     else{
       // Compute the Gram matrix
       // S = Y_n*Y_n'
+      Tucker::Matrix* S;
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::Starting Gram(" << n << ")...\n";
       }
@@ -682,12 +725,12 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       Tucker::computeEigenpairs(S, factorization->eigenvalues[n],
           factorization->U[n], (*reducedI)[n], flipSign);
       factorization->eigen_timer_[n].stop();
+      Tucker::MemoryManager::safe_delete<Tucker::Matrix>(S);
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::EVECS(" << n << ") time: "
             << factorization->eigen_timer_[n].duration() << "s\n";
       }
     }
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(S);
 
     // Perform the tensor times matrix multiplication
     if(rank == 0) {
@@ -1394,4 +1437,96 @@ void exportTimeSeries(const char* filename, const Tensor* Y)
   Tucker::MemoryManager::safe_delete_array<int>(gsizes,ndims-1);
 }
 
+Tensor* generateTensor(int seed, TuckerTensor* fact, Tucker::SizeArray* proc_dims, 
+  Tucker::SizeArray* tensor_dims, Tucker::SizeArray* core_dims,
+  double noise){
+  if(proc_dims->size() != tensor_dims->size()){
+    throw std::runtime_error("TuckerMPI::generateTensor(): processor grid dimension doesn't match that of the output tensor");
+  }
+  if(tensor_dims->size() != core_dims->size()){
+    throw std::runtime_error("TuckerMPI::generateTensor(): output tensor dimension doesn't match that of the core tensor");
+  }
+  if(core_dims->size() != fact->N){
+    throw std::runtime_error("TuckerMPI::generateTensor(): core tensor grid dimension doesn't match that of the TuckerTensor");
+  }
+  int rank;
+  int nprocs;
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+  /////////////////////////////////////////////////////////////////
+  // Generate the seeds for each MPI process and scatter them    //
+  // Given the input seed, the seed that each processor use will //
+  // be the same each run yet different from each other.         //
+  /////////////////////////////////////////////////////////////////
+  int myseed;
+  if(rank == 0) {
+    unsigned* seeds = Tucker::MemoryManager::safe_new_array<unsigned>(nprocs);
+    srand(seed);
+    for(int i=0; i<nprocs; i++) {
+      seeds[i] = rand();
+    }
+    MPI_Scatter(seeds,1,MPI_INT,&myseed,1,MPI_INT,0,MPI_COMM_WORLD);
+    Tucker::MemoryManager::safe_delete_array<unsigned>(seeds,nprocs);
+  }
+  else {
+    MPI_Scatter(NULL,1,MPI_INT,&myseed,1,MPI_INT,0,MPI_COMM_WORLD);
+  }
+  std::default_random_engine generator(myseed);
+  std::normal_distribution<double> distribution;
+  //GENERATE CORE TENSOR//
+  //distribution for the core
+  TuckerMPI::Distribution* dist =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*core_dims, *proc_dims);
+  fact->G = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
+  size_t nnz = dist->getLocalDims().prod();
+  double* dataptr = fact->G->getLocalTensor()->data();
+  for(size_t i=0; i<nnz; i++) {
+    dataptr[i] = distribution(generator);
+  }
+  //GENERATE FACTOR MATRICES//
+  for(int d=0; d<fact->N; d++) {
+    if(rank == 0) std::cout << "Generating factor matrix " << d << "...\n";
+    int nrows = (*tensor_dims)[d];
+    int ncols = (*core_dims)[d];
+    fact->U[d] = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrows,ncols);
+    nnz = nrows*ncols;
+    dataptr = fact->U[d]->data();
+    if(rank == 0) {
+      for(size_t i=0; i<nnz; i++) {
+        dataptr[i] = distribution(generator);
+      }
+    }
+
+    MPI_Bcast(dataptr,nnz,MPI_DOUBLE,0,MPI_COMM_WORLD);
+  }
+  //TTM between factor matrices and core//
+  TuckerMPI::Tensor* product = fact->G;
+  for(int d=0; d<fact->N; d++) {
+    TuckerMPI::Tensor* temp = TuckerMPI::ttm(product, d, fact->U[d]);
+    if(product != fact->G) {
+      Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(product);
+    }
+    product = temp;
+  }
+  /////////////////////////////////////////////////////////////////////
+  // Compute the norm of the global tensor                           //
+  // \todo This could be more efficient; see Bader/Kolda for details //
+  /////////////////////////////////////////////////////////////////////
+  double normM = std::sqrt(product->norm2());
+  ///////////////////////////////////////////////////////////////////
+  // Compute the estimated norm of the noise matrix                //
+  // The average of each element squared is the standard deviation //
+  // squared, so this quantity should be sqrt(nnz * stdev^2)       //
+  ///////////////////////////////////////////////////////////////////
+  nnz = tensor_dims->prod();
+  double normN = std::sqrt(nnz);
+  double alpha = noise*normM/normN;
+  //add noise to product
+  dataptr = product->getLocalTensor()->data();
+  nnz = dist->getLocalDims().prod();
+  for(size_t i=0; i<nnz; i++) {
+    dataptr[i] += alpha*distribution(generator);
+  }
+  return product;
+}
 } // end namespace TuckerMPI

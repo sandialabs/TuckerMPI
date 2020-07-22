@@ -495,6 +495,18 @@ void exportTimeSeries(const Tensor* Y, const char* filename);
 /// Premultiply a dense matrix by a diagonal matrix
 void premultByDiag(const Vector* diag, Matrix* mat);
 
+/** \brief Generate core tensor and factor matrices. Combine them with a 
+ * series of ttm and then add noise to generate the output tensor. 
+ * 
+ * \param[in] seed for the random generator
+ * \param[in/out] TuckerTensor that will store the original core tensor and
+ * factor matrices
+ * \param[in] dimensions of the desired output tensor
+ * \param[in] dimensions of the core tensor
+ * \param[in] noise to be added. 
+ */
+Tensor* generateTensor(int seed, TuckerTensor* fact, SizeArray* tensor_dims,
+ SizeArray* core_dims, double noise);
 } // end of namespace Tucker
 
 #endif /* TUCKER_HPP_ */

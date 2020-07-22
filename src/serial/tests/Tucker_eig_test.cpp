@@ -22,10 +22,17 @@ int main()
       matrix->data()[r+5*c] = std::numeric_limits<double>::signaling_NaN();
     }
   }
-
+  //Tucker::Matrix* matrix = Tucker::MemoryManager::safe_new<Tucker::Matrix>(30,30);
   // Compute the eigenpairs
   double* eigenvalues;
+  //matrix->rand();
+  //std::cout << matrix->prettyPrint() << std::endl;
+  //Tucker::Matrix* S = Tucker::computeGram(matrix, 0);
+  //std::cout << S->prettyPrint() << std::endl;
   Tucker::computeEigenpairs(matrix, eigenvalues, true);
+  for(int i = 0; i < 30; i++){
+    std::cout << eigenvalues[i] << std::endl;
+  }
 
   double TRUE_EVALS[5] = {0.635794375487247, 0.355867612602428,
       0.061922384175464, -0.459221953743586, -0.690271293870763};
