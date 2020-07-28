@@ -44,6 +44,8 @@ int main(int argc, char* argv[])
   std::vector<std::string> fileAsString = Tucker::getFileAsStrings(paramfn);
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
   bool boolUseOldGram                   = Tucker::stringParse<bool>(fileAsString, "Use old Gram", false);
+  bool boolUseLQ                        = Tucker::stringParse<bool>(fileAsString, "Use LQ", false);
+
 
   Tucker::SizeArray* I_dims             = Tucker::stringParseSizeArray(fileAsString, "Global dims");
   Tucker::SizeArray* R_dims             = Tucker::stringParseSizeArray(fileAsString, "Ranks");
@@ -151,10 +153,11 @@ int main(int argc, char* argv[])
   /////////////////////
   // Perform STHOSVD //
   /////////////////////
-  const TuckerMPI::TuckerTensor* solution = TuckerMPI::STHOSVD(&X, R_dims, boolUseOldGram);
+  const TuckerMPI::TuckerTensor* solution = TuckerMPI::STHOSVD(&X, R_dims, boolUseOldGram, false, boolUseLQ);
 
   // Send the timing information to a CSV
-  solution->printTimers(timing_file);
+  if(boolUseLQ) solution->printTimersLQ(timing_file);
+  else solution->printTimers(timing_file);
 
   double xnorm = std::sqrt(X.norm2());
   double gnorm = std::sqrt(solution->G->norm2());
@@ -164,11 +167,21 @@ int main(int argc, char* argv[])
 
     // Compute the error bound based on the eigenvalues
     double eb =0;
-    for(int i=0; i<nd; i++) {
-      for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
-        eb += solution->eigenvalues[i][j];
+    if(boolUseLQ){
+      for(int i=0; i<nd; i++) {
+        for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
+          eb += solution->singularValues[i][j];
+        }
       }
     }
+    else{
+      for(int i=0; i<nd; i++) {
+        for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
+          eb += solution->eigenvalues[i][j];
+        }
+      }
+    }
+    
     std::cout << "Error bound: " << std::sqrt(eb)/xnorm << std::endl;
   }
 

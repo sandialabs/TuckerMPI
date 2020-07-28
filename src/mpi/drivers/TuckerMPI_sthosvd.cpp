@@ -419,6 +419,8 @@ int main(int argc, char* argv[])
         std::cout << "Norm of X: " << std::sqrt(nrm) << std::endl;
         std::cout << "Norm of X - Xtilde: "
             << std::sqrt(err) << std::endl;
+        std::cout << "relative error: "
+            << std::sqrt(err/nrm) << std::endl;
         std::cout << "Maximum entry of X - Xtilde: "
             << std::max(maxEntry,-minEntry) << std::endl;
       }
