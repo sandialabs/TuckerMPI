@@ -405,11 +405,11 @@ int main(int argc, char* argv[])
     }
 
     // Send the timing information to a CSV
-    solution->printTimers(timing_file);
+    if(useLQ) solution->printTimersLQ(timing_file);
+    else solution->printTimers(timing_file);
 
     if(boolReconstruct) {
       TuckerMPI::Tensor* t = solution->reconstructTensor();
-
       TuckerMPI::Tensor* diff = X.subtract(t);
       double nrm = X.norm2();
       double err = diff->norm2();
@@ -422,25 +422,38 @@ int main(int argc, char* argv[])
         std::cout << "Maximum entry of X - Xtilde: "
             << std::max(maxEntry,-minEntry) << std::endl;
       }
+      Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(diff);
+      Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(t);
     }
 
     if(rank == 0) {
       // Write the eigenvalues to files
-      std::string filePrefix = sv_dir + "/" + sv_fn + "_mode_";
-      TuckerMPI::printEigenvalues(solution, filePrefix);
+      std::string filePrefix = sv_dir + "/" + sv_fn + "value_mode_";
+      TuckerMPI::printEigenvalues(solution, filePrefix, useLQ);
+      filePrefix = sv_dir + "/" + sv_fn + "vector_mode_";
+      TuckerMPI::printEigenvectors(solution, filePrefix);
     }
-
-    double xnorm = std::sqrt(X.norm2());
+    MPI_Barrier(MPI_COMM_WORLD);
+    double xnorm2 = X.norm2();
+    double xnorm = std::sqrt(xnorm2);
     double gnorm = std::sqrt(solution->G->norm2());
     if(rank == 0) {
       std::cout << "Norm of input tensor: " << xnorm << std::endl;
       std::cout << "Norm of core tensor: " << gnorm << std::endl;
-
       // Compute the error bound based on the eigenvalues
       double eb =0;
-      for(int i=0; i<nd; i++) {
-        for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
-          eb += solution->eigenvalues[i][j];
+      if(useLQ){
+        for(int i=0; i<nd; i++) {
+          for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
+            eb += solution->singularValues[i][j];
+          }
+        }
+      }
+      else{
+        for(int i=0; i<nd; i++) {
+          for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
+            eb += solution->eigenvalues[i][j];
+          }
         }
       }
       std::cout << "Error bound: " << std::sqrt(eb)/xnorm << std::endl;

@@ -76,13 +76,17 @@ public:
     N = ndims;
     U = MemoryManager::safe_new_array<Matrix*>(N);
     eigenvalues = MemoryManager::safe_new_array<double*>(N);
+    singularValues = MemoryManager::safe_new_array<double*>(N);
     G = 0;
 
     for(int i=0; i<N; i++) {
+      singularValues[i] = 0;
       eigenvalues[i] = 0;
       U[i] = 0;
     }
 
+    LQ_timer_ = MemoryManager::safe_new_array<Timer>(ndims);
+    svd_timer_ = MemoryManager::safe_new_array<Timer>(ndims);
     gram_timer_ = MemoryManager::safe_new_array<Timer>(ndims);
     eigen_timer_ = MemoryManager::safe_new_array<Timer>(ndims);
     ttm_timer_ = MemoryManager::safe_new_array<Timer>(ndims);
@@ -97,12 +101,16 @@ public:
   {
     if(G) MemoryManager::safe_delete<Tensor>(G);
     for(int i=0; i<N; i++) {
+      if(singularValues[i]) MemoryManager::safe_delete_array<double>(singularValues[i],U[i]->nrows());
       if(eigenvalues[i]) MemoryManager::safe_delete_array<double>(eigenvalues[i],U[i]->nrows());
       if(U[i]) MemoryManager::safe_delete<Matrix>(U[i]);
     }
     MemoryManager::safe_delete_array<Matrix*>(U,N);
     MemoryManager::safe_delete_array<double*>(eigenvalues,N);
+    MemoryManager::safe_delete_array<double*>(singularValues,N);
 
+    MemoryManager::safe_delete_array<Timer>(LQ_timer_, N);
+    MemoryManager::safe_delete_array<Timer>(svd_timer_, N);
     MemoryManager::safe_delete_array<Timer>(gram_timer_,N);
     MemoryManager::safe_delete_array<Timer>(eigen_timer_,N);
     MemoryManager::safe_delete_array<Timer>(ttm_timer_,N);
@@ -150,6 +158,13 @@ public:
    */
   double** eigenvalues;
 
+  /** \brief Sigular Values of the lower triangular L
+   *
+   * #singularValues[n] is an array which holds the singular values of
+   * the n-th L matrix
+   */
+  double** singularValues;
+
   /** \note STHOSVD has been declared as a friend function of
    * TuckerTensor so that the timers can remain private
    */
@@ -166,6 +181,12 @@ private:
   /// @cond EXCLUDE
   TuckerTensor(const TuckerTensor& tt);
   /// @endcond
+  
+  /// \brief Array of timers for Gram matrix computation
+  Timer* LQ_timer_;
+  
+  /// \brief Array of timers for Gram matrix computation
+  Timer* svd_timer_;
 
   /// \brief Array of timers for Gram matrix computation
   Timer* gram_timer_;

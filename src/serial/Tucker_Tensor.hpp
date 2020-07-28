@@ -166,7 +166,7 @@ public:
    * data[3] = 7.6
    * </tt>
    */
-  void print() const;
+  void print(int precision = 2) const;
 
   /** \brief Returns the total number of elements in this tensor
    *

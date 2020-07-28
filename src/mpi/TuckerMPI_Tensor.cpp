@@ -123,6 +123,9 @@ size_t Tensor::getGlobalNumEntries() const
 // Compute the norm squared
 double Tensor::norm2() const
 {
+  int rank, nprocs;
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
   // Compute the local portion
   double localNorm2 = localTensor_->norm2();
 
@@ -147,7 +150,9 @@ void Tensor::rand()
 // \todo This function is never tested
 Tensor* Tensor::subtract(const Tensor* t) const
 {
-  Tensor* sub = Tucker::MemoryManager::safe_new<Tensor>(dist_);
+  TuckerMPI::Distribution* dist =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dist_->getGlobalDims(), dist_->getProcessorGrid()->size());
+  Tensor* sub = Tucker::MemoryManager::safe_new<Tensor>(dist);
 
   size_t nnz = getLocalNumEntries();
   if(nnz > 0) {

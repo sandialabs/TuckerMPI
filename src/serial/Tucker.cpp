@@ -574,7 +574,7 @@ void computeSVD(Matrix* L, double*& singularValues,
     int numSingularVector = Lnrows;
     double sum = 0;
     for(int i=Lnrows-1; i>=0; i--) {
-      sum += singularValues[i]*singularValues[i];
+      sum += std::pow(singularValues[i], 2);
       if(sum > thresh) {
         break;
       }
@@ -638,7 +638,6 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
         << "bool flipSign): epsilon = " << epsilon << " < 0";
     throw std::runtime_error(oss.str());
   }
-
   int ndims = X->N();
 
   // Create a struct to store the factorization
@@ -672,7 +671,7 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
       computeEigenpairs(S, factorization->eigenvalues[n],
           factorization->U[n], thresh, flipSign);
       factorization->eigen_timer_[n].stop();
-      std::cout << "eigenvectors for S" << n << ": ";
+      //std::cout << "eigenvectors for S" << n << ": ";
       //std::cout << factorization->U[n]->prettyPrint();
       std::cout << std::endl;
       std::cout << "\tAutoST-HOSVD::EVECS(" << n << ") time: "
@@ -682,16 +681,19 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
       MemoryManager::safe_delete<Matrix>(S);
     }
     else{
+      std::cout << "\tAutoST-HOSVD::Starting LQ(" << n << ")...\n";
+      factorization->LQ_timer_[n].start();
       Matrix* L = computeLQ(Y, n);
-      computeSVD(L, factorization->eigenvalues[n],
+      factorization->LQ_timer_[n].stop();
+      std::cout << "\tAutoST-HOSVD::LQ(" << n << ") time: "
+          << factorization->LQ_timer_[n].duration() << "s\n";
+      std::cout << "\tAutoST-HOSVD::Starting SVD(" << n << ")...\n";
+      factorization->svd_timer_[n].start();
+      computeSVD(L, factorization->singularValues[n],
           factorization->U[n], thresh);
-      // std::cout << "eigenvalues for L" << n << ": ";
-      // for(int i=0; i< L->nrows(); i++){
-      //     std::cout << factorization->eigenvalues[n][i] << ", ";
-      // }
-      // std::cout << std::endl;
-      //std::cout << "eigenvectors for S" << n << ": ";
-      //std::cout << factorization->U[n]->prettyPrint();
+      factorization->svd_timer_[n].stop();
+      std::cout << "\tAutoST-HOSVD::SVD(" << n << ") time: "
+          << factorization->svd_timer_[n].duration() << "s\n";
       std::cout << std::endl;
       MemoryManager::safe_delete<Matrix>(L);
     }
@@ -763,9 +765,13 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
   for(int n=0; n<X->N(); n++)
   {
     if(useQR){
+      factorization->LQ_timer_[n].start();
       Matrix* L = computeLQ(Y, n);
-      computeSVD(L, factorization->eigenvalues[n],
+      factorization->LQ_timer_[n].stop();
+      factorization->svd_timer_[n].start();
+      computeSVD(L, factorization->singularValues[n],
           factorization->U[n], (*reducedI)[n]);
+      factorization->svd_timer_[n].stop();
       MemoryManager::safe_delete<Matrix>(L);
     }
     else{

@@ -247,7 +247,7 @@ int main(int argc, char* argv[])
 
     // Write the eigenvalues to files
     std::string filePrefix = sv_dir + "/" + sv_fn + "_mode_";
-    Tucker::printEigenvalues(solution, filePrefix);
+    Tucker::printEigenvalues(solution, filePrefix, useLQ);
 
     double xnorm = std::sqrt(X->norm2());
     double gnorm = std::sqrt(solution->G->norm2());
@@ -256,9 +256,18 @@ int main(int argc, char* argv[])
 
     // Compute the error bound based on the eigenvalues
     double eb =0;
-    for(int i=0; i<nd; i++) {
-      for(int j=solution->G->size(i); j<X->size(i); j++) {
-        eb += solution->eigenvalues[i][j];
+    if(useLQ){
+      for(int i=0; i<nd; i++) {
+        for(int j=solution->G->size(i); j<X->size(i); j++) {
+          eb += std::pow(solution->singularValues[i][j],2);
+        }
+      }
+    }
+    else{
+      for(int i=0; i<nd; i++) {
+        for(int j=solution->G->size(i); j<X->size(i); j++) {
+          eb += solution->eigenvalues[i][j];
+        }
       }
     }
     std::cout << "Error bound: " << eb << ", " << std::sqrt(eb) << " / " << xnorm << std::endl;

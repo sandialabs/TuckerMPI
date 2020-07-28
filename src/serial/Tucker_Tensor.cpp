@@ -41,6 +41,7 @@
 #include <cmath>
 #include <cstdlib>
 #include "Tucker_Tensor.hpp"
+#include <iomanip> 
 
 //#include <cblas.h>
 
@@ -193,7 +194,7 @@ bool isApproxEqual(const Tensor* t1, const Tensor* t2,
   double errNorm2 = 0;
   for(size_t i=0; i<numElements; i++) {
     double err;
-    if(ignoreSign) err = std::abs(std::abs(t1Data[i]) - std::abs(t2Data[i]));
+    if(ignoreSign) err = std::abs(t1Data[i]) - std::abs(t2Data[i]);
     else err = std::abs(t1Data[i] - t2Data[i]);
     if(std::isnan(err)) {
       std::cerr << "Difference " << i << " is nan: "
@@ -204,7 +205,9 @@ bool isApproxEqual(const Tensor* t1, const Tensor* t2,
     }
     errNorm2 += (err*err);
   }
+  std::cout << std::endl;
 
+  std::cout<< "errNorm2:" << std::sqrt(errNorm2) << "  origNorm2: " << std::sqrt(origNorm2) << std::endl;
   double relErr = std::sqrt(errNorm2/origNorm2);
   if(verbose) {
     std::cout << "Relative error: " << relErr << std::endl;
@@ -215,7 +218,7 @@ bool isApproxEqual(const Tensor* t1, const Tensor* t2,
   return true;
 }
 
-void Tensor::print() const
+void Tensor::print(int precision) const
 {
   // If this tensor doesn't have any entries, there's nothing to print
   size_t numElements = getNumElements();
@@ -224,7 +227,7 @@ void Tensor::print() const
 
   const double* dataPtr = data();
   for(size_t i=0; i<numElements; i++) {
-    std::cout << "data[" << i << "] = " << dataPtr[i] << std::endl;
+    std::cout << "data[" << i << "] = " << std::setprecision(precision) << dataPtr[i] << std::endl;
   }
 }
 

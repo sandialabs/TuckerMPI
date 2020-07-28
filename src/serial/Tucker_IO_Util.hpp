@@ -134,9 +134,11 @@ SizeArray* stringParseSizeArray(const std::vector<std::string>& lines,
  * tensor, array of factors, and all eigenvalues obtained during ST-HOSVD
  * \param[in] filePrefix Prefix of the filenames; each mode will
  * be represented in its own file.
+ * \param[in] useLQ, if this parameter is true then print the square of the
+ * singular values of the L to get the eigenvalues.
  */
 void printEigenvalues(const TuckerTensor* factorization,
-    const std::string& filePrefix);
+    const std::string& filePrefix, bool useLQ);
 
 }
 

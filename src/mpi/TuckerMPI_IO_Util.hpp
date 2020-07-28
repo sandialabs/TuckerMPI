@@ -44,8 +44,10 @@
 
 namespace TuckerMPI {
 
+//if useLQ is true then print the square of the singular values of 
+//L to be consistent with the eigen value of the gram matrix.
 void printEigenvalues(const TuckerTensor* factorization,
-    std::string filePrefix)
+    std::string filePrefix, bool useLQ)
 {
   // For each mode...
   int nmodes = factorization->N;
@@ -60,9 +62,43 @@ void printEigenvalues(const TuckerTensor* factorization,
 
     // Determine the number of eigenvalues for this mode
     int nevals = factorization->U[mode]->nrows();
-    for(int i=0; i<nevals; i++) {
-      ofs << factorization->eigenvalues[mode][i] << std::endl;
+    if(useLQ){
+      for(int i=0; i<nevals; i++) {
+        ofs << std::pow(factorization->singularValues[mode][i], 2) << std::endl;
+      }
     }
+    else{
+      for(int i=0; i<nevals; i++) {
+        ofs << factorization->eigenvalues[mode][i] << std::endl;
+      }
+    }
+    
+
+    ofs.close();
+  }
+}
+
+/**
+ * If used in LQ approch, this will print the left singular vector of the L,
+ * which should be the same as the eigenvectors in the gram approach up to a
+ * sign change.
+ */
+void printEigenvectors(const TuckerTensor* factorization,
+    std::string filePrefix)
+{
+  // For each mode...
+  int nmodes = factorization->N;
+  for(int mode=0; mode<nmodes; mode++) {
+    // Create the filename by appending the mode #
+    std::ostringstream ss;
+    ss << filePrefix << mode << ".txt";
+
+    // Open the file
+    std::ofstream ofs(ss.str());
+    std::cout << "Writing eigenvectors to " << ss.str() << std::endl;
+
+    // Determine the number of eigenvalues for this mode
+    ofs << factorization->U[mode]->prettyPrint();
 
     ofs.close();
   }

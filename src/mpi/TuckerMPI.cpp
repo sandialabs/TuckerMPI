@@ -513,35 +513,19 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   for(int n=0; n<ndims; n++)
   {
     if(useLQ){
-      if(rank == 0) {
-        std::cout << "\tAutoST-HOSVD::Starting LQ(" << n << ")...\n";
-      }
+      if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting LQ(" << n << ")...\n";
+      factorization->LQ_timer_[n].start();
       Tucker::Matrix* L = LQ(Y, n);
+      factorization->LQ_timer_[n].stop();
       int SizeOfL = L->nrows()*L->ncols();
+      factorization->LQ_bcast_timer_[n].start();
       MPI_Bcast(L->data(), SizeOfL, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-      std::cout << "L is "<< L->nrows()<< " by " <<L->ncols()<<". First 100 elements in processor " << rank << ": "; 
-      for(int i=0; i< 100; i++){
-        std::cout << std::setprecision(8) << L->data()[i] << ", ";
-      }
+      factorization->LQ_bcast_timer_[n].stop();
       std::cout << std::endl;
-      if(rank == 0) {
-        std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << n << ")...\n";
-      }
-      Tucker::computeSVD(L, factorization->eigenvalues[n], factorization->U[n], thresh);
-      // if(rank == 0){
-      //   std::cout << "eigenvalues for L" << n << ": ";
-      //   for(int i=0; i< L->nrows(); i++){
-      //       std::cout << std::setprecision(15)<< factorization->eigenvalues[n][i] << ", ";
-      //   }
-      //   std::cout << std::endl;
-      // }
-      // if(rank == 0){
-      //   std::cout << "eigenvectors for L" << n << ": ";
-      //   for(int i=0; i< L->nrows(); i++){
-      //       std::cout << std::setprecision(15)<< factorization->U[n]->prettyPrint();
-      //   }
-      // }
-      // Free the Gram matrix
+      if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << n << ")...\n";
+      factorization->svd_timer_[n].start();
+      Tucker::computeSVD(L, factorization->singularValues[n], factorization->U[n], thresh);
+      factorization->svd_timer_[n].stop();
       Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L);
     }
     else{
@@ -578,7 +562,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       }
       factorization->eigen_timer_[n].start();
       Tucker::computeEigenpairs(S, factorization->eigenvalues[n],
-          factorization->U[n], thresh, flipSign);
+        factorization->U[n], thresh, flipSign);
       factorization->eigen_timer_[n].stop();
       // if(rank == 0){
       //   std::cout << "eigenvalues for S" << n << ": ";
@@ -678,13 +662,19 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::Starting LQ(" << n << ")...\n";
       }
+      factorization->LQ_timer_[n].start();
       L = LQ(Y, n);
+      factorization->LQ_timer_[n].stop();
       int SizeOfL = L->nrows()*L->ncols();
+      factorization->LQ_bcast_timer_[n].start();
       MPI_Bcast(L->data(), SizeOfL, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      factorization->LQ_bcast_timer_[n].stop();
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << n << ")...\n";
       }
-      Tucker::computeSVD(L, factorization->eigenvalues[n], factorization->U[n], (*reducedI)[n]);
+      factorization->svd_timer_[n].start();
+      Tucker::computeSVD(L, factorization->singularValues[n], factorization->U[n], (*reducedI)[n]);
+      factorization->svd_timer_[n].stop();
       Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L);
     }
     else{
@@ -725,6 +715,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       Tucker::computeEigenpairs(S, factorization->eigenvalues[n],
           factorization->U[n], (*reducedI)[n], flipSign);
       factorization->eigen_timer_[n].stop();
+      
       Tucker::MemoryManager::safe_delete<Tucker::Matrix>(S);
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::EVECS(" << n << ") time: "

@@ -27,8 +27,14 @@ int main(int argc, char* argv[])
 
   // Read the binary files
   Tucker::importTensorBinary(&t1, argv[2]);
+  std::cout << "t1 norm2: " <<t1.norm2() << std::endl;
   Tucker::importTensorBinary(&t2, argv[3]);
+  std::cout << "t2 norm2: " << t2.norm2() << std::endl;
 
+  // for(int i=0; i< 100; i++){
+  //   std::cout << t1.data()[i] << std::endl;
+  // }
+  // std::cout << std::endl;
   // Read the tolerance
   double tol = atof(argv[4]);
   bool approxEqual;
