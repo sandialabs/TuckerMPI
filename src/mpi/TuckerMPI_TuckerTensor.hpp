@@ -72,6 +72,13 @@ public:
 
     LQ_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
     LQ_bcast_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    LQ_redistribute_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    LQ_tsqr_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    LQ_localqr_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    LQ_dcopy_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    LQ_decompose_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    LQ_transpose_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+
     svd_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
 
     gram_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
@@ -117,6 +124,12 @@ public:
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(eigen_timer_,N);
 
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_redistribute_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_tsqr_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_localqr_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_dcopy_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_decompose_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_transpose_timer_,N);
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_bcast_timer_,N);
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(svd_timer_,N);
 
@@ -148,7 +161,7 @@ public:
    */
   void printTimersLQ(const std::string& filename) const
   {
-    const int ntimers = 8;
+    const int ntimers = 14;
     double* raw_array = Tucker::MemoryManager::safe_new_array<double>(ntimers*N+1);
 
     // Get the MPI data
@@ -159,15 +172,21 @@ public:
     // Pack the data
     for(int i=0; i<N; i++) {
       raw_array[i*ntimers] = LQ_timer_[i].duration();
-      raw_array[i*ntimers+1] = LQ_bcast_timer_[i].duration();
+      raw_array[i*ntimers+1] = LQ_redistribute_timer_[i].duration();
+      raw_array[i*ntimers+2] = LQ_localqr_timer_[i].duration();
+      raw_array[i*ntimers+3] = LQ_dcopy_timer_[i].duration();
+      raw_array[i*ntimers+4] = LQ_decompose_timer_[i].duration();
+      raw_array[i*ntimers+5] = LQ_transpose_timer_[i].duration();
+      raw_array[i*ntimers+6] = LQ_tsqr_timer_[i].duration();
+      raw_array[i*ntimers+7] = LQ_bcast_timer_[i].duration();
 
-      raw_array[i*ntimers+2] = svd_timer_[i].duration();
+      raw_array[i*ntimers+8] = svd_timer_[i].duration();
 
-      raw_array[i*ntimers+3] = ttm_timer_[i].duration();
-      raw_array[i*ntimers+4] = ttm_matmul_timer_[i].duration();
-      raw_array[i*ntimers+5] = ttm_pack_timer_[i].duration();
-      raw_array[i*ntimers+6] = ttm_reducescatter_timer_[i].duration();
-      raw_array[i*ntimers+7] = ttm_reduce_timer_[i].duration();
+      raw_array[i*ntimers+9] = ttm_timer_[i].duration();
+      raw_array[i*ntimers+10] = ttm_matmul_timer_[i].duration();
+      raw_array[i*ntimers+11] = ttm_pack_timer_[i].duration();
+      raw_array[i*ntimers+12] = ttm_reducescatter_timer_[i].duration();
+      raw_array[i*ntimers+13] = ttm_reduce_timer_[i].duration();
     }
     raw_array[ntimers*N] = total_timer_.duration();
 
@@ -212,52 +231,54 @@ public:
                 << "--------------------------------------------------------\n";
       for(int i=0; i<N; i++) {
         std::cout << "LQ(" << i << ")         : " << std::scientific
-            << min_array[i*ntimers] << " " << std::scientific
-            << max_array[i*ntimers] << " " << std::scientific
-            << mean_array[i*ntimers] << std::endl;
+          << min_array[i*ntimers] << " " << std::scientific
+          << max_array[i*ntimers] << " " << std::scientific
+          << mean_array[i*ntimers] << std::endl;
+
+        std::cout << " localqr(" << i << ")         : " << std::scientific
+          << min_array[i*ntimers+1] << " " << std::scientific
+          << max_array[i*ntimers+1] << " " << std::scientific
+          << mean_array[i*ntimers+1] << std::endl;
+
+        std::cout << " tsqr(" << i << ")         : " << std::scientific
+          << min_array[i*ntimers+2] << " " << std::scientific
+          << max_array[i*ntimers+2] << " " << std::scientific
+          << mean_array[i*ntimers+2] << std::endl;
 
         std::cout << " bcast : " << std::scientific
-            << min_array[i*ntimers+1] << " " << std::scientific
-            << max_array[i*ntimers+1] << " " << std::scientific
-            << mean_array[i*ntimers+1] << std::endl;
+          << min_array[i*ntimers+3] << " " << std::scientific
+          << max_array[i*ntimers+3] << " " << std::scientific
+          << mean_array[i*ntimers+3] << std::endl;
 
-        if(max_array[i*ntimers+2] > 0) {
-          std::cout << " svd          : " << std::scientific
-              << min_array[i*ntimers+2] << " " << std::scientific
-              << max_array[i*ntimers+2] << " " << std::scientific
-              << mean_array[i*ntimers+2] << std::endl;
-        }
+        std::cout << " svd          : " << std::scientific
+          << min_array[i*ntimers+4] << " " << std::scientific
+          << max_array[i*ntimers+4] << " " << std::scientific
+          << mean_array[i*ntimers+4] << std::endl;
 
         std::cout << "TTM(" << i << ")          : " << std::scientific
-            << min_array[i*ntimers+9] << " " << std::scientific
-            << max_array[i*ntimers+9] << " " << std::scientific
-            << mean_array[i*ntimers+9] << std::endl;
+          << min_array[i*ntimers+5] << " " << std::scientific
+          << max_array[i*ntimers+5] << " " << std::scientific
+          << mean_array[i*ntimers+5] << std::endl;
 
         std::cout << " local multiply : " << std::scientific
-            << min_array[i*ntimers+10] << " " << std::scientific
-            << max_array[i*ntimers+10] << " " << std::scientific
-            << mean_array[i*ntimers+10] << std::endl;
+          << min_array[i*ntimers+6] << " " << std::scientific
+          << max_array[i*ntimers+6] << " " << std::scientific
+          << mean_array[i*ntimers+6] << std::endl;
 
-        if(max_array[i*ntimers+11] > 0) {
-          std::cout << " packing        : " << std::scientific
-              << min_array[i*ntimers+11] << " " << std::scientific
-              << max_array[i*ntimers+11] << " " << std::scientific
-              << mean_array[i*ntimers+11] << std::endl;
-        }
+        std::cout << " packing        : " << std::scientific
+          << min_array[i*ntimers+7] << " " << std::scientific
+          << max_array[i*ntimers+7] << " " << std::scientific
+          << mean_array[i*ntimers+7] << std::endl;
 
-        if(max_array[i*ntimers+12] > 0) {
-          std::cout << " reduce-scatter : " << std::scientific
-              << min_array[i*ntimers+12] << " " << std::scientific
-              << max_array[i*ntimers+12] << " " << std::scientific
-              << mean_array[i*ntimers+12] << std::endl;
-        }
+        std::cout << " reduce-scatter : " << std::scientific
+          << min_array[i*ntimers+8] << " " << std::scientific
+          << max_array[i*ntimers+8] << " " << std::scientific
+          << mean_array[i*ntimers+8] << std::endl;
 
-        if(max_array[i*ntimers+13] > 0) {
-          std::cout << " reduce         : " << std::scientific
-              << min_array[i*ntimers+13] << " " << std::scientific
-              << max_array[i*ntimers+13] << " " << std::scientific
-              << mean_array[i*ntimers+13] << std::endl;
-        }
+        std::cout << " reduce         : " << std::scientific
+          << min_array[i*ntimers+9] << " " << std::scientific
+          << max_array[i*ntimers+9] << " " << std::scientific
+          << mean_array[i*ntimers+9] << std::endl;
 
         std::cout << std::endl;
       }
@@ -272,7 +293,9 @@ public:
 
       // Create the header row
       for(int d=0; d<N; d++) {
-        os << "LQ(" << d << "),bcast L(" << d << "),svd(" << d
+        os << "LQ(" << d << "),redistribute(" << d << "),localqr(" << d 
+            << "),dcopy(" << d << "),decompose(" << d << "),transpose(" << d 
+            <<"),tsqr(" << d <<"),bcast(" << d << "),svd(" << d
             << "),TTM(" << d << "),TTM local multiply(" << d
             << "),TTM packing(" << d << "),TTM reduce-scatter(" << d
             << "),TTM reduce(" << d << "),";
@@ -531,6 +554,25 @@ private:
 
   /// \brief Array of timers for broadcasting L
   Tucker::Timer* LQ_bcast_timer_;
+
+  /// \brief Array of timers for broadcasting L
+  Tucker::Timer* LQ_redistribute_timer_;
+
+  /// \brief Array of timers for broadcasting L
+  Tucker::Timer* LQ_tsqr_timer_;
+
+  /// \brief Array of timers for broadcasting L
+  Tucker::Timer* LQ_localqr_timer_;
+
+  /// \brief Array of timers for broadcasting L
+  Tucker::Timer* LQ_dcopy_timer_;
+
+  /// \brief Array of timers for broadcasting L
+  Tucker::Timer* LQ_decompose_timer_;
+  
+  /// \brief Array of timers for broadcasting L
+  Tucker::Timer* LQ_transpose_timer_;
+
 
   /// \brief Array of timers for broadcasting L
   Tucker::Timer* svd_timer_;

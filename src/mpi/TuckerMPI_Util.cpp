@@ -59,8 +59,8 @@ Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_t
   double* tempT = Tucker::MemoryManager::safe_new_array<double>(5);
   double* tempWork = Tucker::MemoryManager::safe_new_array<double>(1);
   if(isLastMode){
-    Tucker::Matrix* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(ncolsM, nrowsM);
     if(dcopy_timer) dcopy_timer->start();
+    Tucker::Matrix* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(ncolsM, nrowsM);
     dcopy_(&sizeOfM, M->getLocalMatrix()->data(), &one, Mcopy->data(), &one);
     if(dcopy_timer) dcopy_timer->stop();
     if(decompose_timer) decompose_timer->start();
@@ -72,14 +72,14 @@ Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_t
     double* T = Tucker::MemoryManager::safe_new_array<double>(TSize);
     double* work = Tucker::MemoryManager::safe_new_array<double>(lwork);    
     dgeqr_(&ncolsM, &nrowsM, Mcopy->data(), &ncolsM, T, &TSize, work, &lwork, &info);
-    if(decompose_timer) decompose_timer->stop();
     Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
     Tucker::MemoryManager::safe_delete_array<double>(T, TSize);
+    if(decompose_timer) decompose_timer->stop();
     if(transpose_timer) transpose_timer->start();
     for(int i=0; i<nrowsM; i++){
       dcopy_(&nrowsM, Mcopy->data()+i*ncolsM, &one, R->data()+i*nrowsM, &one);
     }
-
+    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Mcopy);
     if(transpose_timer) transpose_timer->stop();
     // {
     //   std::cout << "Processor["<<globalRank<<"] local matrix size: " << nrowsM << " by "<< ncolsM << " : "; 
@@ -88,11 +88,10 @@ Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_t
     //   }
     //   std::cout <<std::endl; 
     // }
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Mcopy);
   }
   else{
-    Tucker::Matrix* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrowsM, ncolsM);
     if(dcopy_timer) dcopy_timer->start();
+    Tucker::Matrix* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrowsM, ncolsM);
     dcopy_(&sizeOfM, M->getLocalMatrix()->data(), &one, Mcopy->data(), &one);
     if(dcopy_timer) dcopy_timer->stop();
     if(decompose_timer) decompose_timer->start();
@@ -104,18 +103,16 @@ Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_t
     double* T = Tucker::MemoryManager::safe_new_array<double>(TSize);
     double* work = Tucker::MemoryManager::safe_new_array<double>(lwork);  
     dgelq_(&nrowsM, &ncolsM, Mcopy->data(), &nrowsM, T, &TSize, work, &lwork, &info);
-
-    if(decompose_timer) decompose_timer->stop();
     Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
-    Tucker::MemoryManager::safe_delete_array<double>(T, TSize);  
+    Tucker::MemoryManager::safe_delete_array<double>(T, TSize);
+    if(decompose_timer) decompose_timer->stop();  
     if(transpose_timer) transpose_timer->start();
     //transpose the leftmost square of Mcopy one column at a time.
     for(int i=0; i<nrowsM; i++){
       dcopy_(&nrowsM, Mcopy->data()+i*nrowsM, &one, R->data()+i, &nrowsM);
     }
-
-    if(transpose_timer) transpose_timer->stop();
     Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Mcopy);
+    if(transpose_timer) transpose_timer->stop();
   }
   return R;
 }

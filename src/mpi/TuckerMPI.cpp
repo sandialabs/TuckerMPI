@@ -57,8 +57,7 @@ namespace TuckerMPI
 //There isn't a check for this since we might handle this case later but for now
 //it is assumed that the processor grid is never bigger than the tensor in any mode.
 Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
-    Tucker::Timer* local_qr_timer, Tucker::Timer* pack_timer,
-    Tucker::Timer* alltoall_timer, Tucker::Timer* unpack_timer,
+    Tucker::Timer* local_qr_timer, Tucker::Timer* redistribute_timer,
     Tucker::Timer* localqr_dcopy_timer, Tucker::Timer* localqr_decompose_timer, 
     Tucker::Timer* localqr_transpose_timer){
   int one = 1;
@@ -66,7 +65,10 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
   MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
   int globalnp;
   MPI_Comm_size(MPI_COMM_WORLD, &globalnp);
-  const Matrix* redistYn = redistributeTensorForGram(Y, n, pack_timer, alltoall_timer, unpack_timer);
+  // const Matrix* redistYn = redistributeTensorForGram(Y, n, pack_timer, alltoall_timer, unpack_timer);
+  if(redistribute_timer) redistribute_timer->start();
+  const Matrix* redistYn = redistributeTensorForGram(Y, n);
+  if(redistribute_timer) redistribute_timer->stop();
   //R of the transpose of the local unfolding in column major.
   Tucker::Matrix* R;
   int Rnrows;
@@ -88,7 +90,8 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
     bool isLastMode = n == Y->getNumDimensions()-1;
     R = localQR(redistYn, isLastMode, localqr_dcopy_timer, localqr_decompose_timer, localqr_transpose_timer);
     Rnrows = R->nrows();
-    Rncols = R->ncols();  
+    Rncols = R->ncols();
+    Tucker::MemoryManager::safe_delete<const Matrix>(redistYn);  
   }
   if(local_qr_timer) local_qr_timer->stop();
   int sizeOfR = Rnrows*Rncols;
@@ -515,7 +518,9 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
     if(useLQ){
       if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting LQ(" << n << ")...\n";
       factorization->LQ_timer_[n].start();
-      Tucker::Matrix* L = LQ(Y, n);
+      Tucker::Matrix* L = LQ(Y, n, &factorization->LQ_tsqr_timer_[n], &factorization->LQ_localqr_timer_[n], 
+        &factorization->LQ_redistribute_timer_[n], &factorization->LQ_dcopy_timer_[n],
+        &factorization->LQ_decompose_timer_[n], &factorization->LQ_transpose_timer_[n]);
       factorization->LQ_timer_[n].stop();
       int SizeOfL = L->nrows()*L->ncols();
       factorization->LQ_bcast_timer_[n].start();
@@ -663,7 +668,9 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
         std::cout << "\tAutoST-HOSVD::Starting LQ(" << n << ")...\n";
       }
       factorization->LQ_timer_[n].start();
-      L = LQ(Y, n);
+      L = LQ(Y, n, &factorization->LQ_tsqr_timer_[n], &factorization->LQ_localqr_timer_[n], 
+        &factorization->LQ_redistribute_timer_[n], &factorization->LQ_dcopy_timer_[n],
+        &factorization->LQ_decompose_timer_[n], &factorization->LQ_transpose_timer_[n]);
       factorization->LQ_timer_[n].stop();
       int SizeOfL = L->nrows()*L->ncols();
       factorization->LQ_bcast_timer_[n].start();
