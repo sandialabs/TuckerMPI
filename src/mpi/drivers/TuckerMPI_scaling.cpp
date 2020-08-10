@@ -50,6 +50,7 @@ int main(int argc, char* argv[])
   Tucker::SizeArray* I_dims             = Tucker::stringParseSizeArray(fileAsString, "Global dims");
   Tucker::SizeArray* R_dims             = Tucker::stringParseSizeArray(fileAsString, "Ranks");
   Tucker::SizeArray* proc_grid_dims     = Tucker::stringParseSizeArray(fileAsString, "Grid dims");
+  Tucker::SizeArray* modeOrder          = Tucker::stringParseSizeArray(fileAsString, "Decompose mode order");
 
   std::string timing_file               = Tucker::stringParse<std::string>(fileAsString, "Timing file", "runtime.csv");
 
@@ -153,7 +154,7 @@ int main(int argc, char* argv[])
   /////////////////////
   // Perform STHOSVD //
   /////////////////////
-  const TuckerMPI::TuckerTensor* solution = TuckerMPI::STHOSVD(&X, R_dims, boolUseOldGram, false, boolUseLQ);
+  const TuckerMPI::TuckerTensor* solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, false, boolUseLQ);
 
   // Send the timing information to a CSV
   if(boolUseLQ) solution->printTimersLQ(timing_file);

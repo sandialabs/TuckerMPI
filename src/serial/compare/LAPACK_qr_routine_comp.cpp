@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
   Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
   std::cout << "qrf lwork: " << lwork << std::endl;
   
-  //dgeqrt
+  // //dgeqrt
   double* T = Tucker::MemoryManager::safe_new_array<double>(nb*YNcols);
   work = Tucker::MemoryManager::safe_new_array<double>(nb*YNcols);
   for(int i=0; i<avgIteration; i++){
@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
   Tucker::MemoryManager::safe_delete_array<double>(work, nb*YNcols);
   Tucker::MemoryManager::safe_delete_array<double>(T, nb*YNcols);
 
-  //dgeqr
+  // //dgeqr
   qrWorkSpaceQueryTimer.start();
 
   work = Tucker::MemoryManager::safe_new_array<double>(1);
@@ -125,13 +125,14 @@ int main(int argc, char* argv[])
     Tucker::dgelqf_(&YNcols, &YNrows, YTransposeCopy->data(), &YNcols, tau, work, &lwork, &info);
     lqfTimer.stop();
   }
+  std::cout << "lqf done" << std::endl;
   double avgLqfTime = lqfTimer.duration() / avgIteration;
   Tucker::MemoryManager::safe_delete_array<double>(work, lwork);  
   Tucker::MemoryManager::safe_delete_array<double>(tau, std::min(YNrows, YNcols));
 
   //dgelqt
   T = Tucker::MemoryManager::safe_new_array<double>(nb*YNrows);
-  work = Tucker::MemoryManager::safe_new_array<double>(nb*YNrows);
+  work = Tucker::MemoryManager::safe_new_array<double>(nb*YNcols);
   for(int i=0; i<avgIteration; i++){
     dcopy_(&sizeOfY, YTranspose->data(), &one, YTransposeCopy->data(), &one);
     lqtTimer.start();
@@ -139,6 +140,7 @@ int main(int argc, char* argv[])
     lqtTimer.stop();
   }
   double avgLqtTime = lqtTimer.duration() / avgIteration;
+  std::cout << "lqt done." << std::endl;
   Tucker::MemoryManager::safe_delete_array<double>(T, nb*YNrows);
   Tucker::MemoryManager::safe_delete_array<double>(work, nb*YNrows);
 
@@ -169,11 +171,11 @@ int main(int argc, char* argv[])
   Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Y);
 
   std::cout << "Explicity transpose takes: " << transposeTimer.duration() << " seconds. \n";
-  //std::cout << "work space query takes: " << qrfWorkSpaceQuerryTimer.duration() << " seconds. \n";
+  std::cout << "work space query takes: " << qrfWorkSpaceQueryTimer.duration() << " seconds. \n";
   std::cout << "dgeqrf takes: " << avgQrfTime << " seconds. \n";
   std::cout << "dgeqrt takes: " << avgQrtTime << " seconds. \n";
   std::cout << "dgeqr takes: " << avgQrTime << " seconds. \n";
-  //std::cout << "lq work space query takes: " << lqfWorkSpaceQueryTimer.duration() << " seconds. \n";
+  std::cout << "lq work space query takes: " << lqfWorkSpaceQueryTimer.duration() << " seconds. \n";
   std::cout << "dgelqf takes: " << avgLqfTime << " seconds. \n";
   std::cout << "dgelqt takes: " << avgLqtTime << " seconds, \n";
   std::cout << "dgelq takes: " << avgLqTime << " seconds, \n";

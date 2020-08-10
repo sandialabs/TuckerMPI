@@ -478,7 +478,7 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
 
 // \todo STHOSVD is never tested with the new Gram computation
 const TuckerTensor* STHOSVD(const Tensor* const X,
-    const double epsilon, bool useOldGram, bool flipSign,
+    const double epsilon, int* modeOrder, bool useOldGram, bool flipSign,
     bool useLQ)
 {
   // Get this rank
@@ -515,22 +515,23 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   // For each dimension...
   for(int n=0; n<ndims; n++)
   {
+    int mode = modeOrder[n];
     if(useLQ){
-      if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting LQ(" << n << ")...\n";
-      factorization->LQ_timer_[n].start();
-      Tucker::Matrix* L = LQ(Y, n, &factorization->LQ_tsqr_timer_[n], &factorization->LQ_localqr_timer_[n], 
-        &factorization->LQ_redistribute_timer_[n], &factorization->LQ_dcopy_timer_[n],
-        &factorization->LQ_decompose_timer_[n], &factorization->LQ_transpose_timer_[n]);
-      factorization->LQ_timer_[n].stop();
+      if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting LQ(" << mode << ")...\n";
+      factorization->LQ_timer_[mode].start();
+      Tucker::Matrix* L = LQ(Y, mode, &factorization->LQ_tsqr_timer_[mode], &factorization->LQ_localqr_timer_[mode], 
+        &factorization->LQ_redistribute_timer_[mode], &factorization->LQ_dcopy_timer_[mode],
+        &factorization->LQ_decompose_timer_[mode], &factorization->LQ_transpose_timer_[mode]);
+      factorization->LQ_timer_[mode].stop();
       int SizeOfL = L->nrows()*L->ncols();
-      factorization->LQ_bcast_timer_[n].start();
+      factorization->LQ_bcast_timer_[mode].start();
       MPI_Bcast(L->data(), SizeOfL, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-      factorization->LQ_bcast_timer_[n].stop();
+      factorization->LQ_bcast_timer_[mode].stop();
       std::cout << std::endl;
-      if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << n << ")...\n";
-      factorization->svd_timer_[n].start();
-      Tucker::computeSVD(L, factorization->singularValues[n], factorization->U[n], thresh);
-      factorization->svd_timer_[n].stop();
+      if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << mode << ")...\n";
+      factorization->svd_timer_[mode].start();
+      Tucker::computeSVD(L, factorization->singularValues[mode], factorization->U[mode], thresh);
+      factorization->svd_timer_[mode].stop();
       Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L);
     }
     else{
@@ -538,56 +539,42 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       // S = Y_n*Y_n'
       Tucker::Matrix* S;
       if(rank == 0) {
-        std::cout << "\tAutoST-HOSVD::Starting Gram(" << n << ")...\n";
+        std::cout << "\tAutoST-HOSVD::Starting Gram(" << mode << ")...\n";
       }
-      factorization->gram_timer_[n].start();
+      factorization->gram_timer_[mode].start();
       if(useOldGram) {
-        S = oldGram(Y, n,
-            &factorization->gram_matmul_timer_[n],
-            &factorization->gram_shift_timer_[n],
-            &factorization->gram_allreduce_timer_[n],
-            &factorization->gram_allgather_timer_[n]);
+        S = oldGram(Y, mode,
+            &factorization->gram_matmul_timer_[mode],
+            &factorization->gram_shift_timer_[mode],
+            &factorization->gram_allreduce_timer_[mode],
+            &factorization->gram_allgather_timer_[mode]);
       }
       else {
-        S = newGram(Y, n,
-            &factorization->gram_matmul_timer_[n],
-            &factorization->gram_pack_timer_[n],
-            &factorization->gram_alltoall_timer_[n],
-            &factorization->gram_unpack_timer_[n],
-            &factorization->gram_allreduce_timer_[n]);
+        S = newGram(Y, mode,
+            &factorization->gram_matmul_timer_[mode],
+            &factorization->gram_pack_timer_[mode],
+            &factorization->gram_alltoall_timer_[mode],
+            &factorization->gram_unpack_timer_[mode],
+            &factorization->gram_allreduce_timer_[mode]);
       }
-      factorization->gram_timer_[n].stop();
+      factorization->gram_timer_[mode].stop();
       if(rank == 0) {
-        std::cout << "\tAutoST-HOSVD::Gram(" << n << ") time: "
-            << factorization->gram_timer_[n].duration() << "s\n";
+        std::cout << "\tAutoST-HOSVD::Gram(" << mode << ") time: "
+            << factorization->gram_timer_[mode].duration() << "s\n";
       }
       // Compute the relevant eigenpairs
       if(rank == 0) {
-        std::cout << "\tAutoST-HOSVD::Starting Evecs(" << n << ")...\n";
+        std::cout << "\tAutoST-HOSVD::Starting Evecs(" << mode << ")...\n";
       }
-      factorization->eigen_timer_[n].start();
-      Tucker::computeEigenpairs(S, factorization->eigenvalues[n],
-        factorization->U[n], thresh, flipSign);
-      factorization->eigen_timer_[n].stop();
-      // if(rank == 0){
-      //   std::cout << "eigenvalues for S" << n << ": ";
-      //   for(int i=0; i< S->nrows(); i++){
-      //       std::cout << factorization->eigenvalues[n][i];
-      //   }
-      //   std::cout << std::endl;
-      // }
-      // if(rank == 0){
-      //   std::cout << "eigen vectors for S" << n << ": ";
-      //   for(int i=0; i< S->nrows(); i++){
-      //       std::cout << factorization->U[n]->prettyPrint();
-      //   }
-      //   std::cout << std::endl;
-      // }
+      factorization->eigen_timer_[mode].start();
+      Tucker::computeEigenpairs(S, factorization->eigenvalues[mode],
+        factorization->U[mode], thresh, flipSign);
+      factorization->eigen_timer_[mode].stop();
       if(rank == 0) {
-        std::cout << "\tAutoST-HOSVD::EVECS(" << n << ") time: "
-            << factorization->eigen_timer_[n].duration() << "s\n";
-        std::cout << "\t\tEvecs(" << n << ")::Local EV time: "
-            << factorization->eigen_timer_[n].duration() << "s\n";
+        std::cout << "\tAutoST-HOSVD::EVECS(" << mode << ") time: "
+            << factorization->eigen_timer_[mode].duration() << "s\n";
+        std::cout << "\t\tEvecs(" << mode << ")::Local EV time: "
+            << factorization->eigen_timer_[mode].duration() << "s\n";
       }
       // Free the Gram matrix
       Tucker::MemoryManager::safe_delete<Tucker::Matrix>(S);
@@ -596,19 +583,19 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
 
     // Perform the tensor times matrix multiplication
     if(rank == 0) {
-      std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
+      std::cout << "\tAutoST-HOSVD::Starting TTM(" << mode << ")...\n";
     }
-    factorization->ttm_timer_[n].start();
-    Tensor* temp = ttm(Y,n,factorization->U[n],true,
-        &factorization->ttm_matmul_timer_[n],
-        &factorization->ttm_pack_timer_[n],
-        &factorization->ttm_reducescatter_timer_[n],
-        &factorization->ttm_reduce_timer_[n],
+    factorization->ttm_timer_[mode].start();
+    Tensor* temp = ttm(Y,mode,factorization->U[mode],true,
+        &factorization->ttm_matmul_timer_[mode],
+        &factorization->ttm_pack_timer_[mode],
+        &factorization->ttm_reducescatter_timer_[mode],
+        &factorization->ttm_reduce_timer_[mode],
         max_lcl_nnz_x);
-    factorization->ttm_timer_[n].stop();
+    factorization->ttm_timer_[mode].stop();
     if(rank == 0) {
-      std::cout << "\tAutoST-HOSVD::TTM(" << n << ") time: "
-          << factorization->ttm_timer_[n].duration() << "s\n";
+      std::cout << "\tAutoST-HOSVD::TTM(" << mode << ") time: "
+          << factorization->ttm_timer_[mode].duration() << "s\n";
     }
 
     if(n > 0) {
@@ -620,10 +607,10 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       size_t local_nnz = Y->getLocalNumEntries();
       size_t global_nnz = Y->getGlobalNumEntries();
       std::cout << "Local tensor size after STHOSVD iteration "
-          << n << ": " << Y->getLocalSize() << ", or ";
+          << mode << ": " << Y->getLocalSize() << ", or ";
       Tucker::printBytes(local_nnz*sizeof(double));
       std::cout << "Global tensor size after STHOSVD iteration "
-          << n << ": " << Y->getGlobalSize() << ", or ";
+          << mode << ": " << Y->getGlobalSize() << ", or ";
       Tucker::printBytes(global_nnz*sizeof(double));
     }
   }
@@ -635,7 +622,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
 
 // \todo This function is never tested
 const TuckerTensor* STHOSVD(const Tensor* const X,
-    const Tucker::SizeArray* const reducedI, bool useOldGram,
+    const Tucker::SizeArray* const reducedI, int* modeOrder, bool useOldGram,
     bool flipSign, bool useLQ)
 {
   int rank;
@@ -662,26 +649,27 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   // For each dimension...
   for(int n=0; n<ndims; n++)
   {
+    int mode = modeOrder[n];
     if(useLQ){
       Tucker::Matrix* L;
       if(rank == 0) {
-        std::cout << "\tAutoST-HOSVD::Starting LQ(" << n << ")...\n";
+        std::cout << "\tAutoST-HOSVD::Starting LQ(" << mode << ")...\n";
       }
-      factorization->LQ_timer_[n].start();
-      L = LQ(Y, n, &factorization->LQ_tsqr_timer_[n], &factorization->LQ_localqr_timer_[n], 
-        &factorization->LQ_redistribute_timer_[n], &factorization->LQ_dcopy_timer_[n],
-        &factorization->LQ_decompose_timer_[n], &factorization->LQ_transpose_timer_[n]);
-      factorization->LQ_timer_[n].stop();
+      factorization->LQ_timer_[mode].start();
+      L = LQ(Y, mode, &factorization->LQ_tsqr_timer_[mode], &factorization->LQ_localqr_timer_[mode], 
+        &factorization->LQ_redistribute_timer_[mode], &factorization->LQ_dcopy_timer_[mode],
+        &factorization->LQ_decompose_timer_[mode], &factorization->LQ_transpose_timer_[mode]);
+      factorization->LQ_timer_[mode].stop();
       int SizeOfL = L->nrows()*L->ncols();
-      factorization->LQ_bcast_timer_[n].start();
+      factorization->LQ_bcast_timer_[mode].start();
       MPI_Bcast(L->data(), SizeOfL, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-      factorization->LQ_bcast_timer_[n].stop();
+      factorization->LQ_bcast_timer_[mode].stop();
       if(rank == 0) {
-        std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << n << ")...\n";
+        std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << mode << ")...\n";
       }
-      factorization->svd_timer_[n].start();
-      Tucker::computeSVD(L, factorization->singularValues[n], factorization->U[n], (*reducedI)[n]);
-      factorization->svd_timer_[n].stop();
+      factorization->svd_timer_[mode].start();
+      Tucker::computeSVD(L, factorization->singularValues[mode], factorization->U[mode], (*reducedI)[mode]);
+      factorization->svd_timer_[mode].stop();
       Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L);
     }
     else{
@@ -689,64 +677,65 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       // S = Y_n*Y_n'
       Tucker::Matrix* S;
       if(rank == 0) {
-        std::cout << "\tAutoST-HOSVD::Starting Gram(" << n << ")...\n";
+        std::cout << "\tAutoST-HOSVD::Starting Gram(" << mode << ")...\n";
       }
-      factorization->gram_timer_[n].start();
+      factorization->gram_timer_[mode].start();
       if(useOldGram) {
-        S = oldGram(Y, n,
-            &factorization->gram_matmul_timer_[n],
-            &factorization->gram_shift_timer_[n],
-            &factorization->gram_allreduce_timer_[n],
-            &factorization->gram_allgather_timer_[n]);
+        S = oldGram(Y, mode,
+            &factorization->gram_matmul_timer_[mode],
+            &factorization->gram_shift_timer_[mode],
+            &factorization->gram_allreduce_timer_[mode],
+            &factorization->gram_allgather_timer_[mode]);
       }
       else {
-        S = newGram(Y, n,
-            &factorization->gram_matmul_timer_[n],
-            &factorization->gram_pack_timer_[n],
-            &factorization->gram_alltoall_timer_[n],
-            &factorization->gram_unpack_timer_[n],
-            &factorization->gram_allreduce_timer_[n]);
+        S = newGram(Y, mode,
+            &factorization->gram_matmul_timer_[mode],
+            &factorization->gram_pack_timer_[mode],
+            &factorization->gram_alltoall_timer_[mode],
+            &factorization->gram_unpack_timer_[mode],
+            &factorization->gram_allreduce_timer_[mode]);
       }
-      factorization->gram_timer_[n].stop();
+      factorization->gram_timer_[mode].stop();
       if(rank == 0) {
-        std::cout << "\tAutoST-HOSVD::Gram(" << n << ") time: "
-            << factorization->gram_timer_[n].duration() << "s\n";
+        std::cout << "\tAutoST-HOSVD::Gram(" << mode << ") time: "
+            << factorization->gram_timer_[mode].duration() << "s\n";
       }
 
       // Compute the leading eigenvectors of S
       // call dsyev(jobz, uplo, n, a, lda, w, work, lwork, info)
       if(rank == 0) {
-        std::cout << "\tAutoST-HOSVD::Starting Evecs(" << n << ")...\n";
+        std::cout << "\tAutoST-HOSVD::Starting Evecs(" << mode << ")...\n";
       }
-      factorization->eigen_timer_[n].start();
-      Tucker::computeEigenpairs(S, factorization->eigenvalues[n],
-          factorization->U[n], (*reducedI)[n], flipSign);
-      factorization->eigen_timer_[n].stop();
+      factorization->eigen_timer_[mode].start();
+      Tucker::computeEigenpairs(S, factorization->eigenvalues[mode],
+          factorization->U[mode], (*reducedI)[mode], flipSign);
+      factorization->eigen_timer_[mode].stop();
       
       Tucker::MemoryManager::safe_delete<Tucker::Matrix>(S);
       if(rank == 0) {
-        std::cout << "\tAutoST-HOSVD::EVECS(" << n << ") time: "
-            << factorization->eigen_timer_[n].duration() << "s\n";
+        std::cout << "\tAutoST-HOSVD::EVECS(" << mode << ") time: "
+            << factorization->eigen_timer_[mode].duration() << "s\n";
       }
     }
 
     // Perform the tensor times matrix multiplication
     if(rank == 0) {
-      std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
+      std::cout << "\tAutoST-HOSVD::Starting TTM(" << mode << ")...\n";
     }
-    factorization->ttm_timer_[n].start();
-    Tensor* temp = ttm(Y,n,factorization->U[n],true,
-            &factorization->ttm_matmul_timer_[n],
-            &factorization->ttm_pack_timer_[n],
-            &factorization->ttm_reducescatter_timer_[n],
-            &factorization->ttm_reduce_timer_[n],
+    factorization->ttm_timer_[mode].start();
+    Tensor* temp = ttm(Y,mode,factorization->U[mode],true,
+            &factorization->ttm_matmul_timer_[mode],
+            &factorization->ttm_pack_timer_[mode],
+            &factorization->ttm_reducescatter_timer_[mode],
+            &factorization->ttm_reduce_timer_[mode],
             max_lcl_nnz_x);
-    factorization->ttm_timer_[n].stop();
+    factorization->ttm_timer_[mode].stop();
     if(rank == 0) {
-      std::cout << "\tAutoST-HOSVD::TTM(" << n << ") time: "
-          << factorization->ttm_timer_[n].duration() << "s\n";
+      std::cout << "\tAutoST-HOSVD::TTM(" << mode << ") time: "
+          << factorization->ttm_timer_[mode].duration() << "s\n";
     }
     if(n > 0) {
+      std::cout << "deleteing, in mode: " << n << std::endl;
       Tucker::MemoryManager::safe_delete<const Tensor>(Y);
     }
     Y = temp;
@@ -755,10 +744,10 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       size_t local_nnz = Y->getLocalNumEntries();
       size_t global_nnz = Y->getGlobalNumEntries();
       std::cout << "Local tensor size after STHOSVD iteration "
-          << n << ": " << Y->getLocalSize() << ", or ";
+          << mode << ": " << Y->getLocalSize() << ", or ";
       Tucker::printBytes(local_nnz*sizeof(double));
       std::cout << "Global tensor size after STHOSVD iteration "
-          << n << ": " << Y->getGlobalSize() << ", or ";
+          << mode << ": " << Y->getGlobalSize() << ", or ";
       Tucker::printBytes(global_nnz*sizeof(double));
     }
   }

@@ -58,6 +58,7 @@ int main(int argc, char* argv[])
   Tucker::SizeArray* R_dims = 0;
   if(!boolAuto)  R_dims                 = Tucker::stringParseSizeArray(fileAsString, "Ranks");
   Tucker::SizeArray* proc_grid_dims     = Tucker::stringParseSizeArray(fileAsString, "Grid dims");
+  Tucker::SizeArray* modeOrder          = Tucker::stringParseSizeArray(fileAsString, "Decompose mode order");
 
   std::string scaling_type              = Tucker::stringParse<std::string>(fileAsString, "Scaling type", "None");
   std::string sthosvd_dir               = Tucker::stringParse<std::string>(fileAsString, "STHOSVD directory", "compressed");
@@ -92,6 +93,9 @@ int main(int argc, char* argv[])
 
     std::cout << "The global dimensions of the processor grid\n";
     std::cout << "- Grid dims = " << *proc_grid_dims << std::endl << std::endl;
+
+    std::cout << "Mode order for decomposition\n";
+    std::cout << "- Decompose mode order " << *modeOrder << std::endl << std::endl;
 
     std::cout << "If true, automatically determine rank; otherwise, use the user-defined ranks\n";
     std::cout << "- Automatic rank determination = " << (boolAuto ? "true" : "false") << std::endl << std::endl;
@@ -398,10 +402,10 @@ int main(int argc, char* argv[])
     const TuckerMPI::TuckerTensor* solution;
     bool flipSign = false; // confirm its default as false
     if(boolAuto) {
-      solution = TuckerMPI::STHOSVD(&X, tol, boolUseOldGram, flipSign, useLQ);
+      solution = TuckerMPI::STHOSVD(&X, tol, modeOrder->data(), boolUseOldGram, flipSign, useLQ);
     }
     else {
-      solution = TuckerMPI::STHOSVD(&X, R_dims, boolUseOldGram, flipSign, useLQ);
+      solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, flipSign, useLQ);
     }
 
     // Send the timing information to a CSV

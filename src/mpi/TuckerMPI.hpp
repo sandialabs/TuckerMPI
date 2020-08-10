@@ -103,24 +103,26 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
  * \todo There are no tests for this function yet.
  */
 const TuckerTensor* STHOSVD(const Tensor* const X,
-    const double epsilon, bool useOldGram=true,
+    const double epsilon, int* modeOrder, bool useOldGram=true,
     bool flipSign=false, bool useLQ=false);
 
 /** \brief Computes a Tucker decomposition
  *
  * \param X A parallel tensor
  * \param reducedI Dimensions of the desired core tensor
+ * \param modeOrder
  * \param useOldGram Determines whether the old Gram algorithm
  * is used, or the new one
  * \param flipSign If enabled, it flips the sign to be
  * comparable to the Matlab tensor toolbox results, where
  * the maximum magnitude entry in each vector of the factors U_n
  * is forced to be positive
+ * \param useLQ
  *
  * \todo There are no tests for this function yet.
  */
 const TuckerTensor* STHOSVD(const Tensor* const X,
-    const Tucker::SizeArray* const reducedI, bool useOldGram=true,
+    const Tucker::SizeArray* const reducedI, int* modeOrder, bool useOldGram=true,
     bool flipSign=false, bool useLQ=false);
 
 /** \brief Compute some information about slices of a tensor

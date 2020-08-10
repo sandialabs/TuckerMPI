@@ -535,13 +535,13 @@ public:
    * TuckerTensor so that the timers can remain private
    */
   friend const TuckerTensor* STHOSVD(const Tensor* const X,
-      const double epsilon, bool useOldGram, bool flipSign, bool useLQ);
+      const double epsilon, int* modeOrder, bool useOldGram, bool flipSign, bool useLQ);
 
   /** \note STHOSVD has been declared as a friend function of
    * TuckerTensor so that the timers can remain private
    */
   friend const TuckerTensor* STHOSVD(const Tensor* const X,
-      const Tucker::SizeArray* const reducedI, bool useOldGram,
+      const Tucker::SizeArray* const reducedI, int* modeOrder, bool useOldGram,
       bool flipSign, bool useLQ);
 
 private:
