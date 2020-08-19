@@ -72,6 +72,7 @@ extern "C" void dgemm_(const char*, const char*, const int*,
 /// @endcond
 
 /** \brief Compute QR of M transpose. M is assumed to be short and fat. The R is returned in a square matrix.
+ * If isLastMode is true then a call to dgeqr is made, Otherwise a call to dgelq is made.
  */
 Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_timer=0, 
     Tucker::Timer* decompose_timer=0, Tucker::Timer* transpose_timer=0);

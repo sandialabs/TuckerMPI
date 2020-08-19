@@ -105,7 +105,7 @@ extern "C" void dscal_(const int*, const double*, double*, const int*);
  * elements from Yn'. This function then copies the elements of Yn' selected by the top window and reoders those 
  * elements in column major order 
  */
-void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n);
+void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n, const int startingSubmatrix, const int numSubmatrices, const int variant);
 
 /** \brief wrapper of computeLQ(const Tensor* Y, const int n, Matrix* L) which get the LQ of the mode n unfolding
  * of Y. A square matrix is returned with the L stored in the lower triangle in column major. The upper triangle
@@ -114,7 +114,8 @@ void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n);
 Matrix* computeLQ(const Tensor* Y, const int n);
 
 /** \brief Get the LQ of the mode n unfolding of Y. The result lower triangluar matrix is stored in L in column 
- * major. The upper triangle is filled with 0.
+ * major. The upper triangle is filled with 0. Note if n=0, a call to dgelq is made. Otherwise the sequential
+ * tsqr and transpose is used to get the L.
  */
 void computeLQ(const Tensor* Y, const int n, Matrix* L);
 

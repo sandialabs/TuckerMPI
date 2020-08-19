@@ -109,7 +109,7 @@ public:
   }
 
   /**
-   * This function returns the string that shows the matrix in row major.
+   * Assuming the matrix is in column major this returns the string that shows the matrix in row major.
    */
   std::string prettyPrint()
   {

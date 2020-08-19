@@ -735,7 +735,6 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
           << factorization->ttm_timer_[mode].duration() << "s\n";
     }
     if(n > 0) {
-      std::cout << "deleteing, in mode: " << n << std::endl;
       Tucker::MemoryManager::safe_delete<const Tensor>(Y);
     }
     Y = temp;

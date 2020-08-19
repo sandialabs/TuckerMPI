@@ -55,10 +55,10 @@ namespace TuckerMPI {
  * \param Y A parallel tensor
  * \param n The dimension for the tensor unfolding
  */
-Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
-    Tucker::Timer* local_qr_timer, Tucker::Timer* redistribute_timer,
-    Tucker::Timer* localqr_dcopy_timer, Tucker::Timer* localqr_decompose_timer, 
-    Tucker::Timer* localqr_transpose_timer);
+Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer=0,
+    Tucker::Timer* local_qr_timer=0, Tucker::Timer* redistribute_timer=0,
+    Tucker::Timer* localqr_dcopy_timer=0, Tucker::Timer* localqr_decompose_timer=0, 
+    Tucker::Timer* localqr_transpose_timer=0);
 
 /** \brief Computes the Gram matrix using the old algorithm
  *

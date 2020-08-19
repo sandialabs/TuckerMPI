@@ -1,5 +1,8 @@
 INCLUDE_DIRECTORIES(..)
 
+ADD_EXECUTABLE(Tucker_tsqr_test Tucker_tsqr_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_tsqr_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 ADD_EXECUTABLE(compare Tucker_compare.cpp)
 TARGET_LINK_LIBRARIES(compare serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 

@@ -60,6 +60,7 @@ Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_t
   double* tempWork = Tucker::MemoryManager::safe_new_array<double>(1);
   if(isLastMode){
     if(dcopy_timer) dcopy_timer->start();
+    //Mcopy will become transpose of M since M is row major. 
     Tucker::Matrix* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(ncolsM, nrowsM);
     dcopy_(&sizeOfM, M->getLocalMatrix()->data(), &one, Mcopy->data(), &one);
     if(dcopy_timer) dcopy_timer->stop();
@@ -75,19 +76,14 @@ Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_t
     Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
     Tucker::MemoryManager::safe_delete_array<double>(T, TSize);
     if(decompose_timer) decompose_timer->stop();
+    //this is in the transpose timer to be consistent with other mode, but note this is not
+    //actually doing a transpose, we are just getting the upper triangle of Mcopy here.
     if(transpose_timer) transpose_timer->start();
     for(int i=0; i<nrowsM; i++){
       dcopy_(&nrowsM, Mcopy->data()+i*ncolsM, &one, R->data()+i*nrowsM, &one);
     }
     Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Mcopy);
     if(transpose_timer) transpose_timer->stop();
-    // {
-    //   std::cout << "Processor["<<globalRank<<"] local matrix size: " << nrowsM << " by "<< ncolsM << " : "; 
-    //   for(int i=0; i< nrowsM*ncolsM; i++){
-    //       std::cout << Mcopy->data()[i] << ", ";
-    //   }
-    //   std::cout <<std::endl; 
-    // }
   }
   else{
     if(dcopy_timer) dcopy_timer->start();
