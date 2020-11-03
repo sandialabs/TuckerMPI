@@ -46,21 +46,17 @@ int main(int argc, char* argv[])
   Tucker::Timer local_qr_timer;
   Tucker::Timer tsqr_timer;
   Tucker::Timer total_timer;
-  Tucker::Timer alltoall_timer; 
-  Tucker::Timer pack_timer;
-  Tucker::Timer unpack_timer;
+  Tucker::Timer redistribute_timer;
   Tucker::Timer localqr_dcopy_timer;
   Tucker::Timer localqr_decompose_timer;
   Tucker::Timer localqr_transpose_timer;
   if(rank == 0) total_timer.start();
-  Tucker::Matrix* L0 = TuckerMPI::LQ(&X, 0, &tsqr_timer, &local_qr_timer, &pack_timer, &alltoall_timer, &unpack_timer,
+  Tucker::Matrix* L0 = TuckerMPI::LQ(&X, 0, &tsqr_timer, &local_qr_timer, &redistribute_timer,
     &localqr_dcopy_timer, &localqr_decompose_timer, &localqr_transpose_timer);
   if(rank == 0){
     total_timer.stop();
     std::cout << "total time used: " << total_timer.duration()
-      << " \n pack time: " << pack_timer.duration() 
-      << "\n all to all time: " << alltoall_timer.duration()
-      << "\n unpack time: " << unpack_timer.duration()
+      << " \n redistribute time: " << redistribute_timer.duration()
       << "\n local qr time: " << local_qr_timer.duration() 
       << "\n local qr dcopy time: " << localqr_dcopy_timer.duration()
       << "\n local qr decompose time: " << localqr_decompose_timer.duration()

@@ -103,7 +103,7 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
  * \todo There are no tests for this function yet.
  */
 const TuckerTensor* STHOSVD(const Tensor* const X,
-    const double epsilon, int* modeOrder, bool useOldGram=true,
+    const double epsilon, int* modeOrder = nullptr, bool useOldGram=true,
     bool flipSign=false, bool useLQ=false);
 
 /** \brief Computes a Tucker decomposition
@@ -122,7 +122,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
  * \todo There are no tests for this function yet.
  */
 const TuckerTensor* STHOSVD(const Tensor* const X,
-    const Tucker::SizeArray* const reducedI, int* modeOrder, bool useOldGram=true,
+    const Tucker::SizeArray* const reducedI, int* modeOrder = nullptr, bool useOldGram=true,
     bool flipSign=false, bool useLQ=false);
 
 /** \brief Compute some information about slices of a tensor

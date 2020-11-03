@@ -515,7 +515,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   // For each dimension...
   for(int n=0; n<ndims; n++)
   {
-    int mode = modeOrder[n];
+    int mode = modeOrder? modeOrder[n] : n;
     if(useLQ){
       if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting LQ(" << mode << ")...\n";
       factorization->LQ_timer_[mode].start();
@@ -649,16 +649,20 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   // For each dimension...
   for(int n=0; n<ndims; n++)
   {
-    int mode = modeOrder[n];
+    int mode = modeOrder ? modeOrder[n] : n;
     if(useLQ){
       Tucker::Matrix* L;
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::Starting LQ(" << mode << ")...\n";
       }
       factorization->LQ_timer_[mode].start();
-      L = LQ(Y, mode, &factorization->LQ_tsqr_timer_[mode], &factorization->LQ_localqr_timer_[mode], 
-        &factorization->LQ_redistribute_timer_[mode], &factorization->LQ_dcopy_timer_[mode],
-        &factorization->LQ_decompose_timer_[mode], &factorization->LQ_transpose_timer_[mode]);
+      L = LQ(Y, mode, 
+        &factorization->LQ_tsqr_timer_[mode], 
+        &factorization->LQ_localqr_timer_[mode], 
+        &factorization->LQ_redistribute_timer_[mode], 
+        &factorization->LQ_dcopy_timer_[mode],
+        &factorization->LQ_decompose_timer_[mode], 
+        &factorization->LQ_transpose_timer_[mode]);
       factorization->LQ_timer_[mode].stop();
       int SizeOfL = L->nrows()*L->ncols();
       factorization->LQ_bcast_timer_[mode].start();
@@ -1004,10 +1008,6 @@ void importTensorBinary(const char* filename, Tensor* Y)
 {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-
-  if(rank == 0) {
-    std::cout << "Reading file " << filename << std::endl;
-  }
 
   if(Y->getDistribution()->ownNothing()) {
     return;

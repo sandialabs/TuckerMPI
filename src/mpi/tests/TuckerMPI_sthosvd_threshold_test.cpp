@@ -31,9 +31,9 @@ int main(int argc, char* argv[]){
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(proc_grid_dims);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(tensor_dims);
 
-  const TuckerMPI::TuckerTensor* oldGramSolution = TuckerMPI::STHOSVD(T, threshold, true, false, false);
-  const TuckerMPI::TuckerTensor* newGramSolution = TuckerMPI::STHOSVD(T, threshold, false, false, false);
-  const TuckerMPI::TuckerTensor* LQSolution = TuckerMPI::STHOSVD(T, threshold, false, false, true);
+  const TuckerMPI::TuckerTensor* oldGramSolution = TuckerMPI::STHOSVD(T, threshold, nullptr, true, false, false);
+  const TuckerMPI::TuckerTensor* newGramSolution = TuckerMPI::STHOSVD(T, threshold, nullptr, false, false, false);
+  const TuckerMPI::TuckerTensor* LQSolution = TuckerMPI::STHOSVD(T, threshold, nullptr, false, false, true);
   Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(T);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(core_dims);
 
