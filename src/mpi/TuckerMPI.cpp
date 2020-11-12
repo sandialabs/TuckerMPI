@@ -527,7 +527,6 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       factorization->LQ_bcast_timer_[mode].start();
       MPI_Bcast(L->data(), SizeOfL, MPI_DOUBLE, 0, MPI_COMM_WORLD);
       factorization->LQ_bcast_timer_[mode].stop();
-      std::cout << std::endl;
       if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << mode << ")...\n";
       factorization->svd_timer_[mode].start();
       Tucker::computeSVD(L, factorization->singularValues[mode], factorization->U[mode], thresh);
