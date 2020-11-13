@@ -435,7 +435,7 @@ int main(int argc, char* argv[])
     if(rank == 0) {
       // Write the eigenvalues to files
       std::string filePrefix = sv_dir + "/" + sv_fn + "value_mode_";
-      TuckerMPI::printEigenvalues(solution, filePrefix, useLQ);
+      TuckerMPI::printSingularValues(solution, filePrefix, useLQ);
       filePrefix = sv_dir + "/" + sv_fn + "vector_mode_";
       TuckerMPI::printEigenvectors(solution, filePrefix);
     }

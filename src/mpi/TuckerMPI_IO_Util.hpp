@@ -41,12 +41,11 @@
 
 #include<fstream>
 #include<sstream>
+#include<cmath>
 
 namespace TuckerMPI {
 
-//if useLQ is true then print the square of the singular values of 
-//L to be consistent with the eigen value of the gram matrix.
-void printEigenvalues(const TuckerTensor* factorization,
+void printSingularValues(const TuckerTensor* factorization,
     std::string filePrefix, bool useLQ)
 {
   // For each mode...
@@ -58,22 +57,20 @@ void printEigenvalues(const TuckerTensor* factorization,
 
     // Open the file
     std::ofstream ofs(ss.str());
-    std::cout << "Writing eigenvalues to " << ss.str() << std::endl;
+    std::cout << "Writing singular values to " << ss.str() << std::endl;
 
     // Determine the number of eigenvalues for this mode
     int nevals = factorization->U[mode]->nrows();
     if(useLQ){
       for(int i=0; i<nevals; i++) {
-        ofs << std::pow(factorization->singularValues[mode][i], 2) << std::endl;
+        ofs << std::setprecision(16) << factorization->singularValues[mode][i] << std::endl;
       }
     }
     else{
       for(int i=0; i<nevals; i++) {
-        ofs << factorization->eigenvalues[mode][i] << std::endl;
+        ofs << std::setprecision(16) << sqrt(std::abs(factorization->eigenvalues[mode][i])) << std::endl;
       }
     }
-    
-
     ofs.close();
   }
 }
