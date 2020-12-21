@@ -1,7 +1,7 @@
 INCLUDE_DIRECTORIES(.. ../../serial)
 
 ADD_EXECUTABLE(TuckerMPI_converter TuckerMPI_converter.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_converter mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_converter mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 SET(CMAKE_TUCKER_CONVERTER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE INTERNAL "binary directory of converter executable")
 

@@ -1,64 +1,64 @@
 INCLUDE_DIRECTORIES(.. ../../serial)
 
 ADD_EXECUTABLE(TuckerMPI_IO_test TuckerMPI_IO_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_IO_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_IO_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_pack_data TuckerMPI_pack_data.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_pack_data mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_pack_data mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_pack_data2 TuckerMPI_pack_data2.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_pack_data2 mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_pack_data2 mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_pack_data3 TuckerMPI_pack_data3.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_pack_data3 mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_pack_data3 mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_old_gram_test_large TuckerMPI_old_gram_test_file.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_old_gram_test_large mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_old_gram_test_large mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_old_gram_test_small TuckerMPI_old_gram_test_file2.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_old_gram_test_small mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_old_gram_test_small mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_new_gram_test_large TuckerMPI_new_gram_test_file.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_new_gram_test_large mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_new_gram_test_large mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_new_gram_test_small TuckerMPI_new_gram_test_file2.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_new_gram_test_small mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_new_gram_test_small mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_oldGram0 TuckerMPI_oldGram0.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_oldGram0 mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_oldGram0 mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_bigGram0 TuckerMPI_bigGram0.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_bigGram0 mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_bigGram0 mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_gram0 TuckerMPI_gram0.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_gram0 mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_gram0 mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_gram1 TuckerMPI_gram1.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_gram1 mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_gram1 mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_gram2 TuckerMPI_gram2.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_gram2 mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_gram2 mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_ttm_test TuckerMPI_ttm_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_reconstruct_test TuckerMPI_reconstruct_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_reconstruct_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_reconstruct_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_norm_test TuckerMPI_norm_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_norm_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_norm_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_normalize_test TuckerMPI_normalize_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_normalize_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_normalize_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_slice_test TuckerMPI_slice_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_slice_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_slice_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_shift_scale_test TuckerMPI_shift_scale_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_shift_scale_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_shift_scale_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_ttm_test_file TuckerMPI_ttm_test_file.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test_file mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test_file mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ENABLE_TESTING()
 ADD_TEST(TuckerMPI_part_rec_test ${CMAKE_CURRENT_BINARY_DIR}/TuckerMPI_part_rec_test.pl "${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12")

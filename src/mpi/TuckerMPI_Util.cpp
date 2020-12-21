@@ -396,7 +396,7 @@ void localGEMMForGram(const double* Y1, int nrowsY1, int n,
         beta = 1;
       }
 
-      // Call dgemm
+      // Call gemm
       Tucker::gemm(&transa, &transb, &crows, &ccols, &interDim,
           &alpha, Aptr, &lda, Bptr, &ldb, &beta, result, &ldc);
 
