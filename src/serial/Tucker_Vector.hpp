@@ -12,14 +12,15 @@
 
 namespace Tucker {
 
-class Vector : public Matrix {
+template<class scalar_t>
+class Vector : public Matrix<scalar_t> {
 public:
   /** \brief Constructor
    * \param[in] nrows Number of rows
    * \param[in] ncols Number of columns
    */
   Vector(const int nrows) :
-    Matrix(nrows)
+    Matrix<scalar_t>::Matrix(nrows)
   {
 
   }
@@ -30,10 +31,10 @@ public:
    *
    * \exception std::out_of_range \a i is not in the range [0, nsz_)
    */
-  double& operator[](const int i) {
+  scalar_t& operator[](const int i) {
     if(i < 0 || i >= nrows())
       throw std::out_of_range("invalid index");
-    return data_[i];
+    return this->data_[i];
   }
 
   /** \brief Const element access
@@ -42,16 +43,16 @@ public:
    *
    * \exception std::out_of_range \a i is not in the range [0, nsz_)
    */
-  const double& operator[](const int i) const {
+  const scalar_t& operator[](const int i) const {
     if(i < 0 || i >= nrows())
       throw std::out_of_range("invalid index");
-    return data_[i];
+    return this->data_[i];
   }
 
   /// Returns the number of rows
   int nrows() const
   {
-    return I_[0];
+    return this->I_[0];
   }
 
   /// Returns the number of columns
@@ -63,7 +64,7 @@ public:
 private:
   /// @cond EXCLUDE
   // Disables the copy constructor
-  Vector(const Vector& m);
+  Vector(const Vector<scalar_t>& m);
   /// @endcond
 };
 

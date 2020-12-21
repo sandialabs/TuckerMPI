@@ -51,14 +51,15 @@ namespace Tucker {
  * Since a matrix is a 2-dimensional tensor, this class
  * inherits from the tensor class.
  */
-class Matrix : public Tensor {
+template<class scalar_t>
+class Matrix : public Tensor<scalar_t> {
 public:
   /** \brief Constructor
    * \param[in] nrows Number of rows
    * \param[in] ncols Number of columns
    */
   Matrix(const int nrows, const int ncols) :
-    Tensor(nrows,ncols)
+    Tensor<scalar_t>::Tensor(nrows,ncols)
   {
 
   }
@@ -66,26 +67,26 @@ public:
   /// Returns the number of rows
   int nrows() const
   {
-    return I_[0];
+    return this->I_[0];
   }
 
   /// Returns the number of columns
   int ncols() const
   {
-    return I_[1];
+    return this->I_[1];
   }
 
-  Matrix* getSubmatrix(const int rbegin, const int rend) const
+  Matrix<scalar_t>* getSubmatrix(const int rbegin, const int rend) const
   {
     const int ONE = 1;
     int new_nrows = rend-rbegin+1;
     int old_nrows = nrows();
     int myncols = ncols();
-    Matrix* newMat = MemoryManager::safe_new<Matrix>(new_nrows,myncols);
+    Matrix<scalar_t>* newMat = MemoryManager::safe_new<Matrix<scalar_t>>(new_nrows,myncols);
 
     for(int c=0; c<myncols; c++)
     {
-      Tucker::copy(&new_nrows, data()+c*old_nrows+rbegin, &ONE,
+      Tucker::copy(&new_nrows, this->data()+c*old_nrows+rbegin, &ONE,
           newMat->data()+c*new_nrows, &ONE);
     }
 
@@ -94,7 +95,7 @@ public:
 
 protected:
   Matrix(const int nrows) :
-    Tensor(nrows)
+    Tensor<scalar_t>::Tensor(nrows)
   {
 
   }
@@ -102,7 +103,7 @@ protected:
 private:
   /// @cond EXCLUDE
   // Disables the copy constructor
-  Matrix(const Matrix& m);
+  Matrix(const Matrix<scalar_t>& m);
   /// @endcond
 };
 

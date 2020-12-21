@@ -135,7 +135,8 @@ SizeArray* stringParseSizeArray(const std::vector<std::string>& lines,
  * \param[in] filePrefix Prefix of the filenames; each mode will
  * be represented in its own file.
  */
-void printEigenvalues(const TuckerTensor* factorization,
+template <class scalar_t>
+void printEigenvalues(const TuckerTensor<scalar_t>* factorization,
     const std::string& filePrefix);
 
 }

@@ -53,52 +53,53 @@ namespace Tucker {
 /** \example Tucker_gram_test_file.cpp
  * \example Tucker_gram_test_nofile.cpp
  */
-Matrix* computeGram(const Tensor* Y, const int n)
+template<class scalar_t>
+Matrix<scalar_t>* computeGram(const Tensor<scalar_t>* Y, const int n)
 {
   if(Y == 0) {
-    throw std::runtime_error("Tucker::computeGram(const Tensor* Y, const int n): Y is a null pointer");
+    throw std::runtime_error("Tucker::computeGram(const Tensor<scalar_t>* Y, const int n): Y is a null pointer");
   }
   if(Y->getNumElements() == 0) {
-    throw std::runtime_error("Tucker::computeGram(const Tensor* Y, const int n): Y->getNumElements() == 0");
+    throw std::runtime_error("Tucker::computeGram(const Tensor<scalar_t>* Y, const int n): Y->getNumElements() == 0");
   }
   if(n < 0 || n >= Y->N()) {
     std::ostringstream oss;
-    oss << "Tucker::computeGram(const Tensor* Y, const int n): n = "
+    oss << "Tucker::computeGram(const Tensor<scalar_t>* Y, const int n): n = "
         << n << " is not in the range [0," << Y->N() << ")";
     throw std::runtime_error(oss.str());
   }
 
   // Allocate memory for the Gram matrix
   int nrows = Y->size(n);
-  Matrix* S = MemoryManager::safe_new<Matrix>(nrows,nrows);
+  Matrix<scalar_t>* S = MemoryManager::safe_new<Matrix<scalar_t>>(nrows,nrows);
 
   computeGram(Y, n, S->data(), nrows);
 
   return S;
 }
 
-
-void computeGram(const Tensor* Y, const int n, double* gram,
+template<class scalar_t>
+void computeGram(const Tensor<scalar_t>* Y, const int n, scalar_t* gram,
     const int stride)
 {
   if(Y == 0) {
-    throw std::runtime_error("Tucker::computeGram(const Tensor* Y, const int n, double* gram, const int stride): Y is a null pointer");
+    throw std::runtime_error("Tucker::computeGram(const Tensor<scalar_t>* Y, const int n, scalar_t* gram, const int stride): Y is a null pointer");
   }
   if(gram == 0) {
-    throw std::runtime_error("Tucker::computeGram(const Tensor* Y, const int n, double* gram, const int stride): gram is a null pointer");
+    throw std::runtime_error("Tucker::computeGram(const Tensor<scalar_t>* Y, const int n, scalar_t* gram, const int stride): gram is a null pointer");
   }
   if(Y->getNumElements() == 0) {
-    throw std::runtime_error("Tucker::computeGram(const Tensor* Y, const int n, double* gram, const int stride): Y->getNumElements() == 0");
+    throw std::runtime_error("Tucker::computeGram(const Tensor<scalar_t>* Y, const int n, scalar_t* gram, const int stride): Y->getNumElements() == 0");
   }
   if(stride < 1) {
     std::ostringstream oss;
-    oss << "Tucker::computeGram(const Tensor* Y, const int n, double* gram, "
+    oss << "Tucker::computeGram(const Tensor<scalar_t>* Y, const int n, scalar_t* gram, "
         << "const int stride): stride = " << stride << " < 1";
     throw std::runtime_error(oss.str());
   }
   if(n < 0 || n >= Y->N()) {
     std::ostringstream oss;
-    oss << "Tucker::computeGram(const Tensor* Y, const int n, double* gram, "
+    oss << "Tucker::computeGram(const Tensor<scalar_t>* Y, const int n, scalar_t* gram, "
         << "const int stride): n = " << n << " is not in the range [0,"
         << Y->N() << ")";
     throw std::runtime_error(oss.str());
@@ -121,12 +122,12 @@ void computeGram(const Tensor* Y, const int n, double* gram,
     }
 
     // Call symmetric rank-k update
-    // call dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+    // call syrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
     // C := alpha*A*A' + beta*C
     char uplo = 'U';
     char trans = 'N';
-    double alpha = 1;
-    double beta = 0;
+    scalar_t alpha = 1;
+    scalar_t beta = 0;
     syrk(&uplo, &trans, &nrows, &ncols, &alpha,
         Y->data(), &nrows, &beta, gram, &stride);
   }
@@ -152,8 +153,8 @@ void computeGram(const Tensor* Y, const int n, double* gram,
       // C := alpha*A*A' + beta*C
       char uplo = 'U';
       char trans = 'T';
-      double alpha = 1;
-      double beta;
+      scalar_t alpha = 1;
+      scalar_t beta;
       if(i==0)
         beta = 0;
       else
@@ -166,25 +167,26 @@ void computeGram(const Tensor* Y, const int n, double* gram,
 }
 
 /// \example Tucker_eig_test.cpp
-void computeEigenpairs(Matrix* G, double*& eigenvalues,
+template<class scalar_t>
+void computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues,
     const bool flipSign)
 {
   if(G == 0) {
-    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, const bool flipSign): G is a null pointer");
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, const bool flipSign): G is a null pointer");
   }
   if(G->getNumElements() == 0) {
-    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, const bool flipSign): G has no entries");
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, const bool flipSign): G has no entries");
   }
 
   int nrows = G->nrows();
-  eigenvalues = MemoryManager::safe_new_array<double>(nrows);
+  eigenvalues = MemoryManager::safe_new_array<scalar_t>(nrows);
 
   // Compute the leading eigenvectors of S
   // call dsyev(jobz, uplo, n, a, lda, w, work, lwork, info)
   char jobz = 'V';
   char uplo = 'U';
   int lwork = 8*nrows;
-  double* work = MemoryManager::safe_new_array<double>(lwork);
+  scalar_t* work = MemoryManager::safe_new_array<scalar_t>(lwork);
   int info;
   syev(&jobz, &uplo, &nrows, G->data(), &nrows,
       eigenvalues, work, &lwork, &info);
@@ -196,13 +198,13 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
   // The user will expect the eigenvalues to be sorted in descending order
   // LAPACK gives us the eigenvalues in ascending order
   for(int esubs=0; esubs<nrows-esubs-1; esubs++) {
-    double temp = eigenvalues[esubs];
+    scalar_t temp = eigenvalues[esubs];
     eigenvalues[esubs] = eigenvalues[nrows-esubs-1];
     eigenvalues[nrows-esubs-1] = temp;
   }
 
   // Sort the eigenvectors too
-  double* Gptr = G->data();
+  scalar_t* Gptr = G->data();
   const int ONE = 1;
   for(int esubs=0; esubs<nrows-esubs-1; esubs++) {
     Tucker::swap(&nrows, Gptr+esubs*nrows, &ONE,
@@ -215,10 +217,10 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
     for(int c=0; c<nrows; c++)
     {
       int maxIndex=0;
-      double maxVal = std::abs(Gptr[c*nrows]);
+      scalar_t maxVal = std::abs(Gptr[c*nrows]);
       for(int r=1; r<nrows; r++)
       {
-        double testVal = std::abs(Gptr[c*nrows+r]);
+        scalar_t testVal = std::abs(Gptr[c*nrows+r]);
         if(testVal > maxVal) {
           maxIndex = r;
           maxVal = testVal;
@@ -226,35 +228,36 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
       }
 
       if(Gptr[c*nrows+maxIndex] < 0) {
-        const double NEGONE = -1;
+        const scalar_t NEGONE = -1;
         scal(&nrows, &NEGONE, Gptr+c*nrows, &ONE);
       }
     }
   }
 
-  MemoryManager::safe_delete_array<double>(work,lwork);
+  MemoryManager::safe_delete_array<scalar_t>(work,lwork);
 }
 
-void computeEigenpairs(Matrix* G, double*& eigenvalues,
-    Matrix*& eigenvectors, const int numEvecs, const bool flipSign)
+template<class scalar_t>
+void computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues,
+    Matrix<scalar_t>*& eigenvectors, const int numEvecs, const bool flipSign)
 {
   if(G == 0) {
-    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G is a null pointer");
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const int numEvecs, const bool flipSign): G is a null pointer");
   }
   if(G->getNumElements() == 0) {
-    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G has no entries");
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const int numEvecs, const bool flipSign): G has no entries");
   }
   if(numEvecs < 1) {
     std::ostringstream oss;
-    oss << "Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, "
-        << "Matrix*& eigenvectors, const int numEvecs, "
+    oss << "Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, "
+        << "Matrix<scalar_t>*& eigenvectors, const int numEvecs, "
         << "const bool flipSign): numEvecs = " << numEvecs << " < 1";
     throw std::runtime_error(oss.str());
   }
   if(numEvecs > G->nrows()) {
     std::ostringstream oss;
-    oss << "Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, "
-        << "Matrix*& eigenvectors, const int numEvecs, "
+    oss << "Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, "
+        << "Matrix<scalar_t>*& eigenvectors, const int numEvecs, "
         << "const bool flipSign): numEvecs = " << numEvecs
         << " > G->nrows() = " << G->nrows();
     throw std::runtime_error(oss.str());
@@ -264,7 +267,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
 
   // Allocate memory for eigenvectors
   int numRows = G->nrows();
-  eigenvectors = MemoryManager::safe_new<Matrix>(numRows,numEvecs);
+  eigenvectors = MemoryManager::safe_new<Matrix<scalar_t>>(numRows,numEvecs);
 
   // Copy appropriate eigenvectors
   int nToCopy = numRows*numEvecs;
@@ -272,20 +275,20 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
   Tucker::copy(&nToCopy, G->data(), &ONE, eigenvectors->data(), &ONE);
 }
 
-
-void computeEigenpairs(Matrix* G, double*& eigenvalues,
-    Matrix*& eigenvectors, const double thresh, const bool flipSign)
+template<class scalar_t>
+void computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues,
+    Matrix<scalar_t>*& eigenvectors, const scalar_t thresh, const bool flipSign)
 {
   if(G == 0) {
-    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G is a null pointer");
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const int numEvecs, const bool flipSign): G is a null pointer");
   }
   if(G->getNumElements() == 0) {
-    throw std::runtime_error("Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, Matrix*& eigenvectors, const int numEvecs, const bool flipSign): G has no entries");
+    throw std::runtime_error("Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const int numEvecs, const bool flipSign): G has no entries");
   }
   if(thresh < 0) {
     std::ostringstream oss;
-    oss << "Tucker::computeEigenpairs(Matrix* G, double*& eigenvalues, "
-        << "Matrix*& eigenvectors, const int numEvecs, "
+    oss << "Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, "
+        << "Matrix<scalar_t>*& eigenvectors, const int numEvecs, "
         << "const bool flipSign): thresh = " << thresh << " < 0";
     throw std::runtime_error(oss.str());
   }
@@ -295,7 +298,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
   // Compute number of things to copy
   int nrows = G->nrows();
   int numEvecs=nrows;
-  double sum = 0;
+  scalar_t sum = 0;
   for(int i=nrows-1; i>=0; i--) {
     sum += eigenvalues[i];
     if(sum > thresh) {
@@ -306,7 +309,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
 
   // Allocate memory for eigenvectors
   int numRows = G->nrows();
-  eigenvectors = MemoryManager::safe_new<Matrix>(numRows,numEvecs);
+  eigenvectors = MemoryManager::safe_new<Matrix<scalar_t>>(numRows,numEvecs);
 
   // Copy appropriate eigenvectors
   int nToCopy = numRows*numEvecs;
@@ -315,18 +318,19 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
 }
 
 
-const struct TuckerTensor* STHOSVD(const Tensor* X,
-    const double epsilon, bool flipSign)
+template<class scalar_t>
+const struct TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* X,
+    const scalar_t epsilon, bool flipSign)
 {
   if(X == 0) {
-    throw std::runtime_error("Tucker::STHOSVD(const Tensor* X, const double epsilon, bool flipSign): X is a null pointer");
+    throw std::runtime_error("Tucker::STHOSVD(const Tensor<scalar_t>* X, const scalar_t epsilon, bool flipSign): X is a null pointer");
   }
   if(X->getNumElements() == 0) {
-    throw std::runtime_error("Tucker::STHOSVD(const Tensor* X, const double epsilon, bool flipSign): X has no entries");
+    throw std::runtime_error("Tucker::STHOSVD(const Tensor<scalar_t>* X, const scalar_t epsilon, bool flipSign): X has no entries");
   }
   if(epsilon < 0) {
     std::ostringstream oss;
-    oss << "Tucker::STHOSVD(const Tensor* const X, const double epsilon, "
+    oss << "Tucker::STHOSVD(const Tensor<scalar_t>* const X, const scalar_t epsilon, "
         << "bool flipSign): epsilon = " << epsilon << " < 0";
     throw std::runtime_error(oss.str());
   }
@@ -334,18 +338,18 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
   int ndims = X->N();
 
   // Create a struct to store the factorization
-  struct TuckerTensor* factorization = MemoryManager::safe_new<struct TuckerTensor>(ndims);
+  struct TuckerTensor<scalar_t>* factorization = MemoryManager::safe_new<struct TuckerTensor<scalar_t>>(ndims);
   factorization->total_timer_.start();
 
   // Compute the threshold
-  double tensorNorm = X->norm2();
-  double thresh = epsilon*epsilon*tensorNorm/X->N();
+  scalar_t tensorNorm = X->norm2();
+  scalar_t thresh = epsilon*epsilon*tensorNorm/X->N();
   std::cout << "\tAutoST-HOSVD::Tensor Norm: "
       << std::sqrt(tensorNorm) << "...\n";
   std::cout << "\tAutoST-HOSVD::Relative Threshold: "
       << thresh << "...\n";
 
-  const Tensor* Y = X;
+  const Tensor<scalar_t>* Y = X;
 
   // For each dimension...
   for(int n=0; n<X->N(); n++)
@@ -354,7 +358,7 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
     // S = Y_n*Y_n'
     std::cout << "\tAutoST-HOSVD::Starting Gram(" << n << ")...\n";
     factorization->gram_timer_[n].start();
-    Matrix* S = computeGram(Y,n);
+    Matrix<scalar_t>* S = computeGram(Y,n);
     factorization->gram_timer_[n].stop();
     std::cout << "\tAutoST-HOSVD::Gram(" << n << ") time: "
         << factorization->gram_timer_[n].duration() << "s\n";
@@ -370,44 +374,45 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
         << factorization->eigen_timer_[n].duration() << "s\n";
 
     // Free the Gram matrix
-    MemoryManager::safe_delete<Matrix>(S);
+    MemoryManager::safe_delete<Matrix<scalar_t>>(S);
 
     // Perform the tensor times matrix multiplication
     std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
     factorization->ttm_timer_[n].start();
-    Tensor* temp = ttm(Y,n,factorization->U[n],true);
+    Tensor<scalar_t>* temp = ttm(Y,n,factorization->U[n],true);
     factorization->ttm_timer_[n].stop();
     std::cout << "\tAutoST-HOSVD::TTM(" << n << ") time: "
         << factorization->ttm_timer_[n].duration() << "s\n";
     if(n > 0) {
-      MemoryManager::safe_delete<const Tensor>(Y);
+      MemoryManager::safe_delete<const Tensor<scalar_t>>(Y);
     }
     Y = temp;
 
     size_t nnz = Y->getNumElements();
     std::cout << "Local tensor size after STHOSVD iteration "
         << n << ": " << Y->size() << ", or ";
-    Tucker::printBytes(nnz*sizeof(double));
+    Tucker::printBytes(nnz*sizeof(scalar_t));
   }
 
-  factorization->G = const_cast<Tensor*>(Y);
+  factorization->G = const_cast<Tensor<scalar_t>*>(Y);
   factorization->total_timer_.stop();
   return factorization;
 }
 
 
-const struct TuckerTensor* STHOSVD(const Tensor* X,
+template <class scalar_t>
+const struct TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* X,
     const SizeArray* reducedI, bool flipSign)
 {
   if(X == 0) {
-    throw std::runtime_error("Tucker::STHOSVD(const Tensor* X, const SizeArray* reducedI, bool flipSign): X is a null pointer");
+    throw std::runtime_error("Tucker::STHOSVD(const Tensor<scalar_t>* X, const SizeArray* reducedI, bool flipSign): X is a null pointer");
   }
   if(X->getNumElements() == 0) {
-    throw std::runtime_error("Tucker::STHOSVD(const Tensor* X, const SizeArray* reducedI, bool flipSign): X has no entries");
+    throw std::runtime_error("Tucker::STHOSVD(const Tensor<scalar_t>* X, const SizeArray* reducedI, bool flipSign): X has no entries");
   }
   if(X->N() != reducedI->size()) {
     std::ostringstream oss;
-    oss << "Tucker::STHOSVD(const Tensor* X, const SizeArray* reducedI, "
+    oss << "Tucker::STHOSVD(const Tensor<scalar_t>* X, const SizeArray* reducedI, "
         << "bool flipSign): X->N() = " << X->N()
         << " != reducedI->size() = " << reducedI->size();
     throw std::runtime_error(oss.str());
@@ -415,14 +420,14 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
   for(int i=0; i<reducedI->size(); i++) {
     if((*reducedI)[i] <= 0) {
       std::ostringstream oss;
-      oss << "Tucker::STHOSVD(const Tensor* X, const SizeArray* reducedI, "
+      oss << "Tucker::STHOSVD(const Tensor<scalar_t>* X, const SizeArray* reducedI, "
       << "bool flipSign): reducedI[" << i << "] = " << (*reducedI)[i]
       << " <= 0";
       throw std::runtime_error(oss.str());
     }
     if((*reducedI)[i] > X->size(i)) {
       std::ostringstream oss;
-      oss << "Tucker::STHOSVD(const Tensor* X, const SizeArray* reducedI, "
+      oss << "Tucker::STHOSVD(const Tensor<scalar_t>* X, const SizeArray* reducedI, "
       << "bool flipSign): reducedI[" << i << "] = " << (*reducedI)[i]
       << " > X->size(" << i << ") = " << X->size(i);
       throw std::runtime_error(oss.str());
@@ -430,10 +435,10 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
   }
 
   // Create a struct to store the factorization
-  struct TuckerTensor* factorization = MemoryManager::safe_new<struct TuckerTensor>(X->N());
+  struct TuckerTensor<scalar_t>* factorization = MemoryManager::safe_new<struct TuckerTensor<scalar_t>>(X->N());
   factorization->total_timer_.start();
 
-  const Tensor* Y = X;
+  const Tensor<scalar_t>* Y = X;
 
   // For each dimension...
   for(int n=0; n<X->N(); n++)
@@ -441,7 +446,7 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
     // Compute the Gram matrix
     // S = Y_n*Y_n'
     factorization->gram_timer_[n].start();
-    Matrix* S = computeGram(Y,n);
+    Matrix<scalar_t>* S = computeGram(Y,n);
     factorization->gram_timer_[n].stop();
 
     // Compute the leading eigenvectors of S
@@ -451,42 +456,43 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
         factorization->U[n], (*reducedI)[n], flipSign);
     factorization->eigen_timer_[n].stop();
 
-    MemoryManager::safe_delete<Matrix>(S);
+    MemoryManager::safe_delete<Matrix<scalar_t>>(S);
 
     // Perform the tensor times matrix multiplication
     factorization->ttm_timer_[n].start();
-    Tensor* temp = ttm(Y,n,factorization->U[n],true);
+    Tensor<scalar_t>* temp = ttm(Y,n,factorization->U[n],true);
     factorization->ttm_timer_[n].stop();
     if(n > 0) {
-      MemoryManager::safe_delete<const Tensor>(Y);
+      MemoryManager::safe_delete<const Tensor<scalar_t>>(Y);
     }
     Y = temp;
   }
 
-  factorization->G = const_cast<Tensor*>(Y);
+  factorization->G = const_cast<Tensor<scalar_t>*>(Y);
   factorization->total_timer_.stop();
   return factorization;
 }
 
 
-Tensor* ttm(const Tensor* X, const int n,
-    const Matrix* U, bool Utransp)
+template <class scalar_t>
+Tensor<scalar_t>* ttm(const Tensor<scalar_t>* X, const int n,
+    const Matrix<scalar_t>* U, bool Utransp)
 {
   if(X == 0) {
-    throw std::runtime_error("Tucker::ttm(const Tensor* X, const int n, const Matrix* U, bool Utransp): X is a null pointer");
+    throw std::runtime_error("Tucker::ttm(const Tensor<scalar_t>* X, const int n, const Matrix<scalar_t>* U, bool Utransp): X is a null pointer");
   }
   if(X->getNumElements() == 0) {
-    throw std::runtime_error("Tucker::ttm(const Tensor* X, const int n, const Matrix* U, bool Utransp): X has no entries");
+    throw std::runtime_error("Tucker::ttm(const Tensor<scalar_t>* X, const int n, const Matrix<scalar_t>* U, bool Utransp): X has no entries");
   }
   if(U == 0) {
-    throw std::runtime_error("Tucker::ttm(const Tensor* X, const int n, const Matrix* U, bool Utransp): U is a null pointer");
+    throw std::runtime_error("Tucker::ttm(const Tensor<scalar_t>* X, const int n, const Matrix<scalar_t>* U, bool Utransp): U is a null pointer");
   }
   if(U->getNumElements() == 0) {
-    throw std::runtime_error("Tucker::ttm(const Tensor* X, const int n, const Matrix* U, bool Utransp): U has no entries");
+    throw std::runtime_error("Tucker::ttm(const Tensor<scalar_t>* X, const int n, const Matrix<scalar_t>* U, bool Utransp): U has no entries");
   }
   if(n < 0 || n >= X->N()) {
     std::ostringstream oss;
-    oss << "Tucker::ttm(const Tensor* X, const int n, const Matrix* U, "
+    oss << "Tucker::ttm(const Tensor<scalar_t>* X, const int n, const Matrix<scalar_t>* U, "
         << "bool Utransp): n = " << n << " is not in the range [0,"
         << X->N() << ")";
     throw std::runtime_error(oss.str());
@@ -513,7 +519,7 @@ Tensor* ttm(const Tensor* X, const int n,
       I[i] = nrows;
     }
   }
-  Tensor* Y = MemoryManager::safe_new<Tensor>(I);
+  Tensor<scalar_t>* Y = MemoryManager::safe_new<Tensor<scalar_t>>(I);
 
   // Call TTM
   ttm(X, n, U, Y, Utransp);
@@ -523,8 +529,9 @@ Tensor* ttm(const Tensor* X, const int n,
 }
 
 
-Tensor* ttm(const Tensor* const X, const int n,
-    const double* const Uptr, const int dimU,
+template <class scalar_t>
+Tensor<scalar_t>* ttm(const Tensor<scalar_t>* const X, const int n,
+    const scalar_t* const Uptr, const int dimU,
     const int strideU, bool Utransp)
 {
   // Allocate space for the new tensor
@@ -537,7 +544,7 @@ Tensor* ttm(const Tensor* const X, const int n,
       I[i] = dimU;
     }
   }
-  Tensor* Y = MemoryManager::safe_new<Tensor>(I);
+  Tensor<scalar_t>* Y = MemoryManager::safe_new<Tensor<scalar_t>>(I);
 
   // Call TTM
   ttm(X, n, Uptr, strideU, Y, Utransp);
@@ -547,8 +554,9 @@ Tensor* ttm(const Tensor* const X, const int n,
 }
 
 
-void ttm(const Tensor* const X, const int n,
-    const Matrix* const U, Tensor* Y, bool Utransp)
+template <class scalar_t>
+void ttm(const Tensor<scalar_t>* const X, const int n,
+    const Matrix<scalar_t>* const U, Tensor<scalar_t>* Y, bool Utransp)
 {
   // Check that the input is valid
   assert(U != 0);
@@ -564,9 +572,10 @@ void ttm(const Tensor* const X, const int n,
 }
 
 
-void ttm(const Tensor* const X, const int n,
-    const double* const Uptr, const int strideU,
-    Tensor* Y, bool Utransp)
+template <class scalar_t>
+void ttm(const Tensor<scalar_t>* const X, const int n,
+    const scalar_t* const Uptr, const int strideU,
+    Tensor<scalar_t>* Y, bool Utransp)
 {
   // Check that the input is valid
   assert(X != 0);
@@ -608,7 +617,7 @@ void ttm(const Tensor* const X, const int n,
     }
 
     // Call matrix matrix multiply
-    // call dgemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
+    // call gemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
     // C := alpha*op( A )*op( B ) + beta*C
     // A, B and C are matrices, with op( A ) an m by k matrix,
     // op( B ) a k by n matrix and C an m by n matrix.
@@ -620,8 +629,8 @@ void ttm(const Tensor* const X, const int n,
     int lda = strideU;
     int ldb = k;
     int ldc = m;
-    double alpha = 1;
-    double beta = 0;
+    scalar_t alpha = 1;
+    scalar_t beta = 0;
 
     if(Utransp) {
       transa = 'T';
@@ -662,8 +671,8 @@ void ttm(const Tensor* const X, const int n,
       int lda = (int)ncols;
       int ldb = strideU;
       int ldc = (int)ncols;
-      double alpha = 1;
-      double beta = 0;
+      scalar_t alpha = 1;
+      scalar_t beta = 0;
       if(Utransp) {
         transb = 'N';
         k = Unrows;
@@ -679,33 +688,34 @@ void ttm(const Tensor* const X, const int n,
 }
 
 
-MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metrics)
+template <class scalar_t>
+MetricData<scalar_t>* computeSliceMetrics(const Tensor<scalar_t>* Y, const int mode, const int metrics)
 {
   // If there are no slices, calling this function was a bad idea
   int numSlices = Y->size(mode);
   if(numSlices <= 0) {
     std::ostringstream oss;
-    oss << "Tucker::computeSliceMetrics(const Tensor* Y, const int mode, const int metrics): "
+    oss << "Tucker::computeSliceMetrics(const Tensor<scalar_t>* Y, const int mode, const int metrics): "
         << "numSlices = " << numSlices << " <= 0";
     throw std::runtime_error(oss.str());
   }
 
   // Allocate memory for the result
-  MetricData* result = MemoryManager::safe_new<MetricData>(metrics, numSlices);
+  MetricData<scalar_t>* result = MemoryManager::safe_new<MetricData<scalar_t>>(metrics, numSlices);
 
   // Initialize the result
-  double* delta;
+  scalar_t* delta;
   int* nArray;
   if((metrics & MEAN) || (metrics & VARIANCE)) {
-    delta = MemoryManager::safe_new_array<double>(numSlices);
+    delta = MemoryManager::safe_new_array<scalar_t>(numSlices);
     nArray = MemoryManager::safe_new_array<int>(numSlices);
   }
   for(int i=0; i<numSlices; i++) {
     if(metrics & MIN) {
-      result->getMinData()[i] = std::numeric_limits<double>::max();
+      result->getMinData()[i] = std::numeric_limits<scalar_t>::max();
     }
     if(metrics & MAX) {
-      result->getMaxData()[i] = std::numeric_limits<double>::lowest();
+      result->getMaxData()[i] = std::numeric_limits<scalar_t>::lowest();
     }
     if(metrics & SUM) {
       result->getSumData()[i] = 0;
@@ -721,7 +731,7 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
 
   if(Y->getNumElements() == 0) {
     if((metrics & MEAN) || (metrics & VARIANCE)) {
-      MemoryManager::safe_delete_array<double>(delta,numSlices);
+      MemoryManager::safe_delete_array<scalar_t>(delta,numSlices);
       MemoryManager::safe_delete_array<int>(nArray,numSlices);
     }
     return result;
@@ -733,7 +743,7 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
   size_t numSetsContig = Y->size().prod(mode+1,ndims-1,1); // Number of sets of contiguous elements per slice
   size_t distBetweenSets = Y->size().prod(0,mode); // Distance between sets of contiguous elements
 
-  const double* dataPtr;
+  const scalar_t* dataPtr;
   int slice;
   size_t i, c;
   #pragma omp parallel for default(shared) private(slice,i,c,dataPtr)
@@ -768,13 +778,13 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
   } // end for(slice=0; slice<numSlices; slice++)
 
   if((metrics & MEAN) || (metrics & VARIANCE)) {
-    MemoryManager::safe_delete_array<double>(delta,numSlices);
+    MemoryManager::safe_delete_array<scalar_t>(delta,numSlices);
     MemoryManager::safe_delete_array<int>(nArray,numSlices);
   }
   if(metrics & VARIANCE) {
     size_t sizeOfSlice = numContig*numSetsContig;
     for(int i=0; i<numSlices; i++) {
-      result->getVarianceData()[i] /= (double)sizeOfSlice;
+      result->getVarianceData()[i] /= (scalar_t)sizeOfSlice;
     }
   }
 
@@ -784,7 +794,8 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
 
 // Shift is applied before scale
 // We divide by scaleVals, not multiply
-void transformSlices(Tensor* Y, int mode, const double* scales, const double* shifts)
+template <class scalar_t>
+void transformSlices(Tensor<scalar_t>* Y, int mode, const scalar_t* scales, const scalar_t* shifts)
 {
   // If the tensor has no entries, no transformation is necessary
   size_t numEntries = Y->getNumElements();
@@ -798,7 +809,7 @@ void transformSlices(Tensor* Y, int mode, const double* scales, const double* sh
   size_t numSetsContig = Y->size().prod(mode+1,ndims-1,1); // Number of sets of contiguous elements per slice
   size_t distBetweenSets = Y->size().prod(0,mode); // Distance between sets of contiguous elements
 
-  double* dataPtr;
+  scalar_t* dataPtr;
   int slice;
   size_t i, c;
   #pragma omp parallel for default(shared) private(slice,i,c,dataPtr)
@@ -815,50 +826,54 @@ void transformSlices(Tensor* Y, int mode, const double* scales, const double* sh
 }
 
 
-void normalizeTensorMinMax(Tensor* Y, int mode, const char* scale_file)
+template <class scalar_t>
+void normalizeTensorMinMax(Tensor<scalar_t>* Y, int mode, const char* scale_file)
 {
-  MetricData* metrics = computeSliceMetrics(Y, mode, MAX+MIN);
+  MetricData<scalar_t>* metrics = computeSliceMetrics(Y, mode, MAX+MIN);
   int sizeOfModeDim = Y->size(mode);
-  double* scales = MemoryManager::safe_new_array<double>(sizeOfModeDim);
-  double* shifts = MemoryManager::safe_new_array<double>(sizeOfModeDim);
+  scalar_t* scales = MemoryManager::safe_new_array<scalar_t>(sizeOfModeDim);
+  scalar_t* shifts = MemoryManager::safe_new_array<scalar_t>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
     scales[i] = metrics->getMaxData()[i] - metrics->getMinData()[i];
     shifts[i] = -metrics->getMinData()[i];
   }
   transformSlices(Y,mode,scales,shifts);
   if(scale_file) writeScaleShift(mode,sizeOfModeDim,scales,shifts,scale_file);
-  MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
-  MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
+  MemoryManager::safe_delete_array<scalar_t>(scales,sizeOfModeDim);
+  MemoryManager::safe_delete_array<scalar_t>(shifts,sizeOfModeDim);
   MemoryManager::safe_delete<MetricData>(metrics);
 }
 
 // \todo This function is not being tested at all
-void normalizeTensorMax(Tensor* Y, int mode, const char* scale_file)
+template <class scalar_t>
+void normalizeTensorMax(Tensor<scalar_t>* Y, int mode, const char* scale_file)
 {
-  Tucker::MetricData* metrics = computeSliceMetrics(Y, mode,
+  Tucker::MetricData<scalar_t>* metrics = computeSliceMetrics(Y, mode,
       Tucker::MIN + Tucker::MAX);
   int sizeOfModeDim = Y->size(mode);
-  double* scales = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
-  double* shifts = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
+  scalar_t* scales = Tucker::MemoryManager::safe_new_array<scalar_t>(sizeOfModeDim);
+  scalar_t* shifts = Tucker::MemoryManager::safe_new_array<scalar_t>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
-    double scaleval = std::max(std::abs(metrics->getMinData()[i]),
+    scalar_t scaleval = std::max(std::abs(metrics->getMinData()[i]),
         std::abs(metrics->getMaxData()[i]));
     scales[i] = scaleval;
     shifts[i] = 0;
   }
   transformSlices(Y,mode,scales,shifts);
   if(scale_file) writeScaleShift(mode,sizeOfModeDim,scales,shifts,scale_file);
-  Tucker::MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
-  Tucker::MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete_array<scalar_t>(scales,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete_array<scalar_t>(shifts,sizeOfModeDim);
   Tucker::MemoryManager::safe_delete<Tucker::MetricData>(metrics);
 }
 
-void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh, const char* scale_file)
+
+template <class scalar_t>
+void normalizeTensorStandardCentering(Tensor<scalar_t>* Y, int mode, scalar_t stdThresh, const char* scale_file)
 {
-  MetricData* metrics = computeSliceMetrics(Y, mode, MEAN+VARIANCE);
+  MetricData<scalar_t>* metrics = computeSliceMetrics(Y, mode, MEAN+VARIANCE);
   int sizeOfModeDim = Y->size(mode);
-  double* scales = MemoryManager::safe_new_array<double>(sizeOfModeDim);
-  double* shifts = MemoryManager::safe_new_array<double>(sizeOfModeDim);
+  scalar_t* scales = MemoryManager::safe_new_array<scalar_t>(sizeOfModeDim);
+  scalar_t* shifts = MemoryManager::safe_new_array<scalar_t>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
     scales[i] = sqrt(metrics->getVarianceData()[i]);
     shifts[i] = -metrics->getMeanData()[i];
@@ -869,20 +884,22 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh, con
   }
   transformSlices(Y,mode,scales,shifts);
   if(scale_file) writeScaleShift(mode,sizeOfModeDim,scales,shifts,scale_file);
-  MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
-  MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
+  MemoryManager::safe_delete_array<scalar_t>(scales,sizeOfModeDim);
+  MemoryManager::safe_delete_array<scalar_t>(shifts,sizeOfModeDim);
   MemoryManager::safe_delete<MetricData>(metrics);
 }
 
 // \todo This function is not being tested
-void writeScaleShift(const int mode, const int sizeOfModeDim, const double* scales,
-    const double* shifts, const char* scale_file)
+template <class scalar_t>
+void writeScaleShift(const int mode, const int sizeOfModeDim, const scalar_t* scales,
+    const scalar_t* shifts, const char* scale_file)
 {
   std::ofstream outStream(scale_file);
 
   outStream << mode << std::endl;
 
-  outStream << std::fixed << std::setprecision(16);
+  // Set output precision to match scalar_t representation (8 or 16)
+  outStream << std::fixed << std::setprecision(std::numeric_limits<scalar_t>::digits);
   for(int i=0; i<sizeOfModeDim; i++)
   {
     outStream << scales[i] << " " << shifts[i] << std::endl;
@@ -892,7 +909,8 @@ void writeScaleShift(const int mode, const int sizeOfModeDim, const double* scal
 }
 
 // \todo This function is not being tested
-void readTensorBinary(Tensor* Y, const char* filename)
+template <class scalar_t>
+void readTensorBinary(Tensor<scalar_t>* Y, const char* filename)
 {
   // Count the number of filenames
   std::ifstream inStream(filename);
@@ -912,7 +930,7 @@ void readTensorBinary(Tensor* Y, const char* filename)
     int ndims = Y->N();
     if(nfiles != Y->size(ndims-1)) {
       std::ostringstream oss;
-      oss << "Tucker::readTensorBinary(Tensor* Y, const char* filename: "
+      oss << "Tucker::readTensorBinary(Tensor<scalar_t>* Y, const char* filename: "
           << "The number of filenames you provided is "
           << nfiles << ", but the dimension of the tensor's last mode is "
           << Y->size(ndims-1);
@@ -924,7 +942,8 @@ void readTensorBinary(Tensor* Y, const char* filename)
 }
 
 
-Tensor* importTensor(const char* filename)
+template <class scalar_t>
+Tensor<scalar_t>* importTensor(const char* filename)
 {
   // Open file
   std::ifstream ifs;
@@ -950,11 +969,11 @@ Tensor* importTensor(const char* filename)
   }
 
   // Create a tensor using that SizeArray
-  Tensor* t = MemoryManager::safe_new<Tensor>(sz);
+  Tensor<scalar_t>* t = MemoryManager::safe_new<Tensor<scalar_t>>(sz);
 
   // Read the entries of the tensor
   size_t numEntries = sz.prod();
-  double * data = t->data();
+  scalar_t * data = t->data();
   for(size_t i=0; i<numEntries; i++) {
     ifs >> data[i];
   }
@@ -966,7 +985,9 @@ Tensor* importTensor(const char* filename)
   return t;
 }
 
-void importTensorBinary(Tensor* t, const char* filename)
+
+template <class scalar_t>
+void importTensorBinary(Tensor<scalar_t>* t, const char* filename)
 {
   // Get the maximum file size we can read
   const std::streamoff MAX_OFFSET =
@@ -988,10 +1009,10 @@ void importTensorBinary(Tensor* t, const char* filename)
 
   // Assert that this size is consistent with the number of tensor entries
   size_t numEntries = t->getNumElements();
-  assert(size == numEntries*sizeof(double));
+  assert(size == numEntries*sizeof(scalar_t));
 
   // Read the file
-  double* data = t->data();
+  scalar_t* data = t->data();
   ifs.seekg(0, std::ios::beg);
   ifs.read((char*)data,size);
 
@@ -1000,7 +1021,8 @@ void importTensorBinary(Tensor* t, const char* filename)
 }
 
 // \todo This function never gets tested
-void importTimeSeries(Tensor* Y, const char* filename)
+template <class scalar_t>
+void importTimeSeries(Tensor<scalar_t>* Y, const char* filename)
 {
    // Open the file
    std::ifstream ifs;
@@ -1010,7 +1032,7 @@ void importTimeSeries(Tensor* Y, const char* filename)
    int ndims = Y->N();
 
    int nsteps = Y->size(ndims-1);
-   double* dataPtr = Y->data();
+   scalar_t* dataPtr = Y->data();
    size_t count = Y->size().prod(0,ndims-2);
    assert(count <= std::numeric_limits<int>::max());
 
@@ -1032,7 +1054,7 @@ void importTimeSeries(Tensor* Y, const char* filename)
 
      // Assert that this size is consistent with the number of tensor entries
      size_t numEntries = Y->getNumElements();
-     assert(size == numEntries*sizeof(double));
+     assert(size == numEntries*sizeof(scalar_t));
 
      // Read the file
      bifs.seekg(0, std::ios::beg);
@@ -1048,7 +1070,8 @@ void importTimeSeries(Tensor* Y, const char* filename)
 }
 
 
-Matrix* importMatrix(const char* filename)
+template <class scalar_t>
+Matrix<scalar_t>* importMatrix(const char* filename)
 {
   // Open file
   std::ifstream ifs;
@@ -1071,11 +1094,11 @@ Matrix* importMatrix(const char* filename)
     ifs >> nrows >> ncols;
 
   // Create a matrix
-  Matrix* m = MemoryManager::safe_new<Matrix>(nrows,ncols);
+  Matrix<scalar_t>* m = MemoryManager::safe_new<Matrix<scalar_t>>(nrows,ncols);
 
   // Read the entries of the tensor
   size_t numEntries = nrows*ncols;
-  double * data = m->data();
+  scalar_t * data = m->data();
   for(size_t i=0; i<numEntries; i++) {
     ifs >> data[i];
   }
@@ -1088,7 +1111,8 @@ Matrix* importMatrix(const char* filename)
 }
 
 
-SparseMatrix* importSparseMatrix(const char* filename)
+template <class scalar_t>
+SparseMatrix<scalar_t>* importSparseMatrix(const char* filename)
 {
   // Open file
   std::ifstream ifs;
@@ -1111,12 +1135,12 @@ SparseMatrix* importSparseMatrix(const char* filename)
     ifs >> nrows >> ncols >> nnz;
 
   // Create a matrix
-  SparseMatrix* m = MemoryManager::safe_new<SparseMatrix>(nrows,ncols,nnz);
+  SparseMatrix<scalar_t>* m = MemoryManager::safe_new<SparseMatrix<scalar_t>>(nrows,ncols,nnz);
 
   // Read the entries of the tensor
   int* rows = m->rows();
   int* cols = m->cols();
-  double* vals = m->vals();
+  scalar_t* vals = m->vals();
   for(size_t i=0; i<nnz; i++) {
     ifs >> rows[i] >> cols[i] >> vals[i];
     rows[i]--;
@@ -1131,7 +1155,8 @@ SparseMatrix* importSparseMatrix(const char* filename)
 }
 
 // \todo This function never gets tested
-void writeTensorBinary(const Tensor* Y, const char* filename)
+template <class scalar_t>
+void writeTensorBinary(const Tensor<scalar_t>* Y, const char* filename)
 {
   // Count the number of filenames
    std::ifstream inStream(filename);
@@ -1151,7 +1176,7 @@ void writeTensorBinary(const Tensor* Y, const char* filename)
      int ndims = Y->N();
      if(nfiles != Y->size(ndims-1)) {
        std::ostringstream oss;
-       oss << "Tucker::writeTensorBinary(const Tensor* Y, const char* filename: "
+       oss << "Tucker::writeTensorBinary(const Tensor<scalar_t>* Y, const char* filename: "
            << "The number of filenames you provided is "
            << nfiles << ", but the dimension of the tensor's last mode is "
            << Y->size(ndims-1);
@@ -1163,7 +1188,8 @@ void writeTensorBinary(const Tensor* Y, const char* filename)
 }
 
 // \todo This function never gets tested
-void exportTensor(const Tensor* Y, const char* filename)
+template <class scalar_t>
+void exportTensor(const Tensor<scalar_t>* Y, const char* filename)
 {
   // Open the file
   std::ofstream ofs;
@@ -1184,7 +1210,7 @@ void exportTensor(const Tensor* Y, const char* filename)
 
   // Write the elements of the tensor
   size_t numEntries = Y->size().prod();
-  const double* data = Y->data();
+  const scalar_t* data = Y->data();
   for(size_t i=0; i<numEntries; i++) {
     ofs << data[i] << std::endl;
   }
@@ -1193,7 +1219,9 @@ void exportTensor(const Tensor* Y, const char* filename)
   ofs.close();
 }
 
-void exportTensorBinary(const Tensor* Y, const char* filename)
+
+template <class scalar_t>
+void exportTensorBinary(const Tensor<scalar_t>* Y, const char* filename)
 {
   // Get the maximum file size we can write
   const std::streamoff MAX_OFFSET =
@@ -1202,7 +1230,7 @@ void exportTensorBinary(const Tensor* Y, const char* filename)
 
   // Determine how many bytes we are writing
   size_t numEntries = Y->getNumElements();
-//  std::cout << "Writing " << numEntries*sizeof(double) << " bytes...\n";
+//  std::cout << "Writing " << numEntries*sizeof(scalar_t) << " bytes...\n";
 
   // Open file
   std::ofstream ofs;
@@ -1210,15 +1238,16 @@ void exportTensorBinary(const Tensor* Y, const char* filename)
   assert(ofs.is_open());
 
   // Write the file
-  const double* data = Y->data();
-  ofs.write((char*)data,numEntries*sizeof(double));
+  const scalar_t* data = Y->data();
+  ofs.write((char*)data,numEntries*sizeof(scalar_t));
 
   // Close the file
   ofs.close();
 }
 
 // \todo This function never gets tested
-void exportTimeSeries(const Tensor* Y, const char* filename)
+template <class scalar_t>
+void exportTimeSeries(const Tensor<scalar_t>* Y, const char* filename)
 {
   // Open the file
   std::ifstream ifs;
@@ -1239,8 +1268,8 @@ void exportTimeSeries(const Tensor* Y, const char* filename)
     ofs.open(stepFilename.c_str(), std::ios::out | std::ios::binary);
     assert(ofs.is_open());
 
-    const double* data = Y->data() + offset;
-    ofs.write((char*)data,numEntriesPerTimestep*sizeof(double));
+    const scalar_t* data = Y->data() + offset;
+    ofs.write((char*)data,numEntriesPerTimestep*sizeof(scalar_t));
     ofs.close();
 
     offset += numEntriesPerTimestep;
@@ -1248,9 +1277,10 @@ void exportTimeSeries(const Tensor* Y, const char* filename)
 }
 
 
-void premultByDiag(const Vector* diag, Matrix* mat)
+template <class scalar_t>
+void premultByDiag(const Vector<scalar_t>* diag, Matrix<scalar_t>* mat)
 {
-  double* mydata = mat->data();
+  scalar_t* mydata = mat->data();
   int myrows = mat->nrows();
   int mycols = mat->ncols();
 

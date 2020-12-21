@@ -74,6 +74,7 @@ namespace Tucker {
  * 12 & 13 & 14 & 15 & 16 & 17 & 18 & 19 & 20 & 21 & 22 & 23
  * \end{array}\right]\f$
  */
+template<class scalar_t>
 class Tensor {
 public:
   /** \brief Constructor
@@ -127,7 +128,7 @@ public:
    * If the computed norm is within \f$10^{-10}\f$ of the gold
    * standard, the test passes.
    */
-  double norm2() const;
+  scalar_t norm2() const;
 
   /** \brief Data pointer
    *
@@ -137,7 +138,7 @@ public:
    *
    * \exception std::runtime_error data was never allocated
    */
-  double* data();
+  scalar_t* data();
 
   /** \brief Const data pointer
    *
@@ -147,7 +148,7 @@ public:
    *
    * \exception std::runtime_error data was never allocated
    */
-  const double* data() const;
+  const scalar_t* data() const;
 
   /** \brief Prints the tensor to std::cout
    *
@@ -198,13 +199,13 @@ protected:
   SizeArray I_;
 
   //! Tensor data
-  double* data_;
+  scalar_t* data_;
 
 private:
   /// @cond EXCLUDE
   // Copy constructor
   // We provide a private one with no implementation to disable it
-  Tensor(const Tensor& t);
+  Tensor(const Tensor<scalar_t>& t);
   /// @endcond
 };
 
@@ -221,8 +222,9 @@ private:
  * \param t2 A tensor to compare
  * \param tol The maximum allowable difference between entries
  */
-bool isApproxEqual(const Tensor* t1, const Tensor* t2,
-    double tol, bool verbose=false);
+template<class scalar_t>
+bool isApproxEqual(const Tensor<scalar_t>* t1, const Tensor<scalar_t>* t2,
+    scalar_t tol, bool verbose=false);
 
 } // end of namespace Tucker
 

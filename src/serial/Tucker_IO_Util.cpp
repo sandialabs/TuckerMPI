@@ -119,7 +119,8 @@ SizeArray* stringParseSizeArray(const std::vector<std::string>& lines,
   return arr; // Returns empty array if nothing is ever pushed onto tmp vector
 }
 
-void printEigenvalues(const TuckerTensor* factorization,
+template <class scalar_t>
+void printEigenvalues(const TuckerTensor<scalar_t>* factorization,
     const std::string& filePrefix)
 {
   // For each mode...

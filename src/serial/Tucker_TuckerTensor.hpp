@@ -49,6 +49,7 @@ namespace Tucker {
  *
  * Allows users to access the data directly
  */
+template<class scalar_t>
 class TuckerTensor {
 public:
   /** \brief Constructor
@@ -74,8 +75,8 @@ public:
     }
 
     N = ndims;
-    U = MemoryManager::safe_new_array<Matrix*>(N);
-    eigenvalues = MemoryManager::safe_new_array<double*>(N);
+    U = MemoryManager::safe_new_array<Matrix<scalar_t>*>(N);
+    eigenvalues = MemoryManager::safe_new_array<scalar_t*>(N);
     G = 0;
 
     for(int i=0; i<N; i++) {
@@ -97,11 +98,11 @@ public:
   {
     if(G) MemoryManager::safe_delete<Tensor>(G);
     for(int i=0; i<N; i++) {
-      if(eigenvalues[i]) MemoryManager::safe_delete_array<double>(eigenvalues[i],U[i]->nrows());
-      if(U[i]) MemoryManager::safe_delete<Matrix>(U[i]);
+      if(eigenvalues[i]) MemoryManager::safe_delete_array<scalar_t>(eigenvalues[i],U[i]->nrows());
+      if(U[i]) MemoryManager::safe_delete<Matrix<scalar_t>>(U[i]);
     }
-    MemoryManager::safe_delete_array<Matrix*>(U,N);
-    MemoryManager::safe_delete_array<double*>(eigenvalues,N);
+    MemoryManager::safe_delete_array<Matrix<scalar_t>*>(U,N);
+    MemoryManager::safe_delete_array<scalar_t*>(eigenvalues,N);
 
     MemoryManager::safe_delete_array<Timer>(gram_timer_,N);
     MemoryManager::safe_delete_array<Timer>(eigen_timer_,N);
@@ -129,7 +130,7 @@ public:
   }
 
   //! The core tensor
-  Tensor* G;
+  Tensor<scalar_t>* G;
 
   /** \brief Factors
    *
@@ -138,7 +139,7 @@ public:
    * \note These are stored as pointers because Matrix has no
    * default constructor.
    */
-  Matrix** U;
+  Matrix<scalar_t>** U;
 
   //! The number of factors
   int N;
@@ -148,23 +149,25 @@ public:
    * #eigenvalues[n] is an array which holds the eigenvalues of
    * the n-th Gram matrix
    */
-  double** eigenvalues;
+  scalar_t** eigenvalues;
 
   /** \note STHOSVD has been declared as a friend function of
    * TuckerTensor so that the timers can remain private
    */
-  friend const struct TuckerTensor* STHOSVD(const Tensor* const X,
-      const double epsilon, bool flipSign);
+  template <class T>
+  friend const struct TuckerTensor<T>* STHOSVD(const Tensor<T>* const X,
+      const scalar_t epsilon, bool flipSign);
 
   /** \note STHOSVD has been declared as a friend function of
    * TuckerTensor so that the timers can remain private
    */
-  friend const struct TuckerTensor* STHOSVD(const Tensor* const X,
+  template <class T>
+  friend const struct TuckerTensor<T>* STHOSVD(const Tensor<T>* const X,
       const SizeArray* const reducedI, bool flipSign);
 
 private:
   /// @cond EXCLUDE
-  TuckerTensor(const TuckerTensor& tt);
+  TuckerTensor(const TuckerTensor<scalar_t>& tt);
   /// @endcond
 
   /// \brief Array of timers for Gram matrix computation
