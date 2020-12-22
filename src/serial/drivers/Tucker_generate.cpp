@@ -12,6 +12,8 @@
 
 int main(int argc, char* argv[])
 {
+  typedef double scalar_t;  // specify precision
+  
   //
   // Get the name of the input file
   //
@@ -95,8 +97,8 @@ int main(int argc, char* argv[])
   std::cout << "Generating a random core tensor...\n";
   Tucker::Timer coreTimer;
   coreTimer.start();
-  Tucker::TuckerTensor fact(nd);
-  fact.G = Tucker::MemoryManager::safe_new<Tucker::Tensor>(*R_dims);
+  Tucker::TuckerTensor<scalar_t> fact(nd);
+  fact.G = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*R_dims);
   size_t nnz = R_dims->prod();
   double* dataptr = fact.G->data();
   for(size_t i=0; i<nnz; i++) {
@@ -114,7 +116,7 @@ int main(int argc, char* argv[])
     std::cout << "Generating factor matrix " << d << "...\n";
     int nrows = (*I_dims)[d];
     int ncols = (*R_dims)[d];
-    fact.U[d] = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrows,ncols);
+    fact.U[d] = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nrows,ncols);
     nnz = nrows*ncols;
     dataptr = fact.U[d]->data();
     for(size_t i=0; i<nnz; i++) {
@@ -127,15 +129,15 @@ int main(int argc, char* argv[])
   ////////////////////////////////////////////////////////
   // Construct the global tensor using a series of TTMs //
   ////////////////////////////////////////////////////////
-  Tucker::Tensor* product = fact.G;
+  Tucker::Tensor<scalar_t>* product = fact.G;
   for(int d=0; d<nd; d++) {
     Tucker::Timer ttmTimer;
     ttmTimer.start();
     std::cout << "Performing mode " << d << " TTM...\n";
-    Tucker::Tensor* temp = Tucker::ttm(product, d, fact.U[d]);
+    Tucker::Tensor<scalar_t>* temp = Tucker::ttm(product, d, fact.U[d]);
 
     if(product != fact.G) {
-      Tucker::MemoryManager::safe_delete<Tucker::Tensor>(product);
+      Tucker::MemoryManager::safe_delete(product);
     }
     product = temp;
     ttmTimer.stop();

@@ -163,12 +163,12 @@ int main()
   trueData[10][3][4] = 0.301217280929192;
 
   // Read the matrix from a binary file
-  Tucker::Tensor* tensor =
-      Tucker::importTensor("input_files/3x5x7x11.txt");
+  Tucker::Tensor<double>* tensor =
+      Tucker::importTensor<double>("input_files/3x5x7x11.txt");
 
   for(int n=0; n<tensor->N(); n++) {
     // Compute the slice metrics
-    Tucker::MetricData* mets = Tucker::computeSliceMetrics(tensor, n,
+    Tucker::MetricData<double>* mets = Tucker::computeSliceMetrics(tensor, n,
         Tucker::MIN + Tucker::MAX + Tucker::SUM + Tucker::MEAN + Tucker::VARIANCE);
 
     for(int j=0; j<tensor->size(n); j++) {
@@ -215,11 +215,11 @@ int main()
       }
     }
 
-    Tucker::MemoryManager::safe_delete<Tucker::MetricData>(mets);
+    Tucker::MemoryManager::safe_delete(mets);
   }
 
   // Free memory
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::MemoryManager::safe_delete(tensor);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();

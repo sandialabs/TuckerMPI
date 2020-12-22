@@ -143,4 +143,9 @@ void printEigenvalues(const TuckerTensor<scalar_t>* factorization,
   }
 }
 
+// Explicit instantiations to build static library for both single and double precision
+template void printEigenvalues(const TuckerTensor<float>*, const std::string&);
+
+template void printEigenvalues(const TuckerTensor<double>*, const std::string&);
+
 }

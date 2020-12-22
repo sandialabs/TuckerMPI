@@ -107,6 +107,10 @@ private:
   /// @endcond
 };
 
+// Explicit instantiations to build static library for both single and double precision
+template class Matrix<float>;
+template class Matrix<double>;
+
 } // end of namespace Tucker
 
 #endif /* MATRIX_HPP_ */

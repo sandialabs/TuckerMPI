@@ -68,6 +68,10 @@ private:
   /// @endcond
 };
 
+// Explicit instantiations to build static library for both single and double precision
+template class Vector<float>;
+template class Vector<double>;
+
 } // end of namespace Tucker
 
 

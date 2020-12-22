@@ -17,20 +17,20 @@ int main()
       Tucker::MemoryManager::safe_new<Tucker::SizeArray>(4);
   for(int i=0; i<4; i++)
     (*size)[i] = 2;
-  Tucker::Tensor* t =
-      Tucker::MemoryManager::safe_new<Tucker::Tensor>(*size);
+  Tucker::Tensor<double>* t =
+      Tucker::MemoryManager::safe_new<Tucker::Tensor<double>>(*size);
   double* data = t->data();
   for(int i=0; i<16; i++)
     data[i] = i+1;
 
-  Tucker::Matrix* Gram;
+  Tucker::Matrix<double>* Gram;
   Gram = Tucker::computeGram(t,0);
   double trueSol0[4];
   trueSol0[0] = 680; trueSol0[1] = 744;
   trueSol0[2] = 744; trueSol0[3] = 816;
   bool isEqual = checkUTEqual(Gram->data(), trueSol0, 2);
   if(!isEqual) return EXIT_FAILURE;
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Gram);
+  Tucker::MemoryManager::safe_delete(Gram);
 
   Gram = Tucker::computeGram(t,1);
   double trueSol1[4];
@@ -38,7 +38,7 @@ int main()
   trueSol1[2] = 732; trueSol1[3] = 884;
   isEqual = checkUTEqual(Gram->data(), trueSol1, 2);
   if(!isEqual) return EXIT_FAILURE;
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Gram);
+  Tucker::MemoryManager::safe_delete(Gram);
 
   Gram = Tucker::computeGram(t,2);
   double trueSol2[4];
@@ -46,7 +46,7 @@ int main()
   trueSol2[2] = 684; trueSol2[3] = 1020;
   isEqual = checkUTEqual(Gram->data(), trueSol2, 2);
   if(!isEqual) return EXIT_FAILURE;
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Gram);
+  Tucker::MemoryManager::safe_delete(Gram);
 
   Gram = Tucker::computeGram(t,3);
   double trueSol3[4];
@@ -54,10 +54,10 @@ int main()
   trueSol3[2] = 492; trueSol3[3] = 1292;
   isEqual = checkUTEqual(Gram->data(), trueSol3, 2);
   if(!isEqual) return EXIT_FAILURE;
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Gram);
+  Tucker::MemoryManager::safe_delete(Gram);
 
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(t);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(size);
+  Tucker::MemoryManager::safe_delete(t);
+  Tucker::MemoryManager::safe_delete(size);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();

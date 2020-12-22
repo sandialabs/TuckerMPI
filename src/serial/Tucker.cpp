@@ -338,7 +338,7 @@ const struct TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* X,
   int ndims = X->N();
 
   // Create a struct to store the factorization
-  struct TuckerTensor<scalar_t>* factorization = MemoryManager::safe_new<struct TuckerTensor<scalar_t>>(ndims);
+  struct TuckerTensor<scalar_t>* factorization = MemoryManager::safe_new<TuckerTensor<scalar_t>>(ndims);
   factorization->total_timer_.start();
 
   // Compute the threshold
@@ -435,7 +435,7 @@ const struct TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* X,
   }
 
   // Create a struct to store the factorization
-  struct TuckerTensor<scalar_t>* factorization = MemoryManager::safe_new<struct TuckerTensor<scalar_t>>(X->N());
+  struct TuckerTensor<scalar_t>* factorization = MemoryManager::safe_new<TuckerTensor<scalar_t>>(X->N());
   factorization->total_timer_.start();
 
   const Tensor<scalar_t>* Y = X;
@@ -839,9 +839,9 @@ void normalizeTensorMinMax(Tensor<scalar_t>* Y, int mode, const char* scale_file
   }
   transformSlices(Y,mode,scales,shifts);
   if(scale_file) writeScaleShift(mode,sizeOfModeDim,scales,shifts,scale_file);
-  MemoryManager::safe_delete_array<scalar_t>(scales,sizeOfModeDim);
-  MemoryManager::safe_delete_array<scalar_t>(shifts,sizeOfModeDim);
-  MemoryManager::safe_delete<MetricData>(metrics);
+  MemoryManager::safe_delete_array(scales,sizeOfModeDim);
+  MemoryManager::safe_delete_array(shifts,sizeOfModeDim);
+  MemoryManager::safe_delete(metrics);
 }
 
 // \todo This function is not being tested at all
@@ -861,9 +861,9 @@ void normalizeTensorMax(Tensor<scalar_t>* Y, int mode, const char* scale_file)
   }
   transformSlices(Y,mode,scales,shifts);
   if(scale_file) writeScaleShift(mode,sizeOfModeDim,scales,shifts,scale_file);
-  Tucker::MemoryManager::safe_delete_array<scalar_t>(scales,sizeOfModeDim);
-  Tucker::MemoryManager::safe_delete_array<scalar_t>(shifts,sizeOfModeDim);
-  Tucker::MemoryManager::safe_delete<Tucker::MetricData>(metrics);
+  Tucker::MemoryManager::safe_delete_array(scales,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete_array(shifts,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete(metrics);
 }
 
 
@@ -884,9 +884,9 @@ void normalizeTensorStandardCentering(Tensor<scalar_t>* Y, int mode, scalar_t st
   }
   transformSlices(Y,mode,scales,shifts);
   if(scale_file) writeScaleShift(mode,sizeOfModeDim,scales,shifts,scale_file);
-  MemoryManager::safe_delete_array<scalar_t>(scales,sizeOfModeDim);
-  MemoryManager::safe_delete_array<scalar_t>(shifts,sizeOfModeDim);
-  MemoryManager::safe_delete<MetricData>(metrics);
+  MemoryManager::safe_delete_array(scales,sizeOfModeDim);
+  MemoryManager::safe_delete_array(shifts,sizeOfModeDim);
+  MemoryManager::safe_delete(metrics);
 }
 
 // \todo This function is not being tested
@@ -1292,5 +1292,64 @@ void premultByDiag(const Vector<scalar_t>* diag, Matrix<scalar_t>* mat)
     }
   }
 }
+
+// Explicit instantiations to build static library for both single and double precision
+template Matrix<float>* computeGram(const Tensor<float>* Y, const int n);
+template void computeGram(const Tensor<float>*, const int, float*, const int);
+template void computeEigenpairs(Matrix<float>*, float*&, const bool);
+template void computeEigenpairs(Matrix<float>*, float*&, Matrix<float>*&, const int, const bool);
+template void computeEigenpairs(Matrix<float>*, float*&, Matrix<float>*&, const float, const bool);
+template const struct TuckerTensor<float>* STHOSVD(const Tensor<float>*, const float, bool);
+template const struct TuckerTensor<float>* STHOSVD(const Tensor<float>*, const SizeArray*, bool);
+template Tensor<float>* ttm(const Tensor<float>*, const int, const Matrix<float>*, bool);
+template Tensor<float>* ttm(const Tensor<float>* const, const int, const float* const, const int, const int, bool);
+template void ttm(const Tensor<float>* const, const int, const Matrix<float>* const, Tensor<float>*, bool);
+template void ttm(const Tensor<float>* const, const int, const float* const, const int, Tensor<float>*, bool);
+template MetricData<float>* computeSliceMetrics(const Tensor<float>*, const int, const int);
+template void transformSlices(Tensor<float>*, int, const float*, const float*);
+template void normalizeTensorMinMax(Tensor<float>*, int, const char*);
+template void normalizeTensorMax(Tensor<float>*, int, const char*);
+template void normalizeTensorStandardCentering(Tensor<float>*, int, float, const char*);
+template void writeScaleShift(const int, const int, const float*, const float*, const char*);
+template void readTensorBinary(Tensor<float>* Y, const char* filename);
+template Tensor<float>* importTensor(const char*);
+template void importTensorBinary(Tensor<float>*, const char*);
+template void importTimeSeries(Tensor<float>*, const char*);
+template Matrix<float>* importMatrix(const char*);
+template SparseMatrix<float>* importSparseMatrix(const char*);
+template void writeTensorBinary(const Tensor<float>*, const char*);
+template void exportTensor(const Tensor<float>*, const char*);
+template void exportTensorBinary(const Tensor<float>*, const char*);
+template void exportTimeSeries(const Tensor<float>*, const char*);
+template void premultByDiag(const Vector<float>*, Matrix<float>*);
+
+template Matrix<double>* computeGram(const Tensor<double>* Y, const int n);
+template void computeGram(const Tensor<double>*, const int, double*, const int);
+template void computeEigenpairs(Matrix<double>*, double*&, const bool);
+template void computeEigenpairs(Matrix<double>*, double*&, Matrix<double>*&, const int, const bool);
+template void computeEigenpairs(Matrix<double>*, double*&, Matrix<double>*&, const double, const bool);
+template const struct TuckerTensor<double>* STHOSVD(const Tensor<double>*, const double, bool);
+template const struct TuckerTensor<double>* STHOSVD(const Tensor<double>*, const SizeArray*, bool);
+template Tensor<double>* ttm(const Tensor<double>*, const int, const Matrix<double>*, bool);
+template Tensor<double>* ttm(const Tensor<double>* const, const int, const double* const, const int, const int, bool);
+template void ttm(const Tensor<double>* const, const int, const Matrix<double>* const, Tensor<double>*, bool);
+template void ttm(const Tensor<double>* const, const int, const double* const, const int, Tensor<double>*, bool);
+template MetricData<double>* computeSliceMetrics(const Tensor<double>*, const int, const int);
+template void transformSlices(Tensor<double>*, int, const double*, const double*);
+template void normalizeTensorMinMax(Tensor<double>*, int, const char*);
+template void normalizeTensorMax(Tensor<double>*, int, const char*);
+template void normalizeTensorStandardCentering(Tensor<double>*, int, double, const char*);
+template void writeScaleShift(const int, const int, const double*, const double*, const char*);
+template void readTensorBinary(Tensor<double>* Y, const char* filename);
+template Tensor<double>* importTensor(const char*);
+template void importTensorBinary(Tensor<double>*, const char*);
+template void importTimeSeries(Tensor<double>*, const char*);
+template Matrix<double>* importMatrix(const char*);
+template SparseMatrix<double>* importSparseMatrix(const char*);
+template void writeTensorBinary(const Tensor<double>*, const char*);
+template void exportTensor(const Tensor<double>*, const char*);
+template void exportTensorBinary(const Tensor<double>*, const char*);
+template void exportTimeSeries(const Tensor<double>*, const char*);
+template void premultByDiag(const Vector<double>*, Matrix<double>*);
 
 } // end namespace Tucker

@@ -13,8 +13,8 @@
 int main()
 {
   // Read the tensor from a binary file
-  Tucker::Matrix* matrix =
-      Tucker::importMatrix("input_files/5x5.txt");
+  Tucker::Matrix<double>* matrix =
+      Tucker::importMatrix<double>("input_files/5x5.txt");
 
   // Initialize the lower triangular portion of the matrix with NAN
   for(int r=0; r<5; r++) {
@@ -59,8 +59,8 @@ int main()
     }
   }
 
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
-  Tucker::MemoryManager::safe_delete_array<double>(eigenvalues,5);
+  Tucker::MemoryManager::safe_delete(matrix);
+  Tucker::MemoryManager::safe_delete_array(eigenvalues,5);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();

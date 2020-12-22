@@ -100,7 +100,7 @@ Vector<scalar_t>* SparseMatrix<scalar_t>::multiply(const Vector<scalar_t>* v, bo
   result->initialize();
 
   scalar_t* resultData = result->data();
-  const double* vData = v->data();
+  const scalar_t* vData = v->data();
   for(int i=0; i<nnz_; i++) {
     if(transp) {
       // result(col(i)) += val(i) m(row(i))
@@ -114,5 +114,9 @@ Vector<scalar_t>* SparseMatrix<scalar_t>::multiply(const Vector<scalar_t>* v, bo
 
   return result;
 }
+
+// Explicit instantiations to build static library for both single and double precision
+template class SparseMatrix<float>;
+template class SparseMatrix<double>;
 
 } /* namespace Tucker */

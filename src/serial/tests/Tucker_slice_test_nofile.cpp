@@ -17,8 +17,8 @@ int main()
   (*size)[1] = 3;
   (*size)[2] = 5;
   (*size)[3] = 7;
-  Tucker::Tensor* t =
-      Tucker::MemoryManager::safe_new<Tucker::Tensor>(*size);
+  Tucker::Tensor<double>* t =
+      Tucker::MemoryManager::safe_new<Tucker::Tensor<double>>(*size);
 
   size_t nnz = size->prod();
   double* data = t->data();
@@ -80,7 +80,7 @@ int main()
   trueData[6][3][2] = 5865;
 
   for(int i=0; i<size->size(); i++) {
-    Tucker::MetricData* mets = Tucker::computeSliceMetrics(t,i,Tucker::MIN + Tucker::MAX + Tucker::SUM);
+    Tucker::MetricData<double>* mets = Tucker::computeSliceMetrics(t,i,Tucker::MIN + Tucker::MAX + Tucker::SUM);
     for(int j=0; j<(*size)[i]; j++) {
       std::cout << "The maximum of slice " << j << " of mode "
           << i << " is " << mets->getMaxData()[j] << std::endl;
@@ -108,11 +108,11 @@ int main()
         return EXIT_FAILURE;
       }
     }
-    Tucker::MemoryManager::safe_delete<Tucker::MetricData>(mets);
+    Tucker::MemoryManager::safe_delete(mets);
   }
 
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(size);
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(t);
+  Tucker::MemoryManager::safe_delete(size);
+  Tucker::MemoryManager::safe_delete(t);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();

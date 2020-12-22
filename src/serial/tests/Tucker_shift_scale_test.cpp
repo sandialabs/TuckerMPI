@@ -9,11 +9,11 @@
 
 int main()
 {
-  Tucker::Tensor* tensor;
-  Tucker::Tensor* true_sol;
+  Tucker::Tensor<double>* tensor;
+  Tucker::Tensor<double>* true_sol;
 
   // Read tensor from file
-  tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
+  tensor = Tucker::importTensor<double>("input_files/3x5x7x11.txt");
 
   double shifts0[3] = {-0.450368098480610,
       -0.408899824586946, 0.094037031444121};
@@ -22,20 +22,20 @@ int main()
       0.341369101972144, 0.357212764090606};
 
   // Read true solution from file
-  true_sol = Tucker::importTensor("input_files/3x5x7x11_ss0.txt");
+  true_sol = Tucker::importTensor<double>("input_files/3x5x7x11_ss0.txt");
 
   // Call shift-scale
   Tucker::transformSlices(tensor,0,scales0,shifts0);
 
-  if(!isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
     return EXIT_FAILURE;
   }
 
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(true_sol);
+  Tucker::MemoryManager::safe_delete(tensor);
+  Tucker::MemoryManager::safe_delete(true_sol);
 
   // Read tensor from file
-  tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
+  tensor = Tucker::importTensor<double>("input_files/3x5x7x11.txt");
 
   double shifts1[5] = {0.463612200951355, -0.011100213839396,
       -0.279689899431367, -0.273791359158714, 0.036787804512826};
@@ -44,20 +44,20 @@ int main()
       -0.038768240608501, 0.139323762199356, 0.417336040866845};
 
   // Read true solution from file
-  true_sol = Tucker::importTensor("input_files/3x5x7x11_ss1.txt");
+  true_sol = Tucker::importTensor<double>("input_files/3x5x7x11_ss1.txt");
 
   // Call shift-scale
   Tucker::transformSlices(tensor,1,scales1,shifts1);
 
-  if(!isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
     return EXIT_FAILURE;
   }
 
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(true_sol);
+  Tucker::MemoryManager::safe_delete(tensor);
+  Tucker::MemoryManager::safe_delete(true_sol);
 
   // Read tensor from file
-  tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
+  tensor = Tucker::importTensor<double>("input_files/3x5x7x11.txt");
 
   double shifts2[7] = {-0.338427426109669, 0.215635404167474,
       0.077738876192409, -0.066701022790881, 0.384242782631094,
@@ -68,20 +68,20 @@ int main()
       0.480978160932146, -0.372963057805143};
 
   // Read true solution from file
-  true_sol = Tucker::importTensor("input_files/3x5x7x11_ss2.txt");
+  true_sol = Tucker::importTensor<double>("input_files/3x5x7x11_ss2.txt");
 
   // Call shift-scale
   Tucker::transformSlices(tensor,2,scales2,shifts2);
 
-  if(!isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
     return EXIT_FAILURE;
   }
 
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(true_sol);
+  Tucker::MemoryManager::safe_delete(tensor);
+  Tucker::MemoryManager::safe_delete(true_sol);
 
   // Read tensor from file
-  tensor = Tucker::importTensor("input_files/3x5x7x11.txt");
+  tensor = Tucker::importTensor<double>("input_files/3x5x7x11.txt");
 
   double shifts3[11] = {-0.267759854038207, -0.476367533341775,
        0.107432610401855, -0.389190678712850, -0.092540492121601,
@@ -94,17 +94,17 @@ int main()
        0.185279684412687, 0.409454555749395, 0.110868982383243};
 
   // Read true solution from file
-  true_sol = Tucker::importTensor("input_files/3x5x7x11_ss3.txt");
+  true_sol = Tucker::importTensor<double>("input_files/3x5x7x11_ss3.txt");
 
   // Call shift-scale
   Tucker::transformSlices(tensor,3,scales3,shifts3);
 
-  if(!isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
     return EXIT_FAILURE;
   }
 
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(true_sol);
+  Tucker::MemoryManager::safe_delete(tensor);
+  Tucker::MemoryManager::safe_delete(true_sol);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();

@@ -13,14 +13,14 @@ int main()
   const double TRUE_SOLUTION = 9.690249359274157;
 
   // Read the matrix from a binary file
-  Tucker::Tensor* tensor =
-      Tucker::importTensor("input_files/3x5x7x11.txt");
+  Tucker::Tensor<double>* tensor =
+      Tucker::importTensor<double>("input_files/3x5x7x11.txt");
 
   // Compute its norm
   double norm = sqrt(tensor->norm2());
 
   // Free memory
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::MemoryManager::safe_delete(tensor);
 
   // Compare computed solution to true solution
   double diff = std::abs(norm-TRUE_SOLUTION);

@@ -131,13 +131,13 @@ public:
    */
   ~MetricData()
   {
-    if(minData_) MemoryManager::safe_delete_array<scalar_t>(minData_,dimension_);
-    if(maxData_) MemoryManager::safe_delete_array<scalar_t>(maxData_,dimension_);
-    if(sumData_) MemoryManager::safe_delete_array<scalar_t>(sumData_,dimension_);
-    if(norm1Data_) MemoryManager::safe_delete_array<scalar_t>(norm1Data_,dimension_);
-    if(norm2Data_) MemoryManager::safe_delete_array<scalar_t>(norm2Data_,dimension_);
-    if(meanData_) MemoryManager::safe_delete_array<scalar_t>(meanData_,dimension_);
-    if(varianceData_) MemoryManager::safe_delete_array<scalar_t>(varianceData_,dimension_);
+    if(minData_) MemoryManager::safe_delete_array(minData_,dimension_);
+    if(maxData_) MemoryManager::safe_delete_array(maxData_,dimension_);
+    if(sumData_) MemoryManager::safe_delete_array(sumData_,dimension_);
+    if(norm1Data_) MemoryManager::safe_delete_array(norm1Data_,dimension_);
+    if(norm2Data_) MemoryManager::safe_delete_array(norm2Data_,dimension_);
+    if(meanData_) MemoryManager::safe_delete_array(meanData_,dimension_);
+    if(varianceData_) MemoryManager::safe_delete_array(varianceData_,dimension_);
   }
 
   /** \brief Returns the min-data array
@@ -225,6 +225,10 @@ private:
   scalar_t* varianceData_; ///< Variance array
   int dimension_;
 };
+
+// Explicit instantiations to build static library for both single and double precision
+template class MetricData<float>;
+template class MetricData<double>;
 
 }
 

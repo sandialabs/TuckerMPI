@@ -30,11 +30,11 @@ bool checkUTEqual(const double* arr1, const double* arr2, int numRows)
 int main()
 {
   // Read the matrix from a binary file
-  Tucker::Tensor* tensor =
-      Tucker::importTensor("input_files/3x5x7x11.txt");
+  Tucker::Tensor<double>* tensor =
+      Tucker::importTensor<double>("input_files/3x5x7x11.txt");
 
   // Compute the Gram matrix
-  Tucker::Matrix* matrix = Tucker::computeGram(tensor,0);
+  Tucker::Matrix<double>* matrix = Tucker::computeGram(tensor,0);
 
   const double TRUE_SOLUTION_0[3*3] =
     {30.443306716415002, 2.839326384970902, 3.302846757455287,
@@ -46,7 +46,7 @@ int main()
   if(!matchesTrueSol)
     return EXIT_FAILURE;
 
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete(matrix);
 
   // Compute the Gram matrix
   matrix = Tucker::computeGram(tensor,1);
@@ -63,7 +63,7 @@ int main()
   if(!matchesTrueSol)
     return EXIT_FAILURE;
 
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete(matrix);
 
   // Compute the Gram matrix
   matrix = Tucker::computeGram(tensor,2);
@@ -82,7 +82,7 @@ int main()
   if(!matchesTrueSol)
     return EXIT_FAILURE;
 
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete(matrix);
 
   // Compute the Gram matrix
   matrix = Tucker::computeGram(tensor,3);
@@ -105,10 +105,10 @@ int main()
   if(!matchesTrueSol)
     return EXIT_FAILURE;
 
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete(matrix);
 
   // Free memory
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::MemoryManager::safe_delete(tensor);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();
