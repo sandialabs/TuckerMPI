@@ -39,17 +39,11 @@
 #ifndef TUCKERTENSOR_HPP_
 #define TUCKERTENSOR_HPP_
 
-//#include "Tucker.hpp"
 #include "Tucker_Tensor.hpp"
 #include "Tucker_Matrix.hpp"
 #include "Tucker_Timer.hpp"
 
 namespace Tucker {
-
-//template const TuckerTensor<float>* STHOSVD(const Tensor<float>*, const float, bool);
-//template const TuckerTensor<float>* STHOSVD(const Tensor<float>*, const SizeArray*, bool);
-//template const TuckerTensor<double>* STHOSVD(const Tensor<double>*, const double, bool);
-//template const TuckerTensor<double>* STHOSVD(const Tensor<double>*, const SizeArray*, bool);
 
 /** \brief A structure for storing a %Tucker decomposition
  *
@@ -157,18 +151,9 @@ public:
    */
   scalar_t** eigenvalues;
 
-  /** \note STHOSVD has been declared as a friend function of
-   * TuckerTensor so that the timers can remain private
+  /** \note timers have been declared public because befriending the templated
+   * STHOSVD functions is difficult to do for static library
    */
-  //friend const struct TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
-  //    const scalar_t epsilon, bool flipSign);
-
-  /** \note STHOSVD has been declared as a friend function of
-   * TuckerTensor so that the timers can remain private
-   */
-  //friend const struct TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
-  //    const SizeArray* const reducedI, bool flipSign);
-
   /// \brief Array of timers for Gram matrix computation
   Timer* gram_timer_;
 
