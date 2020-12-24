@@ -63,7 +63,8 @@ bool isPackForGramNecessary(int n, const Map* origMap, const Map* redistMap)
 // Pack the data for redistribution
 // Y_n is block-row distributed; we are packing
 // so that Y_n will be block-column distributed
-const double* packForGram(const Tensor* Y, int n, const Map* redistMap)
+template <class scalar_t>
+const scalar_t* packForGram(const Tensor<scalar_t>* Y, int n, const Map* redistMap)
 {
   const int ONE = 1;
 
@@ -82,11 +83,11 @@ const double* packForGram(const Tensor* Y, int n, const Map* redistMap)
   int nprocs = Y->getDistribution()->getProcessorGrid()->getNumProcs(n,true);
 
   // Allocate memory for packed data
-  double* sendData = Tucker::MemoryManager::safe_new_array<double>(Y->getLocalNumEntries());
+  scalar_t* sendData = Tucker::MemoryManager::safe_new_array<scalar_t>(Y->getLocalNumEntries());
 
   // Local data is row-major
   if(n == ndims-1) {
-    const double* YnData = Y->getLocalTensor()->data();
+    const scalar_t* YnData = Y->getLocalTensor()->data();
 
     int offset=0;
     for(int b=0; b<nprocs; b++) {
@@ -107,11 +108,11 @@ const double* packForGram(const Tensor* Y, int n, const Map* redistMap)
     size_t ncolsPerLocalBlock = sz.prod(0,n-1);
     assert(ncolsPerLocalBlock <= std::numeric_limits<int>::max());
 
-    const double* src = Y->getLocalTensor()->data();
+    const scalar_t* src = Y->getLocalTensor()->data();
 
     // Make local data column major
     for(size_t b=0; b<numLocalBlocks; b++) {
-      double* dest = sendData+b*localNumRows*ncolsPerLocalBlock;
+      scalar_t* dest = sendData+b*localNumRows*ncolsPerLocalBlock;
       // Copy one row at a time
       for(int r=0; r<localNumRows; r++) {
         int temp = (int)ncolsPerLocalBlock;
@@ -126,7 +127,8 @@ const double* packForGram(const Tensor* Y, int n, const Map* redistMap)
 }
 
 // \todo This function is never tested with 1 MPI process
-const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
+template <class scalar_t>
+const Matrix<scalar_t>* redistributeTensorForGram(const Tensor<scalar_t>* Y, int n,
     Tucker::Timer* pack_timer, Tucker::Timer* alltoall_timer,
     Tucker::Timer* unpack_timer)
 {
@@ -158,7 +160,7 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
   // Create a matrix to store the redistributed Y_n
   // Y_n has a block row distribution
   // We want it to have a block column distribution
-  Matrix* redistY = Tucker::MemoryManager::safe_new<Matrix>(nrows,(int)ncols,comm,false);
+  Matrix<scalar_t>* redistY = Tucker::MemoryManager::safe_new<Matrix<scalar_t>>(nrows,(int)ncols,comm,false);
 
   // Get the column map of the redistributed Y_n
   const Map* redistMap = redistY->getMap();
@@ -189,7 +191,7 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
 
   // Pack the data, if packing is necessary
   bool isPackingNecessary = isPackForGramNecessary(n, oldMap, redistMap);
-  const double* sendBuf;
+  const scalar_t* sendBuf;
   if(isPackingNecessary) {
     if(pack_timer) pack_timer->start();
     sendBuf = packForGram(Y, n, redistMap);
@@ -205,9 +207,9 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
 
   // Determine whether the data needs to be unpacked
   bool isUnpackingNecessary = isUnpackForGramNecessary(n, ndims, oldMap, redistMap);
-  double* recvBuf;
+  scalar_t* recvBuf;
   if(isUnpackingNecessary) {
-    recvBuf = Tucker::MemoryManager::safe_new_array<double>(redistY->getLocalNumEntries());
+    recvBuf = Tucker::MemoryManager::safe_new_array<scalar_t>(redistY->getLocalNumEntries());
   }
   else {
     // If redistY has no entries, we're not receiving anything
@@ -225,8 +227,7 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
 
   // Perform the all-to-all communication
   if(alltoall_timer) alltoall_timer->start();
-  MPI_Alltoallv((void*)sendBuf, sendCounts, sendDispls, MPI_DOUBLE,
-      recvBuf, recvCounts, recvDispls, MPI_DOUBLE, comm);
+  MPI_Alltoallv_(sendBuf, sendCounts, sendDispls, recvBuf, recvCounts, recvDispls, comm);
   if(alltoall_timer) alltoall_timer->stop();
 
   if(isUnpackingNecessary) {
@@ -236,14 +237,14 @@ const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
   }
 
   // Free memory
-  Tucker::MemoryManager::safe_delete_array<int>(sendCounts,numProcs);
-  Tucker::MemoryManager::safe_delete_array<int>(sendDispls,numProcs+1);
-  Tucker::MemoryManager::safe_delete_array<int>(recvCounts,numProcs);
-  Tucker::MemoryManager::safe_delete_array<int>(recvDispls,numProcs+1);
+  Tucker::MemoryManager::safe_delete_array(sendCounts,numProcs);
+  Tucker::MemoryManager::safe_delete_array(sendDispls,numProcs+1);
+  Tucker::MemoryManager::safe_delete_array(recvCounts,numProcs);
+  Tucker::MemoryManager::safe_delete_array(recvDispls,numProcs+1);
   if(isPackingNecessary && Y->getLocalNumEntries() > 0)
-    Tucker::MemoryManager::safe_delete_array<const double>(sendBuf,Y->getLocalNumEntries());
+    Tucker::MemoryManager::safe_delete_array(sendBuf,Y->getLocalNumEntries());
   if(isUnpackingNecessary)
-    Tucker::MemoryManager::safe_delete_array<double>(recvBuf,redistY->getLocalNumEntries());
+    Tucker::MemoryManager::safe_delete_array(recvBuf,redistY->getLocalNumEntries());
 
   return redistY;
 }
@@ -267,9 +268,9 @@ bool isUnpackForGramNecessary(int n, int ndims, const Map* origMap, const Map* r
   return true;
 }
 
-
-void unpackForGram(int n, int ndims, Matrix* redistMat,
-    const double* dataToUnpack, const Map* origMap)
+template <class scalar_t>
+void unpackForGram(int n, int ndims, Matrix<scalar_t>* redistMat,
+    const scalar_t* dataToUnpack, const Map* origMap)
 {
   const int ONE = 1;
 
@@ -283,28 +284,29 @@ void unpackForGram(int n, int ndims, Matrix* redistMat,
   int nprocs;
   MPI_Comm_size(comm,&nprocs);
 
-  double* dest = redistMat->getLocalMatrix()->data();
+  scalar_t* dest = redistMat->getLocalMatrix()->data();
   for(int c=0; c<nLocalCols; c++) {
     for(int b=0; b<nprocs; b++) {
       int nLocalRows=origMap->getNumEntries(b);
-      const double* src = dataToUnpack + origMap->getOffset(b)*nLocalCols + c*nLocalRows;
+      const scalar_t* src = dataToUnpack + origMap->getOffset(b)*nLocalCols + c*nLocalRows;
       Tucker::copy(&nLocalRows, src, &ONE, dest, &ONE);
       dest += nLocalRows;
     }
   }
 }
 
-const Tucker::Matrix* localRankKForGram(const Matrix* Y, int n, int ndims)
+template <class scalar_t>
+const Tucker::Matrix<scalar_t>* localRankKForGram(const Matrix<scalar_t>* Y, int n, int ndims)
 {
   int nrows = Y->getLocalNumRows();
-  Tucker::Matrix* localResult = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrows, nrows);
+  Tucker::Matrix<scalar_t>* localResult = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nrows, nrows);
 
   char uplo = 'U';
   int ncols = Y->getLocalNumCols();
-  double alpha = 1;
-  const double* A = Y->getLocalMatrix()->data();
-  double beta = 0;
-  double* C = localResult->data();
+  scalar_t alpha = 1;
+  const scalar_t* A = Y->getLocalMatrix()->data();
+  scalar_t beta = 0;
+  scalar_t* C = localResult->data();
   int ldc = nrows;
 
   if(n < ndims-1) {
@@ -323,8 +325,9 @@ const Tucker::Matrix* localRankKForGram(const Matrix* Y, int n, int ndims)
   return localResult;
 }
 
-void localGEMMForGram(const double* Y1, int nrowsY1, int n,
-    const Tensor* Y2, double* result)
+template <class scalar_t>
+void localGEMMForGram(const scalar_t* Y1, int nrowsY1, int n,
+    const Tensor<scalar_t>* Y2, scalar_t* result)
 {
   int ndims = Y2->getNumDimensions();
   int numLocalRows = Y2->getLocalSize(n);
@@ -340,12 +343,12 @@ void localGEMMForGram(const double* Y1, int nrowsY1, int n,
     int crows = nrowsY1;
     int ccols = numLocalRows;
     int interDim = (int)numCols;
-    double alpha = 1;
-    const double* Aptr = Y1;
+    scalar_t alpha = 1;
+    const scalar_t* Aptr = Y1;
     int lda = nrowsY1;
-    const double* Bptr = Y2->getLocalTensor()->data();
+    const scalar_t* Bptr = Y2->getLocalTensor()->data();
     int ldb = numLocalRows;
-    double beta = 0;
+    scalar_t beta = 0;
     int ldc = numGlobalRows;
 
     Tucker::gemm(&transa, &transb, &crows, &ccols, &interDim,
@@ -358,12 +361,12 @@ void localGEMMForGram(const double* Y1, int nrowsY1, int n,
     int crows = nrowsY1;
     int ccols = numLocalRows;
     int interDim = (int)numCols;
-    double alpha = 1;
-    const double* Aptr = Y1;
+    scalar_t alpha = 1;
+    const scalar_t* Aptr = Y1;
     int lda = (int)numCols;
-    const double* Bptr = Y2->getLocalTensor()->data();
+    const scalar_t* Bptr = Y2->getLocalTensor()->data();
     int ldb = (int)numCols;
-    double beta = 0;
+    scalar_t beta = 0;
     int ldc = numGlobalRows;
 
     Tucker::gemm(&transa, &transb, &crows, &ccols, &interDim,
@@ -380,12 +383,12 @@ void localGEMMForGram(const double* Y1, int nrowsY1, int n,
     int crows = nrowsY1;
     int ccols = numLocalRows;
     int interDim = (int)colsPerBlock;
-    double alpha = 1;
-    const double* Aptr = Y1;
+    scalar_t alpha = 1;
+    const scalar_t* Aptr = Y1;
     int lda = (int)colsPerBlock;
-    const double* Bptr = Y2->getLocalTensor()->data();
+    const scalar_t* Bptr = Y2->getLocalTensor()->data();
     int ldb = (int)colsPerBlock;
-    double beta;
+    scalar_t beta;
     int ldc = numGlobalRows;
 
     for(size_t b=0; b<numBlocks; b++) {
@@ -407,7 +410,8 @@ void localGEMMForGram(const double* Y1, int nrowsY1, int n,
   }
 }
 
-Tucker::Matrix* reduceForGram(const Tucker::Matrix* U)
+template <class scalar_t>
+Tucker::Matrix<scalar_t>* reduceForGram(const Tucker::Matrix<scalar_t>* U)
 {
   // Get the dimensions of U
   int nrows = U->nrows();
@@ -415,15 +419,15 @@ Tucker::Matrix* reduceForGram(const Tucker::Matrix* U)
   int count = nrows*ncols;
 
   // Create a matrix to store the result
-  Tucker::Matrix* reducedU = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrows,ncols);
+  Tucker::Matrix<scalar_t>* reducedU = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nrows,ncols);
 
-  MPI_Allreduce((void*)U->data(), reducedU->data(), count,
-      MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce_(U->data(), reducedU->data(), count, MPI_SUM, MPI_COMM_WORLD);
 
   return reducedU;
 }
 
-void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
+template <class scalar_t>
+void packForTTM(Tucker::Tensor<scalar_t>* Y, int n, const Map* map)
 {
   // If Y has no entries, there's nothing to pack
   size_t nentries = Y->getNumElements();
@@ -445,7 +449,7 @@ void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
   // TODO: I'm sure there's a more space-efficient way than this
   size_t numEntries = Y->getNumElements();
   assert(numEntries <= std::numeric_limits<int>::max());
-  double* tempMem = Tucker::MemoryManager::safe_new_array<double>(numEntries);
+  scalar_t* tempMem = Tucker::MemoryManager::safe_new_array<scalar_t>(numEntries);
 
   // Get communicator corresponding to this dimension
   const MPI_Comm& comm = map->getComm();
@@ -462,7 +466,7 @@ void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
   int nGlobalRows = map->getGlobalNumEntries();
 
   // Get pointer to tensor data
-  double* tenData = Y->data();
+  scalar_t* tenData = Y->data();
 
   // Set the stride
   size_t stride = leadingDim*nGlobalRows;
@@ -501,7 +505,26 @@ void packForTTM(Tucker::Tensor* Y, int n, const Map* map)
   int temp = (int)numEntries;
   Tucker::copy(&temp, tempMem, &inc, tenData, &inc);
 
-  Tucker::MemoryManager::safe_delete_array<double>(tempMem,numEntries);
+  Tucker::MemoryManager::safe_delete_array<scalar_t>(tempMem,numEntries);
 }
+
+// Explicit instantiations to build static library for both single and double precision
+template const float* packForGram(const Tensor<float>*, int, const Map*);
+template void unpackForGram(int, int, Matrix<float>*, const float*, const Map*);
+template const Matrix<float>* redistributeTensorForGram(const Tensor<float>*, int,
+    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
+template const Tucker::Matrix<float>* localRankKForGram(const Matrix<float>*, int, int);
+template void localGEMMForGram(const float*, int, int, const Tensor<float>*, float*);
+template Tucker::Matrix<float>* reduceForGram(const Tucker::Matrix<float>*);
+template void packForTTM(Tucker::Tensor<float>*, int, const Map*);
+
+template const double* packForGram(const Tensor<double>*, int, const Map*);
+template void unpackForGram(int, int, Matrix<double>*, const double*, const Map*);
+template const Matrix<double>* redistributeTensorForGram(const Tensor<double>*, int,
+    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
+template const Tucker::Matrix<double>* localRankKForGram(const Matrix<double>*, int, int);
+template void localGEMMForGram(const double*, int, int, const Tensor<double>*, double*);
+template Tucker::Matrix<double>* reduceForGram(const Tucker::Matrix<double>*);
+template void packForTTM(Tucker::Tensor<double>*, int, const Map*);
 
 } // end namespace TuckerMPI

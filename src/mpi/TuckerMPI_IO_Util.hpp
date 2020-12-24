@@ -44,7 +44,8 @@
 
 namespace TuckerMPI {
 
-void printEigenvalues(const TuckerTensor* factorization,
+template <class scalar_t>
+void printEigenvalues(const TuckerTensor<scalar_t>* factorization,
     std::string filePrefix)
 {
   // For each mode...
@@ -67,6 +68,10 @@ void printEigenvalues(const TuckerTensor* factorization,
     ofs.close();
   }
 }
+
+// Explicit instantiations to build static library for both single and double precision
+template void printEigenvalues(const TuckerTensor<float>*, std::string);
+template void printEigenvalues(const TuckerTensor<double>*, std::string);
 
 } // end namespace
 

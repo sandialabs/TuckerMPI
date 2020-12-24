@@ -41,7 +41,8 @@
 namespace TuckerMPI {
 
 // TODO: isBlockRow currently does NOTHING
-Matrix::Matrix(int nrows, int ncols, const MPI_Comm& comm, bool isBlockRow) :
+template <class scalar_t>
+Matrix<scalar_t>::Matrix(int nrows, int ncols, const MPI_Comm& comm, bool isBlockRow) :
   globalRows_(nrows),
   globalCols_(ncols),
   comm_(comm)
@@ -71,68 +72,72 @@ Matrix::Matrix(int nrows, int ncols, const MPI_Comm& comm, bool isBlockRow) :
   }
 
   // Create the local portion of the matrix
-  localMatrix_ = Tucker::MemoryManager::safe_new<Tucker::Matrix>(localRows,localCols);
+  localMatrix_ = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(localRows,localCols);
 }
 
-
-Matrix::~Matrix()
+template <class scalar_t>
+Matrix<scalar_t>::~Matrix()
 {
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(localMatrix_);
-  Tucker::MemoryManager::safe_delete<Map>(map_);
+  Tucker::MemoryManager::safe_delete(localMatrix_);
+  Tucker::MemoryManager::safe_delete(map_);
 }
 
-
-Tucker::Matrix* Matrix::getLocalMatrix()
-{
-  return localMatrix_;
-}
-
-
-const Tucker::Matrix* Matrix::getLocalMatrix() const
+template <class scalar_t>
+Tucker::Matrix<scalar_t>* Matrix<scalar_t>::getLocalMatrix()
 {
   return localMatrix_;
 }
 
+template <class scalar_t>
+const Tucker::Matrix<scalar_t>* Matrix<scalar_t>::getLocalMatrix() const
+{
+  return localMatrix_;
+}
 
-size_t Matrix::getLocalNumEntries() const
+template <class scalar_t>
+size_t Matrix<scalar_t>::getLocalNumEntries() const
 {
   return localMatrix_->getNumElements();
 }
 
-
-int Matrix::getGlobalNumRows() const
+template <class scalar_t>
+int Matrix<scalar_t>::getGlobalNumRows() const
 {
   return globalRows_;
 }
 
-
-int Matrix::getLocalNumRows() const
+template <class scalar_t>
+int Matrix<scalar_t>::getLocalNumRows() const
 {
   return localMatrix_->nrows();
 }
 
-
-int Matrix::getGlobalNumCols() const
+template <class scalar_t>
+int Matrix<scalar_t>::getGlobalNumCols() const
 {
   return globalCols_;
 }
 
-
-int Matrix::getLocalNumCols() const
+template <class scalar_t>
+int Matrix<scalar_t>::getLocalNumCols() const
 {
   return localMatrix_->ncols();
 }
 
-
-const Map* Matrix::getMap() const
+template <class scalar_t>
+const Map* Matrix<scalar_t>::getMap() const
 {
   return map_;
 }
 
-
-void Matrix::print() const
+template <class scalar_t>
+void Matrix<scalar_t>::print() const
 {
   localMatrix_->print();
 }
+
+// Explicit instantiations to build static library for both single and double precision
+template class Matrix<float>;
+template class Matrix<double>;
 
 } /* namespace TuckerMPI */

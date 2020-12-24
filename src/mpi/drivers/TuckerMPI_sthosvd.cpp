@@ -17,6 +17,8 @@
 
 int main(int argc, char* argv[])
 {
+  typedef double scalar_t;  // specify precision
+
   //
   // Initialize MPI
   //
@@ -214,7 +216,7 @@ int main(int argc, char* argv[])
   ///////////////////////////
   Tucker::Timer readTimer;
   readTimer.start();
-  TuckerMPI::Tensor X(dist);
+  TuckerMPI::Tensor<scalar_t> X(dist);
   TuckerMPI::readTensorBinary(in_fns_file,X);
   readTimer.stop();
 
@@ -229,15 +231,15 @@ int main(int argc, char* argv[])
     size_t local_nnz = X.getLocalNumEntries();
     size_t global_nnz = X.getGlobalNumEntries();
     std::cout << "Local input tensor size: " << X.getLocalSize() << ", or ";
-    Tucker::printBytes(local_nnz*sizeof(double));
+    Tucker::printBytes(local_nnz*sizeof(scalar_t));
     std::cout << "Global input tensor size: " << X.getGlobalSize() << ", or ";
-    Tucker::printBytes(global_nnz*sizeof(double));
+    Tucker::printBytes(global_nnz*sizeof(scalar_t));
   }
 
   ////////////////////////
   // Compute statistics //
   ////////////////////////
-  Tucker::MetricData* metrics = TuckerMPI::computeSliceMetrics(&X,
+  Tucker::MetricData<scalar_t>* metrics = TuckerMPI::computeSliceMetrics(&X,
       scale_mode,
       Tucker::MIN+Tucker::MAX+Tucker::MEAN+Tucker::VARIANCE);
 
@@ -262,22 +264,22 @@ int main(int argc, char* argv[])
   const MPI_Comm& rowComm = grid->getColComm(scale_mode,false);
   if(needToSendToZero) {
     int numEntries = map->getGlobalNumEntries();
-    double* mins = Tucker::MemoryManager::safe_new_array<double>(numEntries);
-    double* maxs = Tucker::MemoryManager::safe_new_array<double>(numEntries);
-    double* means = Tucker::MemoryManager::safe_new_array<double>(numEntries);
-    double* vars = Tucker::MemoryManager::safe_new_array<double>(numEntries);
-    MPI_Gatherv (metrics->getMinData(), map->getLocalNumEntries(),
-        MPI_DOUBLE, mins, (int*)map->getNumElementsPerProc()->data(),
-        (int*)map->getOffsets()->data(), MPI_DOUBLE, 0, rowComm);
-    MPI_Gatherv (metrics->getMaxData(), map->getLocalNumEntries(),
-        MPI_DOUBLE, maxs, (int*)map->getNumElementsPerProc()->data(),
-        (int*)map->getOffsets()->data(), MPI_DOUBLE, 0, rowComm);
-    MPI_Gatherv (metrics->getMeanData(), map->getLocalNumEntries(),
-        MPI_DOUBLE, means, (int*)map->getNumElementsPerProc()->data(),
-        (int*)map->getOffsets()->data(), MPI_DOUBLE, 0, rowComm);
-    MPI_Gatherv (metrics->getVarianceData(), map->getLocalNumEntries(),
-        MPI_DOUBLE, vars, (int*)map->getNumElementsPerProc()->data(),
-        (int*)map->getOffsets()->data(), MPI_DOUBLE, 0, rowComm);
+    scalar_t* mins = Tucker::MemoryManager::safe_new_array<scalar_t>(numEntries);
+    scalar_t* maxs = Tucker::MemoryManager::safe_new_array<scalar_t>(numEntries);
+    scalar_t* means = Tucker::MemoryManager::safe_new_array<scalar_t>(numEntries);
+    scalar_t* vars = Tucker::MemoryManager::safe_new_array<scalar_t>(numEntries);
+    TuckerMPI::MPI_Gatherv_ (metrics->getMinData(), map->getLocalNumEntries(),
+        mins, (int*)map->getNumElementsPerProc()->data(),
+        (int*)map->getOffsets()->data(), 0, rowComm);
+    TuckerMPI::MPI_Gatherv_ (metrics->getMaxData(), map->getLocalNumEntries(),
+        maxs, (int*)map->getNumElementsPerProc()->data(),
+        (int*)map->getOffsets()->data(), 0, rowComm);
+    TuckerMPI::MPI_Gatherv_ (metrics->getMeanData(), map->getLocalNumEntries(),
+        means, (int*)map->getNumElementsPerProc()->data(),
+        (int*)map->getOffsets()->data(), 0, rowComm);
+    TuckerMPI::MPI_Gatherv_ (metrics->getVarianceData(), map->getLocalNumEntries(),
+        vars, (int*)map->getNumElementsPerProc()->data(),
+        (int*)map->getOffsets()->data(), 0, rowComm);
 
     if(rank == 0) {
       std::cout << "Writing file " << stats_file << std::endl;
@@ -394,7 +396,7 @@ int main(int argc, char* argv[])
   // Perform STHOSVD //
   /////////////////////
   if(boolSTHOSVD) {
-    const TuckerMPI::TuckerTensor* solution;
+    const TuckerMPI::TuckerTensor<scalar_t>* solution;
 
     if(boolAuto) {
       solution = TuckerMPI::STHOSVD(&X, tol, boolUseOldGram);
@@ -407,13 +409,13 @@ int main(int argc, char* argv[])
     solution->printTimers(timing_file);
 
     if(boolReconstruct) {
-      TuckerMPI::Tensor* t = solution->reconstructTensor();
+      TuckerMPI::Tensor<scalar_t>* t = solution->reconstructTensor();
 
-      TuckerMPI::Tensor* diff = X.subtract(t);
-      double nrm = X.norm2();
-      double err = diff->norm2();
-      double maxEntry = diff->maxEntry();
-      double minEntry = diff->minEntry();
+      TuckerMPI::Tensor<scalar_t>* diff = X.subtract(t);
+      scalar_t nrm = X.norm2();
+      scalar_t err = diff->norm2();
+      scalar_t maxEntry = diff->maxEntry();
+      scalar_t minEntry = diff->minEntry();
       if(rank == 0) {
         std::cout << "Norm of X: " << std::sqrt(nrm) << std::endl;
         std::cout << "Norm of X - Xtilde: "
@@ -429,14 +431,14 @@ int main(int argc, char* argv[])
       TuckerMPI::printEigenvalues(solution, filePrefix);
     }
 
-    double xnorm = std::sqrt(X.norm2());
-    double gnorm = std::sqrt(solution->G->norm2());
+    scalar_t xnorm = std::sqrt(X.norm2());
+    scalar_t gnorm = std::sqrt(solution->G->norm2());
     if(rank == 0) {
       std::cout << "Norm of input tensor: " << xnorm << std::endl;
       std::cout << "Norm of core tensor: " << gnorm << std::endl;
 
       // Compute the error bound based on the eigenvalues
-      double eb =0;
+      scalar_t eb =0;
       for(int i=0; i<nd; i++) {
         for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
           eb += solution->eigenvalues[i][j];

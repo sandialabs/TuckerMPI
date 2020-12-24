@@ -45,6 +45,7 @@
 namespace TuckerMPI {
 
 //! Distributed tensor
+template <class scalar_t>
 class Tensor
 {
 public:
@@ -61,10 +62,10 @@ public:
   ~Tensor();
 
   //! Returns the sequential locally owned portion of the tensor
-  Tucker::Tensor* getLocalTensor();
+  Tucker::Tensor<scalar_t>* getLocalTensor();
 
   //! Returns the sequential locally owned portion of the tensor
-  const Tucker::Tensor* getLocalTensor() const;
+  const Tucker::Tensor<scalar_t>* getLocalTensor() const;
 
   //! Returns the global size
   const Tucker::SizeArray& getGlobalSize() const;
@@ -90,7 +91,7 @@ public:
   size_t getGlobalNumEntries() const;
 
   //! Compute the norm squared
-  double norm2() const;
+  scalar_t norm2() const;
 
   //! Print the entries of the tensor as a one-dimensional array
   void print() const;
@@ -98,27 +99,28 @@ public:
   void rand();
 
   //! Returns \a this - \a t
-  Tensor* subtract(const Tensor* t) const;
+  Tensor<scalar_t>* subtract(const Tensor<scalar_t>* t) const;
 
   //! Returns the maximum entry of the tensor
-  double maxEntry() const;
+  scalar_t maxEntry() const;
 
   //! Returns the minimum entry of the tensor
-  double minEntry() const;
+  scalar_t minEntry() const;
 
 private:
   /// @cond EXCLUDE
-  Tensor(const Tensor& t);
+  Tensor(const Tensor<scalar_t>& t);
   /// @endcond
 
   //! Sequential Tensor of locally owned data
-  Tucker::Tensor* localTensor_;
+  Tucker::Tensor<scalar_t>* localTensor_;
   //! Distribution object
   const Distribution* dist_;
 };
 
-bool isApproxEqual(const Tensor* t1, const Tensor* t2,
-    double tol);
+template <class scalar_t>
+bool isApproxEqual(const Tensor<scalar_t>* t1, const Tensor<scalar_t>* t2,
+    scalar_t tol);
 
 } /* namespace TuckerMPI */
 #endif /* TENSOR_MPI_HPP_ */
