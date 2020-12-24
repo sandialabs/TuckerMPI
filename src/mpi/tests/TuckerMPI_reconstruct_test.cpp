@@ -10,6 +10,8 @@
 
 int main(int argc, char* argv[])
 {
+  typedef double scalar_t; // specify precision
+
   // Initialize MPI
   MPI_Init(&argc,&argv);
 
@@ -33,22 +35,22 @@ int main(int argc, char* argv[])
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(nprocsPerDim);
 
   // Create the tensor
-  TuckerMPI::Tensor* tensor =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
+  TuckerMPI::Tensor<scalar_t>* tensor =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
 
   // Read the entries from a file
   std::string filename = "input_files/tensor24.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),tensor);
 
-  const struct TuckerMPI::TuckerTensor* factorization =
+  const struct TuckerMPI::TuckerTensor<scalar_t>* factorization =
       TuckerMPI::STHOSVD(tensor,1e-6);
 
   // Reconstruct the original tensor
-  TuckerMPI::Tensor* temp = TuckerMPI::ttm(factorization->G,0,
+  TuckerMPI::Tensor<scalar_t>* temp = TuckerMPI::ttm(factorization->G,0,
       factorization->U[0]);
-  TuckerMPI::Tensor* temp2 = TuckerMPI::ttm(temp,1,
+  TuckerMPI::Tensor<scalar_t>* temp2 = TuckerMPI::ttm(temp,1,
         factorization->U[1]);
-  TuckerMPI::Tensor* temp3 = TuckerMPI::ttm(temp2,2,
+  TuckerMPI::Tensor<scalar_t>* temp3 = TuckerMPI::ttm(temp2,2,
         factorization->U[2]);
 
   bool eq = isApproxEqual(temp3,tensor,1e-10);
@@ -58,11 +60,11 @@ int main(int argc, char* argv[])
   }
 
   // Free some memory
-  Tucker::MemoryManager::safe_delete<const struct TuckerMPI::TuckerTensor>(factorization);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(temp);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(temp2);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(temp3);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(tensor);
+  Tucker::MemoryManager::safe_delete(factorization);
+  Tucker::MemoryManager::safe_delete(temp);
+  Tucker::MemoryManager::safe_delete(temp2);
+  Tucker::MemoryManager::safe_delete(temp3);
+  Tucker::MemoryManager::safe_delete(tensor);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();

@@ -223,4 +223,7 @@ bool isApproxEqual(const Tensor<scalar_t>* t1, const Tensor<scalar_t>* t2,
 template class Tensor<float>;
 template class Tensor<double>;
 
+template bool isApproxEqual(const Tensor<float>*, const Tensor<float>*, float);
+template bool isApproxEqual(const Tensor<double>*, const Tensor<double>*, double);
+
 } /* namespace TuckerMPI */

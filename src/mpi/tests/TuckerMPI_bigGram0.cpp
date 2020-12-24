@@ -8,10 +8,12 @@
 #include<cstdlib>
 #include "TuckerMPI.hpp"
 
-bool checkUTEqual(const double* arr1, const double* arr2, int numRows);
+template <class scalar_t>
+bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows);
 
 int main(int argc, char* argv[])
 {
+  typedef double scalar_t; // specify precision
   // Initialize MPI
   MPI_Init(&argc,&argv);
 
@@ -33,19 +35,19 @@ int main(int argc, char* argv[])
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(nprocsPerDim);
 
   // Create a tensor
-  TuckerMPI::Tensor* tensor =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
+  TuckerMPI::Tensor<scalar_t>* tensor =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
 
   // Read the entries from a file
   std::string filename = "input_files/tensor64.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),tensor);
 
   // Compute the gram matrix in dimension 0
-  const Tucker::Matrix* mat = TuckerMPI::newGram(tensor,0);
+  const Tucker::Matrix<scalar_t>* mat = TuckerMPI::newGram(tensor,0);
 
 //  mat->print();
 
-  double trueData[36] = {19840, 20320, 20800, 21280,
+  scalar_t trueData[36] = {19840, 20320, 20800, 21280,
                          20320, 20816, 21312, 21808,
                          20800, 21312, 21824, 22336,
                          21280, 21808, 22336, 22864};
@@ -56,8 +58,8 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(tensor);
-  Tucker::MemoryManager::safe_delete<const Tucker::Matrix>(mat);
+  Tucker::MemoryManager::safe_delete(tensor);
+  Tucker::MemoryManager::safe_delete(mat);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();
@@ -70,7 +72,8 @@ int main(int argc, char* argv[])
   return EXIT_SUCCESS;
 }
 
-bool checkUTEqual(const double* arr1, const double* arr2, int numRows)
+template <class scalar_t>
+bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 {
   for(int r=0; r<numRows; r++) {
     for(int c=r; c<numRows; c++) {

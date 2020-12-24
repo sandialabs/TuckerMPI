@@ -12,6 +12,8 @@ bool runSim(Tucker::SizeArray& procs);
 
 int main(int argc, char* argv[])
 {
+  typedef double scalar_t; // specify precision
+
   MPI_Init(&argc, &argv);
 
   int nprocs;
@@ -904,10 +906,12 @@ int main(int argc, char* argv[])
 
 bool runSim(Tucker::SizeArray& procs)
 {
+  typedef double scalar_t;
+  
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-  const double TRUE_SOLUTION = 9.690249359274157;
+  const scalar_t TRUE_SOLUTION = 9.690249359274157;
 
   if(rank == 0) std::cout << procs << std::endl;
 
@@ -920,15 +924,15 @@ bool runSim(Tucker::SizeArray& procs)
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
 
   // Create a tensor with that distribution
-  TuckerMPI::Tensor tensor(dist);
+  TuckerMPI::Tensor<scalar_t> tensor(dist);
 
   // Read the tensor from a binary file
   TuckerMPI::importTensorBinary("input_files/3x5x7x11.mpi",&tensor);
 
   // Compute the norm
-  double norm = sqrt(tensor.norm2());
+  scalar_t norm = sqrt(tensor.norm2());
 
-  double diff = std::abs(norm-TRUE_SOLUTION);
+  scalar_t diff = std::abs(norm-TRUE_SOLUTION);
   if(diff < 1e-10)
     return true;
 

@@ -495,10 +495,12 @@ bool checkUTEqual(const double* arr1, const double* arr2, int numRows)
 
 bool runSim(Tucker::SizeArray& procs)
 {
+  typedef double scalar_t; // specify precision
+
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-  Tucker::Matrix* matrix;
+  Tucker::Matrix<scalar_t>* matrix;
   bool matchesTrueSol;
 
   if(rank == 0) std::cout << procs << std::endl;
@@ -512,7 +514,7 @@ bool runSim(Tucker::SizeArray& procs)
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
 
   // Create a tensor with that distribution
-  TuckerMPI::Tensor tensor(dist);
+  TuckerMPI::Tensor<scalar_t> tensor(dist);
 
   // Read the tensor from a binary file
   TuckerMPI::importTensorBinary("input_files/2x3x4.mpi",&tensor);
@@ -520,7 +522,7 @@ bool runSim(Tucker::SizeArray& procs)
   // Compute the Gram matrix
   matrix = TuckerMPI::oldGram(&tensor,0);
 
-  const double TRUE_SOLUTION_0[2*2] =
+  const scalar_t TRUE_SOLUTION_0[2*2] =
     {1.168135985906300, 0.028160277747515,
      0.028160277747515, 1.853639580930490};
 
@@ -528,12 +530,12 @@ bool runSim(Tucker::SizeArray& procs)
   if(!matchesTrueSol)
     return false;
 
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete(matrix);
 
   // Compute the Gram matrix
   matrix = TuckerMPI::oldGram(&tensor,1);
 
-  const double TRUE_SOLUTION_1[3*3] =
+  const scalar_t TRUE_SOLUTION_1[3*3] =
     {0.820712914437342, -0.054508300978125, 0.235829882605409,
      -0.054508300978125, 1.193684853530435, -0.473108474125891,
      0.235829882605409, -0.473108474125891, 1.007377798869013};
@@ -543,12 +545,12 @@ bool runSim(Tucker::SizeArray& procs)
   if(!matchesTrueSol)
     return false;
 
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete(matrix);
 
   // Compute the Gram matrix
   matrix = TuckerMPI::oldGram(&tensor,2);
 
-  const double TRUE_SOLUTION_2[4*4] =
+  const scalar_t TRUE_SOLUTION_2[4*4] =
     {0.753229224299415, -0.263882754399373, -0.299769660407416, -0.100050281627677,
      -0.263882754399373, 0.815381138600412, 0.091378577087934, -0.103075841588300,
      -0.299769660407416, 0.091378577087934, 0.606586568474460, 0.493012617038671,
@@ -559,7 +561,7 @@ bool runSim(Tucker::SizeArray& procs)
   if(!matchesTrueSol)
     return false;
 
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete(matrix);
 
   return true;
 }

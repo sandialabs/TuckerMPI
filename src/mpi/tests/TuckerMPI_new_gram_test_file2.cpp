@@ -495,10 +495,12 @@ bool checkUTEqual(const double* arr1, const double* arr2, int numRows)
 
 bool runSim(Tucker::SizeArray& procs)
 {
+  typedef double scalar_t; // specify precision 
+
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-  Tucker::Matrix* matrix;
+  Tucker::Matrix<scalar_t>* matrix;
   bool matchesTrueSol;
 
   if(rank == 0) std::cout << procs << std::endl;
@@ -512,7 +514,7 @@ bool runSim(Tucker::SizeArray& procs)
         Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
 
   // Create a tensor with that distribution
-  TuckerMPI::Tensor tensor(dist);
+  TuckerMPI::Tensor<scalar_t> tensor(dist);
 
   // Read the tensor from a binary file
   TuckerMPI::importTensorBinary("input_files/2x3x4.mpi",&tensor);
@@ -528,7 +530,7 @@ bool runSim(Tucker::SizeArray& procs)
   if(!matchesTrueSol)
     return false;
 
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete(matrix);
 
   // Compute the Gram matrix
   matrix = TuckerMPI::newGram(&tensor,1);
@@ -543,7 +545,7 @@ bool runSim(Tucker::SizeArray& procs)
   if(!matchesTrueSol)
     return false;
 
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete(matrix);
 
   // Compute the Gram matrix
   matrix = TuckerMPI::newGram(&tensor,2);
@@ -559,7 +561,7 @@ bool runSim(Tucker::SizeArray& procs)
   if(!matchesTrueSol)
     return false;
 
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matrix);
+  Tucker::MemoryManager::safe_delete(matrix);
 
   return true;
 }

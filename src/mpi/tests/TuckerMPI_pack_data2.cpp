@@ -15,6 +15,8 @@ bool checkArrayEqual(double* arr1, double* arr2, int numEl);
 
 int main(int argc, char* argv[])
 {
+  typedef double scalar_t; // specify precision
+
   // Initialize MPI
   MPI_Init(&argc,&argv);
 
@@ -22,8 +24,8 @@ int main(int argc, char* argv[])
   Tucker::SizeArray* sa =
       Tucker::MemoryManager::safe_new<Tucker::SizeArray>(3);
   (*sa)[0] = 3; (*sa)[1] = 4; (*sa)[2] = 3;
-  Tucker::Tensor* tensor =
-      Tucker::MemoryManager::safe_new<Tucker::Tensor>(*sa);
+  Tucker::Tensor<scalar_t>* tensor =
+      Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*sa);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(sa);
 
   // Fill it with the entries 0:35
@@ -49,7 +51,7 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::MemoryManager::safe_delete(tensor);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();

@@ -906,6 +906,8 @@ int main(int argc, char* argv[])
 
 bool runSim(Tucker::SizeArray& procs)
 {
+  typedef double scalar_t; // specify precision
+
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
@@ -922,8 +924,8 @@ bool runSim(Tucker::SizeArray& procs)
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
 
   // Create a tensor with that distribution
-  TuckerMPI::Tensor tensor(dist);
-  TuckerMPI::Tensor true_sol(dist2);
+  TuckerMPI::Tensor<scalar_t> tensor(dist);
+  TuckerMPI::Tensor<scalar_t> true_sol(dist2);
 
   // Read the tensor from a binary file
   TuckerMPI::importTensorBinary("input_files/3x5x7x11.mpi",&tensor);

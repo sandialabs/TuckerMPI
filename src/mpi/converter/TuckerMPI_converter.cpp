@@ -10,9 +10,11 @@
 
 int main(int argc, char* argv[])
 {
+  typedef double scalar_t; // specify precision
+  
   MPI_Init(&argc, &argv);
 
-  Tucker::Tensor* t = Tucker::importTensor(argv[1]);
+  Tucker::Tensor<scalar_t>* t = Tucker::importTensor<scalar_t>(argv[1]);
   TuckerMPI::exportTensorBinary(argv[2],t);
 
   MPI_Finalize();
