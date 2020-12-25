@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
   TuckerMPI::Tensor<scalar_t>* temp3 = TuckerMPI::ttm(temp2,2,
         factorization->U[2]);
 
-  bool eq = isApproxEqual(temp3,tensor,1e-10);
+  bool eq = isApproxEqual(temp3,tensor,100 * std::numeric_limits<scalar_t>::epsilon());
   if(!eq) {
     MPI_Finalize();
     return EXIT_FAILURE;

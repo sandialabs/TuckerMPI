@@ -941,15 +941,15 @@ bool runSim(Tucker::SizeArray& procs)
     Y4.getLocalTensor()->data()[i] = std::numeric_limits<scalar_t>::signaling_NaN();
   TuckerMPI::readTensorBinary(filenames,Y4);
 
-  if(!isApproxEqual(&Y, &Y2, 1e-10)) {
+  if(!isApproxEqual(&Y, &Y2, 100 * std::numeric_limits<scalar_t>::epsilon())) {
     std::cout << "Y and Y2 are not equal\n";
     return false;
   }
-  if(!isApproxEqual(&Y, &Y3, 1e-10)) {
+  if(!isApproxEqual(&Y, &Y3, 100 * std::numeric_limits<scalar_t>::epsilon())) {
     std::cout << "Y and Y3 are not equal\n";
     return false;
   }
-  if(!isApproxEqual(&Y, &Y4, 1e-10)) {
+  if(!isApproxEqual(&Y, &Y4, 100 * std::numeric_limits<scalar_t>::epsilon())) {
     std::cout << "Y and Y4 are not equal\n";
     return false;
   }

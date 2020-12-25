@@ -947,7 +947,7 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 0, mat, true);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete(mat);
   Tucker::MemoryManager::safe_delete(trueSol);
   Tucker::MemoryManager::safe_delete(mySol);
@@ -967,7 +967,7 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 0, mat);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete(mat);
   Tucker::MemoryManager::safe_delete(trueSol);
   Tucker::MemoryManager::safe_delete(mySol);
@@ -987,7 +987,7 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 1, mat, true);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete<Tucker::Matrix<scalar_t>>(mat);
   Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor<scalar_t>>(trueSol);
   Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor<scalar_t>>(mySol);
@@ -1007,7 +1007,7 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 1, mat);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete(mat);
   Tucker::MemoryManager::safe_delete(trueSol);
   Tucker::MemoryManager::safe_delete(mySol);
@@ -1027,7 +1027,7 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 2, mat, true);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete(mat);
   Tucker::MemoryManager::safe_delete(trueSol);
   Tucker::MemoryManager::safe_delete(mySol);
@@ -1047,7 +1047,7 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 2, mat);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete(mat);
   Tucker::MemoryManager::safe_delete(trueSol);
   Tucker::MemoryManager::safe_delete(mySol);
@@ -1067,7 +1067,7 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 3, mat, true);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete(mat);
   Tucker::MemoryManager::safe_delete(trueSol);
   Tucker::MemoryManager::safe_delete(mySol);
@@ -1087,7 +1087,7 @@ bool runSim(Tucker::SizeArray& procs)
   mySol = TuckerMPI::ttm(&tensor, 3, mat);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete(mat);
   Tucker::MemoryManager::safe_delete(trueSol);
   Tucker::MemoryManager::safe_delete(mySol);

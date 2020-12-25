@@ -14,6 +14,7 @@ bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows);
 int main(int argc, char* argv[])
 {
   typedef double scalar_t; // specify precision
+  
   // Initialize MPI
   MPI_Init(&argc,&argv);
 

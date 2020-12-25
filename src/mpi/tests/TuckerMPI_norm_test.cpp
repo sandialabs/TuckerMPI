@@ -933,7 +933,7 @@ bool runSim(Tucker::SizeArray& procs)
   scalar_t norm = sqrt(tensor.norm2());
 
   scalar_t diff = std::abs(norm-TRUE_SOLUTION);
-  if(diff < 1e-10)
+  if(diff < 100 * std::numeric_limits<scalar_t>::epsilon())
     return true;
 
   return false;

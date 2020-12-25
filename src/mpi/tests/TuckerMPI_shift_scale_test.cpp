@@ -941,7 +941,7 @@ bool runSim(Tucker::SizeArray& procs)
   // Call shift-scale
   TuckerMPI::transformSlices(&tensor,0,scales0+index,shifts0+index);
 
-  if(!isApproxEqual(&tensor,&true_sol,1e-10)) {
+  if(!isApproxEqual(&tensor,&true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return false;
   }
 
@@ -963,7 +963,7 @@ bool runSim(Tucker::SizeArray& procs)
   // Call shift-scale
   TuckerMPI::transformSlices(&tensor,1,scales1+index,shifts1+index);
 
-  if(!isApproxEqual(&tensor,&true_sol,1e-10)) {
+  if(!isApproxEqual(&tensor,&true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return false;
   }
 
@@ -987,7 +987,7 @@ bool runSim(Tucker::SizeArray& procs)
   // Call shift-scale
   TuckerMPI::transformSlices(&tensor,2,scales2+index,shifts2+index);
 
-  if(!isApproxEqual(&tensor,&true_sol,1e-10)) {
+  if(!isApproxEqual(&tensor,&true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return false;
   }
 
@@ -1013,7 +1013,7 @@ bool runSim(Tucker::SizeArray& procs)
   // Call shift-scale
   TuckerMPI::transformSlices(&tensor,3,scales3+index,shifts3+index);
 
-  if(!TuckerMPI::isApproxEqual(&tensor,&true_sol,1e-10)) {
+  if(!TuckerMPI::isApproxEqual(&tensor,&true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return false;
   }
 

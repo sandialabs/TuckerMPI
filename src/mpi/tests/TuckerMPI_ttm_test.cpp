@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
   filename = "input_files/ttm_result0.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult);
 
-  approxEqual = isApproxEqual(result,expectedResult, 1e-10);
+  approxEqual = isApproxEqual(result,expectedResult, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete(result);
   Tucker::MemoryManager::safe_delete(expectedResult);
   if(!approxEqual) {
@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
   filename = "input_files/ttm_result0t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult2);
 
-  approxEqual = isApproxEqual(result,expectedResult2, 1e-10);
+  approxEqual = isApproxEqual(result,expectedResult2, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete(result);
   Tucker::MemoryManager::safe_delete(expectedResult2);
   if(!approxEqual) {
@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
   filename = "input_files/ttm_result1.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult3);
 
-  approxEqual = isApproxEqual(result,expectedResult3, 1e-10);
+  approxEqual = isApproxEqual(result,expectedResult3, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete(result);
   Tucker::MemoryManager::safe_delete(expectedResult3);
   if(!approxEqual) {
@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
   filename = "input_files/ttm_result1t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult4);
 
-  approxEqual = isApproxEqual(result,expectedResult4, 1e-10);
+  approxEqual = isApproxEqual(result,expectedResult4, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete(result);
   Tucker::MemoryManager::safe_delete(expectedResult4);
   if(!approxEqual) {
@@ -223,7 +223,7 @@ int main(int argc, char* argv[])
   filename = "input_files/ttm_result2.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult5);
 
-  approxEqual = isApproxEqual(result,expectedResult5, 1e-10);
+  approxEqual = isApproxEqual(result,expectedResult5, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete(result);
   Tucker::MemoryManager::safe_delete(expectedResult5);
   if(!approxEqual) {
@@ -263,7 +263,7 @@ int main(int argc, char* argv[])
   filename = "input_files/ttm_result2t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult6);
 
-  approxEqual = isApproxEqual(result,expectedResult6, 1e-10);
+  approxEqual = isApproxEqual(result,expectedResult6, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete(result);
   Tucker::MemoryManager::safe_delete(expectedResult6);
   if(!approxEqual) {

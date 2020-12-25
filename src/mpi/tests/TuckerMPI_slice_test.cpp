@@ -1076,35 +1076,35 @@ bool runSim(Tucker::SizeArray& procs)
 //      std::cout << "The stdev of slice " << globalJ << " of mode "
 //          << n << " is " << sqrt(mets->getVarianceData()[j]) << std::endl;
 
-      if(std::abs(mets->getMinData()[j]-trueData[globalJ][n][0])>1e-10) {
+      if(std::abs(mets->getMinData()[j]-trueData[globalJ][n][0])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getMinData()[j] << " != " << trueData[globalJ][n][0]
                   << "; the difference is " << mets->getMinData()[j] - trueData[globalJ][n][0]
                   << std::endl;
         Tucker::MemoryManager::safe_delete(mets);
         return false;
       }
-      if(std::abs(mets->getMaxData()[j]-trueData[globalJ][n][1])>1e-10) {
+      if(std::abs(mets->getMaxData()[j]-trueData[globalJ][n][1])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getMaxData()[j] << " != " << trueData[globalJ][n][1]
                   << "; the difference is " << mets->getMaxData()[j] - trueData[globalJ][n][1]
                   << std::endl;
         Tucker::MemoryManager::safe_delete(mets);
         return false;
       }
-      if(std::abs(mets->getSumData()[j]-trueData[globalJ][n][2])>1e-10) {
+      if(std::abs(mets->getSumData()[j]-trueData[globalJ][n][2])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getSumData()[j] << " != " << trueData[globalJ][n][2]
                   << "; the difference is " << mets->getSumData()[j] - trueData[globalJ][n][2]
                   << std::endl;
         Tucker::MemoryManager::safe_delete(mets);
         return false;
       }
-      if(std::abs(mets->getMeanData()[j]-trueData[globalJ][n][3])>1e-10) {
+      if(std::abs(mets->getMeanData()[j]-trueData[globalJ][n][3])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getMeanData()[j] << " != " << trueData[globalJ][n][3]
                   << "; the difference is " << mets->getMeanData()[j] - trueData[globalJ][n][3]
                   << std::endl;
         Tucker::MemoryManager::safe_delete(mets);
         return false;
       }
-      if(std::abs(sqrt(mets->getVarianceData()[j])-trueData[globalJ][n][4])>1e-10) {
+      if(std::abs(sqrt(mets->getVarianceData()[j])-trueData[globalJ][n][4])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << sqrt(mets->getVarianceData()[j]) << " != " << trueData[globalJ][n][4]
                   << "; the difference is " << sqrt(mets->getVarianceData()[j]) - trueData[globalJ][n][4]
                   << std::endl;

@@ -937,7 +937,7 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::importTensorBinary("input_files/3x5x7x11_mm0.mpi",&true_sol);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(&tensor,&true_sol,1e-10)) {
+  if(!isApproxEqual(&tensor,&true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return false;
   }
 
@@ -951,7 +951,7 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::importTensorBinary("input_files/3x5x7x11_mm1.mpi",&true_sol);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(&tensor,&true_sol,1e-10)) {
+  if(!isApproxEqual(&tensor,&true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return false;
   }
 
@@ -965,7 +965,7 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::importTensorBinary("input_files/3x5x7x11_mm2.mpi",&true_sol);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(&tensor,&true_sol,1e-10)) {
+  if(!isApproxEqual(&tensor,&true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return false;
   }
 
@@ -979,7 +979,7 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::importTensorBinary("input_files/3x5x7x11_mm3.mpi",&true_sol);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(&tensor,&true_sol,1e-10)) {
+  if(!isApproxEqual(&tensor,&true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return false;
   }
 
@@ -993,7 +993,7 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::importTensorBinary("input_files/3x5x7x11_sc0.mpi",&true_sol);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(&tensor,&true_sol,1e-10)) {
+  if(!isApproxEqual(&tensor,&true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return false;
   }
 
@@ -1007,7 +1007,7 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::importTensorBinary("input_files/3x5x7x11_sc1.mpi",&true_sol);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(&tensor,&true_sol,1e-10)) {
+  if(!isApproxEqual(&tensor,&true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return false;
   }
 
@@ -1021,7 +1021,7 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::importTensorBinary("input_files/3x5x7x11_sc2.mpi",&true_sol);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(&tensor,&true_sol,1e-10)) {
+  if(!isApproxEqual(&tensor,&true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return false;
   }
 
@@ -1035,7 +1035,7 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::importTensorBinary("input_files/3x5x7x11_sc3.mpi",&true_sol);
 
   // Compare the computed solution to the true solution
-  if(!isApproxEqual(&tensor,&true_sol,1e-10)) {
+  if(!isApproxEqual(&tensor,&true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return false;
   }
 

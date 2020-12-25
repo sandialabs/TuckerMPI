@@ -8,7 +8,8 @@
 #include <cmath>
 #include "TuckerMPI.hpp"
 
-bool checkUTEqual(const double* arr1, const double* arr2, int numRows);
+template <class scalar_t>
+bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows);
 bool runSim(Tucker::SizeArray& procs);
 
 int main(int argc, char* argv[])
@@ -473,10 +474,10 @@ int main(int argc, char* argv[])
   return EXIT_SUCCESS;
 }
 
-
-bool checkUTEqual(const double* arr1, const double* arr2, int numRows)
+template <class scalar_t>
+bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 {
-  const double TOL = 1e-10;
+  const double TOL = 100 * std::numeric_limits<scalar_t>::epsilon();
 
   for(int r=0; r<numRows; r++) {
     for(int c=r; c<numRows; c++) {
