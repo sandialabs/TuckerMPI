@@ -26,7 +26,7 @@ int main()
 
   // Compare computed solution to true solution
   scalar_t diff = std::abs(norm-TRUE_SOLUTION);
-  if(diff < 1e-10)
+  if(diff < 100 * std::numeric_limits<scalar_t>::epsilon())
     return EXIT_SUCCESS;
   else {
     std::cerr << "ERROR: The true solution is " << TRUE_SOLUTION

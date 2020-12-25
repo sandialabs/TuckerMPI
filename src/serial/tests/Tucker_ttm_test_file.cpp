@@ -27,7 +27,7 @@ int main()
   Tucker::Tensor<scalar_t>* mySol = Tucker::ttm(tensor, 0, mat, true);
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(trueSol, mySol, 1e-10))
+  if(!Tucker::isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon()))
   {
     return EXIT_FAILURE;
   }
@@ -46,7 +46,7 @@ int main()
   mySol = Tucker::ttm(tensor, 0, mat);
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(trueSol, mySol, 1e-10))
+  if(!Tucker::isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon()))
   {
     return EXIT_FAILURE;
   }
@@ -65,7 +65,7 @@ int main()
   mySol = Tucker::ttm(tensor, 1, mat, true);
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(trueSol, mySol, 1e-10))
+  if(!Tucker::isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon()))
   {
     return EXIT_FAILURE;
   }
@@ -84,7 +84,7 @@ int main()
   mySol = Tucker::ttm(tensor, 1, mat);
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(trueSol, mySol, 1e-10))
+  if(!Tucker::isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon()))
   {
     return EXIT_FAILURE;
   }
@@ -103,7 +103,7 @@ int main()
   mySol = Tucker::ttm(tensor, 2, mat, true);
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(trueSol, mySol, 1e-10))
+  if(!Tucker::isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon()))
   {
     return EXIT_FAILURE;
   }
@@ -122,7 +122,7 @@ int main()
   mySol = Tucker::ttm(tensor, 2, mat);
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(trueSol, mySol, 1e-10))
+  if(!Tucker::isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon()))
   {
     return EXIT_FAILURE;
   }
@@ -141,7 +141,7 @@ int main()
   mySol = Tucker::ttm(tensor, 3, mat, true);
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(trueSol, mySol, 1e-10))
+  if(!Tucker::isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon()))
   {
     return EXIT_FAILURE;
   }
@@ -160,7 +160,7 @@ int main()
   mySol = Tucker::ttm(tensor, 3, mat);
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(trueSol, mySol, 1e-10))
+  if(!Tucker::isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon()))
   {
     return EXIT_FAILURE;
   }

@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
       Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(Y->size());
   Tucker::importTensorBinary(Y2, filename.c_str());
 
-  if(!Tucker::isApproxEqual(Y, Y2, 1e-10)) {
+  if(!Tucker::isApproxEqual(Y, Y2, 100 * std::numeric_limits<scalar_t>::epsilon())) {
     std::cout << "Y and Y2 are not equal\n";
     return EXIT_FAILURE;
   }

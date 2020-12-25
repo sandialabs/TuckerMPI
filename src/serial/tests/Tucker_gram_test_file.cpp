@@ -11,7 +11,7 @@
 template <class scalar_t>
 bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 {
-  const scalar_t TOL = 1e-10;
+  const scalar_t TOL = 1000 * std::numeric_limits<scalar_t>::epsilon();
 
   for(int r=0; r<numRows; r++) {
     for(int c=r; c<numRows; c++) {

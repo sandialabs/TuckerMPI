@@ -12,7 +12,7 @@
 template <class scalar_t>
 bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 {
-  const scalar_t TOL = 1e-10;
+  const scalar_t TOL = 100 * std::numeric_limits<scalar_t>::epsilon();
 
   for(int r=0; r<numRows; r++) {
     for(int c=r; c<numRows; c++) {
@@ -186,31 +186,31 @@ int main()
       std::cout << "The stdev of slice " << j << " of mode "
           << n << " is " << sqrt(mets->getVarianceData()[j]) << std::endl;
 
-      if(std::abs(mets->getMinData()[j]-trueData[j][n][0])>1e-10) {
+      if(std::abs(mets->getMinData()[j]-trueData[j][n][0])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getMinData()[j] << " != " << trueData[j][n][0]
                   << "; the difference is " << mets->getMinData()[j] - trueData[j][n][0]
                   << std::endl;
         return EXIT_FAILURE;
       }
-      if(std::abs(mets->getMaxData()[j]-trueData[j][n][1])>1e-10) {
+      if(std::abs(mets->getMaxData()[j]-trueData[j][n][1])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getMaxData()[j] << " != " << trueData[j][n][1]
                   << "; the difference is " << mets->getMaxData()[j] - trueData[j][n][1]
                   << std::endl;
         return EXIT_FAILURE;
       }
-      if(std::abs(mets->getSumData()[j]-trueData[j][n][2])>1e-10) {
+      if(std::abs(mets->getSumData()[j]-trueData[j][n][2])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getSumData()[j] << " != " << trueData[j][n][2]
                   << "; the difference is " << mets->getSumData()[j] - trueData[j][n][2]
                   << std::endl;
         return EXIT_FAILURE;
       }
-      if(std::abs(mets->getMeanData()[j]-trueData[j][n][3])>1e-10) {
+      if(std::abs(mets->getMeanData()[j]-trueData[j][n][3])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getMeanData()[j] << " != " << trueData[j][n][3]
                   << "; the difference is " << mets->getMeanData()[j] - trueData[j][n][3]
                   << std::endl;
         return EXIT_FAILURE;
       }
-      if(std::abs(sqrt(mets->getVarianceData()[j])-trueData[j][n][4])>1e-10) {
+      if(std::abs(sqrt(mets->getVarianceData()[j])-trueData[j][n][4])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << sqrt(mets->getVarianceData()[j]) << " != " << trueData[j][n][4]
                   << "; the difference is " << sqrt(mets->getVarianceData()[j]) - trueData[j][n][4]
                   << std::endl;

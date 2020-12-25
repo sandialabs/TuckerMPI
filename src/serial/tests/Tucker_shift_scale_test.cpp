@@ -29,7 +29,7 @@ int main()
   // Call shift-scale
   Tucker::transformSlices(tensor,0,scales0,shifts0);
 
-  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return EXIT_FAILURE;
   }
 
@@ -51,7 +51,7 @@ int main()
   // Call shift-scale
   Tucker::transformSlices(tensor,1,scales1,shifts1);
 
-  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return EXIT_FAILURE;
   }
 
@@ -75,7 +75,7 @@ int main()
   // Call shift-scale
   Tucker::transformSlices(tensor,2,scales2,shifts2);
 
-  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return EXIT_FAILURE;
   }
 
@@ -101,7 +101,7 @@ int main()
   // Call shift-scale
   Tucker::transformSlices(tensor,3,scales3,shifts3);
 
-  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return EXIT_FAILURE;
   }
 

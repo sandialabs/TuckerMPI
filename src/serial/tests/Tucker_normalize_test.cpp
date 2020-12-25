@@ -24,7 +24,7 @@ int main()
   true_sol = Tucker::importTensor<scalar_t>("input_files/3x5x7x11_mm0.txt");
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return EXIT_FAILURE;
   }
 
@@ -41,7 +41,7 @@ int main()
   true_sol = Tucker::importTensor<scalar_t>("input_files/3x5x7x11_mm1.txt");
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return EXIT_FAILURE;
   }
 
@@ -58,7 +58,7 @@ int main()
   true_sol = Tucker::importTensor<scalar_t>("input_files/3x5x7x11_mm2.txt");
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return EXIT_FAILURE;
   }
 
@@ -75,7 +75,7 @@ int main()
   true_sol = Tucker::importTensor<scalar_t>("input_files/3x5x7x11_mm3.txt");
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return EXIT_FAILURE;
   }
 
@@ -86,13 +86,13 @@ int main()
   tensor = Tucker::importTensor<scalar_t>("input_files/3x5x7x11.txt");
 
   // Normalize the tensor
-  Tucker::normalizeTensorStandardCentering(tensor,0,1e-10);
+  Tucker::normalizeTensorStandardCentering(tensor,0,100 * std::numeric_limits<scalar_t>::epsilon());
 
   // Read true solution from file
   true_sol = Tucker::importTensor<scalar_t>("input_files/3x5x7x11_sc0.txt");
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return EXIT_FAILURE;
   }
 
@@ -103,13 +103,13 @@ int main()
   tensor = Tucker::importTensor<scalar_t>("input_files/3x5x7x11.txt");
 
   // Normalize the tensor
-  Tucker::normalizeTensorStandardCentering(tensor,1,1e-10);
+  Tucker::normalizeTensorStandardCentering(tensor,1,100 * std::numeric_limits<scalar_t>::epsilon());
 
   // Read true solution from file
   true_sol = Tucker::importTensor<scalar_t>("input_files/3x5x7x11_sc1.txt");
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return EXIT_FAILURE;
   }
 
@@ -120,13 +120,13 @@ int main()
   tensor = Tucker::importTensor<scalar_t>("input_files/3x5x7x11.txt");
 
   // Normalize the tensor
-  Tucker::normalizeTensorStandardCentering(tensor,2,1e-10);
+  Tucker::normalizeTensorStandardCentering(tensor,2,100 * std::numeric_limits<scalar_t>::epsilon());
 
   // Read true solution from file
   true_sol = Tucker::importTensor<scalar_t>("input_files/3x5x7x11_sc2.txt");
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return EXIT_FAILURE;
   }
 
@@ -137,13 +137,13 @@ int main()
   tensor = Tucker::importTensor<scalar_t>("input_files/3x5x7x11.txt");
 
   // Normalize the tensor
-  Tucker::normalizeTensorStandardCentering(tensor,3,1e-10);
+  Tucker::normalizeTensorStandardCentering(tensor,3,100 * std::numeric_limits<scalar_t>::epsilon());
 
   // Read true solution from file
   true_sol = Tucker::importTensor<scalar_t>("input_files/3x5x7x11_sc3.txt");
 
   // Compare the computed solution to the true solution
-  if(!Tucker::isApproxEqual(tensor,true_sol,1e-10)) {
+  if(!Tucker::isApproxEqual(tensor,true_sol,100 * std::numeric_limits<scalar_t>::epsilon())) {
     return EXIT_FAILURE;
   }
 

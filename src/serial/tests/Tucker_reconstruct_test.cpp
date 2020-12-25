@@ -33,7 +33,8 @@ int main()
   for(int i=0; i<30; i++)
     data[i] = i+1;
 
-  const struct Tucker::TuckerTensor<scalar_t>* factorization = Tucker::STHOSVD(t,1e-6);
+  // set tolerance looser than 1e-4 (tightest possible for single precision)
+  const struct Tucker::TuckerTensor<scalar_t>* factorization = Tucker::STHOSVD(t,(scalar_t) 1e-3);
 
   // Reconstruct the original tensor
   Tucker::Tensor<scalar_t>* temp = Tucker::ttm(factorization->G,0,
@@ -44,8 +45,9 @@ int main()
         factorization->U[2]);
 
   scalar_t* newdata = temp3->data();
+  // set elementwise tolerance looser than normwise tolerance
   for(int i=0; i<30; i++) {
-    if(!approxEqual(newdata[i], data[i], 1e-10)) {
+    if(!approxEqual(newdata[i], data[i], (scalar_t) 1e-2)) {
       std::cerr << "data[" << i << "] should be " << data[i]
                 << " but is " << newdata[i] << "; difference: "
                 << data[i]-newdata[i] << std::endl;

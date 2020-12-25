@@ -63,7 +63,7 @@ int main()
   trueData[27] = 27.948451779289265; trueData[28] = 29.634181666213383; trueData[29] = 30.726383004410678;
 
   for(int i=0; i<30; i++) {
-    if(!approxEqual(data[i],trueData[i],1e-10)) {
+    if(!approxEqual(data[i],trueData[i],100 * std::sqrt(std::numeric_limits<scalar_t>::epsilon()))) {
       std::cerr << "data[" << i << "] (" << data[i] << ") != trueData["
           << i << "] (" << trueData[i] << "); the difference is "
           << data[i] - trueData[i] << std::endl;

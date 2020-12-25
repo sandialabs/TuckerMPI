@@ -42,7 +42,7 @@ int main()
 
   for(int i=0; i<5; i++) {
     scalar_t diff = std::abs(eigenvalues[i]-TRUE_EVALS[i]);
-    if(diff > 1e-10) {
+    if(diff > 100 * std::numeric_limits<scalar_t>::epsilon()) {
       std::cerr << "ERROR: The true eigenvalue is " << TRUE_EVALS[i]
                 << ", but the computed eigenvalue was " << eigenvalues[i]
                 << ", a difference of " << diff << std::endl;
@@ -53,7 +53,7 @@ int main()
 
   for(int i=0; i<5*5; i++) {
     scalar_t diff = std::abs(matrix->data()[i]-TRUE_EVECS[i]);
-    if(diff > 1e-10) {
+    if(diff > 100 * std::numeric_limits<scalar_t>::epsilon()) {
       std::cerr << "ERROR: The true solution is " << TRUE_EVECS[i]
                 << ", but the computed solution was " << matrix->data()[i]
                 << ", a difference of " << diff << std::endl;
