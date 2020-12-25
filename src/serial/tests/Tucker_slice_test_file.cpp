@@ -31,7 +31,13 @@ bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 
 int main()
 {
-  typedef double scalar_t; // specify precision
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+#else
+  typedef double scalar_t;
+#endif
 
   scalar_t trueData[11][4][5];
   trueData[0][0][0] = -0.493284685681523;

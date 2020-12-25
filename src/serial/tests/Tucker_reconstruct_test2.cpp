@@ -20,7 +20,13 @@ bool approxEqual(scalar_t a, scalar_t b, scalar_t tol)
 
 int main()
 {
-  typedef double scalar_t; // specify precision
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+#else
+  typedef double scalar_t;
+#endif
 
   Tucker::SizeArray* size =
       Tucker::MemoryManager::safe_new<Tucker::SizeArray>(3);
@@ -62,8 +68,9 @@ int main()
   trueData[24] = 24.275808142738295; trueData[25] = 25.170520554167854; trueData[26] = 26.954994904475836;
   trueData[27] = 27.948451779289265; trueData[28] = 29.634181666213383; trueData[29] = 30.726383004410678;
 
+  // set tolerance looser than sqrt(eps)
   for(int i=0; i<30; i++) {
-    if(!approxEqual(data[i],trueData[i],100 * std::sqrt(std::numeric_limits<scalar_t>::epsilon()))) {
+    if(!approxEqual(data[i],trueData[i],10 * std::sqrt(std::numeric_limits<scalar_t>::epsilon()))) {
       std::cerr << "data[" << i << "] (" << data[i] << ") != trueData["
           << i << "] (" << trueData[i] << "); the difference is "
           << data[i] - trueData[i] << std::endl;

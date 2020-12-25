@@ -20,7 +20,13 @@ bool approxEqual(scalar_t a, scalar_t b, scalar_t tol)
 
 int main()
 {
-  typedef double scalar_t; // specify precision
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+#else
+  typedef double scalar_t;
+#endif
 
   Tucker::SizeArray* size =
       Tucker::MemoryManager::safe_new<Tucker::SizeArray>(3);

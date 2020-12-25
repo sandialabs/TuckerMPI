@@ -3,7 +3,13 @@
 
 int main(int argc, char* argv[])
 {
-  typedef double scalar_t; // specify precision
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+#else
+  typedef double scalar_t;
+#endif
 
   // Read a tensor from a text file
   std::string filename = "input_files/3x5x7x11.txt";

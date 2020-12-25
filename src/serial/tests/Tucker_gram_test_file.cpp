@@ -30,7 +30,13 @@ bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 
 int main()
 {
-  typedef double scalar_t; // specify precision
+  
+// specify precision
+#ifdef FLOAT
+  typedef float scalar_t; 
+#else
+  typedef double scalar_t;
+#endif
 
   // Read the matrix from a binary file
   Tucker::Tensor<scalar_t>* tensor =

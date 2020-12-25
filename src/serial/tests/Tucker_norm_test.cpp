@@ -10,7 +10,13 @@
 
 int main()
 {
-  typedef double scalar_t; // specify precision
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+#else
+  typedef double scalar_t;
+#endif
 
   const scalar_t TRUE_SOLUTION = 9.690249359274157;
 
