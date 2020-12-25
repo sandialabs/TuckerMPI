@@ -10,7 +10,8 @@
 #include <cstdlib>
 #include <cmath>
 
-bool approxEqual(double a, double b, double tol)
+template <class scalar_t>
+bool approxEqual(scalar_t a, scalar_t b, scalar_t tol)
 {
   if(std::abs(a-b) > tol)
     return false;
@@ -19,28 +20,30 @@ bool approxEqual(double a, double b, double tol)
 
 int main()
 {
+  typedef double scalar_t; // specify precision
+
   Tucker::SizeArray* size =
       Tucker::MemoryManager::safe_new<Tucker::SizeArray>(3);
   (*size)[0] = 2;
   (*size)[1] = 3;
   (*size)[2] = 5;
-  Tucker::Tensor<double>* t =
-      Tucker::MemoryManager::safe_new<Tucker::Tensor<double>>(*size);
-  double* data = t->data();
+  Tucker::Tensor<scalar_t>* t =
+      Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*size);
+  scalar_t* data = t->data();
   for(int i=0; i<30; i++)
     data[i] = i+1;
 
-  const struct Tucker::TuckerTensor<double>* factorization = Tucker::STHOSVD(t,1e-6);
+  const struct Tucker::TuckerTensor<scalar_t>* factorization = Tucker::STHOSVD(t,1e-6);
 
   // Reconstruct the original tensor
-  Tucker::Tensor<double>* temp = Tucker::ttm(factorization->G,0,
+  Tucker::Tensor<scalar_t>* temp = Tucker::ttm(factorization->G,0,
       factorization->U[0]);
-  Tucker::Tensor<double>* temp2 = Tucker::ttm(temp,1,
+  Tucker::Tensor<scalar_t>* temp2 = Tucker::ttm(temp,1,
         factorization->U[1]);
-  Tucker::Tensor<double>* temp3 = Tucker::ttm(temp2,2,
+  Tucker::Tensor<scalar_t>* temp3 = Tucker::ttm(temp2,2,
         factorization->U[2]);
 
-  double* newdata = temp3->data();
+  scalar_t* newdata = temp3->data();
   for(int i=0; i<30; i++) {
     if(!approxEqual(newdata[i], data[i], 1e-10)) {
       std::cerr << "data[" << i << "] should be " << data[i]

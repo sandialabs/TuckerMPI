@@ -3,17 +3,19 @@
 
 int main(int argc, char* argv[])
 {
+  typedef double scalar_t; // specify precision
+
   // Read a tensor from a text file
   std::string filename = "input_files/3x5x7x11.txt";
-  Tucker::Tensor<double>* Y = Tucker::importTensor<double>(filename.c_str());
+  Tucker::Tensor<scalar_t>* Y = Tucker::importTensor<scalar_t>(filename.c_str());
 
   // Write the tensor to a binary file
   filename = "output_files/output.mpi";
   Tucker::exportTensorBinary(Y, filename.c_str());
 
   // Read a tensor from the binary file
-  Tucker::Tensor<double>* Y2 =
-      Tucker::MemoryManager::safe_new<Tucker::Tensor<double>>(Y->size());
+  Tucker::Tensor<scalar_t>* Y2 =
+      Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(Y->size());
   Tucker::importTensorBinary(Y2, filename.c_str());
 
   if(!Tucker::isApproxEqual(Y, Y2, 1e-10)) {

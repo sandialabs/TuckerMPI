@@ -9,20 +9,22 @@
 
 int main()
 {
+  typedef double scalar_t; // specify precision
+
   // Read the tensor from a file
-  Tucker::Tensor<double>* tensor =
-      Tucker::importTensor<double>("input_files/3x5x7x11.txt");
+  Tucker::Tensor<scalar_t>* tensor =
+      Tucker::importTensor<scalar_t>("input_files/3x5x7x11.txt");
 
   // Read a matrix to multiply
-  Tucker::Matrix<double>* mat =
-      Tucker::importMatrix<double>("input_files/3x2.txt");
+  Tucker::Matrix<scalar_t>* mat =
+      Tucker::importMatrix<scalar_t>("input_files/3x2.txt");
 
   // Read the true solution
-  Tucker::Tensor<double>* trueSol =
-      Tucker::importTensor<double>("input_files/3x2_mult_transp.txt");
+  Tucker::Tensor<scalar_t>* trueSol =
+      Tucker::importTensor<scalar_t>("input_files/3x2_mult_transp.txt");
 
   // Compute the TTM
-  Tucker::Tensor<double>* mySol = Tucker::ttm(tensor, 0, mat, true);
+  Tucker::Tensor<scalar_t>* mySol = Tucker::ttm(tensor, 0, mat, true);
 
   // Compare the computed solution to the true solution
   if(!Tucker::isApproxEqual(trueSol, mySol, 1e-10))
@@ -35,10 +37,10 @@ int main()
   Tucker::MemoryManager::safe_delete(trueSol);
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix<double>("input_files/4x3.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/4x3.txt");
 
   // Read the true solution
-  trueSol = Tucker::importTensor<double>("input_files/4x3_mult.txt");
+  trueSol = Tucker::importTensor<scalar_t>("input_files/4x3_mult.txt");
 
   // Compute the TTM
   mySol = Tucker::ttm(tensor, 0, mat);
@@ -54,10 +56,10 @@ int main()
   Tucker::MemoryManager::safe_delete(trueSol);
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix<double>("input_files/5x8.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/5x8.txt");
 
   // Read the true solution
-  trueSol = Tucker::importTensor<double>("input_files/5x8_mult_transp.txt");
+  trueSol = Tucker::importTensor<scalar_t>("input_files/5x8_mult_transp.txt");
 
   // Compute the TTM
   mySol = Tucker::ttm(tensor, 1, mat, true);
@@ -73,10 +75,10 @@ int main()
   Tucker::MemoryManager::safe_delete(trueSol);
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix<double>("input_files/2x5.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/2x5.txt");
 
   // Read the true solution
-  trueSol = Tucker::importTensor<double>("input_files/2x5_mult.txt");
+  trueSol = Tucker::importTensor<scalar_t>("input_files/2x5_mult.txt");
 
   // Compute the TTM
   mySol = Tucker::ttm(tensor, 1, mat);
@@ -92,10 +94,10 @@ int main()
   Tucker::MemoryManager::safe_delete(trueSol);
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix<double>("input_files/7x1.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/7x1.txt");
 
   // Read the true solution
-  trueSol = Tucker::importTensor<double>("input_files/7x1_mult_transp.txt");
+  trueSol = Tucker::importTensor<scalar_t>("input_files/7x1_mult_transp.txt");
 
   // Compute the TTM
   mySol = Tucker::ttm(tensor, 2, mat, true);
@@ -111,10 +113,10 @@ int main()
   Tucker::MemoryManager::safe_delete(trueSol);
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix<double>("input_files/1x7.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/1x7.txt");
 
   // Read the true solution
-  trueSol = Tucker::importTensor<double>("input_files/1x7_mult.txt");
+  trueSol = Tucker::importTensor<scalar_t>("input_files/1x7_mult.txt");
 
   // Compute the TTM
   mySol = Tucker::ttm(tensor, 2, mat);
@@ -130,10 +132,10 @@ int main()
   Tucker::MemoryManager::safe_delete(trueSol);
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix<double>("input_files/11x25.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/11x25.txt");
 
   // Read the true solution
-  trueSol = Tucker::importTensor<double>("input_files/11x25_mult_transp.txt");
+  trueSol = Tucker::importTensor<scalar_t>("input_files/11x25_mult_transp.txt");
 
   // Compute the TTM
   mySol = Tucker::ttm(tensor, 3, mat, true);
@@ -149,10 +151,10 @@ int main()
   Tucker::MemoryManager::safe_delete(trueSol);
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix<double>("input_files/17x11.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/17x11.txt");
 
   // Read the true solution
-  trueSol = Tucker::importTensor<double>("input_files/17x11_mult.txt");
+  trueSol = Tucker::importTensor<scalar_t>("input_files/17x11_mult.txt");
 
   // Compute the TTM
   mySol = Tucker::ttm(tensor, 3, mat);

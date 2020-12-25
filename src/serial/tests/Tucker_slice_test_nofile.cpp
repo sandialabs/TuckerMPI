@@ -11,22 +11,24 @@
 
 int main()
 {
+  typedef double scalar_t; // specify precision
+
   Tucker::SizeArray* size =
       Tucker::MemoryManager::safe_new<Tucker::SizeArray>(4);
   (*size)[0] = 2;
   (*size)[1] = 3;
   (*size)[2] = 5;
   (*size)[3] = 7;
-  Tucker::Tensor<double>* t =
-      Tucker::MemoryManager::safe_new<Tucker::Tensor<double>>(*size);
+  Tucker::Tensor<scalar_t>* t =
+      Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*size);
 
   size_t nnz = size->prod();
-  double* data = t->data();
+  scalar_t* data = t->data();
   for(size_t i=0; i<nnz; i++) {
-    data[i] = (double)i+1;
+    data[i] = (scalar_t)i+1;
   }
 
-  double trueData[7][4][3];
+  scalar_t trueData[7][4][3];
   trueData[0][0][0] = 209;
   trueData[0][0][1] = 1;
   trueData[0][0][2] = 11025;
@@ -80,7 +82,7 @@ int main()
   trueData[6][3][2] = 5865;
 
   for(int i=0; i<size->size(); i++) {
-    Tucker::MetricData<double>* mets = Tucker::computeSliceMetrics(t,i,Tucker::MIN + Tucker::MAX + Tucker::SUM);
+    Tucker::MetricData<scalar_t>* mets = Tucker::computeSliceMetrics(t,i,Tucker::MIN + Tucker::MAX + Tucker::SUM);
     for(int j=0; j<(*size)[i]; j++) {
       std::cout << "The maximum of slice " << j << " of mode "
           << i << " is " << mets->getMaxData()[j] << std::endl;

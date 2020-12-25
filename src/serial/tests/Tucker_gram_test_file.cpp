@@ -8,9 +8,10 @@
 #include <cmath>
 #include "Tucker.hpp"
 
-bool checkUTEqual(const double* arr1, const double* arr2, int numRows)
+template <class scalar_t>
+bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 {
-  const double TOL = 1e-10;
+  const scalar_t TOL = 1e-10;
 
   for(int r=0; r<numRows; r++) {
     for(int c=r; c<numRows; c++) {
@@ -29,14 +30,16 @@ bool checkUTEqual(const double* arr1, const double* arr2, int numRows)
 
 int main()
 {
+  typedef double scalar_t; // specify precision
+
   // Read the matrix from a binary file
-  Tucker::Tensor<double>* tensor =
-      Tucker::importTensor<double>("input_files/3x5x7x11.txt");
+  Tucker::Tensor<scalar_t>* tensor =
+      Tucker::importTensor<scalar_t>("input_files/3x5x7x11.txt");
 
   // Compute the Gram matrix
-  Tucker::Matrix<double>* matrix = Tucker::computeGram(tensor,0);
+  Tucker::Matrix<scalar_t>* matrix = Tucker::computeGram(tensor,0);
 
-  const double TRUE_SOLUTION_0[3*3] =
+  const scalar_t TRUE_SOLUTION_0[3*3] =
     {30.443306716415002, 2.839326384970902, 3.302846757455287,
      2.839326384970902, 30.254535550071385, -1.525701935166856,
      3.302846757455286,  -1.525701935166856,  33.203090378426815};
@@ -51,7 +54,7 @@ int main()
   // Compute the Gram matrix
   matrix = Tucker::computeGram(tensor,1);
 
-  const double TRUE_SOLUTION_1[5*5] =
+  const scalar_t TRUE_SOLUTION_1[5*5] =
     {19.818638147579669, -1.262410163567289, -0.702854185504209, -1.530487842705398, 0.076595773936855,
      -1.262410163567289, 19.055467182423385, -0.066700982927269,  2.017798574327055, -2.178581571284073,
      -0.702854185504209, -0.066700982927269, 18.565387462362573, -1.776252595103098, 1.511348003921888,
@@ -68,7 +71,7 @@ int main()
   // Compute the Gram matrix
   matrix = Tucker::computeGram(tensor,2);
 
-  const double TRUE_SOLUTION_2[7*7] =
+  const scalar_t TRUE_SOLUTION_2[7*7] =
     {15.008467435803363, 0.759679780649146, 0.036286707752565, -0.289429119623268, 0.297697996043826, 1.775651754316252, 0.290583279984489,
      0.759679780649146, 13.534258753086892, 0.216613144804639, -0.909444710671252, -0.440040933466265, -1.316163513868651, 0.331266618564718,
      0.036286707752565, 0.216613144804639, 13.107978854355352, 0.701142578929455, 1.325848667245948, -0.355644067560675, 0.307781943716007,
@@ -87,7 +90,7 @@ int main()
   // Compute the Gram matrix
   matrix = Tucker::computeGram(tensor,3);
 
-  const double TRUE_SOLUTION_3[11*11] =
+  const scalar_t TRUE_SOLUTION_3[11*11] =
     {9.161015785664386, 0.727680925086397, -0.027808461977047, -1.858926623169289, 2.161910031054029, 0.538498274148853, -1.513458574761186, 1.560326634563823, 0.092898181083783, 0.193490784986641, -1.989938728094985,
         0.727680925086397, 8.579166359218990, 0.141184182846715, 0.895099070075687, -0.217980995935905, -0.257633332960250, 0.874112582420890, -1.046151056779062, 0.285393081978074, -0.864025655243411, 0.241418995156843,
         -0.027808461977047, 0.141184182846715, 8.487659393716891, -0.196516290753068, 0.855490962332431, 0.483991332254019, -0.096130754960697, 1.054249161028251, 0.718345150564935, -0.962619165522184, -1.619740748464319,

@@ -9,9 +9,10 @@
 #include <cstdlib>
 #include "Tucker.hpp"
 
-bool checkUTEqual(const double* arr1, const double* arr2, int numRows)
+template <class scalar_t>
+bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 {
-  const double TOL = 1e-10;
+  const scalar_t TOL = 1e-10;
 
   for(int r=0; r<numRows; r++) {
     for(int c=r; c<numRows; c++) {
@@ -30,7 +31,9 @@ bool checkUTEqual(const double* arr1, const double* arr2, int numRows)
 
 int main()
 {
-  double trueData[11][4][5];
+  typedef double scalar_t; // specify precision
+
+  scalar_t trueData[11][4][5];
   trueData[0][0][0] = -0.493284685681523;
   trueData[0][0][1] = 0.497003271606648;
   trueData[0][0][2] = -10.553150952476088;
@@ -163,12 +166,12 @@ int main()
   trueData[10][3][4] = 0.301217280929192;
 
   // Read the matrix from a binary file
-  Tucker::Tensor<double>* tensor =
-      Tucker::importTensor<double>("input_files/3x5x7x11.txt");
+  Tucker::Tensor<scalar_t>* tensor =
+      Tucker::importTensor<scalar_t>("input_files/3x5x7x11.txt");
 
   for(int n=0; n<tensor->N(); n++) {
     // Compute the slice metrics
-    Tucker::MetricData<double>* mets = Tucker::computeSliceMetrics(tensor, n,
+    Tucker::MetricData<scalar_t>* mets = Tucker::computeSliceMetrics(tensor, n,
         Tucker::MIN + Tucker::MAX + Tucker::SUM + Tucker::MEAN + Tucker::VARIANCE);
 
     for(int j=0; j<tensor->size(n); j++) {

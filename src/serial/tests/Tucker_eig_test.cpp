@@ -12,25 +12,27 @@
 
 int main()
 {
+  typedef double scalar_t; // specify precision
+
   // Read the tensor from a binary file
-  Tucker::Matrix<double>* matrix =
-      Tucker::importMatrix<double>("input_files/5x5.txt");
+  Tucker::Matrix<scalar_t>* matrix =
+      Tucker::importMatrix<scalar_t>("input_files/5x5.txt");
 
   // Initialize the lower triangular portion of the matrix with NAN
   for(int r=0; r<5; r++) {
     for(int c=0; c<r; c++) {
-      matrix->data()[r+5*c] = std::numeric_limits<double>::signaling_NaN();
+      matrix->data()[r+5*c] = std::numeric_limits<scalar_t>::signaling_NaN();
     }
   }
 
   // Compute the eigenpairs
-  double* eigenvalues;
+  scalar_t* eigenvalues;
   Tucker::computeEigenpairs(matrix, eigenvalues, true);
 
-  double TRUE_EVALS[5] = {0.635794375487247, 0.355867612602428,
+  scalar_t TRUE_EVALS[5] = {0.635794375487247, 0.355867612602428,
       0.061922384175464, -0.459221953743586, -0.690271293870763};
 
-  double TRUE_EVECS[5*5] =
+  scalar_t TRUE_EVECS[5*5] =
   {0.609179643854214, 0.461861259573850, 0.006538134339641, 0.226987202930453, 0.603339374584219,
    -0.042600532550886, 0.268064898175888, 0.673874553249279, 0.569936812817458, -0.383916033620496,
    0.752965729125975, -0.200041939033358, 0.180165297412201, -0.377310929868719, -0.467121784120092,
@@ -39,7 +41,7 @@ int main()
   };
 
   for(int i=0; i<5; i++) {
-    double diff = std::abs(eigenvalues[i]-TRUE_EVALS[i]);
+    scalar_t diff = std::abs(eigenvalues[i]-TRUE_EVALS[i]);
     if(diff > 1e-10) {
       std::cerr << "ERROR: The true eigenvalue is " << TRUE_EVALS[i]
                 << ", but the computed eigenvalue was " << eigenvalues[i]
@@ -50,7 +52,7 @@ int main()
 
 
   for(int i=0; i<5*5; i++) {
-    double diff = std::abs(matrix->data()[i]-TRUE_EVECS[i]);
+    scalar_t diff = std::abs(matrix->data()[i]-TRUE_EVECS[i]);
     if(diff > 1e-10) {
       std::cerr << "ERROR: The true solution is " << TRUE_EVECS[i]
                 << ", but the computed solution was " << matrix->data()[i]
