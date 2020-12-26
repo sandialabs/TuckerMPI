@@ -904,7 +904,15 @@ int main(int argc, char* argv[])
 
 bool runSim(Tucker::SizeArray& procs)
 {
-  typedef double scalar_t; // specify precision
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+  std::string filename = "input_files/3x5x7x11_single.mpi";
+#else
+  typedef double scalar_t;
+  std::string filename = "input_files/3x5x7x11.mpi";
+#endif
 
   scalar_t trueData[11][4][5];
   trueData[0][0][0] = -0.493284685681523;
@@ -1055,7 +1063,7 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::Tensor<scalar_t> tensor(dist);
 
   // Read the tensor from a binary file
-  TuckerMPI::importTensorBinary("input_files/3x5x7x11.mpi",&tensor);
+  TuckerMPI::importTensorBinary(filename.c_str(),&tensor);
 
   for(int n=0; n<tensor.getNumDimensions(); n++) {
     // Compute the slice metrics

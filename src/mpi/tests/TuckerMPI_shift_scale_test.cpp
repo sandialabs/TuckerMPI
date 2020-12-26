@@ -903,7 +903,24 @@ int main(int argc, char* argv[])
 
 bool runSim(Tucker::SizeArray& procs)
 {
-  typedef double scalar_t; // specify precision
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+  const char* fn_tensor = "input_files/3x5x7x11_single.mpi";
+  const char* fn_ss0 = "input_files/3x5x7x11_ss0_single.mpi";
+  const char* fn_ss1 = "input_files/3x5x7x11_ss1_single.mpi";
+  const char* fn_ss2 = "input_files/3x5x7x11_ss2_single.mpi";
+  const char* fn_ss3 = "input_files/3x5x7x11_ss3_single.mpi";
+#else
+  typedef double scalar_t;
+  const char* fn_tensor = "input_files/3x5x7x11.mpi";
+  const char* fn_ss0 = "input_files/3x5x7x11_ss0.mpi";
+  const char* fn_ss1 = "input_files/3x5x7x11_ss1.mpi";
+  const char* fn_ss2 = "input_files/3x5x7x11_ss2.mpi";
+  const char* fn_ss3 = "input_files/3x5x7x11_ss3.mpi";
+#endif
+
   const TuckerMPI::Map* map;
   int index;
 
@@ -924,7 +941,7 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::Tensor<scalar_t> true_sol(dist2);
 
   // Read the tensor from a binary file
-  TuckerMPI::importTensorBinary("input_files/3x5x7x11.mpi",&tensor);
+  TuckerMPI::importTensorBinary(fn_tensor,&tensor);
 
   scalar_t shifts0[3] = {-0.450368098480610,
       -0.408899824586946, 0.094037031444121};
@@ -936,7 +953,7 @@ bool runSim(Tucker::SizeArray& procs)
   index = map->getGlobalIndex(0);
 
   // Read true solution from file
-  TuckerMPI::importTensorBinary("input_files/3x5x7x11_ss0.mpi",&true_sol);
+  TuckerMPI::importTensorBinary(fn_ss0,&true_sol);
 
   // Call shift-scale
   TuckerMPI::transformSlices(&tensor,0,scales0+index,shifts0+index);
@@ -946,7 +963,7 @@ bool runSim(Tucker::SizeArray& procs)
   }
 
   // Read tensor from file
-  TuckerMPI::importTensorBinary("input_files/3x5x7x11.mpi",&tensor);
+  TuckerMPI::importTensorBinary(fn_tensor,&tensor);
 
   scalar_t shifts1[5] = {0.463612200951355, -0.011100213839396,
       -0.279689899431367, -0.273791359158714, 0.036787804512826};
@@ -958,7 +975,7 @@ bool runSim(Tucker::SizeArray& procs)
   index = map->getGlobalIndex(0);
 
   // Read true solution from file
-  TuckerMPI::importTensorBinary("input_files/3x5x7x11_ss1.mpi",&true_sol);
+  TuckerMPI::importTensorBinary(fn_ss1,&true_sol);
 
   // Call shift-scale
   TuckerMPI::transformSlices(&tensor,1,scales1+index,shifts1+index);
@@ -968,7 +985,7 @@ bool runSim(Tucker::SizeArray& procs)
   }
 
   // Read tensor from file
-  TuckerMPI::importTensorBinary("input_files/3x5x7x11.mpi",&tensor);
+  TuckerMPI::importTensorBinary(fn_tensor,&tensor);
 
   scalar_t shifts2[7] = {-0.338427426109669, 0.215635404167474,
       0.077738876192409, -0.066701022790881, 0.384242782631094,
@@ -982,7 +999,7 @@ bool runSim(Tucker::SizeArray& procs)
   index = map->getGlobalIndex(0);
 
   // Read true solution from file
-  TuckerMPI::importTensorBinary("input_files/3x5x7x11_ss2.mpi",&true_sol);
+  TuckerMPI::importTensorBinary(fn_ss2,&true_sol);
 
   // Call shift-scale
   TuckerMPI::transformSlices(&tensor,2,scales2+index,shifts2+index);
@@ -992,7 +1009,7 @@ bool runSim(Tucker::SizeArray& procs)
   }
 
   // Read tensor from file
-  TuckerMPI::importTensorBinary("input_files/3x5x7x11.mpi",&tensor);
+  TuckerMPI::importTensorBinary(fn_tensor,&tensor);
 
   scalar_t shifts3[11] = {-0.267759854038207, -0.476367533341775,
        0.107432610401855, -0.389190678712850, -0.092540492121601,
@@ -1008,7 +1025,7 @@ bool runSim(Tucker::SizeArray& procs)
   index = map->getGlobalIndex(0);
 
   // Read true solution from file
-  TuckerMPI::importTensorBinary("input_files/3x5x7x11_ss3.mpi",&true_sol);
+  TuckerMPI::importTensorBinary(fn_ss3,&true_sol);
 
   // Call shift-scale
   TuckerMPI::transformSlices(&tensor,3,scales3+index,shifts3+index);

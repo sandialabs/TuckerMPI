@@ -897,7 +897,17 @@ int main(int argc, char* argv[])
 
 bool runSim(Tucker::SizeArray& procs)
 {
-  typedef double scalar_t; // specify precision
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+  std::string filename = "input_files/input_test_filename_single.txt";
+  std::string filenames = "input_files/input_test_filenames_single.txt";
+#else
+  typedef double scalar_t;
+  std::string filename = "input_files/input_test_filename.txt";
+  std::string filenames = "input_files/input_test_filenames.txt";
+#endif
 
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -910,10 +920,9 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::Tensor<scalar_t> Y(dist);
   for(size_t i=0; i<Y.getLocalNumEntries(); i++)
     Y.getLocalTensor()->data()[i] = std::numeric_limits<scalar_t>::signaling_NaN();
-  std::string filenames = "input_files/input_test_filenames.txt";
   TuckerMPI::readTensorBinary(filenames,Y);
 
-  std::string filename = "input_files/input_test_filename.txt";
+  
   TuckerMPI::Distribution* dist2 =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(sz, procs);
   TuckerMPI::Tensor<scalar_t> Y2(dist2);
@@ -921,11 +930,9 @@ bool runSim(Tucker::SizeArray& procs)
     Y2.getLocalTensor()->data()[i] = std::numeric_limits<scalar_t>::signaling_NaN();
   TuckerMPI::readTensorBinary(filename,Y2);
 
-  filename = "input_files/output_test_filename.txt";
   TuckerMPI::writeTensorBinary(filename,Y);
 
-  filenames = "input_files/output_test_filenames.txt";
-  TuckerMPI::writeTensorBinary(filenames,Y);
+  TuckerMPI::writeTensorBinary(filenames,Y2);
 
   TuckerMPI::Distribution* dist3 =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(sz, procs);

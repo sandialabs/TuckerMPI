@@ -13,7 +13,15 @@ bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows);
 
 int main(int argc, char* argv[])
 {
-  typedef double scalar_t; // specify precision
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+  std::string filename = "input_files/tensor24_single.mpi";
+#else
+  typedef double scalar_t;
+  std::string filename = "input_files/tensor24.mpi";
+#endif
 
   // Initialize MPI
   MPI_Init(&argc,&argv);
@@ -40,7 +48,6 @@ int main(int argc, char* argv[])
       Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
 
   // Read the entries from a file
-  std::string filename = "input_files/tensor24.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),tensor);
 
   // Compute the gram matrix in dimension 2

@@ -10,7 +10,15 @@
 
 int main(int argc, char* argv[])
 {
-  typedef double scalar_t; // specify precision
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+  const char* filename = "input_files/tensor24_single.mpi";
+#else
+  typedef double scalar_t;
+  const char* filename = "input_files/tensor24.mpi";
+#endif
 
   // Initialize MPI
   MPI_Init(&argc,&argv);
@@ -39,11 +47,11 @@ int main(int argc, char* argv[])
       Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
 
   // Read the entries from a file
-  std::string filename = "input_files/tensor24.mpi";
-  TuckerMPI::importTensorBinary(filename.c_str(),tensor);
+  TuckerMPI::importTensorBinary(filename,tensor);
 
+  // Compute approximation to 1e-3 (loose enough for single precision)
   const struct TuckerMPI::TuckerTensor<scalar_t>* factorization =
-      TuckerMPI::STHOSVD(tensor,1e-6);
+      TuckerMPI::STHOSVD(tensor, (scalar_t) 1e-3);
 
   // Reconstruct the original tensor
   TuckerMPI::Tensor<scalar_t>* temp = TuckerMPI::ttm(factorization->G,0,
@@ -53,7 +61,8 @@ int main(int argc, char* argv[])
   TuckerMPI::Tensor<scalar_t>* temp3 = TuckerMPI::ttm(temp2,2,
         factorization->U[2]);
 
-  bool eq = isApproxEqual(temp3,tensor,100 * std::numeric_limits<scalar_t>::epsilon());
+  // Set elementwise tolerance an order of magnitude larger than normwise error
+  bool eq = isApproxEqual(temp3, tensor, (scalar_t) 1e-2);
   if(!eq) {
     MPI_Finalize();
     return EXIT_FAILURE;

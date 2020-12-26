@@ -11,7 +11,13 @@
 
 int main(int argc, char* argv[])
 {
-  typedef double scalar_t;  // specify precision
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+#else
+  typedef double scalar_t;
+#endif
 
   bool approxEqual;
 
@@ -52,7 +58,7 @@ int main(int argc, char* argv[])
   // Create a matrix to multiply
   Tucker::Matrix<scalar_t>* mat =
       Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(7,2);
-  double* data = mat->data();
+  scalar_t* data = mat->data();
   data[0] = 131;  data[1] = 137; data[2] = 139;  data[3] = 149;
   data[4] = 151;  data[5] = 157; data[6] = 163;  data[7] = 167;
   data[8] = 173;  data[9] = 179; data[10] = 181; data[11] = 191;
@@ -69,8 +75,8 @@ int main(int argc, char* argv[])
   (*expectedSize)[2] = 5;
   TuckerMPI::Distribution* expectedDist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*expectedSize,*nprocsPerDim);
-  TuckerMPI::Tensor<scalar_t>* expectedResult =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(expectedDist);
+  TuckerMPI::Tensor<double>* expectedResult =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<double>>(expectedDist);
   filename = "input_files/ttm_result0.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult);
 
@@ -104,8 +110,8 @@ int main(int argc, char* argv[])
   (*expectedSize)[2] = 5;
   expectedDist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*expectedSize,*nprocsPerDim);
-  TuckerMPI::Tensor<scalar_t>* expectedResult2 =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(expectedDist);
+  TuckerMPI::Tensor<double>* expectedResult2 =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<double>>(expectedDist);
   filename = "input_files/ttm_result0t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult2);
 
@@ -141,8 +147,8 @@ int main(int argc, char* argv[])
   (*expectedSize)[2] = 5;
   expectedDist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*expectedSize,*nprocsPerDim);
-  TuckerMPI::Tensor<scalar_t>* expectedResult3 =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(expectedDist);
+  TuckerMPI::Tensor<double>* expectedResult3 =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<double>>(expectedDist);
   filename = "input_files/ttm_result1.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult3);
 
@@ -178,8 +184,8 @@ int main(int argc, char* argv[])
   (*expectedSize)[2] = 5;
   expectedDist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*expectedSize,*nprocsPerDim);
-  TuckerMPI::Tensor<scalar_t>* expectedResult4 =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(expectedDist);
+  TuckerMPI::Tensor<double>* expectedResult4 =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<double>>(expectedDist);
   filename = "input_files/ttm_result1t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult4);
 
@@ -218,8 +224,8 @@ int main(int argc, char* argv[])
   (*expectedSize)[2] = 7;
   expectedDist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*expectedSize,*nprocsPerDim);
-  TuckerMPI::Tensor<scalar_t>* expectedResult5 =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(expectedDist);
+  TuckerMPI::Tensor<double>* expectedResult5 =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<double>>(expectedDist);
   filename = "input_files/ttm_result2.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult5);
 
@@ -258,8 +264,8 @@ int main(int argc, char* argv[])
   (*expectedSize)[2] = 7;
   expectedDist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*expectedSize,*nprocsPerDim);
-  TuckerMPI::Tensor<scalar_t>* expectedResult6 =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(expectedDist);
+  TuckerMPI::Tensor<double>* expectedResult6 =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<double>>(expectedDist);
   filename = "input_files/ttm_result2t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult6);
 

@@ -906,8 +906,16 @@ int main(int argc, char* argv[])
 
 bool runSim(Tucker::SizeArray& procs)
 {
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t;
+  std::string filename = "input_files/3x5x7x11_single.mpi";
+#else
   typedef double scalar_t;
-  
+  std::string filename = "input_files/3x5x7x11.mpi";
+#endif  
+
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
@@ -927,7 +935,7 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::Tensor<scalar_t> tensor(dist);
 
   // Read the tensor from a binary file
-  TuckerMPI::importTensorBinary("input_files/3x5x7x11.mpi",&tensor);
+  TuckerMPI::importTensorBinary(filename.c_str(),&tensor);
 
   // Compute the norm
   scalar_t norm = sqrt(tensor.norm2());

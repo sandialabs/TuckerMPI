@@ -40,6 +40,7 @@
 #define TENSOR_MPI_HPP_
 
 #include "TuckerMPI_Distribution.hpp"
+#include "TuckerMPI_MPIWrapper.hpp"
 #include "Tucker_Tensor.hpp"
 
 namespace TuckerMPI {

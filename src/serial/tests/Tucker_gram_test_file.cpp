@@ -30,9 +30,9 @@ bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 
 int main()
 {
-  
+
 // specify precision
-#ifdef FLOAT
+#ifdef TEST_SINGLE
   typedef float scalar_t; 
 #else
   typedef double scalar_t;

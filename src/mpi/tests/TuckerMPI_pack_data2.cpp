@@ -11,11 +11,18 @@
 #include "mpi.h"
 #include "TuckerMPI.hpp"
 
-bool checkArrayEqual(double* arr1, double* arr2, int numEl);
+template <class scalar_t>
+bool checkArrayEqual(scalar_t* arr1, scalar_t* arr2, int numEl);
 
 int main(int argc, char* argv[])
 {
-  typedef double scalar_t; // specify precision
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+#else
+  typedef double scalar_t;
+#endif
 
   // Initialize MPI
   MPI_Init(&argc,&argv);
@@ -29,7 +36,7 @@ int main(int argc, char* argv[])
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(sa);
 
   // Fill it with the entries 0:35
-  double* data = tensor->data();
+  scalar_t* data = tensor->data();
   for(int i=0; i<36; i++)
     data[i] = i;
 
@@ -44,7 +51,7 @@ int main(int argc, char* argv[])
   tensor->print();
 
   // Check the result
-  double trueResult[36] = {0,1,2,3,4,5,12,13,14,15,16,17,24,25,26,27,28,29,6,7,8,9,10,11,18,19,20,21,22,23,30,31,32,33,34,35};
+  scalar_t trueResult[36] = {0,1,2,3,4,5,12,13,14,15,16,17,24,25,26,27,28,29,6,7,8,9,10,11,18,19,20,21,22,23,30,31,32,33,34,35};
   bool equal = checkArrayEqual(tensor->data(),trueResult,36);
   if(!equal) {
     MPI_Finalize();
@@ -63,7 +70,8 @@ int main(int argc, char* argv[])
   return EXIT_SUCCESS;
 }
 
-bool checkArrayEqual(double* arr1, double* arr2, int numEl)
+template <class scalar_t>
+bool checkArrayEqual(scalar_t* arr1, scalar_t* arr2, int numEl)
 {
   for(int i=0; i<numEl; i++) {
     if(arr1[i] != arr2[i]) {

@@ -925,7 +925,15 @@ bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 
 bool runSim(Tucker::SizeArray& procs)
 {
-  typedef double scalar_t; // specify precision
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+  const char* filename = "input_files/3x5x7x11_single.mpi";
+#else
+  typedef double scalar_t;
+  const char* filename = "input_files/3x5x7x11.mpi";
+#endif
 
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -947,7 +955,7 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::Tensor<scalar_t> tensor(dist);
 
   // Read the tensor from a binary file
-  TuckerMPI::importTensorBinary("input_files/3x5x7x11.mpi",&tensor);
+  TuckerMPI::importTensorBinary(filename,&tensor);
 
   // Compute the Gram matrix
   matrix = TuckerMPI::newGram(&tensor,0);

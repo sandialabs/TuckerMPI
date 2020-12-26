@@ -16,7 +16,13 @@ bool checkArrayEqual(scalar_t* arr1, scalar_t* arr2, int numEl);
 
 int main(int argc, char* argv[])
 {
-  typedef double scalar_t; // specify precision
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+#else
+  typedef double scalar_t;
+#endif
 
   // Initialize MPI
   MPI_Init(&argc,&argv);

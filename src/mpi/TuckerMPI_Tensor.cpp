@@ -131,8 +131,8 @@ scalar_t Tensor<scalar_t>::norm2() const
 
   // Perform a reduction
   scalar_t globalNorm2;
-  MPI_Allreduce(&localNorm2, &globalNorm2, 1,
-      MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce_(&localNorm2, &globalNorm2, 1,
+      MPI_SUM, MPI_COMM_WORLD);
   return globalNorm2;
 }
 

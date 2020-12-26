@@ -477,7 +477,7 @@ int main(int argc, char* argv[])
 template <class scalar_t>
 bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 {
-  const double TOL = 100 * std::numeric_limits<scalar_t>::epsilon();
+  const scalar_t TOL = 100 * std::numeric_limits<scalar_t>::epsilon();
 
   for(int r=0; r<numRows; r++) {
     for(int c=r; c<numRows; c++) {
@@ -496,7 +496,15 @@ bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 
 bool runSim(Tucker::SizeArray& procs)
 {
-  typedef double scalar_t; // specify precision 
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+  const char* filename = "input_files/2x3x4_single.mpi";
+#else
+  typedef double scalar_t;
+  const char* filename = "input_files/2x3x4.mpi";
+#endif
 
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -518,12 +526,12 @@ bool runSim(Tucker::SizeArray& procs)
   TuckerMPI::Tensor<scalar_t> tensor(dist);
 
   // Read the tensor from a binary file
-  TuckerMPI::importTensorBinary("input_files/2x3x4.mpi",&tensor);
+  TuckerMPI::importTensorBinary(filename,&tensor);
 
   // Compute the Gram matrix
   matrix = TuckerMPI::newGram(&tensor,0);
 
-  const double TRUE_SOLUTION_0[2*2] =
+  const scalar_t TRUE_SOLUTION_0[2*2] =
     {1.168135985906300, 0.028160277747515,
      0.028160277747515, 1.853639580930490};
 
@@ -536,7 +544,7 @@ bool runSim(Tucker::SizeArray& procs)
   // Compute the Gram matrix
   matrix = TuckerMPI::newGram(&tensor,1);
 
-  const double TRUE_SOLUTION_1[3*3] =
+  const scalar_t TRUE_SOLUTION_1[3*3] =
     {0.820712914437342, -0.054508300978125, 0.235829882605409,
      -0.054508300978125, 1.193684853530435, -0.473108474125891,
      0.235829882605409, -0.473108474125891, 1.007377798869013};
@@ -551,7 +559,7 @@ bool runSim(Tucker::SizeArray& procs)
   // Compute the Gram matrix
   matrix = TuckerMPI::newGram(&tensor,2);
 
-  const double TRUE_SOLUTION_2[4*4] =
+  const scalar_t TRUE_SOLUTION_2[4*4] =
     {0.753229224299415, -0.263882754399373, -0.299769660407416, -0.100050281627677,
      -0.263882754399373, 0.815381138600412, 0.091378577087934, -0.103075841588300,
      -0.299769660407416, 0.091378577087934, 0.606586568474460, 0.493012617038671,
