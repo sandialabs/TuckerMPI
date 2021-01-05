@@ -1,4 +1,4 @@
-image: gcc:7.5
+image: ubuntu:20.04
 
 before_script:
 - apt-get update
