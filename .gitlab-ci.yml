@@ -1,9 +1,8 @@
 image: ubuntu:20.04
 
 before_script:
-- apt-get update
-- apt-cache search openmpi
-- apt-get install -y cmake libopenmpi3 openmpi-bin liblapack-dev doxygen libjs-mathjax
+- DEBIAN_FRONTEND=noninteractive apt-get update
+- DEBIAN_FRONTEND=noninteractive apt-get install -y cmake libopenmpi3 openmpi-bin liblapack-dev doxygen libjs-mathjax
 
 build:
   stage: build
