@@ -24,7 +24,12 @@ test:
   stage: test
   script:
   - cd build
+  - echo $MPIEXEC
+  - export MPIEXEC_OLD=$MPIEXEC
+  - export MPIEXEC="$MPIEXEC --oversubscribe"
   - ctest --output-on-failure
+  - export MPIEXEC=$MPIEXEC_OLD
+  - echo $MPIEXEC
   dependencies:
   - build
 
