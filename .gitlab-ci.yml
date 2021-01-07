@@ -1,8 +1,12 @@
 image: ubuntu:20.04
 
+variables:
+  OMPI_ALLOW_RUN_AS_ROOT: 1
+  OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+
 before_script:
 - DEBIAN_FRONTEND=noninteractive apt-get update
-- DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential cmake libopenmpi3 openmpi-bin liblapack-dev doxygen libjs-mathjax
+- DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential cmake python libopenmpi3 openmpi-bin liblapack-dev doxygen libjs-mathjax
 
 build:
   stage: build
