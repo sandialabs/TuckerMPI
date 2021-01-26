@@ -15,6 +15,8 @@
 
 int main(int argc, char* argv[])
 {
+  typedef double scalar_t;  // specify precision
+  
   Tucker::Timer totalTimer;
   totalTimer.start();
 
@@ -151,7 +153,7 @@ int main(int argc, char* argv[])
   ///////////////////////////
   Tucker::Timer readTimer;
   readTimer.start();
-  Tucker::Tensor* X = Tucker::MemoryManager::safe_new<Tucker::Tensor>(*I_dims);
+  Tucker::Tensor<scalar_t>* X = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*I_dims);
   Tucker::readTensorBinary(X,in_fns_file.c_str());
   readTimer.stop();
 
@@ -162,7 +164,7 @@ int main(int argc, char* argv[])
   ////////////////////////
   // Compute statistics //
   ////////////////////////
-  Tucker::MetricData* metrics = Tucker::computeSliceMetrics(X,
+  Tucker::MetricData<scalar_t>* metrics = Tucker::computeSliceMetrics(X,
       scale_mode,
       Tucker::MIN+Tucker::MAX+Tucker::MEAN+Tucker::VARIANCE);
 
@@ -234,7 +236,7 @@ int main(int argc, char* argv[])
   /////////////////////
   Tucker::Timer sthosvdTimer, writeTimer;
   if(boolSTHOSVD) {
-    const Tucker::TuckerTensor* solution;
+    const Tucker::TuckerTensor<scalar_t>* solution;
 
     sthosvdTimer.start();
     if(boolAuto) {

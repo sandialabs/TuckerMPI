@@ -13,17 +13,18 @@
 
 namespace Tucker {
 
+template <class scalar_t>
 class SparseMatrix {
 public:
   SparseMatrix(const int nrows, const int ncols, const int nnz);
   ~SparseMatrix();
 
-  Matrix* multiply(const Matrix* m, bool transp=false);
-  Vector* multiply(const Vector* v, bool transp=false);
+  Matrix<scalar_t>* multiply(const Matrix<scalar_t>* m, bool transp=false);
+  Vector<scalar_t>* multiply(const Vector<scalar_t>* v, bool transp=false);
 
   int* rows() { return rows_; }
   int* cols() { return cols_; }
-  double* vals() { return vals_; }
+  scalar_t* vals() { return vals_; }
   int nrows() const { return nrows_; }
   int ncols() const { return ncols_; }
 
@@ -37,7 +38,7 @@ private:
   int nnz_;
   int* rows_;
   int* cols_;
-  double* vals_;
+  scalar_t* vals_;
 };
 
 } /* namespace Tucker */

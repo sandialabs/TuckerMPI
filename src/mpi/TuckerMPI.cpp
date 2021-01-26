@@ -163,7 +163,8 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
 /**
  * \test TuckerMPI_old_gram_test_file.cpp
  */
-Tucker::Matrix* oldGram(const Tensor* Y, const int n,
+template <class scalar_t>
+Tucker::Matrix<scalar_t>* oldGram(const Tensor<scalar_t>* Y, const int n,
     Tucker::Timer* mult_timer, Tucker::Timer* shift_timer,
     Tucker::Timer* allreduce_timer, Tucker::Timer* allgather_timer)
 {
@@ -172,8 +173,8 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
   int numGlobalRows = Y->getGlobalSize(n);
 
   // Create the matrix to return
-  Tucker::Matrix* gram =
-      Tucker::MemoryManager::safe_new<Tucker::Matrix>(numGlobalRows,numGlobalRows);
+  Tucker::Matrix<scalar_t>* gram =
+      Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(numGlobalRows,numGlobalRows);
 
   // Get the row and column communicators
   const MPI_Comm& rowComm =
@@ -185,9 +186,9 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
   MPI_Comm_size(colComm,&numColProcs);
 
   // Create buffer for all-reduce
-  double* allRedBuf;
+  scalar_t* allRedBuf;
   if(numLocalRows > 0)
-    allRedBuf = Tucker::MemoryManager::safe_new_array<double>(numGlobalRows*numLocalRows);
+    allRedBuf = Tucker::MemoryManager::safe_new_array<scalar_t>(numGlobalRows*numLocalRows);
   else
     allRedBuf = 0;
 
@@ -196,7 +197,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
         Y->getDistribution()->getProcessorGrid()->getColComm(n,true);
 
     // Stores the local Gram result
-    Tucker::Matrix* localMatrix;
+    Tucker::Matrix<scalar_t>* localMatrix;
 
     // Get information about the column distribution
     int myColRankSqueezed, numColProcsSqueezed;
@@ -213,7 +214,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
       else
       {
         // Create a matrix to store the local result
-        localMatrix = Tucker::MemoryManager::safe_new<Tucker::Matrix>(numGlobalRows,numLocalRows);
+        localMatrix = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(numGlobalRows,numLocalRows);
 
         // Determine the amount of data being received
         int ndims = Y->getNumDimensions();
@@ -223,7 +224,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
         size_t maxEntries = maxNumRows*numCols;
 
         // Create buffer for receiving data
-        double* recvBuf = Tucker::MemoryManager::safe_new_array<double>(maxEntries);
+        scalar_t* recvBuf = Tucker::MemoryManager::safe_new_array<scalar_t>(maxEntries);
 
         // Send data to the next proc in column
         MPI_Request* sendRequests =
@@ -233,8 +234,8 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
         int tag = 0;
         int sendDest = (myColRankSqueezed+1)%numColProcsSqueezed;
         if(shift_timer) shift_timer->start();
-        MPI_Isend((void*)Y->getLocalTensor()->data(), (int)numToSend, MPI_DOUBLE,
-            sendDest, tag, colCommSqueezed, sendRequests+sendDest);
+        MPI_Isend_(Y->getLocalTensor()->data(), (int)numToSend, sendDest, tag, 
+            colCommSqueezed, sendRequests+sendDest);
         if(shift_timer) shift_timer->stop();
 
         // Receive information from the previous proc in column
@@ -248,12 +249,12 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
         assert(numToReceive <= std::numeric_limits<int>::max());
 
         if(shift_timer) shift_timer->start();
-        MPI_Irecv(recvBuf, (int)numToReceive, MPI_DOUBLE,
-            recvSource, tag, colCommSqueezed, recvRequests+recvSource);
+        MPI_Irecv_(recvBuf, (int)numToReceive, recvSource, tag, colCommSqueezed, 
+            recvRequests+recvSource);
         if(shift_timer) shift_timer->stop();
 
         // Local computation (dsyrk)
-        double* Cptr = localMatrix->data() +
+        scalar_t* Cptr = localMatrix->data() +
             Y->getDistribution()->getMap(n,true)->getOffset(myColRankSqueezed);
         int stride = numGlobalRows;
 
@@ -270,7 +271,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
           // Send data to next proc in column
           sendDest = (sendDest+1)%numColProcsSqueezed;
           if(sendDest != myColRankSqueezed) {
-            MPI_Isend((void*)Y->getLocalTensor()->data(), (int)numToSend, MPI_DOUBLE,
+            MPI_Isend_(Y->getLocalTensor()->data(), (int)numToSend, 
                 sendDest, tag, colCommSqueezed, sendRequests+sendDest);
           }
           if(shift_timer) shift_timer->stop();
@@ -290,8 +291,8 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
                     Y->getDistribution()->getMap(n,true)->getNumEntries(recvSource);
             numToReceive = numRowsToReceive*numCols;
             assert(numToReceive <= std::numeric_limits<int>::max());
-            MPI_Irecv(recvBuf, (int)numToReceive, MPI_DOUBLE,
-                recvSource, tag, colCommSqueezed, recvRequests+recvSource);
+            MPI_Irecv_(recvBuf, numToReceive, recvSource, tag, colCommSqueezed, 
+                recvRequests+recvSource);
           }
           if(shift_timer) shift_timer->stop();
         }
@@ -308,22 +309,22 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
         }
         if(shift_timer) shift_timer->stop();
 
-        Tucker::MemoryManager::safe_delete_array<double>(recvBuf,maxEntries);
-        Tucker::MemoryManager::safe_delete_array<MPI_Request>(sendRequests,numColProcsSqueezed);
-        Tucker::MemoryManager::safe_delete_array<MPI_Request>(recvRequests,numColProcsSqueezed);
-        Tucker::MemoryManager::safe_delete_array<MPI_Status>(sendStatuses,numColProcsSqueezed);
+        Tucker::MemoryManager::safe_delete_array(recvBuf,maxEntries);
+        Tucker::MemoryManager::safe_delete_array(sendRequests,numColProcsSqueezed);
+        Tucker::MemoryManager::safe_delete_array(recvRequests,numColProcsSqueezed);
+        Tucker::MemoryManager::safe_delete_array(sendStatuses,numColProcsSqueezed);
       }
     }
     else {
-      localMatrix = Tucker::MemoryManager::safe_new<Tucker::Matrix>(numGlobalRows,numLocalRows);
+      localMatrix = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(numGlobalRows,numLocalRows);
       localMatrix->initialize();
     }
 
     // All reduce across row communicator
     if(numRowProcs > 1) {
       if(allreduce_timer) allreduce_timer->start();
-      MPI_Allreduce(localMatrix->data(), allRedBuf, numLocalRows*numGlobalRows,
-          MPI_DOUBLE, MPI_SUM, rowComm);
+      MPI_Allreduce_(localMatrix->data(), allRedBuf, numLocalRows*numGlobalRows,
+          MPI_SUM, rowComm);
       if(allreduce_timer) allreduce_timer->stop();
     }
     else {
@@ -333,7 +334,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
       }
     }
 
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(localMatrix);
+    Tucker::MemoryManager::safe_delete(localMatrix);
   }
   else {
   }
@@ -347,8 +348,8 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
       displs[i] = Y->getDistribution()->getMap(n,false)->getOffset(i)*numGlobalRows;
     }
     if(allgather_timer) allgather_timer->start();
-    MPI_Allgatherv(allRedBuf, numLocalRows*numGlobalRows, MPI_DOUBLE,
-        gram->data(), recvcounts, displs, MPI_DOUBLE, colComm);
+    MPI_Allgatherv_(allRedBuf, numLocalRows*numGlobalRows, gram->data(), recvcounts, 
+        displs, colComm);
     if(allgather_timer) allgather_timer->stop();
 
     // Free memory
@@ -362,7 +363,7 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
   }
 
   // Free memory
-  Tucker::MemoryManager::safe_delete_array<double>(allRedBuf,numGlobalRows*numLocalRows);
+  Tucker::MemoryManager::safe_delete_array(allRedBuf,numGlobalRows*numLocalRows);
 
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -383,7 +384,8 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
 /**
  * \test TuckerMPI_new_gram_test_file.cpp
  */
-Tucker::Matrix* newGram(const Tensor* Y, const int n,
+template <class scalar_t>
+Tucker::Matrix<scalar_t>* newGram(const Tensor<scalar_t>* Y, const int n,
     Tucker::Timer* mult_timer, Tucker::Timer* pack_timer,
     Tucker::Timer* alltoall_timer, Tucker::Timer* unpack_timer,
     Tucker::Timer* allreduce_timer)
@@ -402,7 +404,7 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
   MPI_Comm_size(comm,&numProcs);
 
   // If the communicator only has one MPI process, no redistribution is needed
-  const Tucker::Matrix* localGram;
+  const Tucker::Matrix<scalar_t>* localGram;
   if(numProcs > 1) {
     bool myColEmpty = false;
     for(int i=0; i<ndims; i++) {
@@ -415,13 +417,14 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
 
     if(myColEmpty) {
       int nGlobalRows = Y->getGlobalSize(n);
-      Tucker::Matrix* temp = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nGlobalRows,nGlobalRows);
+      Tucker::Matrix<scalar_t>* temp = 
+        Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nGlobalRows,nGlobalRows);
       temp->initialize();
       localGram = temp;
     }
     else {
       // Redistribute the data
-      const Matrix* redistributedY = redistributeTensorForGram(Y, n,
+      const Matrix<scalar_t>* redistributedY = redistributeTensorForGram(Y, n,
           pack_timer, alltoall_timer, unpack_timer);
 
       // Call symmetric rank-k update
@@ -432,17 +435,19 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
       }
       else {
         int nGlobalRows = Y->getGlobalSize(n);
-        Tucker::Matrix* temp = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nGlobalRows,nGlobalRows);
+        Tucker::Matrix<scalar_t>* temp = 
+          Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nGlobalRows,nGlobalRows);
         temp->initialize();
         localGram = temp;
       }
-      Tucker::MemoryManager::safe_delete<const Matrix>(redistributedY);
+      Tucker::MemoryManager::safe_delete(redistributedY);
     } // end if(!myColEmpty)
   }
   else {
     if(Y->getDistribution()->ownNothing()) {
       int nGlobalRows = Y->getGlobalSize(n);
-      Tucker::Matrix* temp = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nGlobalRows,nGlobalRows);
+      Tucker::Matrix<scalar_t>* temp = 
+        Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nGlobalRows,nGlobalRows);
       temp->initialize();
       localGram = temp;
     }
@@ -455,9 +460,9 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
 
   // Perform the all-reduce
   if(allreduce_timer) allreduce_timer->start();
-  Tucker::Matrix* gramMat = reduceForGram(localGram);
+  Tucker::Matrix<scalar_t>* gramMat = reduceForGram(localGram);
   if(allreduce_timer) allreduce_timer->stop();
-  Tucker::MemoryManager::safe_delete<const Tucker::Matrix>(localGram);
+  Tucker::MemoryManager::safe_delete(localGram);
 
   if(rank == 0) {
     if(mult_timer)
@@ -477,8 +482,9 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
 }
 
 // \todo STHOSVD is never tested with the new Gram computation
-const TuckerTensor* STHOSVD(const Tensor* const X,
-    const double epsilon, int* modeOrder, bool useOldGram, bool flipSign,
+template <class scalar_t>
+const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
+    const scalar_t epsilon, int* modeOrder, bool useOldGram, bool flipSign,
     bool useLQ)
 {
   // Get this rank
@@ -488,11 +494,12 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   int ndims = X->getNumDimensions();
 
   // Create a struct to store the factorization
-  TuckerTensor* factorization = Tucker::MemoryManager::safe_new<TuckerTensor>(ndims);
+  TuckerTensor<scalar_t>* factorization = 
+    Tucker::MemoryManager::safe_new<TuckerTensor<scalar_t>>(ndims);
 
   // Compute the threshold
-  double tensorNorm = X->norm2();
-  double thresh = epsilon*epsilon*tensorNorm/ndims;
+  scalar_t tensorNorm = X->norm2();
+  scalar_t thresh = epsilon*epsilon*tensorNorm/ndims;
   if(rank == 0) {
     std::cout << "\tAutoST-HOSVD::Tensor Norm: "
         << std::sqrt(tensorNorm) << "...\n";
@@ -510,7 +517,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   MPI_Barrier(MPI_COMM_WORLD);
   factorization->total_timer_.start();
 
-  const Tensor* Y = X;
+  const Tensor<scalar_t>* Y = X;
 
   // For each dimension...
   for(int n=0; n<ndims; n++)
@@ -519,24 +526,24 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
     if(useLQ){
       if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting LQ(" << mode << ")...\n";
       factorization->LQ_timer_[mode].start();
-      Tucker::Matrix* L = LQ(Y, mode, &factorization->LQ_tsqr_timer_[mode], &factorization->LQ_localqr_timer_[mode], 
+      Tucker::Matrix<scalar_t>* L = LQ(Y, mode, &factorization->LQ_tsqr_timer_[mode], &factorization->LQ_localqr_timer_[mode], 
         &factorization->LQ_redistribute_timer_[mode], &factorization->LQ_dcopy_timer_[mode],
         &factorization->LQ_decompose_timer_[mode], &factorization->LQ_transpose_timer_[mode]);
       factorization->LQ_timer_[mode].stop();
       int SizeOfL = L->nrows()*L->ncols();
       factorization->LQ_bcast_timer_[mode].start();
-      MPI_Bcast(L->data(), SizeOfL, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Bcast(L->data(), SizeOfL, 0, MPI_COMM_WORLD);
       factorization->LQ_bcast_timer_[mode].stop();
       if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << mode << ")...\n";
       factorization->svd_timer_[mode].start();
       Tucker::computeSVD(L, factorization->singularValues[mode], factorization->U[mode], thresh);
       factorization->svd_timer_[mode].stop();
-      Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L);
+      Tucker::MemoryManager::safe_delete(L);
     }
     else{
       // Compute the Gram matrix
       // S = Y_n*Y_n'
-      Tucker::Matrix* S;
+      Tucker::Matrix<scalar_t>* S;
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::Starting Gram(" << mode << ")...\n";
       }
@@ -576,7 +583,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
             << factorization->eigen_timer_[mode].duration() << "s\n";
       }
       // Free the Gram matrix
-      Tucker::MemoryManager::safe_delete<Tucker::Matrix>(S);
+      Tucker::MemoryManager::safe_delete(S);
     }
 
 
@@ -585,7 +592,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       std::cout << "\tAutoST-HOSVD::Starting TTM(" << mode << ")...\n";
     }
     factorization->ttm_timer_[mode].start();
-    Tensor* temp = ttm(Y,mode,factorization->U[mode],true,
+    Tensor<scalar_t>* temp = ttm(Y,mode,factorization->U[mode],true,
         &factorization->ttm_matmul_timer_[mode],
         &factorization->ttm_pack_timer_[mode],
         &factorization->ttm_reducescatter_timer_[mode],
@@ -598,7 +605,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
     }
 
     if(n > 0) {
-      Tucker::MemoryManager::safe_delete<const Tensor>(Y);
+      Tucker::MemoryManager::safe_delete(Y);
     }
     Y = temp;
 
@@ -607,20 +614,21 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       size_t global_nnz = Y->getGlobalNumEntries();
       std::cout << "Local tensor size after STHOSVD iteration "
           << mode << ": " << Y->getLocalSize() << ", or ";
-      Tucker::printBytes(local_nnz*sizeof(double));
+      Tucker::printBytes(local_nnz*sizeof(scalar_t));
       std::cout << "Global tensor size after STHOSVD iteration "
           << mode << ": " << Y->getGlobalSize() << ", or ";
-      Tucker::printBytes(global_nnz*sizeof(double));
+      Tucker::printBytes(global_nnz*sizeof(scalar_t));
     }
   }
 
-  factorization->G = const_cast<Tensor*>(Y);
+  factorization->G = const_cast<Tensor<scalar_t>*>(Y);
   factorization->total_timer_.stop();
   return factorization;
 }
 
 // \todo This function is never tested
-const TuckerTensor* STHOSVD(const Tensor* const X,
+template <class scalar_t>
+const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
     const Tucker::SizeArray* const reducedI, int* modeOrder, bool useOldGram,
     bool flipSign, bool useLQ)
 {
@@ -631,7 +639,8 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   assert(ndims == reducedI->size());
 
   // Create a struct to store the factorization
-  TuckerTensor* factorization = Tucker::MemoryManager::safe_new<TuckerTensor>(ndims);
+  TuckerTensor<scalar_t>* factorization = 
+    Tucker::MemoryManager::safe_new<TuckerTensor<scalar_t>>(ndims);
 
   // Compute the nnz of the largest tensor piece being stored by any process
   size_t max_lcl_nnz_x = 1;
@@ -643,14 +652,14 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
   MPI_Barrier(MPI_COMM_WORLD);
   factorization->total_timer_.start();
 
-  const Tensor* Y = X;
+  const Tensor<scalar_t>* Y = X;
 
   // For each dimension...
   for(int n=0; n<ndims; n++)
   {
     int mode = modeOrder ? modeOrder[n] : n;
     if(useLQ){
-      Tucker::Matrix* L;
+      Tucker::Matrix<scalar_t>* L;
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::Starting LQ(" << mode << ")...\n";
       }
@@ -665,7 +674,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       factorization->LQ_timer_[mode].stop();
       int SizeOfL = L->nrows()*L->ncols();
       factorization->LQ_bcast_timer_[mode].start();
-      MPI_Bcast(L->data(), SizeOfL, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Bcast(L->data(), SizeOfL, 0, MPI_COMM_WORLD);
       factorization->LQ_bcast_timer_[mode].stop();
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << mode << ")...\n";
@@ -673,12 +682,12 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       factorization->svd_timer_[mode].start();
       Tucker::computeSVD(L, factorization->singularValues[mode], factorization->U[mode], (*reducedI)[mode]);
       factorization->svd_timer_[mode].stop();
-      Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L);
+      Tucker::MemoryManager::safe_delete(L);
     }
     else{
       // Compute the Gram matrix
       // S = Y_n*Y_n'
-      Tucker::Matrix* S;
+      Tucker::Matrix<scalar_t>* S;
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::Starting Gram(" << mode << ")...\n";
       }
@@ -714,7 +723,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
           factorization->U[mode], (*reducedI)[mode], flipSign);
       factorization->eigen_timer_[mode].stop();
       
-      Tucker::MemoryManager::safe_delete<Tucker::Matrix>(S);
+      Tucker::MemoryManager::safe_delete(S);
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::EVECS(" << mode << ") time: "
             << factorization->eigen_timer_[mode].duration() << "s\n";
@@ -726,7 +735,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       std::cout << "\tAutoST-HOSVD::Starting TTM(" << mode << ")...\n";
     }
     factorization->ttm_timer_[mode].start();
-    Tensor* temp = ttm(Y,mode,factorization->U[mode],true,
+    Tensor<scalar_t>* temp = ttm(Y,mode,factorization->U[mode],true,
             &factorization->ttm_matmul_timer_[mode],
             &factorization->ttm_pack_timer_[mode],
             &factorization->ttm_reducescatter_timer_[mode],
@@ -738,7 +747,7 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
           << factorization->ttm_timer_[mode].duration() << "s\n";
     }
     if(n > 0) {
-      Tucker::MemoryManager::safe_delete<const Tensor>(Y);
+      Tucker::MemoryManager::safe_delete(Y);
     }
     Y = temp;
 
@@ -747,19 +756,20 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
       size_t global_nnz = Y->getGlobalNumEntries();
       std::cout << "Local tensor size after STHOSVD iteration "
           << mode << ": " << Y->getLocalSize() << ", or ";
-      Tucker::printBytes(local_nnz*sizeof(double));
+      Tucker::printBytes(local_nnz*sizeof(scalar_t));
       std::cout << "Global tensor size after STHOSVD iteration "
           << mode << ": " << Y->getGlobalSize() << ", or ";
-      Tucker::printBytes(global_nnz*sizeof(double));
+      Tucker::printBytes(global_nnz*sizeof(scalar_t));
     }
   }
 
-  factorization->G = const_cast<Tensor*>(Y);
+  factorization->G = const_cast<Tensor<scalar_t>*>(Y);
   factorization->total_timer_.stop();
   return factorization;
 }
 
-Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
+template <class scalar_t>
+Tucker::MetricData<scalar_t>* computeSliceMetrics(const Tensor<scalar_t>* const Y,
     int mode, int metrics)
 {
   // If I don't own any slices, I don't have any work to do.
@@ -768,7 +778,7 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
   }
 
   // Compute the local result
-  Tucker::MetricData* result =
+  Tucker::MetricData<scalar_t>* result =
       Tucker::computeSliceMetrics(Y->getLocalTensor(), mode, metrics);
 
   // Get the row communicator
@@ -781,24 +791,21 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
   {
     // Compute the global result
     int numSlices = Y->getLocalSize(mode);
-    double* sendBuf = Tucker::MemoryManager::safe_new_array<double>(numSlices);
-    double* recvBuf = Tucker::MemoryManager::safe_new_array<double>(numSlices);
+    scalar_t* sendBuf = Tucker::MemoryManager::safe_new_array<scalar_t>(numSlices);
+    scalar_t* recvBuf = Tucker::MemoryManager::safe_new_array<scalar_t>(numSlices);
     if(metrics & Tucker::MIN) {
       for(int i=0; i<numSlices; i++) sendBuf[i] = result->getMinData()[i];
-      MPI_Allreduce(sendBuf, recvBuf, numSlices, MPI_DOUBLE,
-          MPI_MIN, comm);
+      MPI_Allreduce_(sendBuf, recvBuf, numSlices, MPI_MIN, comm);
       for(int i=0; i<numSlices; i++) result->getMinData()[i] = recvBuf[i];
     }
     if(metrics & Tucker::MAX) {
       for(int i=0; i<numSlices; i++) sendBuf[i] = result->getMaxData()[i];
-      MPI_Allreduce(sendBuf, recvBuf, numSlices, MPI_DOUBLE,
-          MPI_MAX, comm);
+      MPI_Allreduce_(sendBuf, recvBuf, numSlices, MPI_MAX, comm);
       for(int i=0; i<numSlices; i++) result->getMaxData()[i] = recvBuf[i];
     }
     if(metrics & Tucker::SUM) {
       for(int i=0; i<numSlices; i++) sendBuf[i] = result->getSumData()[i];
-      MPI_Allreduce(sendBuf, recvBuf, numSlices, MPI_DOUBLE,
-          MPI_SUM, comm);
+      MPI_Allreduce_(sendBuf, recvBuf, numSlices, MPI_SUM, comm);
       for(int i=0; i<numSlices; i++) result->getSumData()[i] = recvBuf[i];
     }
     // If X is partitioned into X_A and X_B,
@@ -816,46 +823,46 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
           globalSize.prod(mode+1,ndims-1,1);
 
       for(int i=0; i<numSlices; i++) {
-        sendBuf[i] = result->getMeanData()[i] * (double)localSliceSize;
+        sendBuf[i] = result->getMeanData()[i] * (scalar_t)localSliceSize;
       }
 
-      MPI_Allreduce(sendBuf, recvBuf, numSlices,
-          MPI_DOUBLE, MPI_SUM, comm);
+      MPI_Allreduce_(sendBuf, recvBuf, numSlices,
+          MPI_SUM, comm);
 
-      double* meanDiff;
+      scalar_t* meanDiff;
       if(metrics & Tucker::VARIANCE) {
-        meanDiff = Tucker::MemoryManager::safe_new_array<double>(numSlices);
+        meanDiff = Tucker::MemoryManager::safe_new_array<scalar_t>(numSlices);
         for(int i=0; i<numSlices; i++) {
           meanDiff[i] = result->getMeanData()[i] -
-              recvBuf[i] / (double)globalSliceSize;
+              recvBuf[i] / (scalar_t)globalSliceSize;
         }
       }
 
       for(int i=0; i<numSlices; i++) {
-        result->getMeanData()[i] = recvBuf[i] / (double)globalSliceSize;
+        result->getMeanData()[i] = recvBuf[i] / (scalar_t)globalSliceSize;
       }
 
       if(metrics & Tucker::VARIANCE) {
         for(int i=0; i<numSlices; i++) {
           // Source of this equation:
           // http://stats.stackexchange.com/questions/10441/how-to-calculate-the-variance-of-a-partition-of-variables
-          sendBuf[i] = (double)localSliceSize*result->getVarianceData()[i] +
-              (double)localSliceSize*meanDiff[i]*meanDiff[i];
+          sendBuf[i] = (scalar_t)localSliceSize*result->getVarianceData()[i] +
+              (scalar_t)localSliceSize*meanDiff[i]*meanDiff[i];
         }
 
-        Tucker::MemoryManager::safe_delete_array<double>(meanDiff,numSlices);
+        Tucker::MemoryManager::safe_delete_array<scalar_t>(meanDiff,numSlices);
 
-        MPI_Allreduce(sendBuf, recvBuf, numSlices,
-            MPI_DOUBLE, MPI_SUM, comm);
+        MPI_Allreduce_(sendBuf, recvBuf, numSlices,
+            MPI_SUM, comm);
 
         for(int i=0; i<numSlices; i++) {
-          result->getVarianceData()[i] = recvBuf[i] / (double)globalSliceSize;
+          result->getVarianceData()[i] = recvBuf[i] / (scalar_t)globalSliceSize;
         }
       } // end if(metrics & Tucker::VARIANCE)
     } // end if((metrics & Tucker::MEAN) || (metrics & Tucker::VARIANCE))
 
-    Tucker::MemoryManager::safe_delete_array<double>(sendBuf,numSlices);
-    Tucker::MemoryManager::safe_delete_array<double>(recvBuf,numSlices);
+    Tucker::MemoryManager::safe_delete_array(sendBuf,numSlices);
+    Tucker::MemoryManager::safe_delete_array(recvBuf,numSlices);
   } // end if(nprocs > 1)
 
   return result;
@@ -863,22 +870,24 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
 
 // Shift is applied before scale
 // We divide by scaleVals, not multiply
-void transformSlices(Tensor* Y, int mode, const double* scales, const double* shifts)
+template <class scalar_t>
+void transformSlices(Tensor<scalar_t>* Y, int mode, const scalar_t* scales, const scalar_t* shifts)
 {
   Tucker::transformSlices(Y->getLocalTensor(), mode, scales, shifts);
 }
 
-void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh)
+template <class scalar_t>
+void normalizeTensorStandardCentering(Tensor<scalar_t>* Y, int mode, scalar_t stdThresh)
 {
   // I don't have to do any work because I don't own any data
   if(Y->getLocalSize(mode) == 0)
     return;
 
-  Tucker::MetricData* metrics =
+  Tucker::MetricData<scalar_t>* metrics =
       computeSliceMetrics(Y, mode, Tucker::MEAN+Tucker::VARIANCE);
   int sizeOfModeDim = Y->getLocalSize(mode);
-  double* scales = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
-  double* shifts = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
+  scalar_t* scales = Tucker::MemoryManager::safe_new_array<scalar_t>(sizeOfModeDim);
+  scalar_t* shifts = Tucker::MemoryManager::safe_new_array<scalar_t>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
     scales[i] = sqrt(metrics->getVarianceData()[i]);
     shifts[i] = -metrics->getMeanData()[i];
@@ -887,57 +896,60 @@ void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh)
     }
   }
   transformSlices(Y,mode,scales,shifts);
-  Tucker::MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
-  Tucker::MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
-  Tucker::MemoryManager::safe_delete<Tucker::MetricData>(metrics);
+  Tucker::MemoryManager::safe_delete_array(scales,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete_array(shifts,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete(metrics);
 }
 
-void normalizeTensorMinMax(Tensor* Y, int mode)
+template <class scalar_t>
+void normalizeTensorMinMax(Tensor<scalar_t>* Y, int mode)
 {
   // I don't have to do any work because I don't own any data
   if(Y->getLocalSize(mode) == 0)
     return;
 
-  Tucker::MetricData* metrics = computeSliceMetrics(Y, mode,
+  Tucker::MetricData<scalar_t>* metrics = computeSliceMetrics(Y, mode,
       Tucker::MAX+Tucker::MIN);
   int sizeOfModeDim = Y->getLocalSize(mode);
-  double* scales = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
-  double* shifts = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
+  scalar_t* scales = Tucker::MemoryManager::safe_new_array<scalar_t>(sizeOfModeDim);
+  scalar_t* shifts = Tucker::MemoryManager::safe_new_array<scalar_t>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
     scales[i] = metrics->getMaxData()[i] - metrics->getMinData()[i];
     shifts[i] = -metrics->getMinData()[i];
   }
   transformSlices(Y,mode,scales,shifts);
-  Tucker::MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
-  Tucker::MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
-  Tucker::MemoryManager::safe_delete<Tucker::MetricData>(metrics);
+  Tucker::MemoryManager::safe_delete_array(scales,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete_array(shifts,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete(metrics);
 }
 
 // \todo This function is never tested
-void normalizeTensorMax(Tensor* Y, int mode)
+template <class scalar_t>
+void normalizeTensorMax(Tensor<scalar_t>* Y, int mode)
 {
   // I don't have to do any work because I don't own any data
   if(Y->getLocalSize(mode) == 0)
     return;
 
-  Tucker::MetricData* metrics = computeSliceMetrics(Y, mode,
+  Tucker::MetricData<scalar_t>* metrics = computeSliceMetrics(Y, mode,
       Tucker::MIN + Tucker::MAX);
   int sizeOfModeDim = Y->getLocalSize(mode);
-  double* scales = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
-  double* shifts = Tucker::MemoryManager::safe_new_array<double>(sizeOfModeDim);
+  scalar_t* scales = Tucker::MemoryManager::safe_new_array<scalar_t>(sizeOfModeDim);
+  scalar_t* shifts = Tucker::MemoryManager::safe_new_array<scalar_t>(sizeOfModeDim);
   for(int i=0; i<sizeOfModeDim; i++) {
-    double scaleval = std::max(std::abs(metrics->getMinData()[i]),
+    scalar_t scaleval = std::max(std::abs(metrics->getMinData()[i]),
         std::abs(metrics->getMaxData()[i]));
     scales[i] = scaleval;
     shifts[i] = 0;
   }
   transformSlices(Y,mode,scales,shifts);
-  Tucker::MemoryManager::safe_delete_array<double>(scales,sizeOfModeDim);
-  Tucker::MemoryManager::safe_delete_array<double>(shifts,sizeOfModeDim);
-  Tucker::MemoryManager::safe_delete<Tucker::MetricData>(metrics);
+  Tucker::MemoryManager::safe_delete_array(scales,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete_array(shifts,sizeOfModeDim);
+  Tucker::MemoryManager::safe_delete(metrics);
 }
 
-const Tensor* reconstructSingleSlice(const TuckerTensor* fact,
+template <class scalar_t>
+const Tensor<scalar_t>* reconstructSingleSlice(const TuckerTensor<scalar_t>* fact,
     const int mode, const int sliceNum)
 {
   assert(mode >= 0 && mode < fact->N);
@@ -948,29 +960,30 @@ const Tensor* reconstructSingleSlice(const TuckerTensor* fact,
   // Copy row of matrix
   int nrows = fact->U[mode]->nrows();
   int ncols = fact->U[mode]->ncols();
-  Tucker::Matrix tempMat(1,ncols);
-  const double* olddata = fact->U[mode]->data();
-  double* rowdata = tempMat.data();
+  Tucker::Matrix<scalar_t> tempMat(1,ncols);
+  const scalar_t* olddata = fact->U[mode]->data();
+  scalar_t* rowdata = tempMat.data();
   for(int j=0; j<ncols; j++)
     rowdata[j] = olddata[j*nrows+sliceNum];
-  Tensor* ten = ttm(fact->G, mode, &tempMat);
+  Tensor<scalar_t>* ten = ttm(fact->G, mode, &tempMat);
 
   for(int i=0; i<fact->N; i++)
   {
-    Tucker::Matrix* tempMat;
+    Tucker::Matrix<scalar_t>* tempMat;
     if(i == mode)
       continue;  
     
-    Tensor* temp = ttm(ten, i, fact->U[i]);
+    Tensor<scalar_t>* temp = ttm(ten, i, fact->U[i]);
 
-    Tucker::MemoryManager::safe_delete<Tensor>(ten);
+    Tucker::MemoryManager::safe_delete(ten);
     ten = temp;
   }
 
   return ten;
 }
 
-void readTensorBinary(std::string& filename, Tensor& Y)
+template <class scalar_t>
+void readTensorBinary(std::string& filename, Tensor<scalar_t>& Y)
 {
   // Count the number of filenames
   std::ifstream inStream(filename);
@@ -1003,7 +1016,8 @@ void readTensorBinary(std::string& filename, Tensor& Y)
 }
 
 //! \todo This function should report when the file was not sufficiently large
-void importTensorBinary(const char* filename, Tensor* Y)
+template <class scalar_t>
+void importTensorBinary(const char* filename, Tensor<scalar_t>* Y)
 {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -1027,8 +1041,8 @@ void importTensorBinary(const char* filename, Tensor* Y)
 
   // Create the datatype associated with this layout
   MPI_Datatype view;
-  MPI_Type_create_subarray(ndims, gsizes, lsizes, starts,
-      MPI_ORDER_FORTRAN, MPI_DOUBLE, &view);
+  MPI_Type_create_subarray_<scalar_t>(ndims, gsizes, lsizes, starts,
+      MPI_ORDER_FORTRAN, &view);
   MPI_Type_commit(&view);
 
   // Open the file
@@ -1041,7 +1055,7 @@ void importTensorBinary(const char* filename, Tensor* Y)
 
   // Set the view
   MPI_Offset disp = 0;
-  MPI_File_set_view(fh, disp, MPI_DOUBLE, view, "native", MPI_INFO_NULL);
+  MPI_File_set_view_<scalar_t>(fh, disp, view, "native", MPI_INFO_NULL);
 
   // Read the file
   size_t count = Y->getLocalNumEntries();
@@ -1055,10 +1069,10 @@ void importTensorBinary(const char* filename, Tensor* Y)
   }
 
   MPI_Status status;
-  ret = MPI_File_read_all(fh, Y->getLocalTensor()->data(),
-      (int)count, MPI_DOUBLE, &status);
+  ret = MPI_File_read_all_(fh, Y->getLocalTensor()->data(),
+      (int)count, &status);
   int nread;
-  MPI_Get_count (&status, MPI_DOUBLE, &nread);
+  MPI_Get_count_<scalar_t>(&status, &nread);
   if(ret != MPI_SUCCESS) {
     std::cerr << "Error: Could not read file " << filename << std::endl;
   }
@@ -1070,14 +1084,15 @@ void importTensorBinary(const char* filename, Tensor* Y)
   MPI_Type_free(&view);
 
   // Free other memory
-  Tucker::MemoryManager::safe_delete_array<int>(starts,ndims);
-  Tucker::MemoryManager::safe_delete_array<int>(lsizes,ndims);
-  Tucker::MemoryManager::safe_delete_array<int>(gsizes,ndims);
+  Tucker::MemoryManager::safe_delete_array(starts,ndims);
+  Tucker::MemoryManager::safe_delete_array(lsizes,ndims);
+  Tucker::MemoryManager::safe_delete_array(gsizes,ndims);
 }
 
 // This function assumes that Y has already been allocated
 // and its values need to be filled in
-void importTensorBinary(const char* filename, Tucker::Tensor* Y)
+template <class scalar_t>
+void importTensorBinary(const char* filename, Tucker::Tensor<scalar_t>* Y)
 {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -1098,9 +1113,9 @@ void importTensorBinary(const char* filename, Tucker::Tensor* Y)
   // Read the file
   size_t count = Y->size().prod();
   assert(count <= std::numeric_limits<int>::max());
-  double * data = Y->data();
+  scalar_t * data = Y->data();
   MPI_Status status;
-  ret = MPI_File_read(fh, data, (int)count, MPI_DOUBLE, &status);
+  ret = MPI_File_read_(fh, data, (int)count, &status);
   if(ret != MPI_SUCCESS && rank == 0) {
     std::cerr << "Error: Could not read file " << filename << std::endl;
   }
@@ -1109,7 +1124,8 @@ void importTensorBinary(const char* filename, Tucker::Tensor* Y)
   MPI_File_close(&fh);
 }
 
-void importTimeSeries(const char* filename, Tensor* Y)
+template <class scalar_t>
+void importTimeSeries(const char* filename, Tensor<scalar_t>* Y)
 {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -1136,14 +1152,14 @@ void importTimeSeries(const char* filename, Tensor* Y)
 
   // Create the datatype associated with this layout
   MPI_Datatype view;
-  MPI_Type_create_subarray(ndims-1, gsizes, lsizes, starts,
-      MPI_ORDER_FORTRAN, MPI_DOUBLE, &view);
+  MPI_Type_create_subarray_<scalar_t>(ndims-1, gsizes, lsizes, starts,
+      MPI_ORDER_FORTRAN, &view);
   MPI_Type_commit(&view);
 
   int nsteps = Y->getGlobalSize(ndims-1);
   const Map* stepMap = Y->getDistribution()->getMap(ndims-1,true);
   const MPI_Comm& stepComm = Y->getDistribution()->getProcessorGrid()->getRowComm(ndims-1,true);
-  double* dataPtr = Y->getLocalTensor()->data();
+  scalar_t* dataPtr = Y->getLocalTensor()->data();
   size_t count = Y->getLocalSize().prod(0,ndims-2);
   assert(count <= std::numeric_limits<int>::max());
   if(rank == 0 && 8*count > std::numeric_limits<int>::max()) {
@@ -1176,12 +1192,12 @@ void importTimeSeries(const char* filename, Tensor* Y)
 
     // Set the view
     MPI_Offset disp = 0;
-    MPI_File_set_view(fh, disp, MPI_DOUBLE, view, "native", MPI_INFO_NULL);
+    MPI_File_set_view_<scalar_t>(fh, disp, view, "native", MPI_INFO_NULL);
 
     // Read the file
     MPI_Status status;
-    ret = MPI_File_read_all(fh, dataPtr,
-        (int)count, MPI_DOUBLE, &status);
+    ret = MPI_File_read_all_(fh, dataPtr,
+        (int)count, &status);
     if(ret != MPI_SUCCESS && rank == 0) {
       std::cerr << "Error: Could not read file " << stepFilename << std::endl;
       exit(1);
@@ -1205,7 +1221,8 @@ void importTimeSeries(const char* filename, Tensor* Y)
   Tucker::MemoryManager::safe_delete_array<int>(gsizes,ndims-1);
 }
 
-void writeTensorBinary(std::string& filename, const Tensor& Y)
+template <class scalar_t>
+void writeTensorBinary(std::string& filename, const Tensor<scalar_t>& Y)
 {
   // Count the number of filenames
    std::ifstream inStream(filename);
@@ -1237,7 +1254,8 @@ void writeTensorBinary(std::string& filename, const Tensor& Y)
    }
 }
 
-void exportTensorBinary(const char* filename, const Tensor* Y)
+template <class scalar_t>
+void exportTensorBinary(const char* filename, const Tensor<scalar_t>* Y)
 {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -1265,8 +1283,8 @@ void exportTensorBinary(const char* filename, const Tensor* Y)
 
   // Create the datatype associated with this layout
   MPI_Datatype view;
-  MPI_Type_create_subarray(ndims, gsizes, lsizes, starts,
-      MPI_ORDER_FORTRAN, MPI_DOUBLE, &view);
+  MPI_Type_create_subarray_<scalar_t>(ndims, gsizes, lsizes, starts,
+      MPI_ORDER_FORTRAN, &view);
   MPI_Type_commit(&view);
 
   // Open the file
@@ -1280,14 +1298,14 @@ void exportTensorBinary(const char* filename, const Tensor* Y)
 
   // Set the view
   MPI_Offset disp = 0;
-  MPI_File_set_view(fh, disp, MPI_DOUBLE, view, "native", MPI_INFO_NULL);
+  MPI_File_set_view_<scalar_t>(fh, disp, view, "native", MPI_INFO_NULL);
 
   // Write the file
   size_t count = Y->getLocalNumEntries();
   assert(count <= std::numeric_limits<int>::max());
   MPI_Status status;
-  ret = MPI_File_write_all(fh, (double*)Y->getLocalTensor()->data(), (int)count,
-      MPI_DOUBLE, &status);
+  ret = MPI_File_write_all_(fh, Y->getLocalTensor()->data(), (int)count,
+      &status);
   if(ret != MPI_SUCCESS && rank == 0) {
     std::cerr << "Error: Could not write to file " << filename << std::endl;
   }
@@ -1304,7 +1322,8 @@ void exportTensorBinary(const char* filename, const Tensor* Y)
   Tucker::MemoryManager::safe_delete_array<int>(gsizes,ndims);
 }
 
-void exportTensorBinary(const char* filename, const Tucker::Tensor* Y)
+template <class scalar_t>
+void exportTensorBinary(const char* filename, const Tucker::Tensor<scalar_t>* Y)
 {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -1325,9 +1344,9 @@ void exportTensorBinary(const char* filename, const Tucker::Tensor* Y)
   // Write the tensor to a binary file
   size_t nentries = Y->size().prod();
   assert(nentries <= std::numeric_limits<int>::max());
-  const double* entries = Y->data();
+  const scalar_t* entries = Y->data();
   MPI_Status status;
-  ret = MPI_File_write(fh, (double*)entries, (int)nentries, MPI_DOUBLE, &status);
+  ret = MPI_File_write_(fh, entries, (int)nentries, &status);
   if(ret != MPI_SUCCESS && rank == 0) {
     std::cerr << "Error: Could not write file " << filename << std::endl;
   }
@@ -1336,7 +1355,8 @@ void exportTensorBinary(const char* filename, const Tucker::Tensor* Y)
   MPI_File_close(&fh);
 }
 
-void exportTimeSeries(const char* filename, const Tensor* Y)
+template <class scalar_t>
+void exportTimeSeries(const char* filename, const Tensor<scalar_t>* Y)
 {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -1363,14 +1383,14 @@ void exportTimeSeries(const char* filename, const Tensor* Y)
 
   // Create the datatype associated with this layout
   MPI_Datatype view;
-  MPI_Type_create_subarray(ndims-1, gsizes, lsizes, starts,
-      MPI_ORDER_FORTRAN, MPI_DOUBLE, &view);
+  MPI_Type_create_subarray_<scalar_t>(ndims-1, gsizes, lsizes, starts,
+      MPI_ORDER_FORTRAN, &view);
   MPI_Type_commit(&view);
 
   int nsteps = Y->getGlobalSize(ndims-1);
   const Map* stepMap = Y->getDistribution()->getMap(ndims-1,true);
   const MPI_Comm& stepComm = Y->getDistribution()->getProcessorGrid()->getRowComm(ndims-1,true);
-  const double* dataPtr = Y->getLocalTensor()->data();
+  const scalar_t* dataPtr = Y->getLocalTensor()->data();
   size_t count = Y->getLocalSize().prod(0,ndims-2);
   assert(count <= std::numeric_limits<int>::max());
   for(int step=0; step<nsteps; step++) {
@@ -1396,12 +1416,11 @@ void exportTimeSeries(const char* filename, const Tensor* Y)
 
     // Set the view
     MPI_Offset disp = 0;
-    MPI_File_set_view(fh, disp, MPI_DOUBLE, view, "native", MPI_INFO_NULL);
+    MPI_File_set_view_<scalar_t>(fh, disp, view, "native", MPI_INFO_NULL);
 
     // Write the file
     MPI_Status status;
-    ret = MPI_File_write_all(fh, (void*)dataPtr, (int)count,
-        MPI_DOUBLE, &status);
+    ret = MPI_File_write_all_(fh, dataPtr, (int)count, &status);
     if(ret != MPI_SUCCESS && rank == 0) {
       std::cerr << "Error: Could not write to file " << stepFilename << std::endl;
     }
@@ -1417,14 +1436,14 @@ void exportTimeSeries(const char* filename, const Tensor* Y)
   MPI_Type_free(&view);
 
   // Free other memory
-  Tucker::MemoryManager::safe_delete_array<int>(starts,ndims-1);
-  Tucker::MemoryManager::safe_delete_array<int>(lsizes,ndims-1);
-  Tucker::MemoryManager::safe_delete_array<int>(gsizes,ndims-1);
+  Tucker::MemoryManager::safe_delete_array(starts,ndims-1);
+  Tucker::MemoryManager::safe_delete_array(lsizes,ndims-1);
+  Tucker::MemoryManager::safe_delete_array(gsizes,ndims-1);
 }
 
-Tensor* generateTensor(int seed, TuckerTensor* fact, Tucker::SizeArray* proc_dims, 
+Tensor<scalar_t>* generateTensor(int seed, TuckerTensor<scalar_t>* fact, Tucker::SizeArray* proc_dims, 
   Tucker::SizeArray* tensor_dims, Tucker::SizeArray* core_dims,
-  double noise){
+  scalar_t noise){
   if(proc_dims->size() != tensor_dims->size()){
     throw std::runtime_error("TuckerMPI::generateTensor(): processor grid dimension doesn't match that of the output tensor");
   }
@@ -1457,14 +1476,14 @@ Tensor* generateTensor(int seed, TuckerTensor* fact, Tucker::SizeArray* proc_dim
     MPI_Scatter(NULL,1,MPI_INT,&myseed,1,MPI_INT,0,MPI_COMM_WORLD);
   }
   std::default_random_engine generator(myseed);
-  std::normal_distribution<double> distribution;
+  std::normal_distribution<scalar_t> distribution;
   //GENERATE CORE TENSOR//
   //distribution for the core
-  TuckerMPI::Distribution* dist =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*core_dims, *proc_dims);
-  fact->G = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
+  TuckerMPI::Distribution<scalar_t>* dist =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution<scalar_t>>(*core_dims, *proc_dims);
+  fact->G = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
   size_t nnz = dist->getLocalDims().prod();
-  double* dataptr = fact->G->getLocalTensor()->data();
+  scalar_t* dataptr = fact->G->getLocalTensor()->data();
   for(size_t i=0; i<nnz; i++) {
     dataptr[i] = distribution(generator);
   }
@@ -1473,7 +1492,7 @@ Tensor* generateTensor(int seed, TuckerTensor* fact, Tucker::SizeArray* proc_dim
     if(rank == 0) std::cout << "Generating factor matrix " << d << "...\n";
     int nrows = (*tensor_dims)[d];
     int ncols = (*core_dims)[d];
-    fact->U[d] = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrows,ncols);
+    fact->U[d] = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nrows,ncols);
     nnz = nrows*ncols;
     dataptr = fact->U[d]->data();
     if(rank == 0) {
@@ -1482,14 +1501,14 @@ Tensor* generateTensor(int seed, TuckerTensor* fact, Tucker::SizeArray* proc_dim
       }
     }
 
-    MPI_Bcast(dataptr,nnz,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Bcast(dataptr,nnz,0,MPI_COMM_WORLD);
   }
   //TTM between factor matrices and core//
-  TuckerMPI::Tensor* product = fact->G;
+  TuckerMPI::Tensor<scalar_t>* product = fact->G;
   for(int d=0; d<fact->N; d++) {
-    TuckerMPI::Tensor* temp = TuckerMPI::ttm(product, d, fact->U[d]);
+    TuckerMPI::Tensor<scalar_t>* temp = TuckerMPI::ttm(product, d, fact->U[d]);
     if(product != fact->G) {
-      Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(product);
+      Tucker::MemoryManager::safe_delete(product);
     }
     product = temp;
   }
@@ -1497,15 +1516,15 @@ Tensor* generateTensor(int seed, TuckerTensor* fact, Tucker::SizeArray* proc_dim
   // Compute the norm of the global tensor                           //
   // \todo This could be more efficient; see Bader/Kolda for details //
   /////////////////////////////////////////////////////////////////////
-  double normM = std::sqrt(product->norm2());
+  scalar_t normM = std::sqrt(product->norm2());
   ///////////////////////////////////////////////////////////////////
   // Compute the estimated norm of the noise matrix                //
   // The average of each element squared is the standard deviation //
   // squared, so this quantity should be sqrt(nnz * stdev^2)       //
   ///////////////////////////////////////////////////////////////////
   nnz = tensor_dims->prod();
-  double normN = std::sqrt(nnz);
-  double alpha = noise*normM/normN;
+  scalar_t normN = std::sqrt(nnz);
+  scalar_t alpha = noise*normM/normN;
   //add noise to product
   dataptr = product->getLocalTensor()->data();
   nnz = dist->getLocalDims().prod();
@@ -1514,4 +1533,53 @@ Tensor* generateTensor(int seed, TuckerTensor* fact, Tucker::SizeArray* proc_dim
   }
   return product;
 }
+// Explicit instantiations to build static library for both single and double precision
+template Tucker::Matrix<float>* oldGram(const Tensor<float>*, const int,
+    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
+template Tucker::Matrix<float>* newGram(const Tensor<float>*, const int,
+    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
+template const TuckerTensor<float>* STHOSVD(const Tensor<float>* const, const float, 
+    bool, bool);
+template const TuckerTensor<float>* STHOSVD(const Tensor<float>* const, 
+    const Tucker::SizeArray* const, bool, bool);
+template Tucker::MetricData<float>* computeSliceMetrics(const Tensor<float>* const,
+    int, int);
+template void transformSlices(Tensor<float>*, int, const float*, const float*);
+template void normalizeTensorStandardCentering(Tensor<float>*, int, float);
+template void normalizeTensorMinMax(Tensor<float>*, int);
+template void normalizeTensorMax(Tensor<float>*, int);
+template const Tensor<float>* reconstructSingleSlice(const TuckerTensor<float>*,
+    const int, const int);
+template void readTensorBinary(std::string&, Tensor<float>&);
+template void importTensorBinary(const char*, Tucker::Tensor<float>*);
+template void importTimeSeries(const char*, Tensor<float>*);
+template void writeTensorBinary(std::string&, const Tensor<float>&);
+template void exportTensorBinary(const char*, const Tensor<float>*);
+template void exportTensorBinary(const char*, const Tucker::Tensor<float>*);
+template void exportTimeSeries(const char*, const Tensor<float>*);
+
+template Tucker::Matrix<double>* oldGram(const Tensor<double>*, const int,
+    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
+template Tucker::Matrix<double>* newGram(const Tensor<double>*, const int,
+    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
+template const TuckerTensor<double>* STHOSVD(const Tensor<double>* const, const double, 
+    bool, bool);
+template const TuckerTensor<double>* STHOSVD(const Tensor<double>* const, 
+    const Tucker::SizeArray* const, bool, bool);
+template Tucker::MetricData<double>* computeSliceMetrics(const Tensor<double>* const,
+    int, int);
+template void transformSlices(Tensor<double>*, int, const double*, const double*);
+template void normalizeTensorStandardCentering(Tensor<double>*, int, double);
+template void normalizeTensorMinMax(Tensor<double>*, int);
+template void normalizeTensorMax(Tensor<double>*, int);
+template const Tensor<double>* reconstructSingleSlice(const TuckerTensor<double>*,
+    const int, const int);
+template void readTensorBinary(std::string&, Tensor<double>&);
+template void importTensorBinary(const char*, Tucker::Tensor<double>*);
+template void importTimeSeries(const char*, Tensor<double>*);
+template void writeTensorBinary(std::string&, const Tensor<double>&);
+template void exportTensorBinary(const char*, const Tensor<double>*);
+template void exportTensorBinary(const char*, const Tucker::Tensor<double>*);
+template void exportTimeSeries(const char*, const Tensor<double>*);
+
 } // end namespace TuckerMPI

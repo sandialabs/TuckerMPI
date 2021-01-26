@@ -50,6 +50,7 @@ namespace TuckerMPI {
  *
  * \todo Block row distribution is never tested
  */
+template <class scalar_t>
 class Matrix {
 public:
   /** \brief Constructor
@@ -68,12 +69,12 @@ public:
   /** \brief Returns the locally owned portion of the matrix as a sequential
    * Tucker::Matrix pointer
    */
-  Tucker::Matrix* getLocalMatrix();
+  Tucker::Matrix<scalar_t>* getLocalMatrix();
 
   /** \brief Returns the locally owned portion of the matrix as a sequential
    * Tucker::Matrix pointer
    */
-  const Tucker::Matrix* getLocalMatrix() const;
+  const Tucker::Matrix<scalar_t>* getLocalMatrix() const;
 
   //! Returns the number of entries owned by the calling process
   size_t getLocalNumEntries() const;
@@ -105,7 +106,7 @@ private:
   /// @endcond
 
   //! The locally owned portion of the matrix
-  Tucker::Matrix* localMatrix_;
+  Tucker::Matrix<scalar_t>* localMatrix_;
   //! The map describing the distribution
   Map* map_;
   //! The global number of rows

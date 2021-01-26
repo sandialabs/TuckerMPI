@@ -67,6 +67,7 @@ enum Metric {
  *
  * Returned by Tucker::computeSliceMetrics.
  */
+template <class scalar_t>
 class MetricData
 {
 public:
@@ -89,37 +90,37 @@ public:
     assert(dimension > 0);
 
     if(metrics & MIN)
-      minData_ = MemoryManager::safe_new_array<double>(dimension);
+      minData_ = MemoryManager::safe_new_array<scalar_t>(dimension);
     else
       minData_ = 0;
 
     if(metrics & MAX)
-      maxData_ = MemoryManager::safe_new_array<double>(dimension);
+      maxData_ = MemoryManager::safe_new_array<scalar_t>(dimension);
     else
       maxData_ = 0;
 
     if(metrics & SUM)
-      sumData_ = MemoryManager::safe_new_array<double>(dimension);
+      sumData_ = MemoryManager::safe_new_array<scalar_t>(dimension);
     else
       sumData_ = 0;
 
     if(metrics & NORM1)
-      norm1Data_ = MemoryManager::safe_new_array<double>(dimension);
+      norm1Data_ = MemoryManager::safe_new_array<scalar_t>(dimension);
     else
       norm1Data_ = 0;
 
     if(metrics & NORM2)
-      norm2Data_ = MemoryManager::safe_new_array<double>(dimension);
+      norm2Data_ = MemoryManager::safe_new_array<scalar_t>(dimension);
     else
       norm2Data_ = 0;
 
     if(metrics & MEAN)
-      meanData_ = MemoryManager::safe_new_array<double>(dimension);
+      meanData_ = MemoryManager::safe_new_array<scalar_t>(dimension);
     else
       meanData_ = 0;
 
     if(metrics & VARIANCE)
-      varianceData_ = MemoryManager::safe_new_array<double>(dimension);
+      varianceData_ = MemoryManager::safe_new_array<scalar_t>(dimension);
     else
       varianceData_ = 0;
   }
@@ -130,20 +131,20 @@ public:
    */
   ~MetricData()
   {
-    if(minData_) MemoryManager::safe_delete_array<double>(minData_,dimension_);
-    if(maxData_) MemoryManager::safe_delete_array<double>(maxData_,dimension_);
-    if(sumData_) MemoryManager::safe_delete_array<double>(sumData_,dimension_);
-    if(norm1Data_) MemoryManager::safe_delete_array<double>(norm1Data_,dimension_);
-    if(norm2Data_) MemoryManager::safe_delete_array<double>(norm2Data_,dimension_);
-    if(meanData_) MemoryManager::safe_delete_array<double>(meanData_,dimension_);
-    if(varianceData_) MemoryManager::safe_delete_array<double>(varianceData_,dimension_);
+    if(minData_) MemoryManager::safe_delete_array(minData_,dimension_);
+    if(maxData_) MemoryManager::safe_delete_array(maxData_,dimension_);
+    if(sumData_) MemoryManager::safe_delete_array(sumData_,dimension_);
+    if(norm1Data_) MemoryManager::safe_delete_array(norm1Data_,dimension_);
+    if(norm2Data_) MemoryManager::safe_delete_array(norm2Data_,dimension_);
+    if(meanData_) MemoryManager::safe_delete_array(meanData_,dimension_);
+    if(varianceData_) MemoryManager::safe_delete_array(varianceData_,dimension_);
   }
 
   /** \brief Returns the min-data array
    *
    * \exception std::runtime_error min-data was never allocated
    */
-  double* getMinData()
+  scalar_t* getMinData()
   {
     if(minData_) return minData_;
     throw std::runtime_error("min data was never allocated!");
@@ -153,7 +154,7 @@ public:
    *
    * \exception std::runtime_error max-data was never allocated
    */
-  double* getMaxData()
+  scalar_t* getMaxData()
   {
     if(maxData_) return maxData_;
     throw std::runtime_error("max data was never allocated!");
@@ -163,7 +164,7 @@ public:
    *
    * \exception std::runtime_error sum-data was never allocated
    */
-  double* getSumData()
+  scalar_t* getSumData()
   {
     if(sumData_) return sumData_;
     throw std::runtime_error("sum data was never allocated!");
@@ -173,7 +174,7 @@ public:
    *
    * \exception std::runtime_error norm1-data was never allocated
    */
-  double* getNorm1Data()
+  scalar_t* getNorm1Data()
   {
     if(norm1Data_) return norm1Data_;
     throw std::runtime_error("norm1 data was never allocated!");
@@ -183,7 +184,7 @@ public:
    *
    * \exception std::runtime_error norm2-data was never allocated
    */
-  double* getNorm2Data()
+  scalar_t* getNorm2Data()
   {
     if(norm2Data_) return norm2Data_;
     throw std::runtime_error("norm2 data was never allocated!");
@@ -193,7 +194,7 @@ public:
    *
    * \exception std::runtime_error mean-data was never allocated
    */
-  double* getMeanData()
+  scalar_t* getMeanData()
   {
     if(meanData_) return meanData_;
     throw std::runtime_error("mean data was never allocated!");
@@ -203,7 +204,7 @@ public:
    *
    * \exception std::runtime_error variance-data was never allocated
    */
-  double* getVarianceData()
+  scalar_t* getVarianceData()
   {
     if(varianceData_) return varianceData_;
     throw std::runtime_error("variance data was never allocated!");
@@ -215,15 +216,19 @@ private:
   MetricData(const MetricData& m);
   /// @endcond
 
-  double* minData_; ///< Minimum value array
-  double* maxData_; ///< Maximum value array
-  double* sumData_; ///< Sum of all values array
-  double* norm1Data_; ///< 1-norm array
-  double* norm2Data_; ///< 2-norm array
-  double* meanData_; ///< Mean array
-  double* varianceData_; ///< Variance array
+  scalar_t* minData_; ///< Minimum value array
+  scalar_t* maxData_; ///< Maximum value array
+  scalar_t* sumData_; ///< Sum of all values array
+  scalar_t* norm1Data_; ///< 1-norm array
+  scalar_t* norm2Data_; ///< 2-norm array
+  scalar_t* meanData_; ///< Mean array
+  scalar_t* varianceData_; ///< Variance array
   int dimension_;
 };
+
+// Explicit instantiations to build static library for both single and double precision
+template class MetricData<float>;
+template class MetricData<double>;
 
 }
 

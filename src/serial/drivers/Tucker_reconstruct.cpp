@@ -17,6 +17,8 @@
 
 int main(int argc, char* argv[])
 {
+  typedef double scalar_t;  // specify precision
+  
   //
   // Get the name of the input file
   //
@@ -263,9 +265,9 @@ int main(int argc, char* argv[])
     std::cout << "Reconstruction order: " << *rec_order << std::endl;
 
     // Free the memory
-    Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(temp_order);
-    Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(current_dims);
-    Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(rec_size);
+    Tucker::MemoryManager::safe_delete(temp_order);
+    Tucker::MemoryManager::safe_delete(current_dims);
+    Tucker::MemoryManager::safe_delete(rec_size);
 
     orderTimer.stop();
     std::cout << "Computing the optimal reconstruction order: " << orderTimer.duration() << " s\n";
@@ -302,8 +304,8 @@ int main(int argc, char* argv[])
   /////////////////////////////////
   // Set up factorization object //
   /////////////////////////////////
-  Tucker::TuckerTensor* fact =
-      Tucker::MemoryManager::safe_new<Tucker::TuckerTensor>(nd);
+  Tucker::TuckerTensor<scalar_t>* fact =
+      Tucker::MemoryManager::safe_new<Tucker::TuckerTensor<scalar_t>>(nd);
 
   ///////////////////////////
   // Read core tensor data //
@@ -312,7 +314,7 @@ int main(int argc, char* argv[])
   readTimer->start();
   std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn +
             "_core.mpi";
-  fact->G = Tucker::MemoryManager::safe_new<Tucker::Tensor>(*coreSize);
+  fact->G = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*coreSize);
   Tucker::importTensorBinary(fact->G, coreFilename.c_str());
 
   size_t nnz = fact->G->getNumElements();
@@ -327,7 +329,7 @@ int main(int argc, char* argv[])
     std::ostringstream ss;
     ss << sthosvd_dir << "/" << sthosvd_fn << "_mat_" << mode << ".mpi";
 
-    fact->U[mode] = Tucker::MemoryManager::safe_new<Tucker::Matrix>((*I_dims)[mode],(*coreSize)[mode]);
+    fact->U[mode] = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>((*I_dims)[mode],(*coreSize)[mode]);
     Tucker::importTensorBinary(fact->U[mode], ss.str().c_str());
   }
   readTimer->stop();
@@ -339,26 +341,26 @@ int main(int argc, char* argv[])
   ////////////////////////////////////////////////////
   Tucker::Timer* reconstructTimer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
   reconstructTimer->start();
-  Tucker::Tensor* result = fact->G;
+  Tucker::Tensor<scalar_t>* result = fact->G;
   for(int i=0; i<nd; i++)
   {
     int mode = (*rec_order)[i];
     // Grab the requested rows of the factor matrix
     int start_subs = (*subs_begin)[mode];
     int end_subs = (*subs_end)[mode];
-    Tucker::Matrix* factMat =
+    Tucker::Matrix<scalar_t>* factMat =
         fact->U[mode]->getSubmatrix(start_subs, end_subs);
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(fact->U[mode]);
+    Tucker::MemoryManager::safe_delete(fact->U[mode]);
 
     // Perform the TTM
-    Tucker::Tensor* temp = Tucker::ttm(result,mode,factMat);
+    Tucker::Tensor<scalar_t>* temp = Tucker::ttm(result,mode,factMat);
 
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(factMat);
+    Tucker::MemoryManager::safe_delete(factMat);
     if(result != fact->G) {
-      Tucker::MemoryManager::safe_delete<Tucker::Tensor>(result);
+      Tucker::MemoryManager::safe_delete(result);
     }
     else {
-      Tucker::MemoryManager::safe_delete<Tucker::Tensor>(fact->G);
+      Tucker::MemoryManager::safe_delete(fact->G);
     }
     result = temp;
 
@@ -424,13 +426,13 @@ int main(int argc, char* argv[])
   /////////////////
   // Free memory //
   /////////////////
-  Tucker::MemoryManager::safe_delete<Tucker::TuckerTensor>(fact);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(coreSize);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(I_dims);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(subs_begin);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(subs_end);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(rec_order);
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(result);
+  Tucker::MemoryManager::safe_delete(fact);
+  Tucker::MemoryManager::safe_delete(coreSize);
+  Tucker::MemoryManager::safe_delete(I_dims);
+  Tucker::MemoryManager::safe_delete(subs_begin);
+  Tucker::MemoryManager::safe_delete(subs_end);
+  Tucker::MemoryManager::safe_delete(rec_order);
+  Tucker::MemoryManager::safe_delete(result);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();

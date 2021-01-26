@@ -121,7 +121,8 @@ SizeArray* stringParseSizeArray(const std::vector<std::string>& lines,
   return arr; // Returns empty array if nothing is ever pushed onto tmp vector
 }
 
-void printEigenvalues(const TuckerTensor* factorization,
+template <class scalar_t>
+void printEigenvalues(const TuckerTensor<scalar_t>* factorization,
     const std::string& filePrefix, bool useLQ)
 {
   // For each mode...
@@ -150,5 +151,10 @@ void printEigenvalues(const TuckerTensor* factorization,
     ofs.close();
   }
 }
+
+// Explicit instantiations to build static library for both single and double precision
+template void printEigenvalues(const TuckerTensor<float>*, const std::string&, bool);
+
+template void printEigenvalues(const TuckerTensor<double>*, const std::string&, bool);
 
 }
