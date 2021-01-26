@@ -23,7 +23,7 @@ bool checkEqual(const double* arr1, const double* arr2, int nrows, int ncols)
 //2. Each mode n processor fiber has multiple processors AND n=N-1. In this case redistribution is done
 //with each local unfolding being row major. Sequential LQ is not called.
 //3. Each mode n processor fiber has multiple processors AND n!=N-1. In this case redistribution is done
-//with each local unfolding being column major. Sequential LQ is not called.
+//with each local unfolding being column major. parallel LQ is called.
 int main(int argc, char* argv[])
 {
   MPI_Init(&argc,&argv);
@@ -254,8 +254,7 @@ int main(int argc, char* argv[])
   int compareResultBuff;
   std::string filename = "input_files/lq_data.mpi";
   for(int t=0; t<nPossibleProcGrid; t++){
-    Tucker::SizeArray* nprocsPerDim =
-    Tucker::MemoryManager::safe_new<Tucker::SizeArray>(ndims);
+    Tucker::SizeArray* nprocsPerDim = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(ndims);
     (*nprocsPerDim)[0] = *(processorGridLayouts+t*4);
     (*nprocsPerDim)[1] = *(processorGridLayouts+t*4+1); 
     (*nprocsPerDim)[2] = *(processorGridLayouts+t*4+2); 

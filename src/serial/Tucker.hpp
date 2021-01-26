@@ -108,8 +108,9 @@ extern "C" void dscal_(const int*, const double*, double*, const int*);
 void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n, const int startingSubmatrix, const int numSubmatrices, const int variant);
 
 /** \brief wrapper of computeLQ(const Tensor* Y, const int n, Matrix* L) which get the LQ of the mode n unfolding
- * of Y. A square matrix is returned with the L stored in the lower triangle in column major. The upper triangle
- * is filled with 0.
+ * of Y. If Yn is short and fat or square, the column major square matrix containing the lower triangle of Yn is returned.
+ * We allow Yn to be tall and skinny, in which case the returned matrix is not square but a tall and skinny matrix containing
+ * the lower trapezoid of Yn.
  */
 Matrix* computeLQ(const Tensor* Y, const int n);
 

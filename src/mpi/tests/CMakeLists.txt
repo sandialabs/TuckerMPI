@@ -6,6 +6,9 @@ TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_threshold_test mpi_tucker ${BLAS_LIBRARI
 ADD_EXECUTABLE(TuckerMPI_sthosvd_reduced_dims_test TuckerMPI_sthosvd_reduced_dims_test.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_reduced_dims_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
+ADD_EXECUTABLE(TuckerMPI_LQ_edgecase_test TuckerMPI_LQ_edgecase_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_LQ_edgecase_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 ADD_EXECUTABLE(TuckerMPI_LQ_test TuckerMPI_LQ_test.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_LQ_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
@@ -73,6 +76,7 @@ ENABLE_TESTING()
 ADD_TEST(TuckerMPI_part_rec_test ${CMAKE_CURRENT_BINARY_DIR}/TuckerMPI_part_rec_test.pl "${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12")
 ADD_TEST(TuckerMPI_sthosvd_threshold_test10 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_sthosvd_threshold_test)
 ADD_TEST(TuckerMPI_sthosvd_reduced_dims_test10 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_sthosvd_reduced_dims_test)
+ADD_TEST(TuckerMPI_LQ_edgecase_test ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_edgecase_test)
 ADD_TEST(TuckerMPI_LQ_test12 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_test)
 ADD_TEST(TuckerMPI_LQ_test11 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 11 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_test)
 ADD_TEST(TuckerMPI_LQ_test10 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_test)
@@ -259,6 +263,7 @@ ADD_TEST(TuckerMPI_ttm_test_file24 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 24 ${CMAKE
 SET_PROPERTY(TEST TuckerMPI_part_rec_test PROPERTY LABELS SystemTest ManyProcs)
 SET_PROPERTY(TEST TuckerMPI_sthosvd_threshold_test10 PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST TuckerMPI_sthosvd_reduced_dims_test10 PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST TuckerMPI_LQ_edgecase_test PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST TuckerMPI_LQ_test12 PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST TuckerMPI_LQ_test11 PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST TuckerMPI_LQ_test10 PROPERTY LABELS UnitTest)
@@ -440,6 +445,7 @@ FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/input_test_filenames.txt" DESTINATION
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/input_test_filename.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/output_test_filenames.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/output_test_filename.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/lq_edgecase_output.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/io_file0.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/io_file1.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/io_file2.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")

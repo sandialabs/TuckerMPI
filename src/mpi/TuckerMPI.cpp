@@ -76,13 +76,12 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
   if(local_qr_timer) local_qr_timer->start();
   if(!redistYn){
     Tucker::Matrix* L = Tucker::computeLQ(Y->getLocalTensor(), n);
-    Rnrows = L->nrows();
-    Rncols = L->ncols(); 
-    //Do an explicit transpose of tempT.
+    Rncols = L->nrows();
+    Rnrows = L->ncols(); 
+    //Do an explicit transpose of R.
     R = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rnrows, Rncols);
-    int sizeOfTempT = Rnrows*Rncols;
-    for(int i=0; i<Rncols; i++){
-      dcopy_(&Rnrows, L->data()+i*Rnrows, &one, R->data()+i, &Rnrows);
+    for(int i=0; i<L->ncols(); i++){
+      dcopy_(&Rncols, L->data()+i*Rncols, &one, R->data()+i, &Rnrows);
     }
     Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L);
   }
@@ -94,8 +93,9 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
     Tucker::MemoryManager::safe_delete<const Matrix>(redistYn);  
   }
   if(local_qr_timer) local_qr_timer->stop();
-  int sizeOfR = Rnrows*Rncols;
-  Tucker::Matrix* L = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rnrows, Rncols);
+
+  int sizeOfR = R->nrows()*R->ncols();
+  Tucker::Matrix* L = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rncols, Rncols);
   Tucker::Matrix* tempB;
   int treeDepth = (int)ceil(log2(globalnp));
   MPI_Status status;
@@ -105,40 +105,47 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
       if(globalRank+ pow(2, i) < globalnp){
         tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rncols, Rncols);
         MPI_Recv(tempB->data(), Rncols*Rncols, MPI_DOUBLE, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
-        
-        //TODO: delete this?? make tempT square if it is short and fat so that it has enough space to store the R.
-        // if(tempTnrows < tempTncols){
-        //   std::cout << "Processor["<<globalRank<<"] in iteration["<<i<<"] enter special copy block because R is in shape "<< tempTnrows << " by "<< tempTncols<< std::endl;
-        //   Tucker::Matrix* squareTempT = Tucker::MemoryManager::safe_new<Tucker::Matrix>(tempTncols, tempTncols);
-        //   squareTempT->initialize();
-        //   //copy one row at a time.
-        //   for(int j=0; j<tempTnrows; j++){
-        //     dcopy_(&tempTncols, tempT->data()+j, &tempTnrows, squareTempT->data()+j, &tempTncols);
-        //   }
-        //   std::cout << "Processor["<<globalRank<<"] in iteration["<<i<<"] matrix A for dtpqrt:"<< std::endl;
-        //   for(int a=0; a<tempTncols; a++){
-        //     for(int b=0; b<tempTncols;b++){
-        //       std::cout << squareTempT->data()[a+b*tempTncols] << ", ";
-        //     }
-        //     std::cout << std::endl;
-        //   }
-        //   std::cout << std::endl;
-        //   Tucker::MemoryManager::safe_delete<Tucker::Matrix>(tempT);
-        //   tempT = squareTempT;
-        //   tempTnrows = tempT->nrows();
-        // }
+        int count;
+        MPI_Get_count(&status, MPI_DOUBLE, &count);
+        //If not in the edge case where R is upper trapezoidal, tempBEffectiveNrows should equal Rncols.
+        int tempBEffectiveNrows = count/Rncols;
+        Tucker::Matrix* effectiveTempB = Tucker::MemoryManager::safe_new<Tucker::Matrix>(tempBEffectiveNrows, Rncols);
+        for(int i=0; i<count; i++){
+          dcopy_(&count, tempB->data(), &one, effectiveTempB->data(), &one);
+        }
+        Tucker::MemoryManager::safe_delete(tempB);
+        if(count % Rncols !=0){
+          std::cerr << "processor " << globalRank << "received count is not divisible by Rncols" << std::endl;
+        }
         int nb = (Rncols > 32)? 32 : Rncols;
         double* T = Tucker::MemoryManager::safe_new_array<double>(nb*Rncols);
         double* work = Tucker::MemoryManager::safe_new_array<double>(nb*Rncols);
         int info;
-        Tucker::dtpqrt_(&Rncols, &Rncols, &Rncols, &nb, R->data(), &Rnrows, tempB->data(),
-          &Rncols, T, &nb, work, &info);
-        Tucker::MemoryManager::safe_delete<Tucker::Matrix>(tempB);
+        // Edge case
+        // padd with rows of zeros to make R square
+        if(R->nrows() < R->ncols()){
+          Tucker::Matrix* squareR = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rncols, Rncols);
+          int sizeOfSquareR = Rncols*Rncols;
+          for(int i=0; i<Rncols; i++){
+            dcopy_(&Rnrows, R->data()+i*Rnrows, &one, squareR->data()+i*Rncols, &one); //copy the top part over
+            for(int j=i*Rncols+Rnrows; j<(i+1)*Rncols; j++){// padd the bottom with zeros
+              squareR->data()[j] = 0;
+            }
+          }
+          Tucker::MemoryManager::safe_delete(R);
+          R = squareR;
+          Rnrows = R->nrows();
+          Rncols = R->ncols();
+        }
+        Tucker::dtpqrt_(&tempBEffectiveNrows, &Rncols, &tempBEffectiveNrows, &nb, R->data(), &Rncols, effectiveTempB->data(),
+        &tempBEffectiveNrows, T, &nb, work, &info);
+        Tucker::MemoryManager::safe_delete<Tucker::Matrix>(effectiveTempB);
         Tucker::MemoryManager::safe_delete_array<double>(work, nb*Rncols);
         Tucker::MemoryManager::safe_delete_array<double>(T, nb*Rncols);
       }
     }
     else if(globalRank % (int)pow(2, i) == 0){
+      sizeOfR = R->nrows()* R->ncols();
       MPI_Send(R->data(), sizeOfR, MPI_DOUBLE, globalRank-pow(2, i), globalRank, MPI_COMM_WORLD);
     }
   }
@@ -150,12 +157,12 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
         R->data()[r+c*R->nrows()] = 0;
       }
     }
+    
     //transpose
     for(int i=0; i<Rncols; i++){
-      dcopy_(&Rnrows, R->data()+i*Rnrows, &one, L->data()+i, &Rnrows); 
+      dcopy_(&Rncols, R->data()+i*Rncols, &one, L->data()+i, &Rncols); 
     }
     Tucker::MemoryManager::safe_delete<Tucker::Matrix>(R);
-    //std::cout << L->prettyPrint();
   }
   return L;
 }

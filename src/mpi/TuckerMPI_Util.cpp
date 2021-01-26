@@ -49,13 +49,14 @@ Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_t
   int nrowsM = M->getLocalNumRows();
   int ncolsM = M->getLocalNumCols();
   int sizeOfM = ncolsM*nrowsM;
-  if(nrowsM > ncolsM){
-    std::ostringstream oss;
-    oss << "Edge case where unfolding of Y is tall and skinny. Solutioin not implemented yet.";
-    throw std::runtime_error(oss.str());
-  }
+  // if(nrowsM > ncolsM){
+  //   std::ostringstream oss;
+  //   oss << "Edge case where unfolding of Y is tall and skinny. Solutioin not implemented yet.";
+  //   throw std::runtime_error(oss.str());
+  // }
   int info;
-  Tucker::Matrix* R = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrowsM, nrowsM);
+  int nrowsR = nrowsM > ncolsM ? ncolsM : nrowsM;
+  Tucker::Matrix* R = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrowsR, nrowsM);
   double* tempT = Tucker::MemoryManager::safe_new_array<double>(5);
   double* tempWork = Tucker::MemoryManager::safe_new_array<double>(1);
   if(isLastMode){
@@ -80,7 +81,7 @@ Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_t
     //actually doing a transpose, we are just getting the upper triangle of Mcopy here.
     if(transpose_timer) transpose_timer->start();
     for(int i=0; i<nrowsM; i++){
-      dcopy_(&nrowsM, Mcopy->data()+i*ncolsM, &one, R->data()+i*nrowsM, &one);
+      dcopy_(&nrowsR, Mcopy->data()+i*ncolsM, &one, R->data()+i*nrowsR, &one);
     }
     Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Mcopy);
     if(transpose_timer) transpose_timer->stop();
@@ -103,9 +104,19 @@ Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_t
     Tucker::MemoryManager::safe_delete_array<double>(T, TSize);
     if(decompose_timer) decompose_timer->stop();  
     if(transpose_timer) transpose_timer->start();
-    //transpose the leftmost square of Mcopy one column at a time.
-    for(int i=0; i<nrowsM; i++){
-      dcopy_(&nrowsM, Mcopy->data()+i*nrowsM, &one, R->data()+i, &nrowsM);
+    
+    if(nrowsM < ncolsM){
+      //transpose the leftmost square of Mcopy one column at a time.
+      for(int i=0; i<nrowsM; i++){
+        dcopy_(&nrowsM, Mcopy->data()+i*nrowsM, &one, R->data()+i, &nrowsM);
+      }
+    }
+    else{
+      //in this case Mcopy is (nrowsM x ncolsM) and R is (ncolsM x nrowsM)
+      //transpose the whole Mcopy into R
+      for(int i=0; i<nrowsM; i++){
+        dcopy_(&nrowsR, Mcopy->data()+i, &nrowsM, R->data()+i*nrowsR, &one);
+      }
     }
     Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Mcopy);
     if(transpose_timer) transpose_timer->stop();

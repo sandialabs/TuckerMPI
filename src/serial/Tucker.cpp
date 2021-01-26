@@ -84,8 +84,14 @@ void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n, const int
 
 Matrix* computeLQ(const Tensor* Y, const int n){
   int modeNDimension = Y->size(n);
-  //Return value of the function. It will always be a lower triangle matrix.
-  Matrix* L = MemoryManager::safe_new<Matrix>(modeNDimension, modeNDimension);
+  int YnNcols = 1;
+  for(int i=0; i<Y->N(); i++) {
+    if(i != n) {
+      YnNcols *= Y->size(i);
+    }
+  }
+  int LNrows = YnNcols > modeNDimension ? modeNDimension : YnNcols;
+  Matrix* L = MemoryManager::safe_new<Matrix>(modeNDimension, LNrows);
   computeLQ(Y, n, L);
   return L;
 }
@@ -115,11 +121,12 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L){
         Y0ncols *= Y->size(i);
       }
     }
-    if(modeNDimension > Y0ncols){
-      std::ostringstream oss;
-      oss << "mode 0 unfolding of Y is tall and skinny. Not handled here.";
-      throw std::runtime_error(oss.str());
-    }
+    // if(modeNDimension > Y0ncols){
+    //   std::ostringstream oss;
+    //   oss << "mode 0 unfolding of Y is tall and skinny. Not handled here.";
+    //   throw std::runtime_error(oss.str());
+    // }
+
     Matrix* Y0 = MemoryManager::safe_new<Matrix>(modeNDimension, Y0ncols);
     int Y0nrows = Y0->nrows();
     int sizeOfY0 = Y0nrows*Y0ncols;
