@@ -10,7 +10,8 @@
 #include <cstdlib>
 #include <cmath>
 
-bool approxEqual(double a, double b, double tol)
+template <class scalar_t>
+bool approxEqual(scalar_t a, scalar_t b, scalar_t tol)
 {
   if(std::abs(a-b) > tol)
     return false;
@@ -19,14 +20,22 @@ bool approxEqual(double a, double b, double tol)
 
 int main()
 {
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+#else
+  typedef double scalar_t;
+#endif
+
   Tucker::SizeArray* size =
       Tucker::MemoryManager::safe_new<Tucker::SizeArray>(3);
   (*size)[0] = 2;
   (*size)[1] = 3;
   (*size)[2] = 5;
-  Tucker::Tensor* t =
-      Tucker::MemoryManager::safe_new<Tucker::Tensor>(*size);
-  double* data = t->data();
+  Tucker::Tensor<scalar_t>* t =
+      Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*size);
+  scalar_t* data = t->data();
   for(int i=0; i<30; i++)
     data[i] = i+1;
 
@@ -35,19 +44,19 @@ int main()
   (*newSize)[0] = 2;
   (*newSize)[1] = 1;
   (*newSize)[2] = 3;
-  const struct Tucker::TuckerTensor* factorization = Tucker::STHOSVD(t,newSize);
+  const struct Tucker::TuckerTensor<scalar_t>* factorization = Tucker::STHOSVD(t,newSize);
 
   // Reconstruct the original tensor
-  Tucker::Tensor* temp = Tucker::ttm(factorization->G,0,
+  Tucker::Tensor<scalar_t>* temp = Tucker::ttm(factorization->G,0,
       factorization->U[0]);
-  Tucker::Tensor* temp2 = Tucker::ttm(temp,1,
+  Tucker::Tensor<scalar_t>* temp2 = Tucker::ttm(temp,1,
         factorization->U[1]);
-  Tucker::Tensor* temp3 = Tucker::ttm(temp2,2,
+  Tucker::Tensor<scalar_t>* temp3 = Tucker::ttm(temp2,2,
         factorization->U[2]);
 
   data = temp3->data();
 
-  double trueData[30];
+  scalar_t trueData[30];
   trueData[0] = 2.802710268427637; trueData[1] = 3.697422679857209; trueData[2] = 3.112029908952288;
   trueData[3] = 4.105486783765727; trueData[4] = 3.421349549476938; trueData[5] = 4.513550887674245;
   trueData[6] = 8.170984737005284; trueData[7] = 9.065697148434888; trueData[8] = 9.072771157833156;
@@ -59,8 +68,9 @@ int main()
   trueData[24] = 24.275808142738295; trueData[25] = 25.170520554167854; trueData[26] = 26.954994904475836;
   trueData[27] = 27.948451779289265; trueData[28] = 29.634181666213383; trueData[29] = 30.726383004410678;
 
+  // set tolerance looser than sqrt(eps)
   for(int i=0; i<30; i++) {
-    if(!approxEqual(data[i],trueData[i],1e-10)) {
+    if(!approxEqual(data[i],trueData[i],10 * std::sqrt(std::numeric_limits<scalar_t>::epsilon()))) {
       std::cerr << "data[" << i << "] (" << data[i] << ") != trueData["
           << i << "] (" << trueData[i] << "); the difference is "
           << data[i] - trueData[i] << std::endl;
@@ -69,13 +79,13 @@ int main()
   }
 
   // Free some memory
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(t);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(size);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(newSize);
-  Tucker::MemoryManager::safe_delete<const struct Tucker::TuckerTensor>(factorization);
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(temp);
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(temp2);
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(temp3);
+  Tucker::MemoryManager::safe_delete(t);
+  Tucker::MemoryManager::safe_delete(size);
+  Tucker::MemoryManager::safe_delete(newSize);
+  Tucker::MemoryManager::safe_delete(factorization);
+  Tucker::MemoryManager::safe_delete(temp);
+  Tucker::MemoryManager::safe_delete(temp2);
+  Tucker::MemoryManager::safe_delete(temp3);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();

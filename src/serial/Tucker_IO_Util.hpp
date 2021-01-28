@@ -137,7 +137,8 @@ SizeArray* stringParseSizeArray(const std::vector<std::string>& lines,
  * \param[in] useLQ, if this parameter is true then print the square of the
  * singular values of the L to get the eigenvalues.
  */
-void printEigenvalues(const TuckerTensor* factorization,
+template <class scalar_t>
+void printEigenvalues(const TuckerTensor<scalar_t>* factorization,
     const std::string& filePrefix, bool useLQ);
 
 }

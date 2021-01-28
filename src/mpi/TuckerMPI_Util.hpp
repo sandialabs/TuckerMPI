@@ -40,41 +40,17 @@
 #define UTIL_MPI_HPP_
 
 #include "Tucker_Timer.hpp"
+#include "TuckerMPI_MPIWrapper.hpp"
 #include "TuckerMPI_Tensor.hpp"
 #include "TuckerMPI_Matrix.hpp"
 
 namespace TuckerMPI {
 
-/// @cond EXCLUDE
-extern "C" void dgelq_(const int*, const int*, double*, const int*,
-    double*, const int*, double*, const int*, const int*);
-
-extern "C" void dgeqr_(const int*, const int*, double*, const int*, 
-    double*, const int*, double*, const int*, const int*);
-
-extern "C" void dgelqf_(const int*, const int*, double*, 
-    const int*, double*, double*, const int*, int*);
-
-extern "C" void dgeqrf_(const int*, const int*, double*, 
-    const int*, double*, double*, const int*, int*);
-
-extern "C" void dcopy_(const int*, const double*, const int*,
-    double*, const int*);
-
-extern "C" void dsyrk_(const char*, const char*, const int*, const int*,
-    const double*, const double*, const int*, const double*, double*,
-    const int*);
-
-extern "C" void dgemm_(const char*, const char*, const int*,
-    const int*, const int*, const double*, const double*,
-    const int*, const double*, const int*, const double*,
-    double*, const int*);
-/// @endcond
-
 /** \brief Compute QR of M transpose. M is assumed to be short and fat. The R is returned in a square matrix.
  * If isLastMode is true then a call to dgeqr is made, Otherwise a call to dgelq is made.
  */
-Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_timer=0, 
+template <class scalar_t>
+Tucker::Matrix<scalar_t>* localQR(const Matrix<scalar_t>* M, bool isLastMode, Tucker::Timer* dcopy_timer=0, 
     Tucker::Timer* decompose_timer=0, Tucker::Timer* transpose_timer=0);
 
 /** \brief Determines whether packing is necessary for computing the Gram matrix
@@ -83,7 +59,8 @@ bool isPackForGramNecessary(int n, const Map* origMap, const Map* redistMap);
 
 /** \brief Packs the data for computing the Gram matrix
  */
-const double* packForGram(const Tensor* Y, int n, const Map* redistMat);
+template <class scalar_t>
+const scalar_t* packForGram(const Tensor<scalar_t>* Y, int n, const Map* redistMat);
 
 /** \brief Determines whether unpacking is necessary for computing the Gram matrix
  */
@@ -92,34 +69,40 @@ bool isUnpackForGramNecessary(int n, int ndims, const Map* origMap,
 
 /** \brief Unpacks the data for computing the Gram matrix
  */
-void unpackForGram(int n, int ndims, Matrix* redistMat,
-    const double* dataToUnpack, const Map* origMap);
+template <class scalar_t>
+void unpackForGram(int n, int ndims, Matrix<scalar_t>* redistMat,
+    const scalar_t* dataToUnpack, const Map* origMap);
 
 /** \brief Redistributes the tensor for computing the Gram matrix using the
  * new algorithm
  */
-const Matrix* redistributeTensorForGram(const Tensor* Y, int n,
+template <class scalar_t>
+const Matrix<scalar_t>* redistributeTensorForGram(const Tensor<scalar_t>* Y, int n,
     Tucker::Timer* pack_timer=0, Tucker::Timer* alltoall_timer=0,
     Tucker::Timer* unpack_timer=0);
 
 /** \brief Local rank-k update for computing the Gram matrix
  */
-const Tucker::Matrix* localRankKForGram(const Matrix* Y, int n, int ndims);
+template <class scalar_t>
+const Tucker::Matrix<scalar_t>* localRankKForGram(const Matrix<scalar_t>* Y, int n, int ndims);
 
 /** \brief Local matrix-matrix multiply for computing the Gram matrix
  */
-void localGEMMForGram(const double* Y1, int nrowsY1, int n,
-    const Tensor* Y2, double* result);
+template <class scalar_t>
+void localGEMMForGram(const scalar_t* Y1, int nrowsY1, int n,
+    const Tensor<scalar_t>* Y2, scalar_t* result);
 
 /** \brief Perform a reduction for the Gram matrix computation
  *
  */
-Tucker::Matrix* reduceForGram(const Tucker::Matrix* U);
+template <class scalar_t>
+Tucker::Matrix<scalar_t>* reduceForGram(const Tucker::Matrix<scalar_t>* U);
 
 /** \brief Packs the tensor for the TTM
  *
  */
-void packForTTM(Tucker::Tensor* Y, int n, const Map* map);
+template <class scalar_t>
+void packForTTM(Tucker::Tensor<scalar_t>* Y, int n, const Map* map);
 
 } // end namespace TuckerMPI
 

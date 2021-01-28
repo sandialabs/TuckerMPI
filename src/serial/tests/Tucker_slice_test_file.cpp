@@ -9,9 +9,10 @@
 #include <cstdlib>
 #include "Tucker.hpp"
 
-bool checkUTEqual(const double* arr1, const double* arr2, int numRows)
+template <class scalar_t>
+bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 {
-  const double TOL = 1e-10;
+  const scalar_t TOL = 100 * std::numeric_limits<scalar_t>::epsilon();
 
   for(int r=0; r<numRows; r++) {
     for(int c=r; c<numRows; c++) {
@@ -30,7 +31,15 @@ bool checkUTEqual(const double* arr1, const double* arr2, int numRows)
 
 int main()
 {
-  double trueData[11][4][5];
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+#else
+  typedef double scalar_t;
+#endif
+
+  scalar_t trueData[11][4][5];
   trueData[0][0][0] = -0.493284685681523;
   trueData[0][0][1] = 0.497003271606648;
   trueData[0][0][2] = -10.553150952476088;
@@ -163,12 +172,12 @@ int main()
   trueData[10][3][4] = 0.301217280929192;
 
   // Read the matrix from a binary file
-  Tucker::Tensor* tensor =
-      Tucker::importTensor("input_files/3x5x7x11.txt");
+  Tucker::Tensor<scalar_t>* tensor =
+      Tucker::importTensor<scalar_t>("input_files/3x5x7x11.txt");
 
   for(int n=0; n<tensor->N(); n++) {
     // Compute the slice metrics
-    Tucker::MetricData* mets = Tucker::computeSliceMetrics(tensor, n,
+    Tucker::MetricData<scalar_t>* mets = Tucker::computeSliceMetrics(tensor, n,
         Tucker::MIN + Tucker::MAX + Tucker::SUM + Tucker::MEAN + Tucker::VARIANCE);
 
     for(int j=0; j<tensor->size(n); j++) {
@@ -183,31 +192,31 @@ int main()
       std::cout << "The stdev of slice " << j << " of mode "
           << n << " is " << sqrt(mets->getVarianceData()[j]) << std::endl;
 
-      if(std::abs(mets->getMinData()[j]-trueData[j][n][0])>1e-10) {
+      if(std::abs(mets->getMinData()[j]-trueData[j][n][0])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getMinData()[j] << " != " << trueData[j][n][0]
                   << "; the difference is " << mets->getMinData()[j] - trueData[j][n][0]
                   << std::endl;
         return EXIT_FAILURE;
       }
-      if(std::abs(mets->getMaxData()[j]-trueData[j][n][1])>1e-10) {
+      if(std::abs(mets->getMaxData()[j]-trueData[j][n][1])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getMaxData()[j] << " != " << trueData[j][n][1]
                   << "; the difference is " << mets->getMaxData()[j] - trueData[j][n][1]
                   << std::endl;
         return EXIT_FAILURE;
       }
-      if(std::abs(mets->getSumData()[j]-trueData[j][n][2])>1e-10) {
+      if(std::abs(mets->getSumData()[j]-trueData[j][n][2])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getSumData()[j] << " != " << trueData[j][n][2]
                   << "; the difference is " << mets->getSumData()[j] - trueData[j][n][2]
                   << std::endl;
         return EXIT_FAILURE;
       }
-      if(std::abs(mets->getMeanData()[j]-trueData[j][n][3])>1e-10) {
+      if(std::abs(mets->getMeanData()[j]-trueData[j][n][3])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getMeanData()[j] << " != " << trueData[j][n][3]
                   << "; the difference is " << mets->getMeanData()[j] - trueData[j][n][3]
                   << std::endl;
         return EXIT_FAILURE;
       }
-      if(std::abs(sqrt(mets->getVarianceData()[j])-trueData[j][n][4])>1e-10) {
+      if(std::abs(sqrt(mets->getVarianceData()[j])-trueData[j][n][4])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << sqrt(mets->getVarianceData()[j]) << " != " << trueData[j][n][4]
                   << "; the difference is " << sqrt(mets->getVarianceData()[j]) - trueData[j][n][4]
                   << std::endl;
@@ -215,11 +224,11 @@ int main()
       }
     }
 
-    Tucker::MemoryManager::safe_delete<Tucker::MetricData>(mets);
+    Tucker::MemoryManager::safe_delete(mets);
   }
 
   // Free memory
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::MemoryManager::safe_delete(tensor);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();

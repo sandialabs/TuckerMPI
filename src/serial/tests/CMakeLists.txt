@@ -1,4 +1,6 @@
 INCLUDE_DIRECTORIES(..)
+
+# Double precision tests
 ADD_EXECUTABLE(Tucker_svd_test Tucker_svd_test.cpp)
 TARGET_LINK_LIBRARIES(Tucker_svd_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
@@ -47,40 +49,126 @@ TARGET_LINK_LIBRARIES(Tucker_slice_test_file serial_tucker ${BLAS_LIBRARIES} ${L
 ADD_EXECUTABLE(Tucker_slice_test_nofile Tucker_slice_test_nofile.cpp)
 TARGET_LINK_LIBRARIES(Tucker_slice_test_nofile serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
+# Single precision tests
+ADD_EXECUTABLE(Tucker_svd_test_single Tucker_svd_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_svd_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_LQ_edgecase_test_single Tucker_LQ_edgecase_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_LQ_edgecase_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_LQ_test_single Tucker_LQ_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_LQ_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_IO_test_single Tucker_IO_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_IO_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_shift_scale_test_single Tucker_shift_scale_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_shift_scale_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_eig_test_single Tucker_eig_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_eig_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_norm_test_single Tucker_norm_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_norm_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_normalize_test_single Tucker_normalize_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_normalize_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_reconstruct_test_single Tucker_reconstruct_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_reconstruct_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_reconstruct_test2_single Tucker_reconstruct_test2.cpp)
+TARGET_LINK_LIBRARIES(Tucker_reconstruct_test2_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_gram_test_file_single Tucker_gram_test_file.cpp)
+TARGET_LINK_LIBRARIES(Tucker_gram_test_file_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_gram_test_nofile_single Tucker_gram_test_nofile.cpp)
+TARGET_LINK_LIBRARIES(Tucker_gram_test_nofile_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_ttm_test_file_single Tucker_ttm_test_file.cpp)
+TARGET_LINK_LIBRARIES(Tucker_ttm_test_file_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_ttm_test_nofile_single Tucker_ttm_test_nofile.cpp)
+TARGET_LINK_LIBRARIES(Tucker_ttm_test_nofile_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_slice_test_file_single Tucker_slice_test_file.cpp)
+TARGET_LINK_LIBRARIES(Tucker_slice_test_file_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_slice_test_nofile_single Tucker_slice_test_nofile.cpp)
+TARGET_LINK_LIBRARIES(Tucker_slice_test_nofile_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+# Use compile-time definition of TEST_SINGLE to specify precision
+SET_TARGET_PROPERTIES(
+    Tucker_svd_test_single
+    Tucker_LQ_edgecase_test_single
+    Tucker_LQ_test_single
+    Tucker_IO_test_single
+    Tucker_shift_scale_test_single 
+    Tucker_eig_test_single
+    Tucker_norm_test_single
+    Tucker_normalize_test_single
+    Tucker_reconstruct_test_single
+    Tucker_reconstruct_test2_single
+    Tucker_gram_test_file_single
+    Tucker_gram_test_nofile_single
+    Tucker_ttm_test_file_single
+    Tucker_ttm_test_nofile_single
+    Tucker_slice_test_file_single
+    Tucker_slice_test_nofile_single
+    PROPERTIES 
+        COMPILE_DEFINITIONS TEST_SINGLE)
 
 ENABLE_TESTING()
 ADD_TEST(Tucker_noscale_fullrec_test ${CMAKE_CURRENT_BINARY_DIR}/Tucker_noscale_fullrec.py)
 ADD_TEST(Tucker_serial_svd_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_svd_test)
+ADD_TEST(Tucker_serial_svd_test_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_svd_test_single)
 ADD_TEST(Tucker_serial_LQ_edgecase_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_LQ_edgecase_test)
+ADD_TEST(Tucker_serial_LQ_edgecase_test_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_LQ_edgecase_test_single)
 ADD_TEST(Tucker_serial_LQ_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_LQ_test)
+ADD_TEST(Tucker_serial_LQ_test_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_LQ_test_single)
 ADD_TEST(Tucker_serial_IO_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_IO_test)
+ADD_TEST(Tucker_serial_IO_test_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_IO_test_single)
 ADD_TEST(Tucker_serial_shift_scale_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_shift_scale_test)
+ADD_TEST(Tucker_serial_shift_scale_test_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_shift_scale_test_single)
 ADD_TEST(Tucker_serial_eig_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_eig_test)
+ADD_TEST(Tucker_serial_eig_test_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_eig_test_single)
 ADD_TEST(Tucker_serial_norm_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_norm_test)
+ADD_TEST(Tucker_serial_norm_test_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_norm_test_single)
 ADD_TEST(Tucker_serial_normalize_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_normalize_test)
+ADD_TEST(Tucker_serial_normalize_test_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_normalize_test_single)
 ADD_TEST(Tucker_serial_reconstruct_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_reconstruct_test)
+ADD_TEST(Tucker_serial_reconstruct_test_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_reconstruct_test_single)
 ADD_TEST(Tucker_serial_reconstruct_test2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_reconstruct_test2)
+ADD_TEST(Tucker_serial_reconstruct_test2_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_reconstruct_test2_single)
 ADD_TEST(Tucker_serial_gram_test_nofile ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_gram_test_nofile)
+ADD_TEST(Tucker_serial_gram_test_nofile_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_gram_test_nofile_single)
 ADD_TEST(Tucker_serial_gram_test_file ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_gram_test_file)
+ADD_TEST(Tucker_serial_gram_test_file_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_gram_test_file_single)
 ADD_TEST(Tucker_serial_ttm_test_file ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_ttm_test_file)
+ADD_TEST(Tucker_serial_ttm_test_file_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_ttm_test_file_single)
 ADD_TEST(Tucker_serial_ttm_test_nofile ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_ttm_test_nofile)
+ADD_TEST(Tucker_serial_ttm_test_nofile_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_ttm_test_nofile_single)
 ADD_TEST(Tucker_serial_slice_test_file ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_slice_test_file)
+ADD_TEST(Tucker_serial_slice_test_file_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_slice_test_file_single)
 ADD_TEST(Tucker_serial_slice_test_nofile ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_slice_test_nofile)
+ADD_TEST(Tucker_serial_slice_test_nofile_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_slice_test_nofile_single)
+
 
 SET_PROPERTY(TEST Tucker_noscale_fullrec_test PROPERTY LABELS SystemTest LongTest)
-SET_PROPERTY(TEST Tucker_serial_svd_test PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST Tucker_serial_LQ_edgecase_test PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST Tucker_serial_LQ_test PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST Tucker_serial_shift_scale_test PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST Tucker_serial_eig_test PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST Tucker_serial_norm_test PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST Tucker_serial_normalize_test PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST Tucker_serial_gram_test_nofile PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST Tucker_serial_gram_test_file PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST Tucker_serial_ttm_test_file PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST Tucker_serial_ttm_test_nofile PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST Tucker_serial_slice_test_file PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST Tucker_serial_slice_test_nofile PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST Tucker_serial_svd_test Tucker_serial_svd_test_single PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST Tucker_serial_LQ_edgecase_test Tucker_serial_LQ_edgecase_test_single PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST Tucker_serial_LQ_test Tucker_serial_LQ_test_single PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST Tucker_serial_shift_scale_test Tucker_serial_shift_scale_test_single PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST Tucker_serial_eig_test Tucker_serial_eig_test_single PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST Tucker_serial_norm_test Tucker_serial_norm_test_single PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST Tucker_serial_normalize_test Tucker_serial_normalize_test_single PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST Tucker_serial_gram_test_nofile Tucker_serial_gram_test_nofile_single PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST Tucker_serial_gram_test_file Tucker_serial_gram_test_file_single PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST Tucker_serial_ttm_test_file Tucker_serial_ttm_test_file_single PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST Tucker_serial_ttm_test_nofile Tucker_serial_ttm_test_nofile_single PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST Tucker_serial_slice_test_file Tucker_serial_slice_test_file_single PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST Tucker_serial_slice_test_nofile Tucker_serial_slice_test_nofile_single PROPERTY LABELS UnitTest)
 
 FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/input_files)
 FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/output_files)

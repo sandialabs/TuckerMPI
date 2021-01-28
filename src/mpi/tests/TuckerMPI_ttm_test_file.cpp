@@ -12,6 +12,7 @@ bool runSim(Tucker::SizeArray& procs);
 
 int main(int argc, char* argv[])
 {
+  
   MPI_Init(&argc, &argv);
 
   int rank, nprocs;
@@ -890,7 +891,7 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(procs);
+  Tucker::MemoryManager::safe_delete(procs);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();
@@ -905,10 +906,36 @@ int main(int argc, char* argv[])
 
 bool runSim(Tucker::SizeArray& procs)
 {
-  Tucker::Matrix* mat;
-  TuckerMPI::Tensor* mySol;
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+  const char* fn_tensor = "input_files/3x5x7x11_single.mpi";
+  const char* fn_32t    = "input_files/3x2_mult_transp_single.mpi";
+  const char* fn_43     = "input_files/4x3_mult_single.mpi";
+  const char* fn_58t    = "input_files/5x8_mult_transp_single.mpi";
+  const char* fn_25     = "input_files/2x5_mult_single.mpi";
+  const char* fn_71     = "input_files/7x1_mult_transp_single.mpi";
+  const char* fn_17     = "input_files/1x7_mult_single.mpi";
+  const char* fn_1125t  = "input_files/11x25_mult_transp_single.mpi";
+  const char* fn_1711   = "input_files/17x11_mult_single.mpi";
+#else
+  typedef double scalar_t;
+  const char* fn_tensor = "input_files/3x5x7x11.mpi";
+  const char* fn_32t    = "input_files/3x2_mult_transp.mpi";
+  const char* fn_43     = "input_files/4x3_mult.mpi";
+  const char* fn_58t    = "input_files/5x8_mult_transp.mpi";
+  const char* fn_25     = "input_files/2x5_mult.mpi";
+  const char* fn_71     = "input_files/7x1_mult_transp.mpi";
+  const char* fn_17     = "input_files/1x7_mult.mpi";
+  const char* fn_1125t  = "input_files/11x25_mult_transp.mpi";
+  const char* fn_1711   = "input_files/17x11_mult.mpi";
+#endif  
+
+  Tucker::Matrix<scalar_t>* mat;
+  TuckerMPI::Tensor<scalar_t>* mySol;
   TuckerMPI::Distribution* trueDist;
-  TuckerMPI::Tensor* trueSol;
+  TuckerMPI::Tensor<scalar_t>* trueSol;
   bool approxEqual;
 
   int rank;
@@ -925,168 +952,168 @@ bool runSim(Tucker::SizeArray& procs)
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
 
   // Create a tensor with that distribution
-  TuckerMPI::Tensor tensor(dist);
+  TuckerMPI::Tensor<scalar_t> tensor(dist);
 
   // Read the tensor from a binary file
-  TuckerMPI::importTensorBinary("input_files/3x5x7x11.mpi",&tensor);
+  TuckerMPI::importTensorBinary(fn_tensor,&tensor);
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix("input_files/3x2.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/3x2.txt");
 
   // Read the true solution
   dims[0] = 2; dims[1] = 5; dims[2] = 7; dims[3] = 11;
   trueDist = Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
-  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(trueDist);
-  TuckerMPI::importTensorBinary("input_files/3x2_mult_transp.mpi",trueSol);
+  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(trueDist);
+  TuckerMPI::importTensorBinary(fn_32t,trueSol);
 
   // Compute the TTM
   mySol = TuckerMPI::ttm(&tensor, 0, mat, true);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(mat);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(trueSol);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(mySol);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
+  Tucker::MemoryManager::safe_delete(mat);
+  Tucker::MemoryManager::safe_delete(trueSol);
+  Tucker::MemoryManager::safe_delete(mySol);
   if(!approxEqual)
     return false;
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix("input_files/4x3.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/4x3.txt");
 
   // Read the true solution
   dims[0] = 4; dims[1] = 5; dims[2] = 7; dims[3] = 11;
   trueDist = Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
-  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(trueDist);
-  TuckerMPI::importTensorBinary("input_files/4x3_mult.mpi",trueSol);
+  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(trueDist);
+  TuckerMPI::importTensorBinary(fn_43,trueSol);
 
   // Compute the TTM
   mySol = TuckerMPI::ttm(&tensor, 0, mat);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(mat);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(trueSol);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(mySol);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
+  Tucker::MemoryManager::safe_delete(mat);
+  Tucker::MemoryManager::safe_delete(trueSol);
+  Tucker::MemoryManager::safe_delete(mySol);
   if(!approxEqual)
     return false;
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix("input_files/5x8.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/5x8.txt");
 
   // Read the true solution
   dims[0] = 3; dims[1] = 8; dims[2] = 7; dims[3] = 11;
   trueDist = Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
-  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(trueDist);
-  TuckerMPI::importTensorBinary("input_files/5x8_mult_transp.mpi",trueSol);
+  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(trueDist);
+  TuckerMPI::importTensorBinary(fn_58t,trueSol);
 
   // Compute the TTM
   mySol = TuckerMPI::ttm(&tensor, 1, mat, true);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(mat);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(trueSol);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(mySol);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix<scalar_t>>(mat);
+  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor<scalar_t>>(trueSol);
+  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor<scalar_t>>(mySol);
   if(!approxEqual)
     return false;
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix("input_files/2x5.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/2x5.txt");
 
   // Read the true solution
   dims[0] = 3; dims[1] = 2; dims[2] = 7; dims[3] = 11;
   trueDist = Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
-  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(trueDist);
-  TuckerMPI::importTensorBinary("input_files/2x5_mult.mpi",trueSol);
+  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(trueDist);
+  TuckerMPI::importTensorBinary(fn_25,trueSol);
 
   // Compute the TTM
   mySol = TuckerMPI::ttm(&tensor, 1, mat);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(mat);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(trueSol);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(mySol);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
+  Tucker::MemoryManager::safe_delete(mat);
+  Tucker::MemoryManager::safe_delete(trueSol);
+  Tucker::MemoryManager::safe_delete(mySol);
   if(!approxEqual)
     return false;
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix("input_files/7x1.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/7x1.txt");
 
   // Read the true solution
   dims[0] = 3; dims[1] = 5; dims[2] = 1; dims[3] = 11;
   trueDist = Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
-  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(trueDist);
-  TuckerMPI::importTensorBinary("input_files/7x1_mult_transp.mpi",trueSol);
+  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(trueDist);
+  TuckerMPI::importTensorBinary(fn_71,trueSol);
 
   // Compute the TTM
   mySol = TuckerMPI::ttm(&tensor, 2, mat, true);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(mat);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(trueSol);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(mySol);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
+  Tucker::MemoryManager::safe_delete(mat);
+  Tucker::MemoryManager::safe_delete(trueSol);
+  Tucker::MemoryManager::safe_delete(mySol);
   if(!approxEqual)
     return false;
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix("input_files/1x7.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/1x7.txt");
 
   // Read the true solution
   dims[0] = 3; dims[1] = 5; dims[2] = 1; dims[3] = 11;
   trueDist = Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
-  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(trueDist);
-  TuckerMPI::importTensorBinary("input_files/1x7_mult.mpi",trueSol);
+  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(trueDist);
+  TuckerMPI::importTensorBinary(fn_17,trueSol);
 
   // Compute the TTM
   mySol = TuckerMPI::ttm(&tensor, 2, mat);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(mat);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(trueSol);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(mySol);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
+  Tucker::MemoryManager::safe_delete(mat);
+  Tucker::MemoryManager::safe_delete(trueSol);
+  Tucker::MemoryManager::safe_delete(mySol);
   if(!approxEqual)
     return false;
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix("input_files/11x25.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/11x25.txt");
 
   // Read the true solution
   dims[0] = 3; dims[1] = 5; dims[2] = 7; dims[3] = 25;
   trueDist = Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
-  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(trueDist);
-  TuckerMPI::importTensorBinary("input_files/11x25_mult_transp.mpi",trueSol);
+  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(trueDist);
+  TuckerMPI::importTensorBinary(fn_1125t,trueSol);
 
   // Compute the TTM
   mySol = TuckerMPI::ttm(&tensor, 3, mat, true);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(mat);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(trueSol);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(mySol);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
+  Tucker::MemoryManager::safe_delete(mat);
+  Tucker::MemoryManager::safe_delete(trueSol);
+  Tucker::MemoryManager::safe_delete(mySol);
   if(!approxEqual)
     return false;
 
   // Read a matrix to multiply
-  mat = Tucker::importMatrix("input_files/17x11.txt");
+  mat = Tucker::importMatrix<scalar_t>("input_files/17x11.txt");
 
   // Read the true solution
   dims[0] = 3; dims[1] = 5; dims[2] = 7; dims[3] = 17;
   trueDist = Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
-  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(trueDist);
-  TuckerMPI::importTensorBinary("input_files/17x11_mult.mpi",trueSol);
+  trueSol = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(trueDist);
+  TuckerMPI::importTensorBinary(fn_1711,trueSol);
 
   // Compute the TTM
   mySol = TuckerMPI::ttm(&tensor, 3, mat);
 
   // Compare the computed solution to the true solution
-  approxEqual = isApproxEqual(trueSol, mySol, 1e-10);
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(mat);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(trueSol);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(mySol);
+  approxEqual = isApproxEqual(trueSol, mySol, 100 * std::numeric_limits<scalar_t>::epsilon());
+  Tucker::MemoryManager::safe_delete(mat);
+  Tucker::MemoryManager::safe_delete(trueSol);
+  Tucker::MemoryManager::safe_delete(mySol);
   if(!approxEqual)
     return false;
 

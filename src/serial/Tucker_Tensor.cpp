@@ -43,11 +43,10 @@
 #include "Tucker_Tensor.hpp"
 #include <iomanip> 
 
-//#include <cblas.h>
-
 namespace Tucker {
 
-Tensor::Tensor(const SizeArray& I) :
+template<class scalar_t>
+Tensor<scalar_t>::Tensor(const SizeArray& I) :
     I_(I.size())
 {
   // Copy the SizeArray
@@ -64,12 +63,13 @@ Tensor::Tensor(const SizeArray& I) :
   // Compute the total number of entries in this tensor
   size_t numEntries = getNumElements();
   if(numEntries > 0)
-    data_ = MemoryManager::safe_new_array<double>(numEntries);
+    data_ = MemoryManager::safe_new_array<scalar_t>(numEntries);
   else
     data_ = 0;
 }
 
-Tensor::Tensor(int nrows, int ncols) :
+template<class scalar_t>
+Tensor<scalar_t>::Tensor(int nrows, int ncols) :
     I_(2)
 {
   I_[0] = nrows;
@@ -77,58 +77,63 @@ Tensor::Tensor(int nrows, int ncols) :
 
   if(nrows < 0) {
     std::ostringstream oss;
-    oss << "Tucker::Tensor::Tensor(int nrows, int ncols): nrows = "
+    oss << "Tucker::Tensor<scalar_t>::Tensor(int nrows, int ncols): nrows = "
         << nrows << " < 0";
     throw std::length_error(oss.str());
   }
   if(ncols < 0) {
     std::ostringstream oss;
-    oss << "Tucker::Tensor::Tensor(int nrows, int ncols): ncols = "
+    oss << "Tucker::Tensor<scalar_t>::Tensor(int nrows, int ncols): ncols = "
         << ncols << " < 0";
     throw std::length_error(oss.str());
   }
 
   size_t numEntries = nrows*ncols;
   if(numEntries > 0)
-    data_ = MemoryManager::safe_new_array<double>(numEntries);
+    data_ = MemoryManager::safe_new_array<scalar_t>(numEntries);
   else
     data_ = 0;
 }
 
-Tensor::Tensor(int nrows) :
+template<class scalar_t>
+Tensor<scalar_t>::Tensor(int nrows) :
     I_(1)
 {
   I_[0] = nrows;
 
   if(nrows < 0) {
     std::ostringstream oss;
-    oss << "Tucker::Tensor::Tensor(int nrows): nrows = "
+    oss << "Tucker::Tensor<scalar_t>::Tensor(int nrows): nrows = "
         << nrows << " < 0";
     throw std::length_error(oss.str());
   }
 
   size_t numEntries = nrows;
   if(numEntries > 0)
-    data_ = MemoryManager::safe_new_array<double>(numEntries);
+    data_ = MemoryManager::safe_new_array<scalar_t>(numEntries);
   else
     data_ = 0;
 }
 
-Tensor::~Tensor()
+template<class scalar_t>
+Tensor<scalar_t>::~Tensor()
 {
   if(data_)
-    MemoryManager::safe_delete_array<double>(data_,getNumElements());
+    MemoryManager::safe_delete_array<scalar_t>(data_,getNumElements());
 }
 
-int Tensor::N() const {
+template<class scalar_t>
+int Tensor<scalar_t>::N() const {
   return I_.size();
 }
 
-const SizeArray& Tensor::size() const {
+template<class scalar_t>
+const SizeArray& Tensor<scalar_t>::size() const {
   return I_;
 }
 
-int Tensor::size(const int n) const {
+template<class scalar_t>
+int Tensor<scalar_t>::size(const int n) const {
   if(n < 0 || n >= N()) {
     std::ostringstream oss;
     oss << "Tucker::Tensor::size(const int n): n = "
@@ -139,16 +144,17 @@ int Tensor::size(const int n) const {
 }
 
 /// \example Tucker_norm_test.cpp
-double Tensor::norm2() const
+template<class scalar_t>
+scalar_t Tensor<scalar_t>::norm2() const
 {
   // If this tensor has no entries, the norm is 0
   size_t numElements = getNumElements();
   if(numElements == 0)
     return 0;
 
-  double norm=0;
+  scalar_t norm=0;
   size_t i;
-  const double* dataPtr = data();
+  const scalar_t* dataPtr = data();
 //#pragma omp parallel for reduction ( + : norm ) \
 //  shared( numElements, dataPtr ) private(i)
   for(i=0; i<numElements; i++) {
@@ -157,7 +163,8 @@ double Tensor::norm2() const
   return norm;
 }
 
-double* Tensor::data()
+template<class scalar_t>
+scalar_t* Tensor<scalar_t>::data()
 {
   if(data_)
     return data_;
@@ -165,7 +172,8 @@ double* Tensor::data()
     throw std::runtime_error("Tucker::Tensor::data(): data was never allocated");
 }
 
-const double* Tensor::data() const
+template<class scalar_t>
+const scalar_t* Tensor<scalar_t>::data() const
 {
   if(data_)
     return data_;
@@ -173,8 +181,9 @@ const double* Tensor::data() const
     throw std::runtime_error("Tucker::Tensor::data(): data was never allocated");
 }
 
-bool isApproxEqual(const Tensor* t1, const Tensor* t2,
-    double tol, bool verbose, bool ignoreSign)
+template <class scalar_t>
+bool isApproxEqual(const Tensor<scalar_t>* t1, const Tensor<scalar_t>* t2,
+    scalar_t tol, bool verbose, bool ignoreSign)
 {
   // If neither owns any data, they're not NOT equal...
   if(t1->getNumElements() == 0 && t2->getNumElements() == 0) {
@@ -186,14 +195,14 @@ bool isApproxEqual(const Tensor* t1, const Tensor* t2,
     return false;
   }
 
-  double origNorm2 = t1->norm2();
+  scalar_t origNorm2 = t1->norm2();
 
   size_t numElements = t1->getNumElements();
-  const double* t1Data = t1->data();
-  const double* t2Data = t2->data();
-  double errNorm2 = 0;
+  const scalar_t* t1Data = t1->data();
+  const scalar_t* t2Data = t2->data();
+  scalar_t errNorm2 = 0;
   for(size_t i=0; i<numElements; i++) {
-    double err;
+    scalar_t err;
     if(ignoreSign) err = std::abs(t1Data[i]) - std::abs(t2Data[i]);
     else err = std::abs(t1Data[i] - t2Data[i]);
     if(std::isnan(err)) {
@@ -208,7 +217,7 @@ bool isApproxEqual(const Tensor* t1, const Tensor* t2,
   std::cout << std::endl;
 
   std::cout<< "errNorm2:" << std::sqrt(errNorm2) << "  origNorm2: " << std::sqrt(origNorm2) << std::endl;
-  double relErr = std::sqrt(errNorm2/origNorm2);
+  scalar_t relErr = std::sqrt(errNorm2/origNorm2);
   if(verbose) {
     std::cout << "Relative error: " << relErr << std::endl;
   }
@@ -218,47 +227,58 @@ bool isApproxEqual(const Tensor* t1, const Tensor* t2,
   return true;
 }
 
-void Tensor::print(int precision) const
+template <class scalar_t>
+void Tensor<scalar_t>::print(int precision) const
 {
   // If this tensor doesn't have any entries, there's nothing to print
   size_t numElements = getNumElements();
   if(numElements == 0)
     return;
 
-  const double* dataPtr = data();
+  const scalar_t* dataPtr = data();
   for(size_t i=0; i<numElements; i++) {
     std::cout << "data[" << i << "] = " << std::setprecision(precision) << dataPtr[i] << std::endl;
   }
 }
 
-size_t Tensor::getNumElements() const
+template<class scalar_t>
+size_t Tensor<scalar_t>::getNumElements() const
 {
   return I_.prod();
 }
 
-void Tensor::initialize()
+template<class scalar_t>
+void Tensor<scalar_t>::initialize()
 {
   // If this tensor has no entries, it's already been initialized
   size_t numElements = getNumElements();
   if(numElements == 0)
     return;
 
-  double* dataPtr = data();
+  scalar_t* dataPtr = data();
   for(size_t i=0; i<numElements; i++) {
     dataPtr[i] = 0;
   }
 }
 
-void Tensor::rand()
+template<class scalar_t>
+void Tensor<scalar_t>::rand()
 {
   size_t numElements = getNumElements();
   if(numElements == 0)
     return;
 
-  double* dataPtr = data();
+  scalar_t* dataPtr = data();
   for(size_t i=0; i<numElements; i++) {
     dataPtr[i] = std::rand();
   }
 }
+
+// Explicit instantiations to build static library for both single and double precision
+template class Tensor<float>;
+template bool isApproxEqual(const Tensor<float>*, const Tensor<float>*, float, bool);
+
+template class Tensor<double>;
+template bool isApproxEqual(const Tensor<double>*, const Tensor<double>*, double, bool);
 
 } // end of namespace Tucker

@@ -41,57 +41,58 @@
 
 namespace TuckerMPI {
 
-Tensor::Tensor(const Distribution* dist) :
+template <class scalar_t>
+Tensor<scalar_t>::Tensor(const Distribution* dist) :
     dist_(dist)
 {
-  localTensor_ = Tucker::MemoryManager::safe_new<Tucker::Tensor>(dist->getLocalDims());
+  localTensor_ = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(dist->getLocalDims());
 }
 
-
-Tensor::~Tensor()
+template <class scalar_t>
+Tensor<scalar_t>::~Tensor()
 {
-  Tucker::MemoryManager::safe_delete<const Distribution>(dist_);
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(localTensor_);
+  Tucker::MemoryManager::safe_delete(dist_);
+  Tucker::MemoryManager::safe_delete(localTensor_);
 }
 
-
-Tucker::Tensor* Tensor::getLocalTensor()
-{
-  return localTensor_;
-}
-
-
-const Tucker::Tensor* Tensor::getLocalTensor() const
+template <class scalar_t>
+Tucker::Tensor<scalar_t>* Tensor<scalar_t>::getLocalTensor()
 {
   return localTensor_;
 }
 
+template <class scalar_t>
+const Tucker::Tensor<scalar_t>* Tensor<scalar_t>::getLocalTensor() const
+{
+  return localTensor_;
+}
 
-const Tucker::SizeArray& Tensor::getGlobalSize() const
+template <class scalar_t>
+const Tucker::SizeArray& Tensor<scalar_t>::getGlobalSize() const
 {
   return dist_->getGlobalDims();
 }
 
-
-const Tucker::SizeArray& Tensor::getLocalSize() const
+template <class scalar_t>
+const Tucker::SizeArray& Tensor<scalar_t>::getLocalSize() const
 {
   return dist_->getLocalDims();
 }
 
-
-int Tensor::getGlobalSize(int n) const
+template <class scalar_t>
+int Tensor<scalar_t>::getGlobalSize(int n) const
 {
   return dist_->getGlobalDims()[n];
 }
 
-
-int Tensor::getLocalSize(int n) const
+template <class scalar_t>
+int Tensor<scalar_t>::getLocalSize(int n) const
 {
   return dist_->getLocalDims()[n];
 }
 
-
-int Tensor::getNumDimensions() const
+template <class scalar_t>
+int Tensor<scalar_t>::getNumDimensions() const
 {
   return dist_->getGlobalDims().size();
 }
@@ -102,53 +103,57 @@ int Tensor::getNumDimensions() const
 // not just THIS processor.
 // We don't technically need to return the entire distribution;
 // that part is flexible.
-const Distribution* Tensor::getDistribution() const
+template <class scalar_t>
+const Distribution* Tensor<scalar_t>::getDistribution() const
 {
   return dist_;
 }
 
-
-size_t Tensor::getLocalNumEntries() const
+template <class scalar_t>
+size_t Tensor<scalar_t>::getLocalNumEntries() const
 {
   return localTensor_->getNumElements();
 }
 
-
-size_t Tensor::getGlobalNumEntries() const
+template <class scalar_t>
+size_t Tensor<scalar_t>::getGlobalNumEntries() const
 {
   return dist_->getGlobalDims().prod();
 }
 
 
 // Compute the norm squared
-double Tensor::norm2() const
+template <class scalar_t>
+scalar_t Tensor<scalar_t>::norm2() const
 {
   int rank, nprocs;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
   MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
   // Compute the local portion
-  double localNorm2 = localTensor_->norm2();
+  scalar_t localNorm2 = localTensor_->norm2();
 
   // Perform a reduction
-  double globalNorm2;
-  MPI_Allreduce(&localNorm2, &globalNorm2, 1,
-      MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  scalar_t globalNorm2;
+  MPI_Allreduce_(&localNorm2, &globalNorm2, 1,
+      MPI_SUM, MPI_COMM_WORLD);
   return globalNorm2;
 }
 
-
-void Tensor::print() const
+template <class scalar_t>
+void Tensor<scalar_t>::print() const
 {
   localTensor_->print();
 }
 
-void Tensor::rand()
+template <class scalar_t>
+void Tensor<scalar_t>::rand()
 {
   localTensor_->rand();
 }
 
 // \todo This function is never tested
-Tensor* Tensor::subtract(const Tensor* t) const
+template <class scalar_t>
+Tensor<scalar_t>* Tensor<scalar_t>::subtract(const Tensor<scalar_t>* t) const
 {
   TuckerMPI::Distribution* dist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dist_->getGlobalDims(), dist_->getProcessorGrid()->size());
@@ -156,9 +161,9 @@ Tensor* Tensor::subtract(const Tensor* t) const
 
   size_t nnz = getLocalNumEntries();
   if(nnz > 0) {
-    double* subdata = sub->localTensor_->data();
-    double* thisdata = localTensor_->data();
-    double* tdata = t->localTensor_->data();
+    scalar_t* subdata = sub->localTensor_->data();
+    scalar_t* thisdata = localTensor_->data();
+    scalar_t* tdata = t->localTensor_->data();
 
     for(size_t i=0; i<nnz; i++) {
       subdata[i] = thisdata[i] - tdata[i];
@@ -168,43 +173,46 @@ Tensor* Tensor::subtract(const Tensor* t) const
 }
 
 // \todo This function is never tested
-double Tensor::maxEntry() const
+template <class scalar_t>
+scalar_t Tensor<scalar_t>::maxEntry() const
 {
-  double localMax = std::numeric_limits<double>::lowest();
+  scalar_t localMax = std::numeric_limits<scalar_t>::lowest();
   size_t nnz = getLocalNumEntries();
   if(nnz > 0) {
-    double* data = localTensor_->data();
+    scalar_t* data = localTensor_->data();
     for(size_t i=0; i<nnz; i++) {
       localMax = std::max(localMax,data[i]);
     }
   }
 
-  double globalMax;
+  scalar_t globalMax;
   MPI_Allreduce(&localMax, &globalMax, 1, MPI_DOUBLE,
             MPI_MAX, MPI_COMM_WORLD);
   return globalMax;
 }
 
 // \todo This function is never tested
-double Tensor::minEntry() const
+template <class scalar_t>
+scalar_t Tensor<scalar_t>::minEntry() const
 {
-  double localMin = std::numeric_limits<double>::max();
+  scalar_t localMin = std::numeric_limits<scalar_t>::max();
   size_t nnz = getLocalNumEntries();
   if(nnz > 0) {
-    double* data = localTensor_->data();
+    scalar_t* data = localTensor_->data();
     for(size_t i=0; i<nnz; i++) {
       localMin = std::min(localMin,data[i]);
     }
   }
 
-  double globalMin;
+  scalar_t globalMin;
   MPI_Allreduce(&localMin, &globalMin, 1, MPI_DOUBLE,
             MPI_MIN, MPI_COMM_WORLD);
   return globalMin;
 }
 
-bool isApproxEqual(const Tensor* t1, const Tensor* t2,
-    double tol)
+template <class scalar_t>
+bool isApproxEqual(const Tensor<scalar_t>* t1, const Tensor<scalar_t>* t2,
+    scalar_t tol)
 {
   if(t1->getGlobalSize() != t2->getGlobalSize()) {
     std::cerr << "t1 and t2 have different global sizes\n";
@@ -215,5 +223,12 @@ bool isApproxEqual(const Tensor* t1, const Tensor* t2,
   return (isApproxEqual(t1->getLocalTensor(),
       t2->getLocalTensor(), tol));
 }
+
+// Explicit instantiations to build static library for both single and double precision
+template class Tensor<float>;
+template class Tensor<double>;
+
+template bool isApproxEqual(const Tensor<float>*, const Tensor<float>*, float);
+template bool isApproxEqual(const Tensor<double>*, const Tensor<double>*, double);
 
 } /* namespace TuckerMPI */
