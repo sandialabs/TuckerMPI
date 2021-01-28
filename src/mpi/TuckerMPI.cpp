@@ -90,7 +90,7 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
     R = localQR(redistYn, isLastMode, localqr_dcopy_timer, localqr_decompose_timer, localqr_transpose_timer);
     Rnrows = R->nrows();
     Rncols = R->ncols();
-    Tucker::MemoryManager::safe_delete<const Matrix>(redistYn);  
+    Tucker::MemoryManager::safe_delete(redistYn);  
   }
   if(local_qr_timer) local_qr_timer->stop();
 
@@ -103,20 +103,10 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
   for(int i=0; i < treeDepth; i++){
     if(globalRank % (int)pow(2, i+1) == 0){
       if(globalRank+ pow(2, i) < globalnp){
-        tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rncols, Rncols);
+        int tempBNrows;
+        MPI_Recv(&tempBNrows, 1, MPI_INT, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
+        tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix>(tempBNrows, Rncols);
         MPI_Recv(tempB->data(), Rncols*Rncols, MPI_DOUBLE, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
-        int count;
-        MPI_Get_count(&status, MPI_DOUBLE, &count);
-        //If not in the edge case where R is upper trapezoidal, tempBEffectiveNrows should equal Rncols.
-        int tempBEffectiveNrows = count/Rncols;
-        Tucker::Matrix* effectiveTempB = Tucker::MemoryManager::safe_new<Tucker::Matrix>(tempBEffectiveNrows, Rncols);
-        for(int i=0; i<count; i++){
-          dcopy_(&count, tempB->data(), &one, effectiveTempB->data(), &one);
-        }
-        Tucker::MemoryManager::safe_delete(tempB);
-        if(count % Rncols !=0){
-          std::cerr << "processor " << globalRank << "received count is not divisible by Rncols" << std::endl;
-        }
         int nb = (Rncols > 32)? 32 : Rncols;
         double* T = Tucker::MemoryManager::safe_new_array<double>(nb*Rncols);
         double* work = Tucker::MemoryManager::safe_new_array<double>(nb*Rncols);
@@ -134,18 +124,19 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
           }
           Tucker::MemoryManager::safe_delete(R);
           R = squareR;
-          Rnrows = R->nrows();
-          Rncols = R->ncols();
+          Rnrows = R->nrows();//Rnrows might change here
         }
-        Tucker::dtpqrt_(&tempBEffectiveNrows, &Rncols, &tempBEffectiveNrows, &nb, R->data(), &Rncols, effectiveTempB->data(),
-        &tempBEffectiveNrows, T, &nb, work, &info);
-        Tucker::MemoryManager::safe_delete<Tucker::Matrix>(effectiveTempB);
+        Tucker::dtpqrt_(&tempBNrows, &Rncols, &tempBNrows, &nb, R->data(), &Rncols, tempB->data(),
+        &tempBNrows, T, &nb, work, &info);
+        Tucker::MemoryManager::safe_delete(tempB);
         Tucker::MemoryManager::safe_delete_array<double>(work, nb*Rncols);
         Tucker::MemoryManager::safe_delete_array<double>(T, nb*Rncols);
       }
     }
     else if(globalRank % (int)pow(2, i) == 0){
       sizeOfR = R->nrows()* R->ncols();
+      Rnrows = R->nrows();
+      MPI_Send(&Rnrows, 1, MPI_INT, globalRank-pow(2, i), globalRank, MPI_COMM_WORLD);
       MPI_Send(R->data(), sizeOfR, MPI_DOUBLE, globalRank-pow(2, i), globalRank, MPI_COMM_WORLD);
     }
   }
@@ -162,7 +153,7 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
     for(int i=0; i<Rncols; i++){
       dcopy_(&Rncols, R->data()+i*Rncols, &one, L->data()+i, &Rncols); 
     }
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(R);
+    Tucker::MemoryManager::safe_delete(R);
   }
   return L;
 }
