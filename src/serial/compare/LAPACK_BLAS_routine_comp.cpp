@@ -25,9 +25,6 @@ int main(int argc, char* argv[])
   Tucker::Timer qrTimer;
   Tucker::Timer ATATimer;
   Tucker::Timer AATTimer;
-  // Tucker::Timer eigenDecompTimer;
-  // Tucker::Timer svdTimer;
-
 
   int info;
   //dgeqr
@@ -61,38 +58,7 @@ int main(int argc, char* argv[])
   Tucker::MemoryManager::safe_delete<Tucker::Matrix>(YCopy);
   Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
   Tucker::MemoryManager::safe_delete_array<double>(T, TSize);
-  
-  // //dgesvd
-  // Y = Tucker::MemoryManager::safe_new<Tucker::Matrix>(YNcols, YNcols);
-  // Y->rand();
-  // char JOBU = 'A';
-  // char JOBVT = 'N';
-  // double* VT = 0;
-  // double* singularValues = Tucker::MemoryManager::safe_new_array<double>(std::min(YNcols, YNcols));
-  // Tucker::Matrix* leftSingularVectors = Tucker::MemoryManager::safe_new<Tucker::Matrix>(YNcols, YNcols);
-  // work = Tucker::MemoryManager::safe_new_array<double>(1);
-  // Tucker::dgesvd_(&JOBU, &JOBVT, &YNcols, &YNcols, YCopy->data(), &YNcols, singularValues, 
-  //   leftSingularVectors->data(), &YNcols, VT, &one, work, &negOne, &info);
-  // if(info != 0){
-  //   std::cout << "error in dgesvd_ in computeSVD()" << std::endl;
-  // }
-  // lwork = work[0];
-  // Tucker::MemoryManager::safe_delete_array<double>(work, 1);
-  // work = Tucker::MemoryManager::safe_new_array<double>(lwork);
-  // for(int i=0; i<avgIteration; i++){
-  //   svdTimer.start();
-  //   Tucker::dgesvd_(&JOBU, &JOBVT, &YNcols, &YNcols, Y->data(), &YNcols, singularValues, 
-  //   leftSingularVectors->data(), &YNcols, VT, &one, work, &lwork, &info);
-  // }
-  // Tucker::MemoryManager::safe_delete<Tucker::Matrix>(YCopy);
-  // Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
-  // Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Y);
 
-
-  //dsyrk(BLAS)
-  // this is so that gram and qr do around the same number of flops.
-  //int ANrows = YNcols;
-  //int ANcols = ceil(2*YNrows - (2/3)*YNcols);
   int ANrows = YNrows;
   int ANcols = YNcols;
   Tucker::Matrix* A = Tucker::MemoryManager::safe_new<Tucker::Matrix>(ANrows, ANcols);
@@ -110,41 +76,20 @@ int main(int argc, char* argv[])
     ATATimer.stop();
   }
   double avgATATime = ATATimer.duration() / avgIteration;
-  std::cout << "dsyrk ATA takes: " << avgATATime << " seconds. \n";
   Tucker::MemoryManager::safe_delete<Tucker::Matrix>(S);
   //comput A*A'
   Tucker::Matrix* S1 = Tucker::MemoryManager::safe_new<Tucker::Matrix>(ANrows, ANrows);
-  //S1->rand();
-  std::cout << "S created for AAT, size: " << ANrows << std::endl;
+  S1->rand();
   trans = 'N';
   for(int i=0; i<avgIteration; i++){
     AATTimer.start();
     Tucker::dsyrk_(&uplo, &trans, &ANrows, &ANcols, &alpha,
         A->data(), &ANrows, &beta, S1->data(), &ANrows);
     AATTimer.stop();
-    std::cout << "dsyrk AAT takes: " << AATTimer.duration() << " seconds. \n";
   }
   double avgAATTime = AATTimer.duration() / avgIteration;
   Tucker::MemoryManager::safe_delete<Tucker::Matrix>(A);
   Tucker::MemoryManager::safe_delete<Tucker::Matrix>(S1);
-
-
-  // //dsyev(ESSL)
-  // char jobz = 'V';
-  // int lwork = 8*YNrows;
-  // double* work = Tucker::MemoryManager::safe_new_array<double>(lwork);
-  // double* eigenvalues = Tucker::MemoryManager::safe_new_array<double>(YNrows);
-  // for(int i=0; i<avgIteration; i++){
-  //   eigenDecompTimer.start();
-  //   Tucker::dsyev_(&jobz, &uplo, &YNrows, S->data(), &YNrows,
-  //       eigenvalues, work, &lwork, &info);
-  //   eigenDecompTimer.stop();
-  // }
-  // double avgEigenDecompTime = eigenDecompTimer.duration() / avgIteration;
-  // Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
-  // Tucker::MemoryManager::safe_delete_array<double>(T, TSize);
-  // Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Y);
-
 
   std::cout << "work space query takes: " << qrWorkSpaceQueryTimer.duration() << " seconds. \n";
   std::cout << "dgeqr takes: " << avgQrTime << " seconds. \n";
