@@ -84,4 +84,56 @@ void gemm(const char* transa, const char* transb, const int* m,
   sgemm_(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
 }
 
+void gelq(const int* m, const int* n, const double* a, const int* lda,
+    const double* t, const int* tsize, const double* work, const int* lwork, const int* info)
+{
+  dgelq_(m, n, a, lda, t, tsize, work, lwork, info);
+}
+
+void gelq(const int* m, const int* n, const float* a, const int* lda,
+    const float* t, const int* tsize, const float* work, const int* lwork, const int* info)
+{
+  sgelq_(m, n, a, lda, t, tsize, work, lwork, info);
+}
+
+void geqr(const int* m, const int* n, const double* a, const int* lda,
+    const double* t, const int* tsize, const double* work, const int* lwork, const int* info)
+{
+  dgeqr_(m, n, a, lda, t, tsize, work, lwork, info);
+}
+
+void geqr(const int* m, const int* n, const float* a, const int* lda,
+    const float* t, const int* tsize, const float* work, const int* lwork, const int* info)
+{
+  sgeqr_(m, n, a, lda, t, tsize, work, lwork, info);
+}
+
+void tpqrt(const int* m, const int* n, const int* l, const int* nb,
+    const double* a, const int* lda, const double* b, const int* ldb, 
+    const double* t, const int* ldt, const double* work, const int* info)
+{
+  dtpqrt_(m, n, l, nb, a, lda, b, ldb, t, ldt, work, info);
+}
+
+void tpqrt(const int* m, const int* n, const int* l, const int* nb,
+    const float* a, const int* lda, const float* b, const int* ldb, 
+    const float* t, const int* ldt, const float* work, const int* info)
+{
+  stpqrt_(m, n, l, nb, a, lda, b, ldb, t, ldt, work, info);
+}
+
+void gesvd(const char* jobu, const char* jobvt, const int* m, const int* n,
+    const double* a, const int* lda, const double* s, const double* u, const int* ldu, 
+    const double* vt, const int* ldvt, const double* work, const int* lwork, const int* info)
+{
+  dgesvd_(jobu, jobvt, m, n, a, lda, s, u, ldu, vt, ldvt, work, lwork, info);
+}
+
+void gesvd(const char* jobu, const char* jobvt, const int* m, const int* n,
+    const float* a, const int* lda, const float* s, const float* u, const int* ldu, 
+    const float* vt, const int* ldvt, const float* work, const int* lwork, const int* info)
+{
+  sgesvd_(jobu, jobvt, m, n, a, lda, s, u, ldu, vt, ldvt, work, lwork, info);
+}
+
 } // end namespace Tucker

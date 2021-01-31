@@ -48,78 +48,29 @@
 #include "Tucker_Vector.hpp"
 
 namespace Tucker {
-/// @cond EXCLUDE
-extern "C" void dgesvd_(const char*, const char*, const int*, 
-    const int*, double*, const int*, double*, double*, const int*,
-    double*, const int*, double*, const int*, const int*);
-
-extern "C" void dgelq_(const int*, const int*, double*, const int*,
-    double*, const int*, double*, const int*, const int*);
-
-extern "C" void dgelqt_(const int*, const int*, const int*, double*,
-    const int*, double*, const int*, double*, const int*);
-
-extern "C" void dgeqr_(const int*, const int*, double*, const int*, 
-    double*, const int*, double*, const int*, const int*);
-
-extern "C" void dlatsqr_(const int*, const int*, const int*, 
-    const int*, double*, const int*, double*, const int*, double*, 
-    const int*, const int*);
-
-extern "C" void dgeqrt_(const int*, const int*, const int*, 
-    double*, const int*, double*, const int*, double*, const int*);
-
-extern "C" void dtpqrt_(const int*, const int*, const int*, 
-    const int*, double*, const int*, double*, const int*, double*,
-    const int*, double*, int*);
-
-extern "C" void dgeqrf_(const int*, const int*, double*, 
-    const int*, double*, double*, const int*, int*);
-    
-//general LQ factorization
-extern "C" void dgelqf_(const int*, const int*, double*, 
-    const int*, double*, double*, const int*, int*);
-
-// Symmetric rank-k update
-extern "C" void dsyrk_(const char*, const char*, const int*,
-    const int*, const double*, const double*, const int*,
-    const double*, double*, const int*);
-
-// Symmetric eigenvalue solver
-extern "C" void dsyev_(const char*, const char*, const int*,
-    double *, const int*, double*, double*, int*, int*);
-
-// Swap two arrays
-extern "C" void dswap_(const int*, double*, const int*,
-    double*, const int*);
-
-// Copy from one array to another
-extern "C" void dcopy_(const int*, const double*, const int*,
-    double*, const int*);
-
-// Scale an array
-extern "C" void dscal_(const int*, const double*, double*, const int*);
-/// @endcond
 
 /** \brief Yn'(l by m)(The transpose of mode n unfolding of Y) consists of several column major submatrices stacked
  * vertically. R(h by m) should have the same number of columns as Yn'. R can be think of as a window that select 
  * elements from Yn'. This function then copies the elements of Yn' selected by the top window and reoders those 
  * elements in column major order 
  */
-void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n, const int startingSubmatrix, const int numSubmatrices, const int variant);
+template <class scalar_t>
+void combineColumnMajorBlocks(const Tensor<scalar_t>* Y, Matrix<scalar_t>* R, const int n, const int startingSubmatrix, const int numSubmatrices, const int variant);
 
 /** \brief wrapper of computeLQ(const Tensor* Y, const int n, Matrix* L) which get the LQ of the mode n unfolding
  * of Y. If Yn is short and fat or square, the column major square matrix containing the lower triangle of Yn is returned.
  * We allow Yn to be tall and skinny, in which case the returned matrix is not square but a tall and skinny matrix containing
  * the lower trapezoid of Yn.
  */
-Matrix* computeLQ(const Tensor* Y, const int n);
+template <class scalar_t>
+Matrix<scalar_t>* computeLQ(const Tensor<scalar_t>* Y, const int n);
 
 /** \brief Get the LQ of the mode n unfolding of Y. The result lower triangluar matrix is stored in L in column 
  * major. The upper triangle is filled with 0. Note if n=0, a call to dgelq is made. Otherwise the sequential
  * tsqr and transpose is used to get the L.
  */
-void computeLQ(const Tensor* Y, const int n, Matrix* L);
+template <class scalar_t>
+void computeLQ(const Tensor<scalar_t>* Y, const int n, Matrix<scalar_t>* L);
 
 /** \brief Compute the Gram matrix \f$Y_n Y_n^T\f$
  *
@@ -290,19 +241,22 @@ void computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues,
 
 /**This function does not return right singular vectors.
  */ 
-void computeSVD(Matrix* L, double* singularValues, 
-  Matrix* leftSingularVectors);
+template <class scalar_t>
+void computeSVD(Matrix<scalar_t>* L, scalar_t* singularValues, 
+  Matrix<scalar_t>* leftSingularVectors);
 
 /**This function does not return right singular vectors.
  */ 
-void computeSVD(Matrix* L, double*& singularValues, 
-  Matrix*& leadingLeftSingularVectors, const double thresh);
+template <class scalar_t>
+void computeSVD(Matrix<scalar_t>* L, scalar_t*& singularValues, 
+  Matrix<scalar_t>*& leadingLeftSingularVectors, const scalar_t thresh);
 
 /**This function does not return right singular vectors.
  * numSingularVector specifies how many left singular vectors to keep.
  */ 
-void computeSVD(Matrix* L, double*& singularValues, 
-  Matrix*& leadingLeftSingularVectors, const int numSingularVector);  
+template <class scalar_t>
+void computeSVD(Matrix<scalar_t>* L, scalar_t*& singularValues, 
+  Matrix<scalar_t>*& leadingLeftSingularVectors, const int numSingularVector);  
 /** \brief Compute the Tucker decomposition of a tensor X
  *
  * This is an implementation of the sequentially truncated
@@ -536,8 +490,9 @@ void premultByDiag(const Vector<scalar_t>* diag, Matrix<scalar_t>* mat);
  * \param[in] dimensions of the core tensor
  * \param[in] noise to be added. 
  */
-Tensor* generateTensor(int seed, TuckerTensor* fact, SizeArray* tensor_dims,
- SizeArray* core_dims, double noise);
+template <class scalar_t>
+Tensor<scalar_t>* generateTensor(int seed, TuckerTensor<scalar_t>* fact, SizeArray* tensor_dims,
+ SizeArray* core_dims, scalar_t noise);
 } // end of namespace Tucker
 
 #endif /* TUCKER_HPP_ */
