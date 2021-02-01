@@ -276,9 +276,9 @@ void Tensor<scalar_t>::rand()
 
 // Explicit instantiations to build static library for both single and double precision
 template class Tensor<float>;
-template bool isApproxEqual(const Tensor<float>*, const Tensor<float>*, float, bool);
+template bool isApproxEqual(const Tensor<float>*, const Tensor<float>*, float, bool, bool);
 
 template class Tensor<double>;
-template bool isApproxEqual(const Tensor<double>*, const Tensor<double>*, double, bool);
+template bool isApproxEqual(const Tensor<double>*, const Tensor<double>*, double, bool, bool);
 
 } // end of namespace Tucker

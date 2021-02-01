@@ -85,6 +85,30 @@ extern "C" void sgesvd_(const char*, const char*, const int*, const int*,
     const float*, const int*, const float*, const float*, const int*, 
     const float*, const int*, const float*, const int*, const int*);
 
+extern "C" void dgeqrf_(const int*, const int*, const double*, const int*, 
+    const double*, const double*, const int*, const int*);
+
+extern "C" void sgeqrf_(const int*, const int*, const float*, const int*, 
+    const float*, const float*, const int*, const int*);
+
+extern "C" void dgeqrt_(const int*, const int*, const int*, const double*, 
+    const int*, const double*, const int*, const double*, const int*);
+
+extern "C" void sgeqrt_(const int*, const int*, const int* nb, const float*, 
+    const int*, const float*, const int*, const float*, const int*);
+
+extern "C" void dgelqf_(const int*, const int*, const double*, const int*, 
+    const double*, const double*, const int*, const int*);
+
+extern "C" void sgelqf_(const int*, const int*, const float*, const int*, 
+    const float*, const float*, const int*, const int*);
+
+extern "C" void dgelqt_(const int*, const int*, const int*, const double*, const int*,
+    const double*, const int*, const double*, const int*);
+
+extern "C" void sgelqt_(const int*, const int*, const int*, const float*, const int*,
+    const float*, const int*, const float*, const int*);
+
 /// @endcond
 
 // Overloaded wrappers
@@ -153,6 +177,30 @@ void gesvd(const char* jobu, const char* jobvt, const int* m, const int* n,
 void gesvd(const char* jobu, const char* jobvt, const int* m, const int* n,
     const float* a, const int* lda, const float* s, const float* u, const int* ldu, 
     const float* vt, const int* ldvt, const float* work, const int* lwork, const int* info);
+
+void geqrf(const int* m, const int* n, const double* a, const int* lda, 
+    const double* tau, const double* work, const int* lwork, const int* info);
+
+void geqrf(const int* m, const int* n, const float* a, const int* lda, 
+    const float* tau, const float* work, const int* lwork, const int* info);
+
+void geqrt(const int* m, const int* n, const int* nb, const double* a, 
+    const int* lda, const double* t, const int* ldt, const double* work, const int* info);
+
+void geqrt(const int* m, const int* n, const int* nb, const float* a, 
+    const int* lda, const float* t, const int* ldt, const float* work, const int* info);
+
+void gelqf(const int* m, const int* n, const double* a, const int* lda, 
+    const double* tau, const double* work, const int* lwork, const int* info);
+
+void gelqf(const int* m, const int* n, const float* a, const int* lda, 
+    const float* tau, const float* work, const int* lwork, const int* info);    
+
+void gelqt(const int* m, const int* n, const int* mb, const double* a, const int* lda,
+    const double* t, const int* ldt, const double* work, const int* info);
+
+void gelqt(const int* m, const int* n, const int* mb, const float* a, const int* lda,
+    const float* t, const int* ldt, const float* work, const int* info);
 
 } // end namespace Tucker
 

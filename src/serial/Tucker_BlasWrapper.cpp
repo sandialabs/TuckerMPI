@@ -136,4 +136,52 @@ void gesvd(const char* jobu, const char* jobvt, const int* m, const int* n,
   sgesvd_(jobu, jobvt, m, n, a, lda, s, u, ldu, vt, ldvt, work, lwork, info);
 }
 
+void geqrf(const int* m, const int* n, const double* a, const int* lda, 
+    const double* tau, const double* work, const int* lwork, const int* info)
+{
+  dgeqrf_(m, n, a, lda, tau, work, lwork, info);
+}
+
+void geqrf(const int* m, const int* n, const float* a, const int* lda, 
+    const float* tau, const float* work, const int* lwork, const int* info)
+{
+  sgeqrf_(m, n, a, lda, tau, work, lwork, info);
+}
+
+void geqrt(const int* m, const int* n, const int* nb, const double* a, 
+    const int* lda, const double* t, const int* ldt, const double* work, const int* info)
+{
+  dgeqrt_(m, n, nb, a, lda, t, ldt, work, info);
+}
+
+void geqrt(const int* m, const int* n, const int* nb, const float* a, 
+    const int* lda, const float* t, const int* ldt, const float* work, const int* info)
+{
+  sgeqrt_(m, n, nb, a, lda, t, ldt, work, info);
+}
+
+void gelqf(const int* m, const int* n, const double* a, const int* lda, 
+    const double* tau, const double* work, const int* lwork, const int* info)
+{
+  dgelqf_(m, n, a, lda, tau, work, lwork, info);
+}
+
+void gelqf(const int* m, const int* n, const float* a, const int* lda, 
+    const float* tau, const float* work, const int* lwork, const int* info)
+{
+  sgelqf_(m, n, a, lda, tau, work, lwork, info);
+}
+
+void gelqt(const int* m, const int* n, const int* mb, const double* a, const int* lda,
+    const double* t, const int* ldt, const double* work, const int* info)
+{
+  dgelqt_(m, n, mb, a, lda, t, ldt, work, info);
+}
+
+void gelqt(const int* m, const int* n, const int* mb, const float* a, const int* lda,
+    const float* t, const int* ldt, const float* work, const int* info)
+{
+  sgelqt_(m, n, mb, a, lda, t, ldt, work, info);
+}
+
 } // end namespace Tucker

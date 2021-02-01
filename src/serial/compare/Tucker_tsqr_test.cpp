@@ -2,7 +2,8 @@
 #include "Tucker_IO_Util.hpp"
 #include "Tucker.hpp"
 
-bool checkEqual(const double* arr1, const double* arr2, int nrows, int ncols)
+template <class scalar_t>
+bool checkEqual(const scalar_t* arr1, const scalar_t* arr2, int nrows, int ncols)
 {
     int ind = 0;
     for(int c=0; c<ncols; c++) {
@@ -20,6 +21,14 @@ bool checkEqual(const double* arr1, const double* arr2, int nrows, int ncols)
 
 int main(int argc, char* argv[])
 {
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+#else
+  typedef double scalar_t;
+#endif
+
   Tucker::Timer* tsqr_timer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
   Tucker::Timer* reorganize_timer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
   Tucker::Timer* new_reorganize_timer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
@@ -32,7 +41,7 @@ int main(int argc, char* argv[])
   int n                                 = Tucker::stringParse<int>(fileAsString, "LQ on mode ", 1);
   Tucker::SizeArray* Ydims = Tucker::stringParseSizeArray(fileAsString, "Tensor dims");
   bool printResult = Tucker::stringParse<bool>(fileAsString, "Print result", false);
-  Tucker::Tensor* Y = Tucker::MemoryManager::safe_new<Tucker::Tensor>(*Ydims);
+  Tucker::Tensor<scalar_t>* Y = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*Ydims);
   Y->rand();
   std::cout << "Tensor dims: " << *Ydims << std::endl;
   std::cout << "LQ on mode " << n << "\n" << std::endl; 
@@ -53,14 +62,14 @@ int main(int argc, char* argv[])
   for(int i=n+1; i<Y->N(); i++) {
     nmats *= Y->size(i);
   }
-  Tucker::Matrix* R = Tucker::MemoryManager::safe_new<Tucker::Matrix>(YnTransposeNrows, YnTransposeNcols);
-  Tucker::Matrix* newR = Tucker::MemoryManager::safe_new<Tucker::Matrix>(YnTransposeNrows, YnTransposeNcols);
+  Tucker::Matrix<scalar_t>* R = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(YnTransposeNrows, YnTransposeNcols);
+  Tucker::Matrix<scalar_t>* newR = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(YnTransposeNrows, YnTransposeNcols);
   reorganize_timer->start();
-  Tucker::combineColumnMajorBlocks(Y, R, n, 0, nmats, 1);
+  Tucker::combineColumnMajorBlocks<scalar_t>(Y, R, n, 0, nmats, 1);
   reorganize_timer->stop();
   //std::cout << "R: " << R->prettyPrint()<< std::endl;
   new_reorganize_timer->start();
-  Tucker::combineColumnMajorBlocks(Y, newR, n, 0, nmats, 2);
+  Tucker::combineColumnMajorBlocks<scalar_t>(Y, newR, n, 0, nmats, 2);
   new_reorganize_timer->stop();
   if(!checkEqual(newR->data(), R->data(), YnTransposeNrows, YnTransposeNcols)){
     std::cout << "NOT EQUAL !!!!" << std::endl;
@@ -70,24 +79,24 @@ int main(int argc, char* argv[])
   std::cout << "new Reorganize time: " << new_reorganize_timer->duration() << std::endl;
 
   qr_timer->start();
-  double * work = Tucker::MemoryManager::safe_new_array<double>(1);
-  double * TforGeqr = Tucker::MemoryManager::safe_new_array<double>(5);
+  scalar_t * work = Tucker::MemoryManager::safe_new_array<scalar_t>(1);
+  scalar_t * TforGeqr = Tucker::MemoryManager::safe_new_array<scalar_t>(5);
   int negOne = -1;
   int info = 1;
-  Tucker::dgeqr_(&YnTransposeNrows, &YnTransposeNcols, R->data(), &YnTransposeNrows, TforGeqr, &negOne, work, &negOne, &info);
+  Tucker::geqr(&YnTransposeNrows, &YnTransposeNcols, R->data(), &YnTransposeNrows, TforGeqr, &negOne, work, &negOne, &info);
   int lwork = work[0];
   int TSize = TforGeqr[0];
-  Tucker::MemoryManager::safe_delete_array<double>(work, 1);
-  Tucker::MemoryManager::safe_delete_array<double>(TforGeqr, 5);
-  work = Tucker::MemoryManager::safe_new_array<double>(lwork);
-  TforGeqr = Tucker::MemoryManager::safe_new_array<double>(TSize);    
-  Tucker::dgeqr_(&YnTransposeNrows, &YnTransposeNcols, R->data(), &YnTransposeNrows, TforGeqr, &TSize, work, &lwork, &info);
-  Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
-  Tucker::MemoryManager::safe_delete_array<double>(TforGeqr, TSize);
+  Tucker::MemoryManager::safe_delete_array(work, 1);
+  Tucker::MemoryManager::safe_delete_array(TforGeqr, 5);
+  work = Tucker::MemoryManager::safe_new_array<scalar_t>(lwork);
+  TforGeqr = Tucker::MemoryManager::safe_new_array<scalar_t>(TSize);    
+  Tucker::geqr(&YnTransposeNrows, &YnTransposeNcols, R->data(), &YnTransposeNrows, TforGeqr, &TSize, work, &lwork, &info);
+  Tucker::MemoryManager::safe_delete_array(work, lwork);
+  Tucker::MemoryManager::safe_delete_array(TforGeqr, TSize);
   qr_timer->stop();
   std::cout << "qr time on reorganized data: " << qr_timer->duration() << std::endl;
   if(printResult) std::cout << "R of R: " << R->prettyPrint() << std::endl;
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(R);
+  Tucker::MemoryManager::safe_delete(R);
 
   ////////////////////////////////////////////////////////////
   // Reorganize the top n submatrices and then compute TSQR //
@@ -95,9 +104,9 @@ int main(int argc, char* argv[])
   // without any reorganization.                            //
   ////////////////////////////////////////////////////////////
   std::cout << "original algorithm timing: " << std::endl;
-  Tucker::Matrix* L = Tucker::computeLQ(Y, n);
+  Tucker::Matrix<scalar_t>* L = Tucker::computeLQ(Y, n);
   if(printResult) std::cout << L->prettyPrint() << std::endl;
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L);
+  Tucker::MemoryManager::safe_delete(L);
 
   return EXIT_SUCCESS;
 }

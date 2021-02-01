@@ -68,13 +68,13 @@ public:
   /// Returns the number of rows
   int nrows() const
   {
-    return I_[0];
+    return this->I_[0];
   }
 
   /// Returns the number of columns
   int ncols() const
   {
-    return I_[1];
+    return this->I_[1];
   }
 
   Matrix<scalar_t>* getSubmatrix(const int rbegin, const int rend) const
@@ -99,7 +99,7 @@ public:
     Matrix<scalar_t>* T = MemoryManager::safe_new<Matrix<scalar_t>>(ncols(), nrows());
     const int ONE = 1;
     for(int i=0; i<nrows(); i++){
-      Tucker::copy(&I_[1], this->data()+i, &I_[0], T->data()+(i*T->nrows()), &ONE);
+      Tucker::copy(&this->I_[1], this->data()+i, &this->I_[0], T->data()+(i*T->nrows()), &ONE);
     }
     return T;
   }
@@ -112,7 +112,7 @@ public:
     std::string s = "";
     for(int i=0; i<nrows(); i++){
       for(int j=0; j<ncols(); j++){
-        s = s + std::to_string(data()[i+j*nrows()]) + ", ";
+        s = s + std::to_string(this->data()[i+j*nrows()]) + ", ";
       }
       s = s + "\n";
     }
