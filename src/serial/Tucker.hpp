@@ -100,12 +100,11 @@ extern "C" void dcopy_(const int*, const double*, const int*,
 extern "C" void dscal_(const int*, const double*, double*, const int*);
 /// @endcond
 
-/** \brief Yn'(l by m)(The transpose of mode n unfolding of Y) consists of several column major submatrices stacked
- * vertically. R(h by m) should have the same number of columns as Yn'. R can be think of as a window that select 
- * elements from Yn'. This function then copies the elements of Yn' selected by the top window and reoders those 
- * elements in column major order 
+/** \brief Yn'(l by m)(The transpose of mode n unfolding of Y, n != 0) consists of several column major submatrices stacked
+ * vertically. R should have the same number of columns as Yn'. This function copyes x of those submatrices into R, where x 
+ * is specified by numSubmatrices, starting from the ith submatrix, where i is specified by startingSubmatrix.
  */
-void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n, const int startingSubmatrix, const int numSubmatrices, const int variant);
+void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n, const int startingSubmatrix, const int numSubmatrices);
 
 /** \brief wrapper of computeLQ(const Tensor* Y, const int n, Matrix* L) which get the LQ of the mode n unfolding
  * of Y. If Yn is short and fat or square, the column major square matrix containing the lower triangle of Yn is returned.

@@ -50,7 +50,7 @@
  */
 namespace Tucker {
 
-void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n, const int startingSubmatrix, const int numSubmatrices, const int variant){
+void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n, const int startingSubmatrix, const int numSubmatrices){
   int submatrixNrows = 1;
   for(int i=0; i<n; i++) {
       submatrixNrows *= Y->size(i);
@@ -59,25 +59,9 @@ void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n, const int
   int Rnrows = R->nrows();
   int sizeOfSubmatrix = submatrixNrows * Rncols;
   int one = 1;
-  if(variant == 1){
-    for(int i=0; i<Rncols; i++){
-      for(int j=0; j<numSubmatrices; j++){
-        dcopy_(&submatrixNrows, Y->data()+j*sizeOfSubmatrix+i*submatrixNrows, &one, R->data()+i*Rnrows+j*submatrixNrows, &one);
-      }
-    }
-  }
-  else if(variant == 2){
-    for(int i=0; i<numSubmatrices; i++){
-      for(int j=0; j<Rncols; j++){
-        dcopy_(&submatrixNrows, Y->data()+i*sizeOfSubmatrix+j*submatrixNrows, &one, R->data()+j*Rnrows+i*submatrixNrows, &one);
-      }
-    }
-  }
-  else if(variant == 3){
-    for(int i=0; i<numSubmatrices; i++){
-      for(int j=0; j<Rncols; j++){
-        dcopy_(&submatrixNrows, Y->data()+(i+startingSubmatrix)*sizeOfSubmatrix+j*submatrixNrows, &one, R->data()+j*Rnrows+i*submatrixNrows, &one);
-      }
+  for(int i=0; i<numSubmatrices; i++){
+    for(int j=0; j<Rncols; j++){
+      dcopy_(&submatrixNrows, Y->data()+(i+startingSubmatrix)*sizeOfSubmatrix+j*submatrixNrows, &one, R->data()+j*Rnrows+i*submatrixNrows, &one);
     }
   }
 }
@@ -121,12 +105,6 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L){
         Y0ncols *= Y->size(i);
       }
     }
-    // if(modeNDimension > Y0ncols){
-    //   std::ostringstream oss;
-    //   oss << "mode 0 unfolding of Y is tall and skinny. Not handled here.";
-    //   throw std::runtime_error(oss.str());
-    // }
-
     Matrix* Y0 = MemoryManager::safe_new<Matrix>(modeNDimension, Y0ncols);
     int Y0nrows = Y0->nrows();
     int sizeOfY0 = Y0nrows*Y0ncols;
@@ -163,34 +141,32 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L){
     for(int i=0; i<n; i++) {
       submatrixNrows *= Y->size(i);
     }
-    int YnTransposeNrows =1;
+    int YnTransposeNrows =1; 
     for(int i=0; i<Y->N(); i++) {
       if(i != n) {
         YnTransposeNrows *= Y->size(i);
       }
     }
     //total number of submatrices in Yn transpose
-    int totalNumSubmat = 1;
+    int totalNumSubmatrices = 1;
     for(int i=n+1; i<Y->N(); i++) {
-      totalNumSubmat *= Y->size(i);
+      totalNumSubmatrices *= Y->size(i);
     }
     //R would be the first block to do qr on.
     Matrix* R;
     int Rnrows, Rncols, sizeOfR;
-    //Handle edge case when the colun major submatrices are short and fat.
+    //Handle edge case when the submatrices in YnTranspose are short and fat.
     if(submatrixNrows < modeNDimension){
-      //The number of submatrices we need to stack to get a tall matrix.
+      //Get the number of submatrices we need to stack to get a tall matrix.
       int numSubmatrices = (int)std::ceil((double)modeNDimension/(double)submatrixNrows);
-      if(modeNDimension > YnTransposeNrows){
-        std::ostringstream oss;
-        oss << "Mode "<< n << " unfolding of Y is tall. compute gram matrix to get SVD instead." << std::endl;
-        throw std::runtime_error(oss.str());
-      }
+      //When YnTranspose is short and fat this is true.
+      if(numSubmatrices > totalNumSubmatrices)
+        numSubmatrices = totalNumSubmatrices;
       Rnrows = numSubmatrices * submatrixNrows;
       R = MemoryManager::safe_new<Matrix>(Rnrows, modeNDimension);
       Rncols = R->ncols();
       reorganize_timer->start();
-      combineColumnMajorBlocks(Y, R, n, 0, numSubmatrices, 3);
+      combineColumnMajorBlocks(Y, R, n, 0, numSubmatrices);
       reorganize_timer->stop();
 
       int info;
@@ -215,27 +191,26 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L){
       MemoryManager::safe_delete_array<double>(work, lwork);
       MemoryManager::safe_delete_array<double>(TforGeqr, TSize);
       
-      int residue = totalNumSubmat % numSubmatrices;
-      int numIteration = (int)std::ceil((double)totalNumSubmat/(double)numSubmatrices);
       
+      int i; //This is the index for the first submatrix that hasn't been included in the TSQR.
+      int numSubmatricesLeft = totalNumSubmatrices - numSubmatrices;
       Matrix* B;
       int Bnrows, Bncols, sizeOfB;
       int nb = (modeNDimension > 32)? 32 : modeNDimension;
       double* TforTpqrt = MemoryManager::safe_new_array<double>(nb*modeNDimension);
       work = MemoryManager::safe_new_array<double>(nb*modeNDimension);
       int ZERO = 0;
-      for(int i = 1; i < numIteration; i++){
-        if(i==numIteration-1 && residue != 0){
-          reorganize_timer->start();
-          B = Tucker::MemoryManager::safe_new<Matrix>(submatrixNrows*residue, modeNDimension);
-          combineColumnMajorBlocks(Y, B, n, i*numSubmatrices, residue, 3);
-          reorganize_timer->stop();
+      while(numSubmatricesLeft > 0){
+        i = totalNumSubmatrices - numSubmatricesLeft;
+        if(numSubmatricesLeft > numSubmatrices){
+          B = Tucker::MemoryManager::safe_new<Matrix>(submatrixNrows*numSubmatrices, modeNDimension);
+          combineColumnMajorBlocks(Y, B, n, i, numSubmatrices);
+          numSubmatricesLeft = numSubmatricesLeft - numSubmatrices;
         }
         else{
-          reorganize_timer->start();
-          B = Tucker::MemoryManager::safe_new<Matrix>(submatrixNrows*numSubmatrices, modeNDimension);
-          combineColumnMajorBlocks(Y, B, n, i*numSubmatrices, numSubmatrices, 3);
-          reorganize_timer->stop();
+          B = Tucker::MemoryManager::safe_new<Matrix>(submatrixNrows*numSubmatricesLeft, modeNDimension);
+          combineColumnMajorBlocks(Y, B, n, i, numSubmatricesLeft);
+          numSubmatricesLeft = numSubmatricesLeft - numSubmatricesLeft;
         }
         Bnrows = B->nrows();
         Bncols = B->ncols();
@@ -243,7 +218,7 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L){
         tsqr_timer->start();
         dtpqrt_(&Bnrows, &Bncols, &ZERO, &nb, R->data(), &Rnrows, B->data(), &Bnrows, TforTpqrt, &nb, work, &info);
         tsqr_timer->stop();
-        Tucker::MemoryManager::safe_delete<Matrix>(B);
+        Tucker::MemoryManager::safe_delete(B);
       }
       MemoryManager::safe_delete_array<double>(work, nb*modeNDimension);
       MemoryManager::safe_delete_array<double>(TforTpqrt, nb*modeNDimension);
@@ -256,7 +231,6 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L){
       dcopy_timer->start();
       dcopy_(&sizeOfR, Y->data(), &one, R->data(), &one);
       dcopy_timer->stop();
-      //std::cout << R->prettyPrint() << "\n" << std::endl;
 
       int info;
       tsqr_timer->start();
@@ -285,7 +259,7 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L){
       double* TforTpqrt = MemoryManager::safe_new_array<double>(nb*modeNDimension);
       work = MemoryManager::safe_new_array<double>(nb*modeNDimension);
       int ZERO = 0;
-      for(int i = 1; i < totalNumSubmat; i++){
+      for(int i = 1; i < totalNumSubmatrices; i++){
         dcopy_timer->start();
         dcopy_(&sizeOfB, Y->data()+i*sizeOfB, &one, B->data(), &one);
         dcopy_timer->stop();
@@ -303,11 +277,8 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L){
       MemoryManager::safe_delete<Matrix>(B);
       MemoryManager::safe_delete_array<double>(TforTpqrt, nb*modeNDimension);
     }
-    // std::cout << "tsqr reorganize time: " << reorganize_timer->duration() << std::endl;
-    // std::cout << "tsqr dcopy time: " << dcopy_timer->duration() << std::endl;
-    // std::cout << "tsqr time: " << tsqr_timer->duration() << std::endl;
-    //post process the R to L: Make L the transpose of the top square of R
-    for(int r=0; r<Rncols; r++){
+    //copy R to L so that L becomes the transpose of the top  of R
+    for(int r=0; r<L->ncols(); r++){
       dcopy_(&Rncols, R->data()+r, &Rnrows, L->data()+(r*L->nrows()), &one);
     }
     MemoryManager::safe_delete<Matrix>(R);
