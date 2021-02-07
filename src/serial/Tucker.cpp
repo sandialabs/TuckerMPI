@@ -1639,10 +1639,4 @@ void premultByDiag(const Vector* diag, Matrix* mat)
   }
 }
 
-Tensor* generateTensor(int seed, TuckerTensor* fact, SizeArray* tensor_dims,
- SizeArray* core_dims, double noise){
-
-
-}
-
 } // end namespace Tucker
