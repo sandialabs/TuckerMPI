@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/qr_routine_comp.dir/LAPACK_qr_routine_comp.o  -o qr_routine_comp  -Wl,-rpath,/home/fangq18/TuckerMPI/src/serial ../libserial_tucker.so 

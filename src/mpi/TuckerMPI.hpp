@@ -56,7 +56,8 @@ namespace TuckerMPI {
  * \param Y A parallel tensor
  * \param n The dimension for the tensor unfolding
  */
-Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer=0,
+template <class scalar_t>
+Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, Tucker::Timer* tsqr_timer=0,
     Tucker::Timer* local_qr_timer=0, Tucker::Timer* redistribute_timer=0,
     Tucker::Timer* localqr_dcopy_timer=0, Tucker::Timer* localqr_decompose_timer=0, 
     Tucker::Timer* localqr_transpose_timer=0);
@@ -231,7 +232,8 @@ void exportTimeSeries(const char* filename, const Tensor<scalar_t>* Y);
  * \param[in] dimensions of the core tensor
  * \param[in] noise to be added. 
  */
-Tensor* generateTensor(int seed, TuckerTensor* fact, Tucker::SizeArray* proc_dims, 
+template <class scalar_t>
+Tensor<scalar_t>* generateTensor(int seed, TuckerTensor<scalar_t>* fact, Tucker::SizeArray* proc_dims, 
   Tucker::SizeArray* tensor_dims, Tucker::SizeArray* core_dims,
   double noise);
 } // end namespace TuckerMPI

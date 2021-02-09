@@ -9,8 +9,11 @@ bool checkEqual(const scalar_t* arr1, const scalar_t* arr2, int nrows, int ncols
     for(int c=0; c<ncols; c++) {
       for(int r=0; r<nrows; r++) {
         //std::cout << "matching:  arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
-        if(std::abs(std::abs(arr1[r+c*nrows]) - std::abs(arr2[ind])) > 1000 * std::numeric_limits<scalar_t>::epsilon()) {
+        if(std::abs(std::abs(arr1[r+c*nrows]) - std::abs(arr2[ind])) > 100 * std::numeric_limits<scalar_t>::epsilon() * std::abs(arr2[ind]) ) {
+          std::cout.precision(std::numeric_limits<scalar_t>::max_digits10);
           std::cout << arr1[r+c*nrows] << ", " << arr2[r+c] << std::endl;
+          std::cout <<  " difference is " << std::abs(std::abs(arr1[r+c*nrows]) - std::abs(arr2[ind])) << std::endl;
+          std::cout <<  " threshold is " <<100 * std::numeric_limits<scalar_t>::epsilon() * std::abs(arr2[ind]);
           return false;
         }
         ind++;

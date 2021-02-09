@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/Tucker_svd_test.dir/Tucker_svd_test.o  -o Tucker_svd_test  -Wl,-rpath,/home/fangq18/TuckerMPI/src/serial ../libserial_tucker.so 

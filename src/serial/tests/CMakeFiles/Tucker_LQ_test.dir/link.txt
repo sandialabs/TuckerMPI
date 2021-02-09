@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/Tucker_LQ_test.dir/Tucker_LQ_test.o  -o Tucker_LQ_test  -Wl,-rpath,/home/fangq18/TuckerMPI/src/serial ../libserial_tucker.so 

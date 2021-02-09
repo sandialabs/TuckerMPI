@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/Tucker_slice_test_file_single.dir/Tucker_slice_test_file.o  -o Tucker_slice_test_file_single  -Wl,-rpath,/home/fangq18/TuckerMPI/src/serial ../libserial_tucker.so 

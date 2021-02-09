@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/Tucker_reconstruct_test.dir/Tucker_reconstruct_test.o  -o Tucker_reconstruct_test  -Wl,-rpath,/home/fangq18/TuckerMPI/src/serial ../libserial_tucker.so 

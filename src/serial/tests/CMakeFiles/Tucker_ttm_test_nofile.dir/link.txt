@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/Tucker_ttm_test_nofile.dir/Tucker_ttm_test_nofile.o  -o Tucker_ttm_test_nofile  -Wl,-rpath,/home/fangq18/TuckerMPI/src/serial ../libserial_tucker.so 

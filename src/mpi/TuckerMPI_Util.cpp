@@ -41,7 +41,8 @@
 #include "TuckerMPI_Util.hpp"
 
 namespace TuckerMPI {
-Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_timer, 
+template <class scalar_t>
+Tucker::Matrix<scalar_t>* localQR(const Matrix<scalar_t>* M, bool isLastMode, Tucker::Timer* dcopy_timer, 
   Tucker::Timer* decompose_timer, Tucker::Timer* transpose_timer){
   int one = 1;
   int negOne = -1;
@@ -57,69 +58,69 @@ Tucker::Matrix* localQR(const Matrix* M, bool isLastMode, Tucker::Timer* dcopy_t
   // }
   int info;
   int nrowsR = nrowsM > ncolsM ? ncolsM : nrowsM;
-  Tucker::Matrix* R = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrowsR, nrowsM);
-  double* tempT = Tucker::MemoryManager::safe_new_array<double>(5);
-  double* tempWork = Tucker::MemoryManager::safe_new_array<double>(1);
+  Tucker::Matrix<scalar_t>* R = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nrowsR, nrowsM);
+  scalar_t* tempT = Tucker::MemoryManager::safe_new_array<scalar_t>(5);
+  scalar_t* tempWork = Tucker::MemoryManager::safe_new_array<scalar_t>(1);
   if(isLastMode){
     if(dcopy_timer) dcopy_timer->start();
     //Mcopy will become transpose of M since M is row major. 
-    Tucker::Matrix* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(ncolsM, nrowsM);
-    dcopy_(&sizeOfM, M->getLocalMatrix()->data(), &one, Mcopy->data(), &one);
+    Tucker::Matrix<scalar_t>* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(ncolsM, nrowsM);
+    Tucker::copy(&sizeOfM, M->getLocalMatrix()->data(), &one, Mcopy->data(), &one);
     if(dcopy_timer) dcopy_timer->stop();
     if(decompose_timer) decompose_timer->start();
-    dgeqr_(&ncolsM, &nrowsM, Mcopy->data(), &ncolsM, tempT, &negOne, tempWork, &negOne, &info);
+    Tucker::geqr(&ncolsM, &nrowsM, Mcopy->data(), &ncolsM, tempT, &negOne, tempWork, &negOne, &info);
     int lwork = tempWork[0];
     int TSize = tempT[0];
-    Tucker::MemoryManager::safe_delete_array<double>(tempWork, 1);
-    Tucker::MemoryManager::safe_delete_array<double>(tempT, 5);
-    double* T = Tucker::MemoryManager::safe_new_array<double>(TSize);
-    double* work = Tucker::MemoryManager::safe_new_array<double>(lwork);    
-    dgeqr_(&ncolsM, &nrowsM, Mcopy->data(), &ncolsM, T, &TSize, work, &lwork, &info);
-    Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
-    Tucker::MemoryManager::safe_delete_array<double>(T, TSize);
+    Tucker::MemoryManager::safe_delete_array(tempWork, 1);
+    Tucker::MemoryManager::safe_delete_array(tempT, 5);
+    scalar_t* T = Tucker::MemoryManager::safe_new_array<scalar_t>(TSize);
+    scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(lwork);    
+    Tucker::geqr(&ncolsM, &nrowsM, Mcopy->data(), &ncolsM, T, &TSize, work, &lwork, &info);
+    Tucker::MemoryManager::safe_delete_array(work, lwork);
+    Tucker::MemoryManager::safe_delete_array(T, TSize);
     if(decompose_timer) decompose_timer->stop();
     //this is in the transpose timer to be consistent with other mode, but note this is not
     //actually doing a transpose, we are just getting the upper triangle of Mcopy here.
     if(transpose_timer) transpose_timer->start();
     for(int i=0; i<nrowsM; i++){
-      dcopy_(&nrowsR, Mcopy->data()+i*ncolsM, &one, R->data()+i*nrowsR, &one);
+      Tucker::copy(&nrowsR, Mcopy->data()+i*ncolsM, &one, R->data()+i*nrowsR, &one);
     }
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Mcopy);
+    Tucker::MemoryManager::safe_delete(Mcopy);
     if(transpose_timer) transpose_timer->stop();
   }
   else{
     if(dcopy_timer) dcopy_timer->start();
     Tucker::Matrix* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrowsM, ncolsM);
-    dcopy_(&sizeOfM, M->getLocalMatrix()->data(), &one, Mcopy->data(), &one);
+    Tucker::copy(&sizeOfM, M->getLocalMatrix()->data(), &one, Mcopy->data(), &one);
     if(dcopy_timer) dcopy_timer->stop();
     if(decompose_timer) decompose_timer->start();
-    dgelq_(&nrowsM, &ncolsM, Mcopy->data(), &nrowsM, tempT, &negOne, tempWork, &negOne, &info);
+    Tucker::gelq(&nrowsM, &ncolsM, Mcopy->data(), &nrowsM, tempT, &negOne, tempWork, &negOne, &info);
     int lwork = tempWork[0];
     int TSize = tempT[0];
-    Tucker::MemoryManager::safe_delete_array<double>(tempWork, 1);
-    Tucker::MemoryManager::safe_delete_array<double>(tempT, 5);
-    double* T = Tucker::MemoryManager::safe_new_array<double>(TSize);
-    double* work = Tucker::MemoryManager::safe_new_array<double>(lwork);  
-    dgelq_(&nrowsM, &ncolsM, Mcopy->data(), &nrowsM, T, &TSize, work, &lwork, &info);
-    Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
-    Tucker::MemoryManager::safe_delete_array<double>(T, TSize);
+    Tucker::MemoryManager::safe_delete_array(tempWork, 1);
+    Tucker::MemoryManager::safe_delete_array(tempT, 5);
+    scalar_t* T = Tucker::MemoryManager::safe_new_array<scalar_t>(TSize);
+    scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(lwork);  
+    Tucker::gelq(&nrowsM, &ncolsM, Mcopy->data(), &nrowsM, T, &TSize, work, &lwork, &info);
+    Tucker::MemoryManager::safe_delete_array(work, lwork);
+    Tucker::MemoryManager::safe_delete_array(T, TSize);
     if(decompose_timer) decompose_timer->stop();  
     if(transpose_timer) transpose_timer->start();
     
     if(nrowsM < ncolsM){
       //transpose the leftmost square of Mcopy one column at a time.
       for(int i=0; i<nrowsM; i++){
-        dcopy_(&nrowsM, Mcopy->data()+i*nrowsM, &one, R->data()+i, &nrowsM);
+        Tucker::copy(&nrowsM, Mcopy->data()+i*nrowsM, &one, R->data()+i, &nrowsM);
       }
     }
     else{
       //in this case Mcopy is (nrowsM x ncolsM) and R is (ncolsM x nrowsM)
       //transpose the whole Mcopy into R
       for(int i=0; i<nrowsM; i++){
-        dcopy_(&nrowsR, Mcopy->data()+i, &nrowsM, R->data()+i*nrowsR, &one);
+        Tucker::copy(&nrowsR, Mcopy->data()+i, &nrowsM, R->data()+i*nrowsR, &one);
       }
     }
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Mcopy);
+    Tucker::MemoryManager::safe_delete(Mcopy);
     if(transpose_timer) transpose_timer->stop();
   }
   return R;
@@ -302,20 +303,20 @@ const Matrix<scalar_t>* redistributeTensorForGram(const Tensor<scalar_t>* Y, int
 
   // Free the send buffer if necessary
   if(isPackingNecessary && Y->getLocalNumEntries() > 0)
-    Tucker::MemoryManager::safe_delete_array<const double>(sendBuf,Y->getLocalNumEntries());
+    Tucker::MemoryManager::safe_delete_array(sendBuf,Y->getLocalNumEntries());
 
   // Determine whether the data needs to be unpacked
   bool isUnpackingNecessary = isUnpackForGramNecessary(n, ndims, oldMap, redistMap);
-  Matrix* redistY;
+  Matrix<scalar_t>* redistY;
   if(isUnpackingNecessary) {
-    redistY = Tucker::MemoryManager::safe_new<Matrix>(nrows,(int)ncols,comm,false);
+    redistY = Tucker::MemoryManager::safe_new<Matrix<scalar_t>>(nrows,(int)ncols,comm,false);
 
     if(unpack_timer) unpack_timer->start();
     unpackForGram(n, ndims, redistY, recvBuf, oldMap);
     if(unpack_timer) unpack_timer->stop();
 
     // Free receive buffer
-    Tucker::MemoryManager::safe_delete<Matrix>(recvY);
+    Tucker::MemoryManager::safe_delete(recvY);
   }
   else {
     redistY = recvY;
@@ -598,6 +599,9 @@ template const Tucker::Matrix<float>* localRankKForGram(const Matrix<float>*, in
 template void localGEMMForGram(const float*, int, int, const Tensor<float>*, float*);
 template Tucker::Matrix<float>* reduceForGram(const Tucker::Matrix<float>*);
 template void packForTTM(Tucker::Tensor<float>*, int, const Map*);
+template Tucker::Matrix<float>* localQR(const Matrix<float>*, bool, Tucker::Timer*, 
+    Tucker::Timer*, Tucker::Timer*);
+
 
 template const double* packForGram(const Tensor<double>*, int, const Map*);
 template void unpackForGram(int, int, Matrix<double>*, const double*, const Map*);
@@ -607,5 +611,7 @@ template const Tucker::Matrix<double>* localRankKForGram(const Matrix<double>*, 
 template void localGEMMForGram(const double*, int, int, const Tensor<double>*, double*);
 template Tucker::Matrix<double>* reduceForGram(const Tucker::Matrix<double>*);
 template void packForTTM(Tucker::Tensor<double>*, int, const Map*);
+template Tucker::Matrix<double>* localQR(const Matrix<double>*, bool, Tucker::Timer*, 
+    Tucker::Timer*, Tucker::Timer*);
 
 } // end namespace TuckerMPI

@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/Tucker_shift_scale_test_single.dir/Tucker_shift_scale_test.o  -o Tucker_shift_scale_test_single  -Wl,-rpath,/home/fangq18/TuckerMPI/src/serial ../libserial_tucker.so 

@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/Tucker_eig_test.dir/Tucker_eig_test.o  -o Tucker_eig_test  -Wl,-rpath,/home/fangq18/TuckerMPI/src/serial ../libserial_tucker.so 

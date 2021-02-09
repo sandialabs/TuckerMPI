@@ -56,7 +56,8 @@ namespace TuckerMPI
 {
 //There isn't a check for this since we might handle this case later but for now
 //it is assumed that the processor grid is never bigger than the tensor in any mode.
-Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
+template <class scalar_t>
+Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, Tucker::Timer* tsqr_timer,
     Tucker::Timer* local_qr_timer, Tucker::Timer* redistribute_timer,
     Tucker::Timer* localqr_dcopy_timer, Tucker::Timer* localqr_decompose_timer, 
     Tucker::Timer* localqr_transpose_timer){
@@ -67,23 +68,23 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
   MPI_Comm_size(MPI_COMM_WORLD, &globalnp);
   // const Matrix* redistYn = redistributeTensorForGram(Y, n, pack_timer, alltoall_timer, unpack_timer);
   if(redistribute_timer) redistribute_timer->start();
-  const Matrix* redistYn = redistributeTensorForGram(Y, n);
+  const Matrix<scalar_t>* redistYn = redistributeTensorForGram(Y, n);
   if(redistribute_timer) redistribute_timer->stop();
   //R of the transpose of the local unfolding in column major.
-  Tucker::Matrix* R;
+  Tucker::Matrix<scalar_t>* R;
   int Rnrows;
   int Rncols;
   if(local_qr_timer) local_qr_timer->start();
   if(!redistYn){
-    Tucker::Matrix* L = Tucker::computeLQ(Y->getLocalTensor(), n);
+    Tucker::Matrix<scalar_t>* L = Tucker::computeLQ(Y->getLocalTensor(), n);
     Rncols = L->nrows();
     Rnrows = L->ncols(); 
     //Do an explicit transpose of R.
-    R = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rnrows, Rncols);
+    R = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rnrows, Rncols);
     for(int i=0; i<L->ncols(); i++){
-      dcopy_(&Rncols, L->data()+i*Rncols, &one, R->data()+i, &Rnrows);
+      Tucker::copy(&Rncols, L->data()+i*Rncols, &one, R->data()+i, &Rnrows);
     }
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L);
+    Tucker::MemoryManager::safe_delete(L);
   }
   else{
     bool isLastMode = n == Y->getNumDimensions()-1;
@@ -95,8 +96,8 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
   if(local_qr_timer) local_qr_timer->stop();
 
   int sizeOfR = R->nrows()*R->ncols();
-  Tucker::Matrix* L = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rncols, Rncols);
-  Tucker::Matrix* tempB;
+  Tucker::Matrix<scalar_t>* L = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rncols, Rncols);
+  Tucker::Matrix<scalar_t>* tempB;
   int treeDepth = (int)ceil(log2(globalnp));
   MPI_Status status;
   if(tsqr_timer) tsqr_timer->start();
@@ -108,16 +109,16 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
         tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix>(tempBNrows, Rncols);
         MPI_Recv(tempB->data(), Rncols*Rncols, MPI_DOUBLE, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
         int nb = (Rncols > 32)? 32 : Rncols;
-        double* T = Tucker::MemoryManager::safe_new_array<double>(nb*Rncols);
-        double* work = Tucker::MemoryManager::safe_new_array<double>(nb*Rncols);
+        scalar_t* T = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
+        scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
         int info;
         // Edge case
         // padd with rows of zeros to make R square
         if(R->nrows() < R->ncols()){
-          Tucker::Matrix* squareR = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rncols, Rncols);
+          Tucker::Matrix<scalar_t>* squareR = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rncols, Rncols);
           int sizeOfSquareR = Rncols*Rncols;
           for(int i=0; i<Rncols; i++){
-            dcopy_(&Rnrows, R->data()+i*Rnrows, &one, squareR->data()+i*Rncols, &one); //copy the top part over
+            Tucker::copy(&Rnrows, R->data()+i*Rnrows, &one, squareR->data()+i*Rncols, &one); //copy the top part over
             for(int j=i*Rncols+Rnrows; j<(i+1)*Rncols; j++){// padd the bottom with zeros
               squareR->data()[j] = 0;
             }
@@ -126,11 +127,11 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
           R = squareR;
           Rnrows = R->nrows();//Rnrows might change here
         }
-        Tucker::dtpqrt_(&tempBNrows, &Rncols, &tempBNrows, &nb, R->data(), &Rncols, tempB->data(),
+        Tucker::tpqrt(&tempBNrows, &Rncols, &tempBNrows, &nb, R->data(), &Rncols, tempB->data(),
         &tempBNrows, T, &nb, work, &info);
         Tucker::MemoryManager::safe_delete(tempB);
-        Tucker::MemoryManager::safe_delete_array<double>(work, nb*Rncols);
-        Tucker::MemoryManager::safe_delete_array<double>(T, nb*Rncols);
+        Tucker::MemoryManager::safe_delete_array(work, nb*Rncols);
+        Tucker::MemoryManager::safe_delete_array(T, nb*Rncols);
       }
     }
     else if(globalRank % (int)pow(2, i) == 0){
@@ -151,7 +152,7 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
     
     //transpose
     for(int i=0; i<Rncols; i++){
-      dcopy_(&Rncols, R->data()+i*Rncols, &one, L->data()+i, &Rncols); 
+      Tucker::copy(&Rncols, R->data()+i*Rncols, &one, L->data()+i, &Rncols); 
     }
     Tucker::MemoryManager::safe_delete(R);
   }
@@ -1468,7 +1469,7 @@ Tensor<scalar_t>* generateTensor(int seed, TuckerTensor<scalar_t>* fact, Tucker:
       seeds[i] = rand();
     }
     MPI_Scatter(seeds,1,MPI_INT,&myseed,1,MPI_INT,0,MPI_COMM_WORLD);
-    Tucker::MemoryManager::safe_delete_array<unsigned>(seeds,nprocs);
+    Tucker::MemoryManager::safe_delete_array(seeds,nprocs);
   }
   else {
     MPI_Scatter(NULL,1,MPI_INT,&myseed,1,MPI_INT,0,MPI_COMM_WORLD);
@@ -1537,9 +1538,9 @@ template Tucker::Matrix<float>* oldGram(const Tensor<float>*, const int,
 template Tucker::Matrix<float>* newGram(const Tensor<float>*, const int,
     Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
 template const TuckerTensor<float>* STHOSVD(const Tensor<float>* const, const float, 
-    bool, bool);
+    int*, bool, bool, bool);
 template const TuckerTensor<float>* STHOSVD(const Tensor<float>* const, 
-    const Tucker::SizeArray* const, bool, bool);
+    const Tucker::SizeArray* const, int*, bool, bool, bool);
 template Tucker::MetricData<float>* computeSliceMetrics(const Tensor<float>* const,
     int, int);
 template void transformSlices(Tensor<float>*, int, const float*, const float*);
@@ -1555,15 +1556,20 @@ template void writeTensorBinary(std::string&, const Tensor<float>&);
 template void exportTensorBinary(const char*, const Tensor<float>*);
 template void exportTensorBinary(const char*, const Tucker::Tensor<float>*);
 template void exportTimeSeries(const char*, const Tensor<float>*);
+template Tensor<float>* generateTensor(int, TuckerTensor<float>*, Tucker::SizeArray*, 
+    Tucker::SizeArray*, Tucker::SizeArray*, float);
+template Tucker::Matrix<float>* LQ(const Tensor<float>*, const int, Tucker::Timer*,
+    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
+
 
 template Tucker::Matrix<double>* oldGram(const Tensor<double>*, const int,
     Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
 template Tucker::Matrix<double>* newGram(const Tensor<double>*, const int,
     Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
 template const TuckerTensor<double>* STHOSVD(const Tensor<double>* const, const double, 
-    bool, bool);
+    int*, bool, bool, bool);
 template const TuckerTensor<double>* STHOSVD(const Tensor<double>* const, 
-    const Tucker::SizeArray* const, bool, bool);
+    const Tucker::SizeArray* const, int*, bool, bool, bool);
 template Tucker::MetricData<double>* computeSliceMetrics(const Tensor<double>* const,
     int, int);
 template void transformSlices(Tensor<double>*, int, const double*, const double*);
@@ -1579,5 +1585,9 @@ template void writeTensorBinary(std::string&, const Tensor<double>&);
 template void exportTensorBinary(const char*, const Tensor<double>*);
 template void exportTensorBinary(const char*, const Tucker::Tensor<double>*);
 template void exportTimeSeries(const char*, const Tensor<double>*);
+template Tensor<double>* generateTensor(int, TuckerTensor<double>*, Tucker::SizeArray*, 
+    Tucker::SizeArray*, Tucker::SizeArray*, double);
+template Tucker::Matrix<double>* LQ(const Tensor<double>*, const int, Tucker::Timer*,
+    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
 
 } // end namespace TuckerMPI

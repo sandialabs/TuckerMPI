@@ -21,23 +21,28 @@ int main()
   scalar_t* singularValues = Tucker::MemoryManager::safe_new_array<scalar_t>(nrows);
   Tucker::Matrix<scalar_t>* singularVectors = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nrows, ncols);
   Tucker::computeSVD(matrix, singularValues, singularVectors);
-
+   
   for(int i=0; i<nrows; i++) {
     scalar_t diff = std::abs(singularValues[i]-trueSingularValues[i]);
-    if(diff > 1000 * std::numeric_limits<scalar_t>::epsilon()) {
-      std::cerr << "ERROR: The true singular value is " << trueSingularValues[i]
+    if(diff > 10* std::numeric_limits<scalar_t>::epsilon()* trueSingularValues[0]) {
+      std::cout << "precision set to " << std::numeric_limits<scalar_t>::max_digits10 << std::endl;
+      std::cout.precision(std::numeric_limits<scalar_t>::max_digits10);
+      std::cout << "ERROR: The true singular value is " << trueSingularValues[i]
                 << ", but the computed singular value was " << singularValues[i]
-                << ", a difference of " << diff << std::endl;
+                << ", a difference of " <<diff/trueSingularValues[i] << std::endl;
+      std::cout << "epsilon: " << 10*std::numeric_limits<scalar_t>::epsilon() << std::endl;
       return EXIT_FAILURE;
     }
   }
 
+  // std::cout << singularVectors->prettyPrint();
   for(int i=0; i<nrows*nrows; i++) {
     scalar_t diff = std::abs(std::abs(U->data()[i])-std::abs(singularVectors->data()[i]));
-    if(diff > 1000 * std::numeric_limits<scalar_t>::epsilon()) {
-      std::cerr << "ERROR: The true solution is " << U->data()[i]
+    if(diff > 100*std::numeric_limits<scalar_t>::epsilon()) {
+      std::cout << "ERROR: The true solution is " << U->data()[i]
                 << ", but the computed solution was " << singularVectors->data()[i]
                 << ", a difference of " << diff << std::endl;
+      std::cout << "threshold: " << 100*std::numeric_limits<scalar_t>::epsilon() << std::endl;
       return EXIT_FAILURE;
     }
   }
