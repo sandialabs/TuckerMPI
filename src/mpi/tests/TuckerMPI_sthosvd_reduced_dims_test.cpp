@@ -28,7 +28,7 @@ int main(int argc, char* argv[]){
   Tucker::SizeArray* core_dims = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(n);
   (*core_dims)[0] = 10; (*core_dims)[1] = 5; (*core_dims)[2] = 5; (*core_dims)[3] = 10;
   //std::cout << "in test, proc_grid_dim->prod() = " << proc_grid_dims->prod() << "." << std::endl;
-  TuckerMPI::Tensor<scalar_t>* T = TuckerMPI::generateTensor(seed, fact, proc_grid_dims, tensor_dims, core_dims, 1e-6);
+  TuckerMPI::Tensor<scalar_t>* T = TuckerMPI::generateTensor<scalar_t>(seed, fact, proc_grid_dims, tensor_dims, core_dims, 1e-6);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(proc_grid_dims);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(tensor_dims);
 

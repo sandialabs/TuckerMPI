@@ -28,7 +28,7 @@ int main(int argc, char* argv[]){
   (*tensor_dims)[0] = 10; (*tensor_dims)[1] = 20; (*tensor_dims)[2] = 10;  (*tensor_dims)[3] = 20; 
   Tucker::SizeArray* core_dims = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(n);
   (*core_dims)[0] = 5; (*core_dims)[1] = 10; (*core_dims)[2] = 5; (*core_dims)[3] = 10; 
-  TuckerMPI::Tensor* T = TuckerMPI::generateTensor(seed, fact, proc_grid_dims, tensor_dims, core_dims, 1e-12);
+  TuckerMPI::Tensor<scalar_t>* T = TuckerMPI::generateTensor<scalar_t>(seed, fact, proc_grid_dims, tensor_dims, core_dims, 1e-12);
   // std::cout << "core tensor is originally: ";
   // for(int i = 0; i < 4; i++){
   //   std::cout << fact->G->getGlobalSize().data()[i] << ", ";

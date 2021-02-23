@@ -1,6 +1,7 @@
 #include<cstdlib>
 #include "TuckerMPI.hpp"
-#include<cmath>
+#include <cmath>
+#include <map>
 
 template <class scalar_t>
 bool checkEqual(const scalar_t* arr1, const scalar_t* arr2, int nrows, int ncols)
@@ -263,7 +264,7 @@ int main(int argc, char* argv[])
   int root = 0;
   int LSize = 12; // length of the side of the square that L is in.
   int compareResultBuff;
-  std::string filename = "input_files/lq_data.mpi";
+  filename = "input_files/lq_data.mpi";
   for(int t=0; t<nPossibleProcGrid; t++){
     Tucker::SizeArray* nprocsPerDim = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(ndims);
     (*nprocsPerDim)[0] = *(processorGridLayouts+t*4);

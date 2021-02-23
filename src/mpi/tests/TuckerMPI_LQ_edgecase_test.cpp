@@ -52,9 +52,9 @@ int main(int argc, char* argv[])
   (*nprocsPerDim)[3] = 2;
   TuckerMPI::Distribution* dist = 
   Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*tensorSizeArray,*nprocsPerDim);
-  TuckerMPI::Tensor* tensor = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
+  TuckerMPI::Tensor<scalar_t>* tensor = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
   TuckerMPI::importTensorBinary(inputFilename.c_str(),tensor);
-  Tucker::Matrix<scalar_t>* trueL =Tucker::importMatrix(outputFilename.c_str());
+  Tucker::Matrix<scalar_t>* trueL =Tucker::importMatrix<scalar_t>(outputFilename.c_str());
   int compareResultBuff;
 
   Tucker::Matrix<scalar_t>* L = TuckerMPI::LQ<scalar_t>(tensor, 0);

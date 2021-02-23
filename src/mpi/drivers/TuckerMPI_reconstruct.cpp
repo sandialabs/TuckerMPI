@@ -365,8 +365,7 @@ int main(int argc, char* argv[])
   ////////////////////////////////////////////////////
   // Reconstruct the requested pieces of the tensor //
   ////////////////////////////////////////////////////
-<<<<<<< HEAD
-  TuckerMPI::Tensor* result = fact->G;
+  TuckerMPI::Tensor<scalar_t>* result = fact->G;
 
   // Compute the nnz of the largest tensor piece being stored by any process
   size_t max_lcl_nnz = 1;
@@ -374,9 +373,6 @@ int main(int argc, char* argv[])
     max_lcl_nnz *= result->getDistribution()->getMap(i,false)->getMaxNumEntries();
   }
 
-=======
-  TuckerMPI::Tensor<scalar_t>* result = fact->G;
->>>>>>> original_repo/single_precision
   for(int i=0; i<nd; i++)
   {
     int mode = (*rec_order)[i];
@@ -387,11 +383,7 @@ int main(int argc, char* argv[])
         fact->U[mode]->getSubmatrix(start_subs, end_subs);
 
     // Perform the TTM
-<<<<<<< HEAD
-    TuckerMPI::Tensor* temp = TuckerMPI::ttm(result,mode,factMat,false,0,0,0,0,max_lcl_nnz);
-=======
-    TuckerMPI::Tensor<scalar_t>* temp = TuckerMPI::ttm(result,mode,factMat);
->>>>>>> original_repo/single_precision
+    TuckerMPI::Tensor<scalar_t>* temp = TuckerMPI::ttm(result,mode,factMat,false,0,0,0,0,max_lcl_nnz);
 
     Tucker::MemoryManager::safe_delete(factMat);
     if(result != fact->G) {

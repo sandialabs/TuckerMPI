@@ -75,10 +75,11 @@ int main(int argc, char* argv[])
   (*expectedSize)[2] = 5;
   TuckerMPI::Distribution* expectedDist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*expectedSize,*nprocsPerDim);
-  TuckerMPI::Tensor<double>* expectedResult =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<double>>(expectedDist);
+  TuckerMPI::Tensor<scalar_t>* expectedResult =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(expectedDist);
   filename = "input_files/ttm_result0.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult);
+
 
   approxEqual = isApproxEqual(result,expectedResult, 100 * std::numeric_limits<scalar_t>::epsilon());
   Tucker::MemoryManager::safe_delete(result);
@@ -110,8 +111,8 @@ int main(int argc, char* argv[])
   (*expectedSize)[2] = 5;
   expectedDist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*expectedSize,*nprocsPerDim);
-  TuckerMPI::Tensor<double>* expectedResult2 =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<double>>(expectedDist);
+  TuckerMPI::Tensor<scalar_t>* expectedResult2 =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(expectedDist);
   filename = "input_files/ttm_result0t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult2);
 
@@ -147,8 +148,8 @@ int main(int argc, char* argv[])
   (*expectedSize)[2] = 5;
   expectedDist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*expectedSize,*nprocsPerDim);
-  TuckerMPI::Tensor<double>* expectedResult3 =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<double>>(expectedDist);
+  TuckerMPI::Tensor<scalar_t>* expectedResult3 =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(expectedDist);
   filename = "input_files/ttm_result1.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult3);
 
@@ -184,8 +185,8 @@ int main(int argc, char* argv[])
   (*expectedSize)[2] = 5;
   expectedDist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*expectedSize,*nprocsPerDim);
-  TuckerMPI::Tensor<double>* expectedResult4 =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<double>>(expectedDist);
+  TuckerMPI::Tensor<scalar_t>* expectedResult4 =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(expectedDist);
   filename = "input_files/ttm_result1t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult4);
 
@@ -224,8 +225,8 @@ int main(int argc, char* argv[])
   (*expectedSize)[2] = 7;
   expectedDist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*expectedSize,*nprocsPerDim);
-  TuckerMPI::Tensor<double>* expectedResult5 =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<double>>(expectedDist);
+  TuckerMPI::Tensor<scalar_t>* expectedResult5 =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(expectedDist);
   filename = "input_files/ttm_result2.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult5);
 
@@ -264,8 +265,8 @@ int main(int argc, char* argv[])
   (*expectedSize)[2] = 7;
   expectedDist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*expectedSize,*nprocsPerDim);
-  TuckerMPI::Tensor<double>* expectedResult6 =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<double>>(expectedDist);
+  TuckerMPI::Tensor<scalar_t>* expectedResult6 =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(expectedDist);
   filename = "input_files/ttm_result2t.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),expectedResult6);
 

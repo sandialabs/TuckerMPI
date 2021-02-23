@@ -2,16 +2,16 @@ INCLUDE_DIRECTORIES(.. ../../serial)
 
 # Double precision tests
 ADD_EXECUTABLE(TuckerMPI_sthosvd_threshold_test TuckerMPI_sthosvd_threshold_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_threshold_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_threshold_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_sthosvd_reduced_dims_test TuckerMPI_sthosvd_reduced_dims_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_reduced_dims_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_reduced_dims_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_LQ_edgecase_test TuckerMPI_LQ_edgecase_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_LQ_edgecase_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_LQ_edgecase_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_LQ_test TuckerMPI_LQ_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_LQ_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_LQ_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_IO_test TuckerMPI_IO_test.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_IO_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
@@ -75,16 +75,16 @@ TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test_file mpi_tucker serial_tucker ${BLAS_LI
 
 # Single precision tests
 ADD_EXECUTABLE(TuckerMPI_sthosvd_threshold_test_single TuckerMPI_sthosvd_threshold_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_threshold_test_single mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_threshold_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_sthosvd_reduced_dims_test_single TuckerMPI_sthosvd_reduced_dims_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_reduced_dims_test_single mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_reduced_dims_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_LQ_edgecase_test_single TuckerMPI_LQ_edgecase_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_LQ_edgecase_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_LQ_edgecase_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_LQ_test_single TuckerMPI_LQ_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_LQ_test_single mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_LQ_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_IO_test_single TuckerMPI_IO_test.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_IO_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
@@ -126,7 +126,7 @@ ADD_EXECUTABLE(TuckerMPI_gram2_single TuckerMPI_gram2.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_gram2_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_ttm_test_single TuckerMPI_ttm_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_reconstruct_test_single TuckerMPI_reconstruct_test.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_reconstruct_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})

@@ -401,13 +401,8 @@ int main(int argc, char* argv[])
   // Perform STHOSVD //
   /////////////////////
   if(boolSTHOSVD) {
-<<<<<<< HEAD
-    const TuckerMPI::TuckerTensor* solution;
-    bool flipSign = false; // confirm its default as false
-=======
     const TuckerMPI::TuckerTensor<scalar_t>* solution;
-
->>>>>>> original_repo/single_precision
+    bool flipSign = false; // confirm its default as false
     if(boolAuto) {
       solution = TuckerMPI::STHOSVD(&X, tol, modeOrder->data(), boolUseOldGram, flipSign, useLQ);
     }
@@ -420,22 +415,12 @@ int main(int argc, char* argv[])
     else solution->printTimers(timing_file);
 
     if(boolReconstruct) {
-<<<<<<< HEAD
-      TuckerMPI::Tensor* t = solution->reconstructTensor();
-      TuckerMPI::Tensor* diff = X.subtract(t);
-      double nrm = X.norm2();
-      double err = diff->norm2();
-      double maxEntry = diff->maxEntry();
-      double minEntry = diff->minEntry();
-=======
       TuckerMPI::Tensor<scalar_t>* t = solution->reconstructTensor();
-
       TuckerMPI::Tensor<scalar_t>* diff = X.subtract(t);
       scalar_t nrm = X.norm2();
       scalar_t err = diff->norm2();
       scalar_t maxEntry = diff->maxEntry();
       scalar_t minEntry = diff->minEntry();
->>>>>>> original_repo/single_precision
       if(rank == 0) {
         std::cout << "Norm of X: " << std::sqrt(nrm) << std::endl;
         std::cout << "Norm of X - Xtilde: "
@@ -445,8 +430,8 @@ int main(int argc, char* argv[])
         std::cout << "Maximum entry of X - Xtilde: "
             << std::max(maxEntry,-minEntry) << std::endl;
       }
-      Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(diff);
-      Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(t);
+      Tucker::MemoryManager::safe_delete(diff);
+      Tucker::MemoryManager::safe_delete(t);
     }
 
     if(rank == 0) {
@@ -456,22 +441,15 @@ int main(int argc, char* argv[])
       filePrefix = sv_dir + "/" + sv_fn + "vector_mode_";
       TuckerMPI::printEigenvectors(solution, filePrefix);
     }
-<<<<<<< HEAD
     MPI_Barrier(MPI_COMM_WORLD);
-    double xnorm2 = X.norm2();
-    double xnorm = std::sqrt(xnorm2);
-    double gnorm = std::sqrt(solution->G->norm2());
-=======
-
-    scalar_t xnorm = std::sqrt(X.norm2());
+    scalar_t xnorm2 = X.norm2();
+    scalar_t xnorm = std::sqrt(xnorm2);
     scalar_t gnorm = std::sqrt(solution->G->norm2());
->>>>>>> original_repo/single_precision
     if(rank == 0) {
       std::cout << "Norm of input tensor: " << xnorm << std::endl;
       std::cout << "Norm of core tensor: " << gnorm << std::endl;
       // Compute the error bound based on the eigenvalues
-<<<<<<< HEAD
-      double eb =0;
+      scalar_t eb =0;
       if(useLQ){
         for(int i=0; i<nd; i++) {
           for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
@@ -484,12 +462,6 @@ int main(int argc, char* argv[])
           for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
             eb += solution->eigenvalues[i][j];
           }
-=======
-      scalar_t eb =0;
-      for(int i=0; i<nd; i++) {
-        for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
-          eb += solution->eigenvalues[i][j];
->>>>>>> original_repo/single_precision
         }
       }
       std::cout << "Error bound: " << std::sqrt(eb)/xnorm << std::endl;
