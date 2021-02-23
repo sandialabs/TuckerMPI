@@ -1,6 +1,8 @@
 #include<cstdlib>
 #include "TuckerMPI.hpp"
 #include<cmath>
+#include<map>
+
 bool checkEqual(const double* arr1, const double* arr2, int nrows, int ncols)
 {
     int ind = 0;
