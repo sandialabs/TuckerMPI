@@ -10,6 +10,7 @@
 
 int main(int argc, char* argv[])
 {
+  typedef double scalar_t;
   MPI_Init(&argc, &argv);
 
   //
@@ -31,16 +32,16 @@ int main(int argc, char* argv[])
   TuckerMPI::Distribution* dist =
     Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*sz,*nprocsPerDim);
 
-  TuckerMPI::Tensor X(dist);
+  TuckerMPI::Tensor<scalar_t> X(dist);
   X.rand();
 
   if(rank == 0) {
     size_t local_nnz = X.getLocalNumEntries();
     size_t global_nnz = X.getGlobalNumEntries();
     std::cout << "Local input tensor size: " << X.getLocalSize() << ", or ";
-    Tucker::printBytes(local_nnz*sizeof(double));
+    Tucker::printBytes(local_nnz*sizeof(scalar_t));
     std::cout << "Global input tensor size: " << X.getGlobalSize() << ", or ";
-    Tucker::printBytes(global_nnz*sizeof(double));
+    Tucker::printBytes(global_nnz*sizeof(scalar_t));
   }
 
   Tucker::Timer local_qr_timer;
@@ -51,7 +52,7 @@ int main(int argc, char* argv[])
   Tucker::Timer localqr_decompose_timer;
   Tucker::Timer localqr_transpose_timer;
   if(rank == 0) total_timer.start();
-  Tucker::Matrix* L0 = TuckerMPI::LQ(&X, 0, &tsqr_timer, &local_qr_timer, &redistribute_timer,
+  Tucker::Matrix<scalar_t>* L0 = TuckerMPI::LQ<scalar_t>(&X, 0, &tsqr_timer, &local_qr_timer, &redistribute_timer,
     &localqr_dcopy_timer, &localqr_decompose_timer, &localqr_transpose_timer);
   if(rank == 0){
     total_timer.stop();

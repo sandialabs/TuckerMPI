@@ -10,6 +10,40 @@
 namespace TuckerMPI
 {
 
+void MPI_Bcast_(float* buffer, int count, int root, MPI_Comm comm)
+{
+  MPI_Bcast(buffer, count, MPI_FLOAT, root, comm);
+}
+
+void MPI_Bcast_(double* buffer, int count, int root, MPI_Comm comm)
+{
+  MPI_Bcast(buffer, count, MPI_DOUBLE, root, comm);
+}
+
+void MPI_Recv_(float* buf, int count, int source, int tag,
+     MPI_Comm comm, MPI_Status *status)
+{
+  MPI_Recv(buf, count, MPI_FLOAT, source, tag, comm, status);
+}
+
+void MPI_Recv_(double* buf, int count, int source, int tag,
+     MPI_Comm comm, MPI_Status *status)
+{
+  MPI_Recv(buf, count, MPI_DOUBLE, source, tag, comm, status);
+}
+
+void MPI_Send_(float* buf, int count, int dest, int tag,
+     MPI_Comm comm)
+{
+  MPI_Send(buf, count, MPI_FLOAT, dest, tag, comm);
+}
+
+void MPI_Send_(double* buf, int count, int dest, int tag,
+     MPI_Comm comm)
+{
+  MPI_Send(buf, count, MPI_DOUBLE, dest, tag, comm);
+}
+
 void MPI_Isend_(const float* buf, int count, int dest, int tag,
      MPI_Comm comm, MPI_Request* request)
 {

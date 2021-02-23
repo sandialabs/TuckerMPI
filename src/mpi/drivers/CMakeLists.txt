@@ -16,11 +16,7 @@ ADD_EXECUTABLE(generate TuckerMPI_generate.cpp)
 TARGET_LINK_LIBRARIES(generate mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(gram TuckerMPI_gram.cpp)
-<<<<<<< HEAD
 TARGET_LINK_LIBRARIES(gram mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(LQ TuckerMPI_LQ.cpp)
 TARGET_LINK_LIBRARIES(LQ mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
-=======
-TARGET_LINK_LIBRARIES(gram mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
->>>>>>> original_repo/single_precision

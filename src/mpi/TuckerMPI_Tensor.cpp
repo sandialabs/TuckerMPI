@@ -157,7 +157,7 @@ Tensor<scalar_t>* Tensor<scalar_t>::subtract(const Tensor<scalar_t>* t) const
 {
   TuckerMPI::Distribution* dist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dist_->getGlobalDims(), dist_->getProcessorGrid()->size());
-  Tensor* sub = Tucker::MemoryManager::safe_new<Tensor>(dist);
+  Tensor<scalar_t>* sub = Tucker::MemoryManager::safe_new<Tensor<scalar_t>>(dist);
 
   size_t nnz = getLocalNumEntries();
   if(nnz > 0) {

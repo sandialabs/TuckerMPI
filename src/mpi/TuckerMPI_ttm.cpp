@@ -225,11 +225,11 @@ template Tensor<float>* ttm(const Tensor<float>* X, const int n,
     const Tucker::Matrix<float>* const U, bool Utransp,
     Tucker::Timer* mult_timer, Tucker::Timer* pack_timer,
     Tucker::Timer* reduce_scatter_timer,
-    Tucker::Timer* reduce_timer);
+    Tucker::Timer* reduce_timer, size_t nnz_limit);
 template Tensor<double>* ttm(const Tensor<double>* X, const int n,
     const Tucker::Matrix<double>* const U, bool Utransp,
     Tucker::Timer* mult_timer, Tucker::Timer* pack_timer,
     Tucker::Timer* reduce_scatter_timer,
-    Tucker::Timer* reduce_timer);
+    Tucker::Timer* reduce_timer, size_t nnz_limit);
 
 } // end namespace TuckerMPI

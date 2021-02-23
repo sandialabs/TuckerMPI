@@ -211,16 +211,16 @@ public:
     }
 
     // Perform the reductions
-    MPI_Reduce((void*)raw_array, (void*)min_array, ntimers*N+1,
+    MPI_Reduce_(raw_array, min_array, ntimers*N+1,
         MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce((void*)raw_array, (void*)max_array, ntimers*N+1,
+    MPI_Reduce_(raw_array, max_array, ntimers*N+1,
         MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce((void*)raw_array, (void*)mean_array, ntimers*N+1,
+    MPI_Reduce_(raw_array, mean_array, ntimers*N+1,
         MPI_SUM, 0, MPI_COMM_WORLD);
 
     // Gather all the data to process 0
-    MPI_Gather((void*)raw_array, ntimers*N+1,
-        (void*)gathered_data, ntimers*N+1, 0, MPI_COMM_WORLD);
+    MPI_Gather_(raw_array, ntimers*N+1,
+        gathered_data, ntimers*N+1, 0, MPI_COMM_WORLD);
 
     if(rank == 0) {
       // mean_array currently holds the sum, so divide by # entries

@@ -234,8 +234,7 @@ void exportTimeSeries(const char* filename, const Tensor<scalar_t>* Y);
  */
 template <class scalar_t>
 Tensor<scalar_t>* generateTensor(int seed, TuckerTensor<scalar_t>* fact, Tucker::SizeArray* proc_dims, 
-  Tucker::SizeArray* tensor_dims, Tucker::SizeArray* core_dims,
-  double noise);
+  Tucker::SizeArray* tensor_dims, Tucker::SizeArray* core_dims, scalar_t noise);
 } // end namespace TuckerMPI
 
 #endif /* TUCKER_MPI_HPP_ */

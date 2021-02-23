@@ -90,7 +90,7 @@ Tucker::Matrix<scalar_t>* localQR(const Matrix<scalar_t>* M, bool isLastMode, Tu
   }
   else{
     if(dcopy_timer) dcopy_timer->start();
-    Tucker::Matrix* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrowsM, ncolsM);
+    Tucker::Matrix<scalar_t>* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nrowsM, ncolsM);
     Tucker::copy(&sizeOfM, M->getLocalMatrix()->data(), &one, Mcopy->data(), &one);
     if(dcopy_timer) dcopy_timer->stop();
     if(decompose_timer) decompose_timer->start();

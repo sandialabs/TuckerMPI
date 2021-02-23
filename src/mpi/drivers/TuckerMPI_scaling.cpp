@@ -17,6 +17,7 @@
 
 int main(int argc, char* argv[])
 {
+  typedef double scalar_t;
   //
   // Initialize MPI
   //
@@ -139,35 +140,35 @@ int main(int argc, char* argv[])
   /////////////////////////////////
   // Generate random tensor data //
   /////////////////////////////////
-  TuckerMPI::Tensor X(dist);
+  TuckerMPI::Tensor<scalar_t> X(dist);
   X.rand();
 
   if(rank == 0) {
     size_t local_nnz = X.getLocalNumEntries();
     size_t global_nnz = X.getGlobalNumEntries();
     std::cout << "Local input tensor size: " << X.getLocalSize() << ", or ";
-    Tucker::printBytes(local_nnz*sizeof(double));
+    Tucker::printBytes(local_nnz*sizeof(scalar_t));
     std::cout << "Global input tensor size: " << X.getGlobalSize() << ", or ";
-    Tucker::printBytes(global_nnz*sizeof(double));
+    Tucker::printBytes(global_nnz*sizeof(scalar_t));
   }
 
   /////////////////////
   // Perform STHOSVD //
   /////////////////////
-  const TuckerMPI::TuckerTensor* solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, false, boolUseLQ);
+  const TuckerMPI::TuckerTensor<scalar_t>* solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, false, boolUseLQ);
 
   // Send the timing information to a CSV
   if(boolUseLQ) solution->printTimersLQ(timing_file);
   else solution->printTimers(timing_file);
 
-  double xnorm = std::sqrt(X.norm2());
-  double gnorm = std::sqrt(solution->G->norm2());
+  scalar_t xnorm = std::sqrt(X.norm2());
+  scalar_t gnorm = std::sqrt(solution->G->norm2());
   if(rank == 0) {
     std::cout << "Norm of input tensor: " << xnorm << std::endl;
     std::cout << "Norm of core tensor: " << gnorm << std::endl;
 
     // Compute the error bound based on the eigenvalues
-    double eb =0;
+    scalar_t eb =0;
     if(boolUseLQ){
       for(int i=0; i<nd; i++) {
         for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {

@@ -106,8 +106,8 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, Tucker::Tim
       if(globalRank+ pow(2, i) < globalnp){
         int tempBNrows;
         MPI_Recv(&tempBNrows, 1, MPI_INT, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
-        tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix>(tempBNrows, Rncols);
-        MPI_Recv(tempB->data(), Rncols*Rncols, MPI_DOUBLE, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
+        tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(tempBNrows, Rncols);
+        MPI_Recv_(tempB->data(), Rncols*Rncols, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
         int nb = (Rncols > 32)? 32 : Rncols;
         scalar_t* T = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
         scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
@@ -138,7 +138,7 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, Tucker::Tim
       sizeOfR = R->nrows()* R->ncols();
       Rnrows = R->nrows();
       MPI_Send(&Rnrows, 1, MPI_INT, globalRank-pow(2, i), globalRank, MPI_COMM_WORLD);
-      MPI_Send(R->data(), sizeOfR, MPI_DOUBLE, globalRank-pow(2, i), globalRank, MPI_COMM_WORLD);
+      MPI_Send_(R->data(), sizeOfR, globalRank-pow(2, i), globalRank, MPI_COMM_WORLD);
     }
   }
   if(tsqr_timer) tsqr_timer->stop();
@@ -531,7 +531,7 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
       factorization->LQ_timer_[mode].stop();
       int SizeOfL = L->nrows()*L->ncols();
       factorization->LQ_bcast_timer_[mode].start();
-      MPI_Bcast(L->data(), SizeOfL, 0, MPI_COMM_WORLD);
+      MPI_Bcast_(L->data(), SizeOfL, 0, MPI_COMM_WORLD);
       factorization->LQ_bcast_timer_[mode].stop();
       if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << mode << ")...\n";
       factorization->svd_timer_[mode].start();
@@ -673,7 +673,7 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
       factorization->LQ_timer_[mode].stop();
       int SizeOfL = L->nrows()*L->ncols();
       factorization->LQ_bcast_timer_[mode].start();
-      MPI_Bcast(L->data(), SizeOfL, 0, MPI_COMM_WORLD);
+      MPI_Bcast_(L->data(), SizeOfL, 0, MPI_COMM_WORLD);
       factorization->LQ_bcast_timer_[mode].stop();
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << mode << ")...\n";
@@ -1440,9 +1440,9 @@ void exportTimeSeries(const char* filename, const Tensor<scalar_t>* Y)
   Tucker::MemoryManager::safe_delete_array(gsizes,ndims-1);
 }
 
+template <class scalar_t>
 Tensor<scalar_t>* generateTensor(int seed, TuckerTensor<scalar_t>* fact, Tucker::SizeArray* proc_dims, 
-  Tucker::SizeArray* tensor_dims, Tucker::SizeArray* core_dims,
-  scalar_t noise){
+  Tucker::SizeArray* tensor_dims, Tucker::SizeArray* core_dims, scalar_t noise){
   if(proc_dims->size() != tensor_dims->size()){
     throw std::runtime_error("TuckerMPI::generateTensor(): processor grid dimension doesn't match that of the output tensor");
   }
@@ -1478,8 +1478,8 @@ Tensor<scalar_t>* generateTensor(int seed, TuckerTensor<scalar_t>* fact, Tucker:
   std::normal_distribution<scalar_t> distribution;
   //GENERATE CORE TENSOR//
   //distribution for the core
-  TuckerMPI::Distribution<scalar_t>* dist =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution<scalar_t>>(*core_dims, *proc_dims);
+  TuckerMPI::Distribution* dist =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*core_dims, *proc_dims);
   fact->G = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
   size_t nnz = dist->getLocalDims().prod();
   scalar_t* dataptr = fact->G->getLocalTensor()->data();
@@ -1500,7 +1500,7 @@ Tensor<scalar_t>* generateTensor(int seed, TuckerTensor<scalar_t>* fact, Tucker:
       }
     }
 
-    MPI_Bcast(dataptr,nnz,0,MPI_COMM_WORLD);
+    MPI_Bcast_(dataptr,nnz,0,MPI_COMM_WORLD);
   }
   //TTM between factor matrices and core//
   TuckerMPI::Tensor<scalar_t>* product = fact->G;

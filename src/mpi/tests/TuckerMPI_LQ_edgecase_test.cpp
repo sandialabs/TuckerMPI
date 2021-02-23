@@ -2,7 +2,8 @@
 #include "TuckerMPI.hpp"
 #include<cmath>
 
-bool checkEqual(const double* arr1, const double* arr2, int nrows, int ncols)
+template <class scalar_t>
+bool checkEqual(const scalar_t* arr1, const scalar_t* arr2, int nrows, int ncols)
 {
     int ind = 0;
     for(int c=0; c<ncols; c++) {
@@ -20,6 +21,15 @@ bool checkEqual(const double* arr1, const double* arr2, int nrows, int ncols)
 
 int main(int argc, char* argv[])
 {
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t;
+  std::string filename = "input_files/tensor64_single.mpi"; 
+#else
+  typedef double scalar_t;
+  std::string filename = "input_files/tensor64.mpi";
+#endif
+
   MPI_Init(&argc,&argv);
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -44,10 +54,10 @@ int main(int argc, char* argv[])
   Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*tensorSizeArray,*nprocsPerDim);
   TuckerMPI::Tensor* tensor = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
   TuckerMPI::importTensorBinary(inputFilename.c_str(),tensor);
-  Tucker::Matrix* trueL =Tucker::importMatrix(outputFilename.c_str());
+  Tucker::Matrix<scalar_t>* trueL =Tucker::importMatrix(outputFilename.c_str());
   int compareResultBuff;
 
-  Tucker::Matrix* L = TuckerMPI::LQ(tensor, 0);
+  Tucker::Matrix<scalar_t>* L = TuckerMPI::LQ<scalar_t>(tensor, 0);
   // if(rank == 0) std::cout << L->prettyPrint();
   if(rank == 0){
     compareResultBuff = checkEqual(L->data(), trueL->data(), 96, 96);
@@ -66,7 +76,7 @@ int main(int argc, char* argv[])
   (*nprocsPerDim)[2] = 2; 
   (*nprocsPerDim)[3] = 2;
   dist = Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*tensorSizeArray,*nprocsPerDim);
-  tensor = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
+  tensor = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
   TuckerMPI::importTensorBinary(inputFilename.c_str(),tensor);
   L = TuckerMPI::LQ(tensor, 0);
   if(rank == 0){

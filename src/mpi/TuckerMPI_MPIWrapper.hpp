@@ -15,6 +15,15 @@ namespace TuckerMPI
 {
 
 // Overloaded wrappers
+void MPI_Recv_(float*, int, int, int, MPI_Comm, MPI_Status*);
+void MPI_Recv_(double*, int, int, int, MPI_Comm, MPI_Status*);
+
+void MPI_Send_(float*, int, int, int, MPI_Comm);
+void MPI_Send_(double*, int, int, int, MPI_Comm);
+
+void MPI_Bcast_(float*, int, int, MPI_Comm);
+void MPI_Bcast_(double*, int, int, MPI_Comm);
+
 void MPI_Isend_(const float*, int, int, int, MPI_Comm, MPI_Request*);
 void MPI_Isend_(const double*, int, int, int, MPI_Comm, MPI_Request*);
 
