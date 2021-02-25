@@ -54,9 +54,8 @@
 
 namespace TuckerMPI
 {
-//There isn't a check for this since we might handle this case later but for now
-//it is assumed that the processor grid is never bigger than the tensor in any mode.
-Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
+//Compute the LQ of the local matrix, transpose it, do TSQR and then transpose it back to an L.
+Tucker::Matrix* LQ(const Tensor* Y, const int n, bool useButterflyTSQR, Tucker::Timer* tsqr_timer,
     Tucker::Timer* local_qr_timer, Tucker::Timer* redistribute_timer,
     Tucker::Timer* localqr_dcopy_timer, Tucker::Timer* localqr_decompose_timer, 
     Tucker::Timer* localqr_transpose_timer){
@@ -94,19 +93,52 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
   }
   if(local_qr_timer) local_qr_timer->stop();
 
-  int sizeOfR = R->nrows()*R->ncols();
+  if(tsqr_timer) tsqr_timer->start();
   Tucker::Matrix* L = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rncols, Rncols);
+  if(useButterflyTSQR){
+    ButterflyTSQR(R, L);
+  }
+  else{
+    TSQR(R);
+    if(globalRank == 0){
+      //add zeros at the lower triangle
+      for(int c=0; c<R->ncols(); c++){
+        for(int r=c+1; r<R->nrows(); r++){
+          R->data()[r+c*R->nrows()] = 0;
+        }
+      }
+      //transpose
+      for(int i=0; i<Rncols; i++){
+        dcopy_(&Rncols, R->data()+i*Rncols, &one, L->data()+i, &Rncols); 
+      }
+      Tucker::MemoryManager::safe_delete(R);
+    }
+    //bcast
+  }
+  if(tsqr_timer) tsqr_timer->stop();
+  return L;
+}
+
+Tucker::Matrix* TSQR(Tucker::Matrix* R){
+  int one = 1;
+  int globalRank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
+  int globalnp;
+  MPI_Comm_size(MPI_COMM_WORLD, &globalnp);
+  int Rnrows = R->nrows();
+  int Rncols = R->ncols();
+  int sizeOfR = R->nrows()*R->ncols();
+  
   Tucker::Matrix* tempB;
   int treeDepth = (int)ceil(log2(globalnp));
   MPI_Status status;
-  if(tsqr_timer) tsqr_timer->start();
   for(int i=0; i < treeDepth; i++){
     if(globalRank % (int)pow(2, i+1) == 0){
       if(globalRank+ pow(2, i) < globalnp){
-        int tempBNrows;
-        MPI_Recv(&tempBNrows, 1, MPI_INT, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
-        tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix>(tempBNrows, Rncols);
-        MPI_Recv(tempB->data(), Rncols*Rncols, MPI_DOUBLE, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
+        int tempBnrows;
+        MPI_Recv(&tempBnrows, 1, MPI_INT, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
+        tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix>(tempBnrows, Rncols);
+        MPI_Recv(tempB->data(), tempBnrows*Rncols, MPI_DOUBLE, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
         int nb = (Rncols > 32)? 32 : Rncols;
         double* T = Tucker::MemoryManager::safe_new_array<double>(nb*Rncols);
         double* work = Tucker::MemoryManager::safe_new_array<double>(nb*Rncols);
@@ -126,8 +158,8 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
           R = squareR;
           Rnrows = R->nrows();//Rnrows might change here
         }
-        Tucker::dtpqrt_(&tempBNrows, &Rncols, &tempBNrows, &nb, R->data(), &Rncols, tempB->data(),
-        &tempBNrows, T, &nb, work, &info);
+        Tucker::dtpqrt_(&tempBnrows, &Rncols, &tempBnrows, &nb, R->data(), &Rncols, tempB->data(),
+        &tempBnrows, T, &nb, work, &info);
         Tucker::MemoryManager::safe_delete(tempB);
         Tucker::MemoryManager::safe_delete_array<double>(work, nb*Rncols);
         Tucker::MemoryManager::safe_delete_array<double>(T, nb*Rncols);
@@ -140,24 +172,96 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, Tucker::Timer* tsqr_timer,
       MPI_Send(R->data(), sizeOfR, MPI_DOUBLE, globalRank-pow(2, i), globalRank, MPI_COMM_WORLD);
     }
   }
-  if(tsqr_timer) tsqr_timer->stop();
-  if(globalRank == 0){
-    //add zeros at the lower triangle
-    for(int c=0; c<R->ncols(); c++){
-      for(int r=c+1; r<R->nrows(); r++){
-        R->data()[r+c*R->nrows()] = 0;
-      }
-    }
-    
-    //transpose
-    for(int i=0; i<Rncols; i++){
-      dcopy_(&Rncols, R->data()+i*Rncols, &one, L->data()+i, &Rncols); 
-    }
-    Tucker::MemoryManager::safe_delete(R);
-  }
-  return L;
 }
 
+Tucker::Matrix* ButterflyTSQR(Tucker::Matrix* R, Tucker::Matrix* L){
+  int one = 1;
+  int globalRank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
+  int globalnp;
+  MPI_Comm_size(MPI_COMM_WORLD, &globalnp);
+  int treeDepth = (int)floor(log2(globalnp)); //depth of the binary TSQR tree
+  MPI_Status status;
+  int cutOff = pow(2, treeDepth);//largest power of 2 that is smaller than globalnp, also the index of the first element not participating in the butterfly
+  //This means globalnp is not a power of 2. 
+  //If so, do pairs of send-receive to address the processors with rank >= cutOff not participating in the butterfly TSQR.
+  if(globalnp > cutOff){
+    if(globalRank >= cutOff){
+      int target = globalRank - cutOff;
+      int sizeOfR = R->nrows()* R->ncols();
+      int Rnrows = R->nrows();
+      MPI_Send(&Rnrows, 1, MPI_INT, target, globalRank, MPI_COMM_WORLD);
+      MPI_Send(R->data(), sizeOfR, MPI_DOUBLE, target, globalRank, MPI_COMM_WORLD);
+    }
+    else if(globalRank + cutOff < globalnp){
+      int target = globalRank + cutOff;
+      int tempBnrows;
+      int Rncols = R->ncols();
+      int Rnrows = R->nrows();
+      MPI_Recv(&tempBnrows, 1, MPI_INT, target, target, MPI_COMM_WORLD, &status);
+      Tucker::Matrix* tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix>(tempBnrows, Rncols);
+      MPI_Recv(tempB->data(), tempBnrows*Rncols, MPI_DOUBLE, target, target, MPI_COMM_WORLD, &status);
+      //padd the top R with zeros if necessary before the dtpqrt
+      if(Rncols > Rnrows){
+        Tucker::Matrix* squareR = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rncols, Rncols);
+        int sizeOfSquareR = Rncols*Rncols;
+        for(int i=0; i<Rncols; i++){
+          dcopy_(&Rnrows, R->data()+i*Rnrows, &one, squareR->data()+i*Rncols, &one); //copy the top part over
+          for(int j=i*Rncols+Rnrows; j<(i+1)*Rncols; j++){// padd the bottom with zeros
+            squareR->data()[j] = 0;
+          }
+        }
+        Tucker::MemoryManager::safe_delete(R);
+        R = squareR;
+        squareR = NULL;
+        Rnrows = R->nrows();
+      }
+      int nb = (Rncols > 32)? 32 : Rncols;
+      double* T = Tucker::MemoryManager::safe_new_array<double>(nb*Rncols);
+      double* work = Tucker::MemoryManager::safe_new_array<double>(nb*Rncols);
+      int info;
+      Tucker::dtpqrt_(&tempBnrows, &Rncols, &tempBnrows, &nb, R->data(), &Rncols, tempB->data(),
+      &tempBnrows, T, &nb, work, &info);
+      Tucker::MemoryManager::safe_delete(tempB);
+      Tucker::MemoryManager::safe_delete_array<double>(work, nb*Rncols);
+      Tucker::MemoryManager::safe_delete_array<double>(T, nb*Rncols);
+    }
+  }
+  //Butterfly TSQR part
+  for(int i=0; i < treeDepth; i++){
+
+  }
+  //
+  if(globalnp > cutOff){
+    if(globalRank >= cutOff){
+      int target = globalRank - cutOff;
+      int sizeOfR = R->nrows()* R->ncols();
+      int Rnrows = R->nrows();
+      MPI_Recv(&Rnrows, 1, MPI_INT, target, target, MPI_COMM_WORLD, &status);
+      MPI_Recv(R->data(), sizeOfR, MPI_DOUBLE, target, target, MPI_COMM_WORLD, &status);
+    }
+    else if(globalRank + cutOff < globalnp){
+      int target = globalRank - cutOff;
+      int sizeOfR = R->nrows()* R->ncols();
+      int Rnrows = R->nrows();
+      MPI_Send(&Rnrows, 1, MPI_INT, target, globalRank, MPI_COMM_WORLD);
+      MPI_Send(R->data(), sizeOfR, MPI_DOUBLE, target, globalRank, MPI_COMM_WORLD);
+    }
+  }
+  int Rncols = R->ncols(); int Rnrows = R->nrows();
+  for(int c=0; c<Rncols; c++){
+    for(int r=c+1; r<Rnrows; r++){
+      R->data()[r+c*Rnrows] = 0;
+    }
+  }
+  //transpose
+  for(int i=0; i<Rncols; i++){
+    dcopy_(&Rncols, R->data()+i*Rncols, &one, L->data()+i, &Rncols); 
+  }
+  Tucker::MemoryManager::safe_delete(R);
+
+  
+}
 /**
  * \test TuckerMPI_old_gram_test_file.cpp
  */
