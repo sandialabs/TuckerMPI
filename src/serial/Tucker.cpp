@@ -121,11 +121,6 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L){
         Y0ncols *= Y->size(i);
       }
     }
-    // if(modeNDimension > Y0ncols){
-    //   std::ostringstream oss;
-    //   oss << "mode 0 unfolding of Y is tall and skinny. Not handled here.";
-    //   throw std::runtime_error(oss.str());
-    // }
 
     Matrix* Y0 = MemoryManager::safe_new<Matrix>(modeNDimension, Y0ncols);
     int Y0nrows = Y0->nrows();

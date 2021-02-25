@@ -94,6 +94,7 @@ Tucker::Matrix* LQ(const Tensor* Y, const int n, bool useButterflyTSQR, Tucker::
   if(local_qr_timer) local_qr_timer->stop();
 
   if(tsqr_timer) tsqr_timer->start();
+  //Since we are padding we can assume the R and thus L are always sqaure.
   Tucker::Matrix* L = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rncols, Rncols);
   if(useButterflyTSQR){
     ButterflyTSQR(R, L);
@@ -229,25 +230,35 @@ Tucker::Matrix* ButterflyTSQR(Tucker::Matrix* R, Tucker::Matrix* L){
   }
   //Butterfly TSQR part
   for(int i=0; i < treeDepth; i++){
+    if(globalRank % (int)pow(2,i+1) == 0){
+
+    }
+    else{
+
+    }
 
   }
   //
   if(globalnp > cutOff){
     if(globalRank >= cutOff){
       int target = globalRank - cutOff;
-      int sizeOfR = R->nrows()* R->ncols();
-      int Rnrows = R->nrows();
-      MPI_Recv(&Rnrows, 1, MPI_INT, target, target, MPI_COMM_WORLD, &status);
-      MPI_Recv(R->data(), sizeOfR, MPI_DOUBLE, target, target, MPI_COMM_WORLD, &status);
+      int Rncols = R->ncols();
+      Tucker::Matrix* finalR = Tucker::MemoryManager::safe_new<Tucker::Matrix>(Rncols, Rncols);
+      int sizeOfR = Rncols*Rncols;
+      MPI_Recv(finalR->data(), sizeOfR, MPI_DOUBLE, target, target, MPI_COMM_WORLD, &status);
+      Tucker::MemoryManager::safe_delete(R);
+      R = finalR;
+      finalR = NULL;
     }
     else if(globalRank + cutOff < globalnp){
       int target = globalRank - cutOff;
       int sizeOfR = R->nrows()* R->ncols();
       int Rnrows = R->nrows();
-      MPI_Send(&Rnrows, 1, MPI_INT, target, globalRank, MPI_COMM_WORLD);
       MPI_Send(R->data(), sizeOfR, MPI_DOUBLE, target, globalRank, MPI_COMM_WORLD);
     }
   }
+
+  //Add zeros and transpose
   int Rncols = R->ncols(); int Rnrows = R->nrows();
   for(int c=0; c<Rncols; c++){
     for(int r=c+1; r<Rnrows; r++){
@@ -259,8 +270,7 @@ Tucker::Matrix* ButterflyTSQR(Tucker::Matrix* R, Tucker::Matrix* L){
     dcopy_(&Rncols, R->data()+i*Rncols, &one, L->data()+i, &Rncols); 
   }
   Tucker::MemoryManager::safe_delete(R);
-
-  
+  return L;
 }
 /**
  * \test TuckerMPI_old_gram_test_file.cpp
