@@ -6,12 +6,14 @@ int main(int argc, char* argv[]){
 // specify precision
 #ifdef TEST_SINGLE
   typedef float scalar_t;
-  std::string filename = "input_files/tensor64_single.mpi"; 
+  scalar_t tol =  100* std::numeric_limits<scalar_t>::epsilon();
+  scalar_t threshold =  10 * std::sqrt(std::numeric_limits<scalar_t>::epsilon());
 #else
   typedef double scalar_t;
-  std::string filename = "input_files/tensor64.mpi";
+  scalar_t tol =  100* std::numeric_limits<scalar_t>::epsilon();
+  scalar_t threshold = 10 * std::sqrt(std::numeric_limits<scalar_t>::epsilon());
 #endif
-
+  std::cout << "epsilon: " << std::numeric_limits<scalar_t>::epsilon() << std::endl;
   // Initialize MPI
   MPI_Init(&argc,&argv);
   int rank, nprocs;
@@ -19,8 +21,8 @@ int main(int argc, char* argv[]){
   MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
   int n = 4;
   int seed = 234;
-  scalar_t tol = 1e-8;
-  scalar_t threshold = 1e-6;
+  // scalar_t tol = 1e-8;
+  
   TuckerMPI::TuckerTensor<scalar_t>* fact = Tucker::MemoryManager::safe_new<TuckerMPI::TuckerTensor<scalar_t>>(n);
   Tucker::SizeArray* proc_grid_dims = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(n);
   (*proc_grid_dims)[0] = 1; (*proc_grid_dims)[1] = 1; (*proc_grid_dims)[2] = 2;  (*proc_grid_dims)[3] = 5; 
@@ -29,14 +31,6 @@ int main(int argc, char* argv[]){
   Tucker::SizeArray* core_dims = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(n);
   (*core_dims)[0] = 5; (*core_dims)[1] = 10; (*core_dims)[2] = 5; (*core_dims)[3] = 10; 
   TuckerMPI::Tensor<scalar_t>* T = TuckerMPI::generateTensor<scalar_t>(seed, fact, proc_grid_dims, tensor_dims, core_dims, 1e-12);
-  // std::cout << "core tensor is originally: ";
-  // for(int i = 0; i < 4; i++){
-  //   std::cout << fact->G->getGlobalSize().data()[i] << ", ";
-  // }
-  // for(int i=0; i< 8; i++){
-  //   std::cout << T->getLocalTensor()->data()[i]<< ", ";
-  // }
-  std::cout << std::endl;
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(proc_grid_dims);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(tensor_dims);
 
@@ -47,7 +41,9 @@ int main(int argc, char* argv[]){
   Tucker::MemoryManager::safe_delete(core_dims);
 
   bool isCoreEqual_old_newGram = Tucker::isApproxEqual(newGramSolution->G->getLocalTensor(), oldGramSolution->G->getLocalTensor(), tol);
+  // std::cout << "old and new gram" << (int)isCoreEqual_old_newGram << " Reported by processor " << rank << "." << std::endl;
   bool isCoreEqual_LQ_newGram = Tucker::isApproxEqual(newGramSolution->G->getLocalTensor(), LQSolution->G->getLocalTensor(), tol,false, true);
+  // std::cout << "lq and new gram" << (int)isCoreEqual_LQ_newGram << " Reported by processor " << rank << "." << std::endl;
   if(!isCoreEqual_old_newGram){
     std::cout << "Local core not equal between old and new gram. Reported by processor " << rank << "." << std::endl;
   }
@@ -88,5 +84,5 @@ int main(int argc, char* argv[]){
   Tucker::MemoryManager::safe_delete(fact);
   Tucker::MemoryManager::safe_delete_array<int>(compare_results, nprocs);
   MPI_Finalize();
-  return EXIT_FAILURE;
+  return EXIT_SUCCESS;
 }

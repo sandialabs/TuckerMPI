@@ -203,7 +203,7 @@ bool isApproxEqual(const Tensor<scalar_t>* t1, const Tensor<scalar_t>* t2,
   scalar_t errNorm2 = 0;
   for(size_t i=0; i<numElements; i++) {
     scalar_t err;
-    if(ignoreSign) err = std::abs(t1Data[i]) - std::abs(t2Data[i]);
+    if(ignoreSign) err = std::abs(std::abs(t1Data[i]) - std::abs(t2Data[i]));
     else err = std::abs(t1Data[i] - t2Data[i]);
     if(std::isnan(err)) {
       std::cerr << "Difference " << i << " is nan: "
@@ -216,14 +216,18 @@ bool isApproxEqual(const Tensor<scalar_t>* t1, const Tensor<scalar_t>* t2,
   }
   std::cout << std::endl;
 
-  std::cout<< "errNorm2:" << std::sqrt(errNorm2) << "  origNorm2: " << std::sqrt(origNorm2) << std::endl;
+  
   scalar_t relErr = std::sqrt(errNorm2/origNorm2);
   if(verbose) {
     std::cout << "Relative error: " << relErr << std::endl;
   }
 
-  if(relErr > tol)
+  if(relErr > tol){
+    std::cout << "errNorm2:" << std::sqrt(errNorm2) << "  origNorm2: " << std::sqrt(origNorm2) << std::endl;
+    std::cout << "relErr: " << relErr << std::endl;
+    std::cout << "tol: " << tol << std::endl;
     return false;
+  }
   return true;
 }
 

@@ -6,28 +6,26 @@ int main(int argc, char* argv[]){
 // specify precision
 #ifdef TEST_SINGLE
   typedef float scalar_t;
-  std::string filename = "input_files/tensor64_single.mpi"; 
+  scalar_t tol = 100 * std::numeric_limits<scalar_t>::epsilon();
 #else
   typedef double scalar_t;
-  std::string filename = "input_files/tensor64.mpi";
+  scalar_t tol = 100 * std::numeric_limits<scalar_t>::epsilon();
 #endif
 
-  // Initialize MPI
+  // Initialize MPI       
   MPI_Init(&argc,&argv);
   int rank, nprocs;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
   MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
   int n = 4;
   int seed = 123;
-  scalar_t tol = 1e-8;
   TuckerMPI::TuckerTensor<scalar_t>* fact = Tucker::MemoryManager::safe_new<TuckerMPI::TuckerTensor<scalar_t>>(n);
   Tucker::SizeArray* proc_grid_dims = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(n);
   (*proc_grid_dims)[0] = 1; (*proc_grid_dims)[1] = 1; (*proc_grid_dims)[2] = 2; (*proc_grid_dims)[3] = 5;
   Tucker::SizeArray* tensor_dims = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(n);
-  (*tensor_dims)[0] = 20; (*tensor_dims)[1] = 10; (*tensor_dims)[2] = 10; (*tensor_dims)[3] = 20;
+  (*tensor_dims)[0] = 10; (*tensor_dims)[1] = 20; (*tensor_dims)[2] = 10; (*tensor_dims)[3] = 20;
   Tucker::SizeArray* core_dims = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(n);
-  (*core_dims)[0] = 10; (*core_dims)[1] = 5; (*core_dims)[2] = 5; (*core_dims)[3] = 10;
-  //std::cout << "in test, proc_grid_dim->prod() = " << proc_grid_dims->prod() << "." << std::endl;
+  (*core_dims)[0] = 5; (*core_dims)[1] = 10; (*core_dims)[2] = 5; (*core_dims)[3] = 10;
   TuckerMPI::Tensor<scalar_t>* T = TuckerMPI::generateTensor<scalar_t>(seed, fact, proc_grid_dims, tensor_dims, core_dims, 1e-6);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(proc_grid_dims);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(tensor_dims);

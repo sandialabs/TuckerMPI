@@ -2,6 +2,8 @@
 #include "TuckerMPI.hpp"
 #include <cmath>
 #include <map>
+#include <iostream>
+#include <iomanip>
 
 template <class scalar_t>
 bool checkEqual(const scalar_t* arr1, const scalar_t* arr2, int nrows, int ncols)
@@ -10,8 +12,9 @@ bool checkEqual(const scalar_t* arr1, const scalar_t* arr2, int nrows, int ncols
     for(int c=0; c<ncols; c++) {
       for(int r=0; r<nrows; r++) {
         //std::cout << "matching:  arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
-        if(std::abs(std::abs(arr1[r+c*nrows]) - std::abs(arr2[ind])) > 1e-10) {
-          std::cout << "mismatch :" << "arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
+        if(std::abs(std::abs(arr1[r+c*nrows]) - std::abs(arr2[ind]))/std::abs(arr1[r+c*nrows]) > 100 * std::numeric_limits<scalar_t>::epsilon()) {
+          std::cout << "epsilon: " << std::numeric_limits<scalar_t>::epsilon() << std::endl;
+          std::cout << std::setprecision(9) << "mismatch :" << "arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
           return false;
         }
         ind++;
@@ -32,10 +35,10 @@ int main(int argc, char* argv[])
 // specify precision
 #ifdef TEST_SINGLE
   typedef float scalar_t;
-  std::string filename = "input_files/tensor64_single.mpi"; 
+  std::string filename = "input_files/lq_data_single.mpi"; 
 #else
   typedef double scalar_t;
-  std::string filename = "input_files/tensor64.mpi";
+  std::string filename = "input_files/lq_data.mpi";
 #endif
 
   MPI_Init(&argc,&argv);
@@ -264,7 +267,7 @@ int main(int argc, char* argv[])
   int root = 0;
   int LSize = 12; // length of the side of the square that L is in.
   int compareResultBuff;
-  filename = "input_files/lq_data.mpi";
+  // std::string filename = "input_files/lq_data.mpi";
   for(int t=0; t<nPossibleProcGrid; t++){
     Tucker::SizeArray* nprocsPerDim = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(ndims);
     (*nprocsPerDim)[0] = *(processorGridLayouts+t*4);
