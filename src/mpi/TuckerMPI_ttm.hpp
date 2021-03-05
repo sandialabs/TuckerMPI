@@ -25,8 +25,9 @@ namespace TuckerMPI
  * \param reduce_scatter_timer Timer for the reduce-scatter
  * \param reduce_timer Timer for the reduction
  */
-Tensor* ttm(const Tensor* X, const int n,
-    const Tucker::Matrix* const U, bool Utransp=false,
+template <class scalar_t>
+Tensor<scalar_t>* ttm(const Tensor<scalar_t>* X, const int n,
+    const Tucker::Matrix<scalar_t>* const U, bool Utransp=false,
     Tucker::Timer* mult_timer=0, Tucker::Timer* pack_timer=0,
     Tucker::Timer* reduce_scatter_timer=0,
     Tucker::Timer* reduce_timer=0, size_t nnz_limit=0);

@@ -12,7 +12,8 @@
 
 namespace Tucker {
 
-SparseMatrix::SparseMatrix(const int nrows, const int ncols, const int nnz)
+template <class scalar_t>
+SparseMatrix<scalar_t>::SparseMatrix(const int nrows, const int ncols, const int nnz)
 {
   nrows_ = nrows;
   ncols_ = ncols;
@@ -20,16 +21,18 @@ SparseMatrix::SparseMatrix(const int nrows, const int ncols, const int nnz)
 
   rows_ = Tucker::MemoryManager::safe_new_array<int>(nnz);
   cols_ = Tucker::MemoryManager::safe_new_array<int>(nnz);
-  vals_ = Tucker::MemoryManager::safe_new_array<double>(nnz);
+  vals_ = Tucker::MemoryManager::safe_new_array<scalar_t>(nnz);
 }
 
-SparseMatrix::~SparseMatrix() {
+template <class scalar_t>
+SparseMatrix<scalar_t>::~SparseMatrix() {
   Tucker::MemoryManager::safe_delete_array<int>(rows_,nnz_);
   Tucker::MemoryManager::safe_delete_array<int>(cols_,nnz_);
-  Tucker::MemoryManager::safe_delete_array<double>(vals_,nnz_);
+  Tucker::MemoryManager::safe_delete_array<scalar_t>(vals_,nnz_);
 }
 
-Matrix* SparseMatrix::multiply(const Matrix* m, bool transp)
+template <class scalar_t>
+Matrix<scalar_t>* SparseMatrix<scalar_t>::multiply(const Matrix<scalar_t>* m, bool transp)
 {
   assert(m != NULL);
 
@@ -42,19 +45,19 @@ Matrix* SparseMatrix::multiply(const Matrix* m, bool transp)
   }
 
   // Allocate memory for result
-  Matrix* result;
+  Matrix<scalar_t>* result;
   if(transp) {
-    result = Tucker::MemoryManager::safe_new<Matrix>(ncols_,m->ncols());
+    result = Tucker::MemoryManager::safe_new<Matrix<scalar_t>>(ncols_,m->ncols());
   }
   else {
-    result = Tucker::MemoryManager::safe_new<Matrix>(nrows_,m->ncols());
+    result = Tucker::MemoryManager::safe_new<Matrix<scalar_t>>(nrows_,m->ncols());
   }
 
   // Initialize result to 0
   result->initialize();
 
-  double* resultData = result->data();
-  const double* mData = m->data();
+  scalar_t* resultData = result->data();
+  const scalar_t* mData = m->data();
   for(int i=0; i<nnz_; i++) {
     for(int c=0; c<m->ncols(); c++) {
       if(transp) {
@@ -71,7 +74,8 @@ Matrix* SparseMatrix::multiply(const Matrix* m, bool transp)
   return result;
 }
 
-Vector* SparseMatrix::multiply(const Vector* v, bool transp)
+template <class scalar_t>
+Vector<scalar_t>* SparseMatrix<scalar_t>::multiply(const Vector<scalar_t>* v, bool transp)
 {
   assert(v != NULL);
 
@@ -84,19 +88,19 @@ Vector* SparseMatrix::multiply(const Vector* v, bool transp)
   }
 
   // Allocate memory for result
-  Vector* result;
+  Vector<scalar_t>* result;
   if(transp) {
-    result = Tucker::MemoryManager::safe_new<Vector>(ncols_);
+    result = Tucker::MemoryManager::safe_new<Vector<scalar_t>>(ncols_);
   }
   else {
-    result = Tucker::MemoryManager::safe_new<Vector>(nrows_);
+    result = Tucker::MemoryManager::safe_new<Vector<scalar_t>>(nrows_);
   }
 
   // Initialize result to 0
   result->initialize();
 
-  double* resultData = result->data();
-  const double* vData = v->data();
+  scalar_t* resultData = result->data();
+  const scalar_t* vData = v->data();
   for(int i=0; i<nnz_; i++) {
     if(transp) {
       // result(col(i)) += val(i) m(row(i))
@@ -110,5 +114,9 @@ Vector* SparseMatrix::multiply(const Vector* v, bool transp)
 
   return result;
 }
+
+// Explicit instantiations to build static library for both single and double precision
+template class SparseMatrix<float>;
+template class SparseMatrix<double>;
 
 } /* namespace Tucker */

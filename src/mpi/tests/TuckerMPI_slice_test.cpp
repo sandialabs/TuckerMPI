@@ -904,7 +904,17 @@ int main(int argc, char* argv[])
 
 bool runSim(Tucker::SizeArray& procs)
 {
-  double trueData[11][4][5];
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+  std::string filename = "input_files/3x5x7x11_single.mpi";
+#else
+  typedef double scalar_t;
+  std::string filename = "input_files/3x5x7x11.mpi";
+#endif
+
+  scalar_t trueData[11][4][5];
   trueData[0][0][0] = -0.493284685681523;
   trueData[0][0][1] = 0.497003271606648;
   trueData[0][0][2] = -10.553150952476088;
@@ -1050,14 +1060,14 @@ bool runSim(Tucker::SizeArray& procs)
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(dims,procs);
 
   // Create a tensor with that distribution
-  TuckerMPI::Tensor tensor(dist);
+  TuckerMPI::Tensor<scalar_t> tensor(dist);
 
   // Read the tensor from a binary file
-  TuckerMPI::importTensorBinary("input_files/3x5x7x11.mpi",&tensor);
+  TuckerMPI::importTensorBinary(filename.c_str(),&tensor);
 
   for(int n=0; n<tensor.getNumDimensions(); n++) {
     // Compute the slice metrics
-    Tucker::MetricData* mets = TuckerMPI::computeSliceMetrics(&tensor, n,
+    Tucker::MetricData<scalar_t>* mets = TuckerMPI::computeSliceMetrics(&tensor, n,
         Tucker::MIN + Tucker::MAX + Tucker::SUM + Tucker::MEAN + Tucker::VARIANCE);
 
     const TuckerMPI::Map* map = tensor.getDistribution()->getMap(n,false);
@@ -1074,44 +1084,44 @@ bool runSim(Tucker::SizeArray& procs)
 //      std::cout << "The stdev of slice " << globalJ << " of mode "
 //          << n << " is " << sqrt(mets->getVarianceData()[j]) << std::endl;
 
-      if(std::abs(mets->getMinData()[j]-trueData[globalJ][n][0])>1e-10) {
+      if(std::abs(mets->getMinData()[j]-trueData[globalJ][n][0])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getMinData()[j] << " != " << trueData[globalJ][n][0]
                   << "; the difference is " << mets->getMinData()[j] - trueData[globalJ][n][0]
                   << std::endl;
-        Tucker::MemoryManager::safe_delete<Tucker::MetricData>(mets);
+        Tucker::MemoryManager::safe_delete(mets);
         return false;
       }
-      if(std::abs(mets->getMaxData()[j]-trueData[globalJ][n][1])>1e-10) {
+      if(std::abs(mets->getMaxData()[j]-trueData[globalJ][n][1])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getMaxData()[j] << " != " << trueData[globalJ][n][1]
                   << "; the difference is " << mets->getMaxData()[j] - trueData[globalJ][n][1]
                   << std::endl;
-        Tucker::MemoryManager::safe_delete<Tucker::MetricData>(mets);
+        Tucker::MemoryManager::safe_delete(mets);
         return false;
       }
-      if(std::abs(mets->getSumData()[j]-trueData[globalJ][n][2])>1e-10) {
+      if(std::abs(mets->getSumData()[j]-trueData[globalJ][n][2])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getSumData()[j] << " != " << trueData[globalJ][n][2]
                   << "; the difference is " << mets->getSumData()[j] - trueData[globalJ][n][2]
                   << std::endl;
-        Tucker::MemoryManager::safe_delete<Tucker::MetricData>(mets);
+        Tucker::MemoryManager::safe_delete(mets);
         return false;
       }
-      if(std::abs(mets->getMeanData()[j]-trueData[globalJ][n][3])>1e-10) {
+      if(std::abs(mets->getMeanData()[j]-trueData[globalJ][n][3])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << mets->getMeanData()[j] << " != " << trueData[globalJ][n][3]
                   << "; the difference is " << mets->getMeanData()[j] - trueData[globalJ][n][3]
                   << std::endl;
-        Tucker::MemoryManager::safe_delete<Tucker::MetricData>(mets);
+        Tucker::MemoryManager::safe_delete(mets);
         return false;
       }
-      if(std::abs(sqrt(mets->getVarianceData()[j])-trueData[globalJ][n][4])>1e-10) {
+      if(std::abs(sqrt(mets->getVarianceData()[j])-trueData[globalJ][n][4])>100 * std::numeric_limits<scalar_t>::epsilon()) {
         std::cout << sqrt(mets->getVarianceData()[j]) << " != " << trueData[globalJ][n][4]
                   << "; the difference is " << sqrt(mets->getVarianceData()[j]) - trueData[globalJ][n][4]
                   << std::endl;
-        Tucker::MemoryManager::safe_delete<Tucker::MetricData>(mets);
+        Tucker::MemoryManager::safe_delete(mets);
         return false;
       }
     } // end for(int j=0; j<tensor.getLocalSize(n); j++)
 
-    if(mets) Tucker::MemoryManager::safe_delete<Tucker::MetricData>(mets);
+    if(mets) Tucker::MemoryManager::safe_delete(mets);
   } // end for(int n=0; n<tensor.getNumDimensions(); n++)
 
   return true;

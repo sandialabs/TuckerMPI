@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/Tucker_sthosvd.dir/Tucker_sthosvd.o  -o Tucker_sthosvd  -Wl,-rpath,/home/fangq18/TuckerMPI/src/serial ../libserial_tucker.so 

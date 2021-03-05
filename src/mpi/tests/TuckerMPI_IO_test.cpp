@@ -897,6 +897,18 @@ int main(int argc, char* argv[])
 
 bool runSim(Tucker::SizeArray& procs)
 {
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+  std::string filename = "input_files/input_test_filename_single.txt";
+  std::string filenames = "input_files/input_test_filenames_single.txt";
+#else
+  typedef double scalar_t;
+  std::string filename = "input_files/input_test_filename.txt";
+  std::string filenames = "input_files/input_test_filenames.txt";
+#endif
+
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
   if(rank == 0) std::cout << procs << std::endl;
@@ -905,49 +917,46 @@ bool runSim(Tucker::SizeArray& procs)
   sz[0] = 3; sz[1] = 5; sz[2] = 7; sz[3] = 11;
   TuckerMPI::Distribution* dist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(sz, procs);
-  TuckerMPI::Tensor Y(dist);
+  TuckerMPI::Tensor<scalar_t> Y(dist);
   for(size_t i=0; i<Y.getLocalNumEntries(); i++)
-    Y.getLocalTensor()->data()[i] = std::numeric_limits<double>::signaling_NaN();
-  std::string filenames = "input_files/input_test_filenames.txt";
+    Y.getLocalTensor()->data()[i] = std::numeric_limits<scalar_t>::signaling_NaN();
   TuckerMPI::readTensorBinary(filenames,Y);
 
-  std::string filename = "input_files/input_test_filename.txt";
+  
   TuckerMPI::Distribution* dist2 =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(sz, procs);
-  TuckerMPI::Tensor Y2(dist2);
+  TuckerMPI::Tensor<scalar_t> Y2(dist2);
   for(size_t i=0; i<Y2.getLocalNumEntries(); i++)
-    Y2.getLocalTensor()->data()[i] = std::numeric_limits<double>::signaling_NaN();
+    Y2.getLocalTensor()->data()[i] = std::numeric_limits<scalar_t>::signaling_NaN();
   TuckerMPI::readTensorBinary(filename,Y2);
 
-  filename = "input_files/output_test_filename.txt";
   TuckerMPI::writeTensorBinary(filename,Y);
 
-  filenames = "input_files/output_test_filenames.txt";
-  TuckerMPI::writeTensorBinary(filenames,Y);
+  TuckerMPI::writeTensorBinary(filenames,Y2);
 
   TuckerMPI::Distribution* dist3 =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(sz, procs);
-  TuckerMPI::Tensor Y3(dist3);
+  TuckerMPI::Tensor<scalar_t> Y3(dist3);
   for(size_t i=0; i<Y3.getLocalNumEntries(); i++)
-    Y3.getLocalTensor()->data()[i] = std::numeric_limits<double>::signaling_NaN();
+    Y3.getLocalTensor()->data()[i] = std::numeric_limits<scalar_t>::signaling_NaN();
   TuckerMPI::readTensorBinary(filename,Y3);
 
   TuckerMPI::Distribution* dist4 =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(sz, procs);
-  TuckerMPI::Tensor Y4(dist4);
+  TuckerMPI::Tensor<scalar_t> Y4(dist4);
   for(size_t i=0; i<Y4.getLocalNumEntries(); i++)
-    Y4.getLocalTensor()->data()[i] = std::numeric_limits<double>::signaling_NaN();
+    Y4.getLocalTensor()->data()[i] = std::numeric_limits<scalar_t>::signaling_NaN();
   TuckerMPI::readTensorBinary(filenames,Y4);
 
-  if(!isApproxEqual(&Y, &Y2, 1e-10)) {
+  if(!isApproxEqual(&Y, &Y2, 100 * std::numeric_limits<scalar_t>::epsilon())) {
     std::cout << "Y and Y2 are not equal\n";
     return false;
   }
-  if(!isApproxEqual(&Y, &Y3, 1e-10)) {
+  if(!isApproxEqual(&Y, &Y3, 100 * std::numeric_limits<scalar_t>::epsilon())) {
     std::cout << "Y and Y3 are not equal\n";
     return false;
   }
-  if(!isApproxEqual(&Y, &Y4, 1e-10)) {
+  if(!isApproxEqual(&Y, &Y4, 100 * std::numeric_limits<scalar_t>::epsilon())) {
     std::cout << "Y and Y4 are not equal\n";
     return false;
   }

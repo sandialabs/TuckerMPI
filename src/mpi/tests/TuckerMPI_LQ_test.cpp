@@ -1,16 +1,20 @@
 #include<cstdlib>
 #include "TuckerMPI.hpp"
-#include<cmath>
-#include<map>
+#include <cmath>
+#include <map>
+#include <iostream>
+#include <iomanip>
 
-bool checkEqual(const double* arr1, const double* arr2, int nrows, int ncols)
+template <class scalar_t>
+bool checkEqual(const scalar_t* arr1, const scalar_t* arr2, int nrows, int ncols)
 {
     int ind = 0;
     for(int c=0; c<ncols; c++) {
       for(int r=0; r<nrows; r++) {
         //std::cout << "matching:  arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
-        if(std::abs(std::abs(arr1[r+c*nrows]) - std::abs(arr2[ind])) > 1e-10) {
-          std::cout << "mismatch :" << "arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
+        if(std::abs(std::abs(arr1[r+c*nrows]) - std::abs(arr2[ind]))/std::abs(arr1[r+c*nrows]) > 100 * std::numeric_limits<scalar_t>::epsilon()) {
+          std::cout << "epsilon: " << std::numeric_limits<scalar_t>::epsilon() << std::endl;
+          std::cout << std::setprecision(9) << "mismatch :" << "arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
           return false;
         }
         ind++;
@@ -28,13 +32,22 @@ bool checkEqual(const double* arr1, const double* arr2, int nrows, int ncols)
 //with each local unfolding being column major. parallel LQ is called.
 int main(int argc, char* argv[])
 {
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t;
+  std::string filename = "input_files/lq_data_single.mpi"; 
+#else
+  typedef double scalar_t;
+  std::string filename = "input_files/lq_data.mpi";
+#endif
+
   MPI_Init(&argc,&argv);
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   int np;
   MPI_Comm_size(MPI_COMM_WORLD, &np);
 
-  double trueL0[144] = {-23849.5889482398,-17774.7242906376,-18094.6470371705,-17835.1318307058,-18293.7929012903,-18275.2636511234,-17906.6024545266,-18074.4790166212,-17959.1322487599,-17655.9258071020,-18290.2463412140,-18147.3568345061
+  scalar_t trueL0[144] = {-23849.5889482398,-17774.7242906376,-18094.6470371705,-17835.1318307058,-18293.7929012903,-18275.2636511234,-17906.6024545266,-18074.4790166212,-17959.1322487599,-17655.9258071020,-18290.2463412140,-18147.3568345061
                         ,0,15927.6956397282,6616.91547614796,6942.59317375532,6957.98058026128,7078.56703271951,6647.44937269167,6673.36984500899,6510.94710276394,7089.88941257394,6851.39159772014,6854.43275237639
                         ,0,0,14432.1068864436,4289.62076937678,4652.22642986779,5030.85707064290,4405.17700011329,4269.98075145095,4726.29303211693,4592.36949596314,4492.54413419240,4332.39004911653
                         ,0,0,0,13658.8874825149,2538.84486340496,2968.76970792052,2838.86599424121,2803.76714195008,2752.03029260961,3365.50742416397,3036.61298762652,2915.45297201958
@@ -46,7 +59,7 @@ int main(int argc, char* argv[])
                         ,0,0,0,0,0,0,0,0,0,-12571.7699799737,-863.144860419557,-1322.33797945032
                         ,0,0,0,0,0,0,0,0,0,0,-12649.9259243531,-1526.02110230107
                         ,0,0,0,0,0,0,0,0,0,0,0,-12298.8349994680};
-  double trueL1[144] = {-23984.8004786365,-17922.1545070963,-17615.4699046310,-17666.4769163879,-18264.9258804635,-18035.6846572606,-18509.4680022637,-18246.1674588372,-17758.0650870694,-18260.6927412264,-18167.1776835549,-18151.7261895835
+  scalar_t trueL1[144] = {-23984.8004786365,-17922.1545070963,-17615.4699046310,-17666.4769163879,-18264.9258804635,-18035.6846572606,-18509.4680022637,-18246.1674588372,-17758.0650870694,-18260.6927412264,-18167.1776835549,-18151.7261895835
                         ,0,15550.0120522065,7046.00512760060,6717.93126318658,6910.59125542114,6421.13173906777,6766.65196567129,6817.74935507676,6446.24129074201,6684.78654139556,6821.68754862194,6594.60509197659
                         ,0,0,-14453.4175121618,-3890.11639523449,-4035.06522750462,-4115.21188688365,-4335.51095828080,-4661.57130538406,-4209.21340262534,-4312.92953927133,-4166.11848139783,-3910.34184476888
                         ,0,0,0,-13755.8196534181,-3172.85674090367,-3602.73656488275,-3829.51638526944,-3324.29840084975,-3544.77881525183,-3293.45963708055,-3558.10741861874,-3159.99429603333
@@ -58,7 +71,7 @@ int main(int argc, char* argv[])
                         ,0,0,0,0,0,0,0,0,0,12359.2083737049,1318.47973319212,1303.90074784872
                         ,0,0,0,0,0,0,0,0,0,0,-12283.4150324433,-1416.73874557502
                         ,0,0,0,0,0,0,0,0,0,0,0,-12685.1657741559};
-  double trueL2[144] = {-23919.1890330755,-18172.9312979182,-17489.3878894276,-18240.1106240140,-18371.0018091487,-18056.8329638083,-17883.5587363975,-18534.7360392091,-18323.3179600674,-18285.4615762766,-18157.5008834719,-18054.0321163420
+  scalar_t trueL2[144] = {-23919.1890330755,-18172.9312979182,-17489.3878894276,-18240.1106240140,-18371.0018091487,-18056.8329638083,-17883.5587363975,-18534.7360392091,-18323.3179600674,-18285.4615762766,-18157.5008834719,-18054.0321163420
                         ,0,-15594.3435270981,-6628.76774922671,-6938.84424024239,-6925.39715190606,-6720.73139267506,-6705.70271454213,-6599.49962982223,-6266.87147118211,-6786.61694477214,-6680.07176587838,-6456.29599760679
                         ,0,0,-14230.3319139068,-3613.05270635871,-4330.36485193008,-4303.87858167391,-4127.00876416880,-4143.52848771550,-3663.10523139682,-3767.10273166744,-4334.12903053142,-4024.15692108709
                         ,0,0,0,13625.1593082232,3020.31515445465,2374.44517288196,2489.77444501950,3071.83185897708,3218.02484179389,3499.14972304482,2641.37000494223,3580.32801922099
@@ -70,7 +83,7 @@ int main(int argc, char* argv[])
                         ,0,0,0,0,0,0,0,0,0,-12758.8266016503,-887.499609476112,-1450.84600215865
                         ,0,0,0,0,0,0,0,0,0,0,12367.8576794228,2010.55610807143
                         ,0,0,0,0,0,0,0,0,0,0,0,-12490.4461152022};
-  double trueL3[144] = {-24007.8582968161,-17882.9845916301,-17793.0873599271,-18311.1346528691,-17469.4133401988,-17728.1502472232,-17716.3810174774,-17983.9237078994,-18619.1042313542,-18545.0332343492,-17655.4634636532,-18033.3047057936
+  scalar_t trueL3[144] = {-24007.8582968161,-17882.9845916301,-17793.0873599271,-18311.1346528691,-17469.4133401988,-17728.1502472232,-17716.3810174774,-17983.9237078994,-18619.1042313542,-18545.0332343492,-17655.4634636532,-18033.3047057936
                         ,0,-16095.8485049879,-6880.70889028153,-7097.27257386136,-7281.96331967756,-7366.78363082625,-6252.15043579831,-7008.75889827275,-7157.92316789236,-6754.22077843093,-6280.82259161879,-7207.08906859890
                         ,0,0,-14307.2796634861,-4136.15162059204,-4049.91612113628,-4587.45385870540,-4259.13871822973,-4127.00353377372,-4697.92622018819,-4347.41908136038,-4675.37449047705,-4520.86949270615
                         ,0,0,0,13411.3148687325,3090.93319681329,3578.46452893151,3477.85379409751,2912.14180862004,2936.29914404115,3022.91000795858,3134.32783237319,3296.52837667573
@@ -87,10 +100,10 @@ int main(int argc, char* argv[])
   Tucker::SizeArray* sz =
     Tucker::MemoryManager::safe_new<Tucker::SizeArray>(ndims);
   (*sz)[0] = 12; (*sz)[1] = 12; (*sz)[2] = 12; (*sz)[3] = 12;
-  std::map<int, double*> pointerMap;
+  std::map<int, scalar_t*> pointerMap;
   std::map<int, int> sizeMap;
-  long d = (sizeof(double)*ndims);
-  double processorGridLayouts_12[160] = {1,1,1,12
+  long d = (sizeof(scalar_t)*ndims);
+  scalar_t processorGridLayouts_12[160] = {1,1,1,12
                                         ,1,1,12,1
                                         ,1,12,1,1
                                         ,12,1,1,1
@@ -130,15 +143,15 @@ int main(int argc, char* argv[])
                                         ,3,1,2,2
                                         ,3,2,1,2
                                         ,3,2,2,1};
-  double* pGridLayouts_12 = processorGridLayouts_12;
+  scalar_t* pGridLayouts_12 = processorGridLayouts_12;
   pointerMap[12] = pGridLayouts_12; sizeMap[12] = sizeof(processorGridLayouts_12)/d;
-  double processorGridLayouts_11[16] ={1,1,1,11
+  scalar_t processorGridLayouts_11[16] ={1,1,1,11
                                       ,1,1,11,1
                                       ,1,11,1,1
                                       ,11,1,1,1};
-  double* pGridLayouts_11 = processorGridLayouts_11;
+  scalar_t* pGridLayouts_11 = processorGridLayouts_11;
   pointerMap[11] = pGridLayouts_11; sizeMap[11] = sizeof(processorGridLayouts_11)/d;
-  double processorGridLayouts_10[64] = {1,1,2,5
+  scalar_t processorGridLayouts_10[64] = {1,1,2,5
                                         ,1,1,5,2
                                         ,1,2,1,5
                                         ,1,2,5,1
@@ -154,9 +167,9 @@ int main(int argc, char* argv[])
                                         ,1,1,10,1
                                         ,1,10,1,1
                                         ,10,1,1,1};
-  double* pGridLayouts_10 = processorGridLayouts_10;
+  scalar_t* pGridLayouts_10 = processorGridLayouts_10;
   pointerMap[10] = pGridLayouts_10; sizeMap[10] = sizeof(processorGridLayouts_10)/d;
-  double processorGridLayouts_9[40] = {1,1,3,3
+  scalar_t processorGridLayouts_9[40] = {1,1,3,3
                                       ,1,3,1,3
                                       ,1,3,3,1
                                       ,3,1,1,3
@@ -166,9 +179,9 @@ int main(int argc, char* argv[])
                                       ,1,1,9,1
                                       ,1,9,1,1
                                       ,9,1,1,1};
-  double* pGridLayouts_9 = processorGridLayouts_9;
+  scalar_t* pGridLayouts_9 = processorGridLayouts_9;
   pointerMap[9] = pGridLayouts_9; sizeMap[9] = sizeof(processorGridLayouts_9)/d;
-  double processorGridLayouts_8[80] = {1,1,1,8
+  scalar_t processorGridLayouts_8[80] = {1,1,1,8
                                       ,1,1,8,1
                                       ,1,8,1,1
                                       ,8,1,1,1
@@ -188,15 +201,15 @@ int main(int argc, char* argv[])
                                       ,4,1,1,2
                                       ,4,1,2,1
                                       ,4,2,1,1};                                      
-  double* pGridLayouts_8 = processorGridLayouts_8;
+  scalar_t* pGridLayouts_8 = processorGridLayouts_8;
   pointerMap[8] = pGridLayouts_8; sizeMap[8] = sizeof(processorGridLayouts_8)/d;
-  double processorGridLayouts_7[16] = {1,1,1,7
+  scalar_t processorGridLayouts_7[16] = {1,1,1,7
                                       ,1,1,7,1
                                       ,1,7,1,1
                                       ,7,1,1,1};
-  double* pGridLayouts_7 = processorGridLayouts_7;
+  scalar_t* pGridLayouts_7 = processorGridLayouts_7;
   pointerMap[7] = pGridLayouts_7; sizeMap[7] = sizeof(processorGridLayouts_7)/d;
-  double processorGridLayouts_6[64] = {1,1,1,6
+  scalar_t processorGridLayouts_6[64] = {1,1,1,6
                                       ,1,1,6,1
                                       ,1,6,1,1
                                       ,6,1,1,1
@@ -212,15 +225,15 @@ int main(int argc, char* argv[])
                                       ,3,1,1,2
                                       ,3,1,2,1
                                       ,3,2,1,1};
-  double* pGridLayouts_6 = processorGridLayouts_6;
+  scalar_t* pGridLayouts_6 = processorGridLayouts_6;
   pointerMap[6] = pGridLayouts_6; sizeMap[6] = sizeof(processorGridLayouts_6)/d;
-  double processorGridLayouts_5[16] = {1,1,1,5
+  scalar_t processorGridLayouts_5[16] = {1,1,1,5
                                       ,1,1,5,1
                                       ,1,5,1,1
                                       ,5,1,1,1};
-  double* pGridLayouts_5 = processorGridLayouts_5;
+  scalar_t* pGridLayouts_5 = processorGridLayouts_5;
   pointerMap[5] = pGridLayouts_5; sizeMap[5] = sizeof(processorGridLayouts_5)/d;
-  double processorGridLayouts_4[40] = {1,1,1,4
+  scalar_t processorGridLayouts_4[40] = {1,1,1,4
                                       ,1,1,4,1
                                       ,1,4,1,1
                                       ,4,1,1,1
@@ -229,32 +242,32 @@ int main(int argc, char* argv[])
                                       ,1,2,2,1
                                       ,2,1,1,2
                                       ,2,1,2,1
-                                      ,2,2,1,1};
-  double* pGridLayouts_4 = processorGridLayouts_4;
+                                      ,2,2,1,1};                                    
+  scalar_t* pGridLayouts_4 = processorGridLayouts_4;
   pointerMap[4] = pGridLayouts_4; sizeMap[4] = sizeof(processorGridLayouts_4)/d;
-  double processorGridLayouts_3[16] = {1,1,1,3
+  scalar_t processorGridLayouts_3[16] = {1,1,1,3
                                       ,1,1,3,1
                                       ,1,3,1,1
                                       ,3,1,1,1};
-  double* pGridLayouts_3 = processorGridLayouts_3;
+  scalar_t* pGridLayouts_3 = processorGridLayouts_3;
   pointerMap[3] = pGridLayouts_3; sizeMap[3] = sizeof(processorGridLayouts_3)/d;
-  double processorGridLayouts_2[16] = {1,1,1,2
+  scalar_t processorGridLayouts_2[16] = {1,1,1,2
                                       ,1,1,2,1
                                       ,1,2,1,1
                                       ,2,1,1,1};
-  double* pGridLayouts_2 = processorGridLayouts_2;
+  scalar_t* pGridLayouts_2 = processorGridLayouts_2;
   pointerMap[2] = pGridLayouts_2; sizeMap[2] = sizeof(processorGridLayouts_2)/d;
-  double processorGridLayouts_1[4] = {1,1,1,1};
-  double* pGridLayouts_1 = processorGridLayouts_1;
+  scalar_t processorGridLayouts_1[4] = {1,1,1,1};
+  scalar_t* pGridLayouts_1 = processorGridLayouts_1;
   pointerMap[1] = pGridLayouts_1; sizeMap[1] = sizeof(processorGridLayouts_1)/d;
 
   int nPossibleProcGrid = sizeMap[np];
-  double* processorGridLayouts = pointerMap[np];
+  scalar_t* processorGridLayouts = pointerMap[np];
 
   int root = 0;
   int LSize = 12; // length of the side of the square that L is in.
   int compareResultBuff;
-  std::string filename = "input_files/lq_data.mpi";
+  // std::string filename = "input_files/lq_data.mpi";
   for(int t=0; t<nPossibleProcGrid; t++){
     Tucker::SizeArray* nprocsPerDim = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(ndims);
     (*nprocsPerDim)[0] = *(processorGridLayouts+t*4);
@@ -264,10 +277,10 @@ int main(int argc, char* argv[])
     TuckerMPI::Distribution* dist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*sz,*nprocsPerDim);
     Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(nprocsPerDim);
-    TuckerMPI::Tensor* tensor = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
+    TuckerMPI::Tensor<scalar_t>* tensor = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
     TuckerMPI::importTensorBinary(filename.c_str(),tensor);
 
-    Tucker::Matrix* L0 = TuckerMPI::LQ(tensor, 0);
+    Tucker::Matrix<scalar_t>* L0 = TuckerMPI::LQ<scalar_t>(tensor, 0);
     if(rank == 0){
       //std::cout << L0->prettyPrint();
       compareResultBuff = (int)checkEqual(L0->data(), trueL0, LSize, LSize);
@@ -275,50 +288,50 @@ int main(int argc, char* argv[])
     }
     MPI_Bcast(&compareResultBuff, 1, MPI_INT, root, MPI_COMM_WORLD);
     if(compareResultBuff != 1){
-      Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(tensor);
+      Tucker::MemoryManager::safe_delete(tensor);
       MPI_Finalize();
       return EXIT_FAILURE;
     }
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L0);
+    Tucker::MemoryManager::safe_delete(L0);
   
-    Tucker::Matrix* L1 = TuckerMPI::LQ(tensor, 1);
+    Tucker::Matrix<scalar_t>* L1 = TuckerMPI::LQ<scalar_t>(tensor, 1);
     if(rank == 0){
       compareResultBuff = checkEqual(L1->data(), trueL1, LSize, LSize);
     }
     MPI_Bcast(&compareResultBuff, 1, MPI_INT, root, MPI_COMM_WORLD);
     if(compareResultBuff != 1){
-      Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(tensor);
+      Tucker::MemoryManager::safe_delete(tensor);
       MPI_Finalize();
       return EXIT_FAILURE;
     }
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L1);
+    Tucker::MemoryManager::safe_delete(L1);
     
-    Tucker::Matrix* L2 = TuckerMPI::LQ(tensor, 2);
+    Tucker::Matrix<scalar_t>* L2 = TuckerMPI::LQ<scalar_t>(tensor, 2);
     if(rank == 0){
       compareResultBuff = checkEqual(L2->data(), trueL2, LSize, LSize);
     }
     MPI_Bcast(&compareResultBuff, 1, MPI_INT, root, MPI_COMM_WORLD);
     if(compareResultBuff != 1){
-      Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(tensor);
+      Tucker::MemoryManager::safe_delete(tensor);
       MPI_Finalize();
       return EXIT_FAILURE;
     }
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L2);
+    Tucker::MemoryManager::safe_delete(L2);
     MPI_Barrier(MPI_COMM_WORLD);
 
-    Tucker::Matrix* L3 = TuckerMPI::LQ(tensor, 3);
+    Tucker::Matrix<scalar_t>* L3 = TuckerMPI::LQ<scalar_t>(tensor, 3);
     if(rank == 0){
       compareResultBuff = checkEqual(L3->data(), trueL3, LSize, LSize);
     }
     MPI_Bcast(&compareResultBuff, 1, MPI_INT, root, MPI_COMM_WORLD);
     if(compareResultBuff != 1){
-      Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(tensor);
+      Tucker::MemoryManager::safe_delete(tensor);
       MPI_Finalize();
       return EXIT_FAILURE;
     }
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(L3);
+    Tucker::MemoryManager::safe_delete(L3);
 
-    Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(tensor);
+    Tucker::MemoryManager::safe_delete(tensor);
   }
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(sz);
   MPI_Finalize();

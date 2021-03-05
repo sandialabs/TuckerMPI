@@ -41,84 +41,36 @@
 
 #include <iostream>
 #include "string.h"
+#include "Tucker_BlasWrapper.hpp"
 #include "Tucker_TuckerTensor.hpp"
 #include "Tucker_Metric.hpp"
 #include "Tucker_SparseMatrix.hpp"
 #include "Tucker_Vector.hpp"
 
 namespace Tucker {
-/// @cond EXCLUDE
-extern "C" void dgesvd_(const char*, const char*, const int*, 
-    const int*, double*, const int*, double*, double*, const int*,
-    double*, const int*, double*, const int*, const int*);
-
-extern "C" void dgelq_(const int*, const int*, double*, const int*,
-    double*, const int*, double*, const int*, const int*);
-
-extern "C" void dgelqt_(const int*, const int*, const int*, double*,
-    const int*, double*, const int*, double*, const int*);
-
-extern "C" void dgeqr_(const int*, const int*, double*, const int*, 
-    double*, const int*, double*, const int*, const int*);
-
-extern "C" void dlatsqr_(const int*, const int*, const int*, 
-    const int*, double*, const int*, double*, const int*, double*, 
-    const int*, const int*);
-
-extern "C" void dgeqrt_(const int*, const int*, const int*, 
-    double*, const int*, double*, const int*, double*, const int*);
-
-extern "C" void dtpqrt_(const int*, const int*, const int*, 
-    const int*, double*, const int*, double*, const int*, double*,
-    const int*, double*, int*);
-
-extern "C" void dgeqrf_(const int*, const int*, double*, 
-    const int*, double*, double*, const int*, int*);
-    
-//general LQ factorization
-extern "C" void dgelqf_(const int*, const int*, double*, 
-    const int*, double*, double*, const int*, int*);
-
-// Symmetric rank-k update
-extern "C" void dsyrk_(const char*, const char*, const int*,
-    const int*, const double*, const double*, const int*,
-    const double*, double*, const int*);
-
-// Symmetric eigenvalue solver
-extern "C" void dsyev_(const char*, const char*, const int*,
-    double *, const int*, double*, double*, int*, int*);
-
-// Swap two arrays
-extern "C" void dswap_(const int*, double*, const int*,
-    double*, const int*);
-
-// Copy from one array to another
-extern "C" void dcopy_(const int*, const double*, const int*,
-    double*, const int*);
-
-// Scale an array
-extern "C" void dscal_(const int*, const double*, double*, const int*);
-/// @endcond
 
 /** \brief Yn'(l by m)(The transpose of mode n unfolding of Y) consists of several column major submatrices stacked
  * vertically. R(h by m) should have the same number of columns as Yn'. R can be think of as a window that select 
  * elements from Yn'. This function then copies the elements of Yn' selected by the top window and reoders those 
  * elements in column major order 
  */
-void combineColumnMajorBlocks(const Tensor* Y, Matrix* R, const int n, const int startingSubmatrix, const int numSubmatrices, const int variant);
+template <class scalar_t>
+void combineColumnMajorBlocks(const Tensor<scalar_t>* Y, Matrix<scalar_t>* R, const int n, const int startingSubmatrix, const int numSubmatrices, const int variant);
 
 /** \brief wrapper of computeLQ(const Tensor* Y, const int n, Matrix* L) which get the LQ of the mode n unfolding
  * of Y. If Yn is short and fat or square, the column major square matrix containing the lower triangle of Yn is returned.
  * We allow Yn to be tall and skinny, in which case the returned matrix is not square but a tall and skinny matrix containing
  * the lower trapezoid of Yn.
  */
-Matrix* computeLQ(const Tensor* Y, const int n);
+template <class scalar_t>
+Matrix<scalar_t>* computeLQ(const Tensor<scalar_t>* Y, const int n);
 
 /** \brief Get the LQ of the mode n unfolding of Y. The result lower triangluar matrix is stored in L in column 
  * major. The upper triangle is filled with 0. Note if n=0, a call to dgelq is made. Otherwise the sequential
  * tsqr and transpose is used to get the L.
  */
-void computeLQ(const Tensor* Y, const int n, Matrix* L);
+template <class scalar_t>
+void computeLQ(const Tensor<scalar_t>* Y, const int n, Matrix<scalar_t>* L);
 
 /** \brief Compute the Gram matrix \f$Y_n Y_n^T\f$
  *
@@ -179,7 +131,8 @@ void computeLQ(const Tensor* Y, const int n, Matrix* L);
  * \exception std::runtime_error \a Y has no entries
  * \exception std::runtime_error \a n is not in the range [0,N)
  */
-Matrix* computeGram(const Tensor* Y, const int n);
+template <class scalar_t>
+Matrix<scalar_t>* computeGram(const Tensor<scalar_t>* Y, const int n);
 
 /** \brief Compute the Gram matrix \f$Y_n Y_n^T\f$
  *
@@ -202,8 +155,9 @@ Matrix* computeGram(const Tensor* Y, const int n);
  * \exception std::runtime_error \a gram is a null-pointer
  * \exception std::runtime_error \a stride < 1
  */
-void computeGram(const Tensor* Y, const int n,
-    double* gram, const int stride);
+template <class scalar_t>
+void computeGram(const Tensor<scalar_t>* Y, const int n,
+    scalar_t* gram, const int stride);
 
 /** \brief Compute all eigenpairs of G
  *
@@ -211,7 +165,7 @@ void computeGram(const Tensor* Y, const int n,
  * eigenvectors overwrite G.
  * \param[in,out] G The matrix whose eigenvalues are being computed; overwritten
  * by the set of eigenvectors
- * \param[out] eigenvalues double array to store the computed eigenvalues.  This
+ * \param[out] eigenvalues scalar_t array to store the computed eigenvalues.  This
  * function dynamically allocates space for this array.  The user is expected
  * to free that memory when done.
  * \param[in] flipSign If true, each eigenvector may have its sign flipped to be
@@ -228,7 +182,8 @@ void computeGram(const Tensor* Y, const int n,
  * \exception std::runtime_error \a G is a null-pointer
  * \exception std::runtime_error \a G has no entries
  */
-void computeEigenpairs(Matrix* G, double*& eigenvalues,
+template <class scalar_t>
+void computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues,
     const bool flipSign=false);
 
 /** \brief Compute all eigenpairs of \a G, and copy a subset to a separate
@@ -239,7 +194,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
  * \a numEvecs largest eigenvalues are copied to \a eigenvectors.
  * \param[in,out] G The matrix whose eigenvalues are being computed; overwritten
  * by the set of eigenvectors
- * \param[out] eigenvalues double array to store the computed eigenvalues.  This
+ * \param[out] eigenvalues scalar_t array to store the computed eigenvalues.  This
  * function dynamically allocates space for this array.
  * \param[out] eigenvectors The matrix containing the eigenvectors corresponding to
  * the largest eigenvalues.  Dynamically allocated by this function; user
@@ -253,8 +208,9 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
  * \exception std::runtime_error \a G has no entries
  * \exception std::runtime_error \a numEvecs is not in the range [1,nrows]
  */
-void computeEigenpairs(Matrix* G, double*& eigenvalues,
-    Matrix*& eigenvectors, const int numEvecs, const bool flipSign=false);
+template <class scalar_t>
+void computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues,
+    Matrix<scalar_t>*& eigenvectors, const int numEvecs, const bool flipSign=false);
 
 /** \brief Compute all eigenpairs of \a G, and copy a subset to a separate
  * matrix
@@ -265,7 +221,7 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
  * discarded, and the rest are copied to \a eigenvectors.
  * \param[in,out] G The matrix whose eigenvalues are being computed; overwritten
  * by the set of eigenvectors
- * \param[out] eigenvalues double array to store the computed eigenvalues.  This
+ * \param[out] eigenvalues scalar_t array to store the computed eigenvalues.  This
  * function dynamically allocates space for this array.
  * \param[out] eigenvectors The matrix containing the eigenvectors corresponding to
  * the largest eigenvalues.  Dynamically allocated by this function; user
@@ -279,24 +235,28 @@ void computeEigenpairs(Matrix* G, double*& eigenvalues,
  * \exception std::runtime_error \a G has no entries
  * \exception std::runtime_error \a thresh < 0
  */
-void computeEigenpairs(Matrix* G, double*& eigenvalues,
-    Matrix*& eigenvectors, const double thresh, const bool flipSign=false);
+template <class scalar_t>
+void computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues,
+    Matrix<scalar_t>*& eigenvectors, const scalar_t thresh, const bool flipSign=false);
 
 /**This function does not return right singular vectors.
  */ 
-void computeSVD(Matrix* L, double* singularValues, 
-  Matrix* leftSingularVectors);
+template <class scalar_t>
+void computeSVD(Matrix<scalar_t>* L, scalar_t* singularValues, 
+  Matrix<scalar_t>* leftSingularVectors);
 
 /**This function does not return right singular vectors.
  */ 
-void computeSVD(Matrix* L, double*& singularValues, 
-  Matrix*& leadingLeftSingularVectors, const double thresh);
+template <class scalar_t>
+void computeSVD(Matrix<scalar_t>* L, scalar_t*& singularValues, 
+  Matrix<scalar_t>*& leadingLeftSingularVectors, const scalar_t thresh);
 
 /**This function does not return right singular vectors.
  * numSingularVector specifies how many left singular vectors to keep.
  */ 
-void computeSVD(Matrix* L, double*& singularValues, 
-  Matrix*& leadingLeftSingularVectors, const int numSingularVector);  
+template <class scalar_t>
+void computeSVD(Matrix<scalar_t>* L, scalar_t*& singularValues, 
+  Matrix<scalar_t>*& leadingLeftSingularVectors, const int numSingularVector);  
 /** \brief Compute the Tucker decomposition of a tensor X
  *
  * This is an implementation of the sequentially truncated
@@ -325,8 +285,9 @@ void computeSVD(Matrix* L, double*& singularValues,
  * \exception std::runtime_error X has no entries
  * \exception std::runtime_error epsilon < 0
  */
-const struct TuckerTensor* STHOSVD(const Tensor* X,
-    const double epsilon, bool useQR=false, bool flipSign=false);
+template <class scalar_t>
+const struct TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* X,
+    const scalar_t epsilon, bool useQR=false, bool flipSign=false);
 
 /** \brief Compute the Tucker decomposition of a tensor X
  *
@@ -356,7 +317,8 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
  * \exception std::runtime_error reducedI has negative entries
  * \exception std::runtime_error reducedI specifies a size larger than X
  */
-const struct TuckerTensor* STHOSVD(const Tensor* X,
+template <class scalar_t>
+const struct TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* X,
     const SizeArray* reducedI, bool useQR=false, bool flipSign=false);
 
 /** \brief Compute \f$Y := X \times_n U\f$, where X and Y are
@@ -371,19 +333,23 @@ const struct TuckerTensor* STHOSVD(const Tensor* X,
  * \test ttm_test_file.cpp
  * \test ttm_test_nofile.cpp
  */
-Tensor* ttm(const Tensor* X, const int n,
-    const Matrix* U, bool Utransp=false);
+template <class scalar_t>
+Tensor<scalar_t>* ttm(const Tensor<scalar_t>* X, const int n,
+    const Matrix<scalar_t>* U, bool Utransp=false);
 
-Tensor* ttm(const Tensor* const X, const int n,
-    const double* const Uptr, const int dimU,
+template <class scalar_t>
+Tensor<scalar_t>* ttm(const Tensor<scalar_t>* const X, const int n,
+    const scalar_t* const Uptr, const int dimU,
     const int strideU, bool Utransp=false);
 
-void ttm(const Tensor* const X, const int n,
-    const Matrix* const U, Tensor* Y, bool Utransp=false);
+template <class scalar_t>
+void ttm(const Tensor<scalar_t>* const X, const int n,
+    const Matrix<scalar_t>* const U, Tensor<scalar_t>* Y, bool Utransp=false);
 
-void ttm(const Tensor* const X, const int n,
-    const double* const Uptr, const int strideU,
-    Tensor* Y, bool Utransp=false);
+template <class scalar_t>
+void ttm(const Tensor<scalar_t>* const X, const int n,
+    const scalar_t* const Uptr, const int strideU,
+    Tensor<scalar_t>* Y, bool Utransp=false);
 
 /** \brief Compute some information about slices of a tensor
  *
@@ -402,7 +368,8 @@ void ttm(const Tensor* const X, const int n,
  * \test slice_test_file.cpp
  * \test slice_test_nofile.cpp
  */
-MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metrics);
+template <class scalar_t>
+MetricData<scalar_t>* computeSliceMetrics(const Tensor<scalar_t>* Y, const int mode, const int metrics);
 
 /** \brief Perform a transformation on each slice of a tensor
  *
@@ -416,23 +383,29 @@ MetricData* computeSliceMetrics(const Tensor* Y, const int mode, const int metri
  *
  * \test shift_scale_test.cpp
  */
-void transformSlices(Tensor* Y, int mode, const double* scales, const double* shifts);
+template <class scalar_t>
+void transformSlices(Tensor<scalar_t>* Y, int mode, const scalar_t* scales, const scalar_t* shifts);
 
 /** \brief Normalize each slice of the tensor so its data lies in the range [0,1]
  *
  * \param Y The tensor whose slices are being normalized
  * \param mode The mode which determines the slices
  */
-void normalizeTensorMinMax(Tensor* Y, int mode, const char* scale_file=0);
+template <class scalar_t>
+void normalizeTensorMinMax(Tensor<scalar_t>* Y, int mode, const char* scale_file=0);
 
-void normalizeTensorMax(Tensor* Y, int mode, const char* scale_file=0);
+template <class scalar_t>
+void normalizeTensorMax(Tensor<scalar_t>* Y, int mode, const char* scale_file=0);
 
-void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh, const char* scale_file=0);
+template <class scalar_t>
+void normalizeTensorStandardCentering(Tensor<scalar_t>* Y, int mode, scalar_t stdThresh, const char* scale_file=0);
 
-void writeScaleShift(const int mode, const int sizeOfModeDim, const double* scales,
-    const double* shifts, const char* scale_file=0);
+template <class scalar_t>
+void writeScaleShift(const int mode, const int sizeOfModeDim, const scalar_t* scales,
+    const scalar_t* shifts, const char* scale_file=0);
 
-void readTensorBinary(Tensor* Y, const char* filename);
+template <class scalar_t>
+void readTensorBinary(Tensor<scalar_t>* Y, const char* filename);
 
 /** \brief Imports a tensor from a text file
  *
@@ -449,30 +422,36 @@ void readTensorBinary(Tensor* Y, const char* filename);
  *
  * \param[in] filename Name of file to be read
  */
-Tensor* importTensor(const char* filename);
+template <class scalar_t>
+Tensor<scalar_t>* importTensor(const char* filename);
 
 /** \brief Imports a tensor from a binary file
  *
  * \param[in] filename Name of file to be read
  * \param[in,out] t Tensor to be read
  */
-void importTensorBinary(Tensor* t, const char* filename);
+template <class scalar_t>
+void importTensorBinary(Tensor<scalar_t>* t, const char* filename);
 
-void importTimeSeries(Tensor* Y, const char* filename);
+template <class scalar_t>
+void importTimeSeries(Tensor<scalar_t>* Y, const char* filename);
 
 /** \brief Imports a tensor from a text file
  *
  * \param[in] filename Name of file to be read
  */
-Matrix* importMatrix(const char* filename);
+template <class scalar_t>
+Matrix<scalar_t>* importMatrix(const char* filename);
 
 /** \brief Imports a sparse matrix from a text file
  *
  * \param[in] filename Name of file to be read
  */
-SparseMatrix* importSparseMatrix(const char* filename);
+template <class scalar_t>
+SparseMatrix<scalar_t>* importSparseMatrix(const char* filename);
 
-void writeTensorBinary(const Tensor* Y, const char* filename);
+template <class scalar_t>
+void writeTensorBinary(const Tensor<scalar_t>* Y, const char* filename);
 
 /** \brief Writes a tensor to a text file
  *
@@ -481,7 +460,8 @@ void writeTensorBinary(const Tensor* Y, const char* filename);
  * \param[in] Y tensor to be written to file
  * \param[in] filename Name of file to be written to
  */
-void exportTensor(const Tensor* Y, const char* filename);
+template <class scalar_t>
+void exportTensor(const Tensor<scalar_t>* Y, const char* filename);
 
 /** \brief Writes a tensor to a binary file
  *
@@ -490,12 +470,15 @@ void exportTensor(const Tensor* Y, const char* filename);
  * \param[in] Y tensor to be written to file
  * \param[in] filename Name of file to be written to
  */
-void exportTensorBinary(const Tensor* Y, const char* filename);
+template <class scalar_t>
+void exportTensorBinary(const Tensor<scalar_t>* Y, const char* filename);
 
-void exportTimeSeries(const Tensor* Y, const char* filename);
+template <class scalar_t>
+void exportTimeSeries(const Tensor<scalar_t>* Y, const char* filename);
 
 /// Premultiply a dense matrix by a diagonal matrix
-void premultByDiag(const Vector* diag, Matrix* mat);
+template <class scalar_t>
+void premultByDiag(const Vector<scalar_t>* diag, Matrix<scalar_t>* mat);
 
 /** \brief Generate core tensor and factor matrices. Combine them with a 
  * series of ttm and then add noise to generate the output tensor. 
@@ -507,8 +490,9 @@ void premultByDiag(const Vector* diag, Matrix* mat);
  * \param[in] dimensions of the core tensor
  * \param[in] noise to be added. 
  */
-Tensor* generateTensor(int seed, TuckerTensor* fact, SizeArray* tensor_dims,
- SizeArray* core_dims, double noise);
+template <class scalar_t>
+Tensor<scalar_t>* generateTensor(int seed, TuckerTensor<scalar_t>* fact, SizeArray* tensor_dims,
+ SizeArray* core_dims, scalar_t noise);
 } // end of namespace Tucker
 
 #endif /* TUCKER_HPP_ */

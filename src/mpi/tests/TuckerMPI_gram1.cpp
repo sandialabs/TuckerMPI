@@ -8,10 +8,21 @@
 #include<cstdlib>
 #include "TuckerMPI.hpp"
 
-bool checkUTEqual(const double* arr1, const double* arr2, int numRows);
+template <class scalar_t>
+bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows);
 
 int main(int argc, char* argv[])
 {
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+  std::string filename = "input_files/tensor36_single.mpi";
+#else
+  typedef double scalar_t;
+  std::string filename = "input_files/tensor36.mpi";
+#endif
+
   // Initialize MPI
   MPI_Init(&argc,&argv);
 
@@ -33,17 +44,16 @@ int main(int argc, char* argv[])
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(nprocsPerDim);
 
   // Create a tensor
-  TuckerMPI::Tensor* tensor =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
+  TuckerMPI::Tensor<scalar_t>* tensor =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
 
   // Read the entries from a file
-  std::string filename = "input_files/tensor36.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),tensor);
 
   // Compute the gram matrix in dimension 1
-  const Tucker::Matrix* mat = TuckerMPI::newGram(tensor,1);
+  const Tucker::Matrix<scalar_t>* mat = TuckerMPI::newGram(tensor,1);
 
-  double trueData[36] = {1515, 1665, 1815, 1965, 2115, 2265,
+  scalar_t trueData[36] = {1515, 1665, 1815, 1965, 2115, 2265,
                          1665, 1839, 2013, 2187, 2361, 2535,
                          1815, 2013, 2211, 2409, 2607, 2805,
                          1965, 2187, 2409, 2631, 2853, 3075,
@@ -56,8 +66,8 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(tensor);
-  Tucker::MemoryManager::safe_delete<const Tucker::Matrix>(mat);
+  Tucker::MemoryManager::safe_delete(tensor);
+  Tucker::MemoryManager::safe_delete(mat);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();
@@ -70,7 +80,8 @@ int main(int argc, char* argv[])
   return EXIT_SUCCESS;
 }
 
-bool checkUTEqual(const double* arr1, const double* arr2, int numRows)
+template <class scalar_t>
+bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 {
   for(int r=0; r<numRows; r++) {
     for(int c=r; c<numRows; c++) {
