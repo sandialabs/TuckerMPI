@@ -49,13 +49,12 @@
 
 namespace Tucker {
 
-/** \brief Yn'(l by m)(The transpose of mode n unfolding of Y) consists of several column major submatrices stacked
- * vertically. R(h by m) should have the same number of columns as Yn'. R can be think of as a window that select 
- * elements from Yn'. This function then copies the elements of Yn' selected by the top window and reoders those 
- * elements in column major order 
+/** \brief Yn'(l by m)(The transpose of mode n unfolding of Y, n != 0) consists of several column major submatrices stacked
+ * vertically. R should have the same number of columns as Yn'. This function copyes x of those submatrices into R, where x 
+ * is specified by numSubmatrices, starting from the ith submatrix, where i is specified by startingSubmatrix.
  */
 template <class scalar_t>
-void combineColumnMajorBlocks(const Tensor<scalar_t>* Y, Matrix<scalar_t>* R, const int n, const int startingSubmatrix, const int numSubmatrices, const int variant);
+void combineColumnMajorBlocks(const Tensor<scalar_t>* Y, Matrix<scalar_t>* R, const int n, const int startingSubmatrix, const int numSubmatrices);
 
 /** \brief wrapper of computeLQ(const Tensor* Y, const int n, Matrix* L) which get the LQ of the mode n unfolding
  * of Y. If Yn is short and fat or square, the column major square matrix containing the lower triangle of Yn is returned.
@@ -480,19 +479,6 @@ void exportTimeSeries(const Tensor<scalar_t>* Y, const char* filename);
 template <class scalar_t>
 void premultByDiag(const Vector<scalar_t>* diag, Matrix<scalar_t>* mat);
 
-/** \brief Generate core tensor and factor matrices. Combine them with a 
- * series of ttm and then add noise to generate the output tensor. 
- * 
- * \param[in] seed for the random generator
- * \param[in/out] TuckerTensor that will store the original core tensor and
- * factor matrices
- * \param[in] dimensions of the desired output tensor
- * \param[in] dimensions of the core tensor
- * \param[in] noise to be added. 
- */
-template <class scalar_t>
-Tensor<scalar_t>* generateTensor(int seed, TuckerTensor<scalar_t>* fact, SizeArray* tensor_dims,
- SizeArray* core_dims, scalar_t noise);
 } // end of namespace Tucker
 
 #endif /* TUCKER_HPP_ */
