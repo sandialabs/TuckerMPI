@@ -36,8 +36,8 @@ int main(int argc, char* argv[]){
   Tucker::MemoryManager::safe_delete(T);
   Tucker::MemoryManager::safe_delete(core_dims);
 
-  bool isCoreEqual_old_newGram = Tucker::isApproxEqual(newGramSolution->G->getLocalTensor(), oldGramSolution->G->getLocalTensor(), tol);
-  bool isCoreEqual_LQ_newGram = Tucker::isApproxEqual(newGramSolution->G->getLocalTensor(), LQSolution->G->getLocalTensor(), tol);
+  bool isCoreEqual_old_newGram = Tucker::isApproxEqual(newGramSolution->G->getLocalTensor(), oldGramSolution->G->getLocalTensor(), tol, false, true);
+  bool isCoreEqual_LQ_newGram = Tucker::isApproxEqual(newGramSolution->G->getLocalTensor(), LQSolution->G->getLocalTensor(), tol, false, true);
   if(!isCoreEqual_old_newGram){
     std::cout << "Local core not equal between old and new gram. Reported by processor " << rank << "." << std::endl;
   }
