@@ -1,83 +1,188 @@
 INCLUDE_DIRECTORIES(.. ../../serial)
 
+# Double precision tests
 ADD_EXECUTABLE(TuckerMPI_sthosvd_threshold_test TuckerMPI_sthosvd_threshold_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_threshold_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_threshold_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_sthosvd_reduced_dims_test TuckerMPI_sthosvd_reduced_dims_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_reduced_dims_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_reduced_dims_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_LQ_edgecase_test TuckerMPI_LQ_edgecase_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_LQ_edgecase_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_LQ_edgecase_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_LQ_test TuckerMPI_LQ_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_LQ_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_LQ_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_IO_test TuckerMPI_IO_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_IO_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_IO_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_pack_data TuckerMPI_pack_data.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_pack_data mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_pack_data mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_pack_data2 TuckerMPI_pack_data2.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_pack_data2 mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_pack_data2 mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_pack_data3 TuckerMPI_pack_data3.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_pack_data3 mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_pack_data3 mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_old_gram_test_large TuckerMPI_old_gram_test_file.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_old_gram_test_large mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_old_gram_test_large mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_old_gram_test_small TuckerMPI_old_gram_test_file2.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_old_gram_test_small mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_old_gram_test_small mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_new_gram_test_large TuckerMPI_new_gram_test_file.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_new_gram_test_large mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_new_gram_test_large mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_new_gram_test_small TuckerMPI_new_gram_test_file2.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_new_gram_test_small mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_new_gram_test_small mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_oldGram0 TuckerMPI_oldGram0.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_oldGram0 mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_oldGram0 mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_bigGram0 TuckerMPI_bigGram0.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_bigGram0 mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_bigGram0 mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_gram0 TuckerMPI_gram0.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_gram0 mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_gram0 mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_gram1 TuckerMPI_gram1.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_gram1 mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_gram1 mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_gram2 TuckerMPI_gram2.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_gram2 mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_gram2 mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_ttm_test TuckerMPI_ttm_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_reconstruct_test TuckerMPI_reconstruct_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_reconstruct_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_reconstruct_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_norm_test TuckerMPI_norm_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_norm_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_norm_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_normalize_test TuckerMPI_normalize_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_normalize_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_normalize_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_slice_test TuckerMPI_slice_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_slice_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_slice_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_shift_scale_test TuckerMPI_shift_scale_test.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_shift_scale_test mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_shift_scale_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_ttm_test_file TuckerMPI_ttm_test_file.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test_file mpi_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test_file mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+# Single precision tests
+ADD_EXECUTABLE(TuckerMPI_sthosvd_threshold_test_single TuckerMPI_sthosvd_threshold_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_threshold_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_sthosvd_reduced_dims_test_single TuckerMPI_sthosvd_reduced_dims_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_reduced_dims_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_LQ_edgecase_test_single TuckerMPI_LQ_edgecase_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_LQ_edgecase_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_LQ_test_single TuckerMPI_LQ_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_LQ_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_IO_test_single TuckerMPI_IO_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_IO_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_pack_data_single TuckerMPI_pack_data.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_pack_data_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_pack_data2_single TuckerMPI_pack_data2.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_pack_data2_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_pack_data3_single TuckerMPI_pack_data3.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_pack_data3_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_old_gram_test_large_single TuckerMPI_old_gram_test_file.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_old_gram_test_large_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_old_gram_test_small_single TuckerMPI_old_gram_test_file2.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_old_gram_test_small_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_new_gram_test_large_single TuckerMPI_new_gram_test_file.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_new_gram_test_large_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_new_gram_test_small_single TuckerMPI_new_gram_test_file2.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_new_gram_test_small_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_oldGram0_single TuckerMPI_oldGram0.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_oldGram0_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_bigGram0_single TuckerMPI_bigGram0.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_bigGram0_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_gram0_single TuckerMPI_gram0.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_gram0_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_gram1_single TuckerMPI_gram1.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_gram1_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_gram2_single TuckerMPI_gram2.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_gram2_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_ttm_test_single TuckerMPI_ttm_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_reconstruct_test_single TuckerMPI_reconstruct_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_reconstruct_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_norm_test_single TuckerMPI_norm_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_norm_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_normalize_test_single TuckerMPI_normalize_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_normalize_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_slice_test_single TuckerMPI_slice_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_slice_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_shift_scale_test_single TuckerMPI_shift_scale_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_shift_scale_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_ttm_test_file_single TuckerMPI_ttm_test_file.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test_file_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+# Use compile-time definition of TEST_SINGLE to specify precision
+SET_TARGET_PROPERTIES(
+    TuckerMPI_sthosvd_threshold_test_single
+    TuckerMPI_sthosvd_reduced_dims_test_single
+    TuckerMPI_LQ_test_single
+    TuckerMPI_IO_test_single
+    TuckerMPI_pack_data_single
+    TuckerMPI_pack_data2_single
+    TuckerMPI_pack_data3_single
+    TuckerMPI_old_gram_test_large_single
+    TuckerMPI_old_gram_test_small_single
+    TuckerMPI_new_gram_test_large_single
+    TuckerMPI_new_gram_test_small_single
+    TuckerMPI_oldGram0_single
+    TuckerMPI_bigGram0_single
+    TuckerMPI_gram0_single
+    TuckerMPI_gram1_single
+    TuckerMPI_gram2_single
+    TuckerMPI_ttm_test_single
+    TuckerMPI_reconstruct_test_single
+    TuckerMPI_norm_test_single
+    TuckerMPI_slice_test_single
+    TuckerMPI_shift_scale_test_single
+    TuckerMPI_ttm_test_file_single
+    PROPERTIES 
+        COMPILE_DEFINITIONS TEST_SINGLE)
 
 ENABLE_TESTING()
 ADD_TEST(TuckerMPI_part_rec_test ${CMAKE_CURRENT_BINARY_DIR}/TuckerMPI_part_rec_test.pl "${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12")
 ADD_TEST(TuckerMPI_sthosvd_threshold_test10 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_sthosvd_threshold_test)
+ADD_TEST(TuckerMPI_sthosvd_threshold_test10_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_sthosvd_threshold_test_single)
 ADD_TEST(TuckerMPI_sthosvd_reduced_dims_test10 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_sthosvd_reduced_dims_test)
+ADD_TEST(TuckerMPI_sthosvd_reduced_dims_test10_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_sthosvd_reduced_dims_test_single)
 ADD_TEST(TuckerMPI_LQ_edgecase_test ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_edgecase_test)
+ADD_TEST(TuckerMPI_LQ_edgecase_test_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_edgecase_test_single)
 ADD_TEST(TuckerMPI_LQ_test12 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_test)
+ADD_TEST(TuckerMPI_LQ_test12_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_test_single)
 ADD_TEST(TuckerMPI_LQ_test11 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 11 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_test)
 ADD_TEST(TuckerMPI_LQ_test10 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_test)
 ADD_TEST(TuckerMPI_LQ_test9 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 9 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_test)
@@ -90,11 +195,13 @@ ADD_TEST(TuckerMPI_LQ_test3 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT
 ADD_TEST(TuckerMPI_LQ_test2 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_test)
 ADD_TEST(TuckerMPI_LQ_test1 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_test)
 ADD_TEST(TuckerMPI_IO_test2 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test)
+ADD_TEST(TuckerMPI_IO_test2_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test_single)
 ADD_TEST(TuckerMPI_IO_test3 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test)
 ADD_TEST(TuckerMPI_IO_test4 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test)
 ADD_TEST(TuckerMPI_IO_test5 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 5 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test)
 ADD_TEST(TuckerMPI_IO_test6 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 6 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test)
 ADD_TEST(TuckerMPI_IO_test7 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 7 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test)
+ADD_TEST(TuckerMPI_IO_test7_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 7 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test_single)
 ADD_TEST(TuckerMPI_IO_test8 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test)
 ADD_TEST(TuckerMPI_IO_test9 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 9 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test)
 ADD_TEST(TuckerMPI_IO_test10 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test)
@@ -105,11 +212,16 @@ ADD_TEST(TuckerMPI_IO_test14 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 14 ${CMAKE_CURRE
 ADD_TEST(TuckerMPI_IO_test15 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 15 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test)
 ADD_TEST(TuckerMPI_IO_test16 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 16 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test)
 ADD_TEST(TuckerMPI_IO_test24 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 24 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test)
+ADD_TEST(TuckerMPI_IO_test24_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 24 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_IO_test_single)
 ADD_TEST(TuckerMPI_packing_test ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_pack_data)
+ADD_TEST(TuckerMPI_packing_test_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_pack_data_single)
 ADD_TEST(TuckerMPI_packing_test2 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_pack_data2)
+ADD_TEST(TuckerMPI_packing_test2_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_pack_data2_single)
 ADD_TEST(TuckerMPI_packing_test3 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_pack_data3)
+ADD_TEST(TuckerMPI_packing_test3_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_pack_data3_single)
 ADD_TEST(TuckerMPI_old_gram_test_large2 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_large)
 ADD_TEST(TuckerMPI_old_gram_test_large3 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_large)
+ADD_TEST(TuckerMPI_old_gram_test_large3_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_large_single)
 ADD_TEST(TuckerMPI_old_gram_test_large4 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_large)
 ADD_TEST(TuckerMPI_old_gram_test_large5 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 5 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_large)
 ADD_TEST(TuckerMPI_old_gram_test_large6 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 6 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_large)
@@ -124,6 +236,7 @@ ADD_TEST(TuckerMPI_old_gram_test_large14 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 14 $
 ADD_TEST(TuckerMPI_old_gram_test_large15 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 15 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_large)
 ADD_TEST(TuckerMPI_old_gram_test_large16 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 16 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_large)
 ADD_TEST(TuckerMPI_old_gram_test_large24 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 24 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_large)
+ADD_TEST(TuckerMPI_old_gram_test_large24_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 24 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_large_single)
 ADD_TEST(TuckerMPI_old_gram_test_small2 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_small)
 ADD_TEST(TuckerMPI_old_gram_test_small3 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_small)
 ADD_TEST(TuckerMPI_old_gram_test_small4 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_small)
@@ -140,6 +253,7 @@ ADD_TEST(TuckerMPI_old_gram_test_small14 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 14 $
 ADD_TEST(TuckerMPI_old_gram_test_small15 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 15 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_small)
 ADD_TEST(TuckerMPI_old_gram_test_small16 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 16 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_small)
 ADD_TEST(TuckerMPI_old_gram_test_small24 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 24 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_small)
+ADD_TEST(TuckerMPI_old_gram_test_small24_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 24 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_old_gram_test_small_single)
 ADD_TEST(TuckerMPI_new_gram_test_large2 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_large)
 ADD_TEST(TuckerMPI_new_gram_test_large3 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_large)
 ADD_TEST(TuckerMPI_new_gram_test_large4 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_large)
@@ -155,6 +269,7 @@ ADD_TEST(TuckerMPI_new_gram_test_large13 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 13 $
 ADD_TEST(TuckerMPI_new_gram_test_large14 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 14 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_large)
 ADD_TEST(TuckerMPI_new_gram_test_large15 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 15 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_large)
 ADD_TEST(TuckerMPI_new_gram_test_large16 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 16 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_large)
+ADD_TEST(TuckerMPI_new_gram_test_large16_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 16 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_large_single)
 ADD_TEST(TuckerMPI_new_gram_test_large24 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 24 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_large)
 ADD_TEST(TuckerMPI_new_gram_test_small2 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_small)
 ADD_TEST(TuckerMPI_new_gram_test_small3 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_small)
@@ -170,15 +285,22 @@ ADD_TEST(TuckerMPI_new_gram_test_small12 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12 $
 ADD_TEST(TuckerMPI_new_gram_test_small13 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 13 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_small)
 ADD_TEST(TuckerMPI_new_gram_test_small14 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 14 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_small)
 ADD_TEST(TuckerMPI_new_gram_test_small15 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 15 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_small)
+ADD_TEST(TuckerMPI_new_gram_test_small15_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 15 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_small_single)
 ADD_TEST(TuckerMPI_new_gram_test_small16 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 16 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_small)
 ADD_TEST(TuckerMPI_new_gram_test_small24 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 24 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_new_gram_test_small)
 ADD_TEST(TuckerMPI_oldGram0 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_oldGram0)
+ADD_TEST(TuckerMPI_oldGram0_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_oldGram0_single)
 ADD_TEST(TuckerMPI_bigGram0 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_bigGram0)
+ADD_TEST(TuckerMPI_bigGram0_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_bigGram0_single)
 ADD_TEST(TuckerMPI_gram0 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_gram0)
+ADD_TEST(TuckerMPI_gram0_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_gram0_single)
 ADD_TEST(TuckerMPI_gram1 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_gram1)
+ADD_TEST(TuckerMPI_gram1_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_gram1_single)
 ADD_TEST(TuckerMPI_gram2 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_gram2)
+ADD_TEST(TuckerMPI_gram2_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_gram2_single)
 ADD_TEST(TuckerMPI_ttm_test ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_ttm_test)
 ADD_TEST(TuckerMPI_reconstruct_test ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 6 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_reconstruct_test)
+ADD_TEST(TuckerMPI_reconstruct_test_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 6 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_reconstruct_test_single)
 ADD_TEST(TuckerMPI_norm_test2 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_norm_test)
 ADD_TEST(TuckerMPI_norm_test3 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_norm_test)
 ADD_TEST(TuckerMPI_norm_test4 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_norm_test)
@@ -192,6 +314,7 @@ ADD_TEST(TuckerMPI_norm_test11 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 11 ${CMAKE_CUR
 ADD_TEST(TuckerMPI_norm_test12 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_norm_test)
 ADD_TEST(TuckerMPI_norm_test13 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 13 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_norm_test)
 ADD_TEST(TuckerMPI_norm_test14 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 14 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_norm_test)
+ADD_TEST(TuckerMPI_norm_test14_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 14 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_norm_test_single)
 ADD_TEST(TuckerMPI_norm_test15 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 15 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_norm_test)
 ADD_TEST(TuckerMPI_norm_test16 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 16 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_norm_test)
 ADD_TEST(TuckerMPI_norm_test24 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 24 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_norm_test)
@@ -222,6 +345,7 @@ ADD_TEST(TuckerMPI_slice_test9 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 9 ${CMAKE_CURR
 ADD_TEST(TuckerMPI_slice_test10 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_slice_test)
 ADD_TEST(TuckerMPI_slice_test11 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 11 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_slice_test)
 ADD_TEST(TuckerMPI_slice_test12 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_slice_test)
+ADD_TEST(TuckerMPI_slice_test12_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_slice_test_single)
 ADD_TEST(TuckerMPI_slice_test13 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 13 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_slice_test)
 ADD_TEST(TuckerMPI_slice_test14 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 14 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_slice_test)
 ADD_TEST(TuckerMPI_slice_test15 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 15 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_slice_test)
@@ -237,6 +361,7 @@ ADD_TEST(TuckerMPI_shift_scale_test8 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAK
 ADD_TEST(TuckerMPI_shift_scale_test9 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 9 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_shift_scale_test)
 ADD_TEST(TuckerMPI_shift_scale_test10 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_shift_scale_test)
 ADD_TEST(TuckerMPI_shift_scale_test11 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 11 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_shift_scale_test)
+ADD_TEST(TuckerMPI_shift_scale_test11_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 11 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_shift_scale_test_single)
 ADD_TEST(TuckerMPI_shift_scale_test12 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_shift_scale_test)
 ADD_TEST(TuckerMPI_shift_scale_test13 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 13 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_shift_scale_test)
 ADD_TEST(TuckerMPI_shift_scale_test14 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 14 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_shift_scale_test)
@@ -252,6 +377,7 @@ ADD_TEST(TuckerMPI_ttm_test_file7 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 7 ${CMAKE_C
 ADD_TEST(TuckerMPI_ttm_test_file8 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_ttm_test_file)
 ADD_TEST(TuckerMPI_ttm_test_file9 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 9 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_ttm_test_file)
 ADD_TEST(TuckerMPI_ttm_test_file10 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_ttm_test_file)
+ADD_TEST(TuckerMPI_ttm_test_file10_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_ttm_test_file_single)
 ADD_TEST(TuckerMPI_ttm_test_file11 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 11 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_ttm_test_file)
 ADD_TEST(TuckerMPI_ttm_test_file12 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_ttm_test_file)
 ADD_TEST(TuckerMPI_ttm_test_file13 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 13 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_ttm_test_file)
@@ -261,17 +387,17 @@ ADD_TEST(TuckerMPI_ttm_test_file16 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 16 ${CMAKE
 ADD_TEST(TuckerMPI_ttm_test_file24 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 24 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_ttm_test_file)
 
 SET_PROPERTY(TEST TuckerMPI_part_rec_test PROPERTY LABELS SystemTest ManyProcs)
-SET_PROPERTY(TEST TuckerMPI_sthosvd_threshold_test10 PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST TuckerMPI_sthosvd_reduced_dims_test10 PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST TuckerMPI_LQ_edgecase_test PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST TuckerMPI_LQ_test12 PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST TuckerMPI_LQ_test11 PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST TuckerMPI_LQ_test10 PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST TuckerMPI_LQ_test9 PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST TuckerMPI_LQ_test8 PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST TuckerMPI_LQ_test7 PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST TuckerMPI_LQ_test6 PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST TuckerMPI_LQ_test5 PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST TuckerMPI_sthosvd_threshold_test10 PROPERTY LABELS UnitTest ManyProcs)
+SET_PROPERTY(TEST TuckerMPI_sthosvd_reduced_dims_test10 PROPERTY LABELS UnitTest ManyProcs)
+SET_PROPERTY(TEST TuckerMPI_LQ_edgecase_test PROPERTY LABELS UnitTest ManyProcs)
+SET_PROPERTY(TEST TuckerMPI_LQ_test12 PROPERTY LABELS UnitTest ManyProcs)
+SET_PROPERTY(TEST TuckerMPI_LQ_test11 PROPERTY LABELS UnitTest ManyProcs)
+SET_PROPERTY(TEST TuckerMPI_LQ_test10 PROPERTY LABELS UnitTest ManyProcs)
+SET_PROPERTY(TEST TuckerMPI_LQ_test9 PROPERTY LABELS UnitTest ManyProcs)
+SET_PROPERTY(TEST TuckerMPI_LQ_test8 PROPERTY LABELS UnitTest ManyProcs)
+SET_PROPERTY(TEST TuckerMPI_LQ_test7 PROPERTY LABELS UnitTest ManyProcs)
+SET_PROPERTY(TEST TuckerMPI_LQ_test6 PROPERTY LABELS UnitTest ManyProcs)
+SET_PROPERTY(TEST TuckerMPI_LQ_test5 PROPERTY LABELS UnitTest ManyProcs)
 SET_PROPERTY(TEST TuckerMPI_LQ_test4 PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST TuckerMPI_LQ_test3 PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST TuckerMPI_LQ_test2 PROPERTY LABELS UnitTest)
@@ -446,6 +572,10 @@ FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/input_test_filename.txt" DESTINATION 
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/output_test_filenames.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/output_test_filename.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/lq_edgecase_output.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/input_test_filenames_single.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/input_test_filename_single.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/output_test_filenames_single.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
+FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/output_test_filename_single.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/io_file0.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/io_file1.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")
 FILE(COPY "${CMAKE_SOURCE_DIR}/input_files/io_file2.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input_files")

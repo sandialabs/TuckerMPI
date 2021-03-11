@@ -16,6 +16,8 @@
 
 int main(int argc, char* argv[])
 {
+  typedef double scalar_t;  // specify precision
+
   //
   // Get the name of the input file
   //
@@ -138,8 +140,8 @@ int main(int argc, char* argv[])
   /////////////////////////////////
   // Set up factorization object //
   /////////////////////////////////
-  Tucker::TuckerTensor* fact =
-      Tucker::MemoryManager::safe_new<Tucker::TuckerTensor>(nd);
+  Tucker::TuckerTensor<scalar_t>* fact =
+      Tucker::MemoryManager::safe_new<Tucker::TuckerTensor<scalar_t>>(nd);
 
   ///////////////////////////
   // Read core tensor data //
@@ -148,7 +150,7 @@ int main(int argc, char* argv[])
   readTimer->start();
   std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn +
       "_core.mpi";
-  fact->G = Tucker::MemoryManager::safe_new<Tucker::Tensor>(*coreSize);
+  fact->G = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*coreSize);
   Tucker::importTensorBinary(fact->G, coreFilename.c_str());
 
   size_t nnz = fact->G->getNumElements();
@@ -163,7 +165,7 @@ int main(int argc, char* argv[])
     std::ostringstream ss;
     ss << sthosvd_dir << "/" << sthosvd_fn << "_mat_" << mode << ".mpi";
 
-    fact->U[mode] = Tucker::MemoryManager::safe_new<Tucker::Matrix>((*I_dims)[mode],(*coreSize)[mode]);
+    fact->U[mode] = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>((*I_dims)[mode],(*coreSize)[mode]);
     Tucker::importTensorBinary(fact->U[mode], ss.str().c_str());
   }
 
@@ -177,8 +179,8 @@ int main(int argc, char* argv[])
       "_scale.txt";
   ifs.open(scaleFilename);
 
-  Tucker::Vector* scales = NULL;
-  Tucker::Vector* shifts = NULL;
+  Tucker::Vector<scalar_t>* scales = NULL;
+  Tucker::Vector<scalar_t>* shifts = NULL;
   int scale_size = 0;
   int scale_mode;
 
@@ -190,8 +192,8 @@ int main(int argc, char* argv[])
 
     // Read the scales and shifts
     scale_size = fact->U[scale_mode]->nrows();
-    scales = Tucker::MemoryManager::safe_new<Tucker::Vector>(scale_size);
-    shifts = Tucker::MemoryManager::safe_new<Tucker::Vector>(scale_size);
+    scales = Tucker::MemoryManager::safe_new<Tucker::Vector<scalar_t>>(scale_size);
+    shifts = Tucker::MemoryManager::safe_new<Tucker::Vector<scalar_t>>(scale_size);
     for(int i=0; i<scale_size; i++) {
       ifs >> (*scales)[i] >> (*shifts)[i];
     }
@@ -212,7 +214,7 @@ int main(int argc, char* argv[])
   ////////////////////////////////////
   // Read the C matrices from files //
   ////////////////////////////////////
-  Tucker::SparseMatrix** Cs = Tucker::MemoryManager::safe_new_array<Tucker::SparseMatrix*>(nd);
+  Tucker::SparseMatrix<scalar_t>** Cs = Tucker::MemoryManager::safe_new_array<Tucker::SparseMatrix<scalar_t>*>(nd);
   for(int mode=0; mode<nd; mode++) {
     std::ostringstream ss;
     ss << "C" << mode << ".txt";
@@ -224,13 +226,13 @@ int main(int argc, char* argv[])
       ifs.close();
 
       // Read C from file
-      Cs[mode] = Tucker::importSparseMatrix(ss.str().c_str());
+      Cs[mode] = Tucker::importSparseMatrix<scalar_t>(ss.str().c_str());
 
       // Compute C^T U
-      Tucker::Matrix* temp = Cs[mode]->multiply(fact->U[mode],true);
+      Tucker::Matrix<scalar_t>* temp = Cs[mode]->multiply(fact->U[mode],true);
 
       // Replace U with temp
-      Tucker::MemoryManager::safe_delete<Tucker::Matrix>(fact->U[mode]);
+      Tucker::MemoryManager::safe_delete(fact->U[mode]);
       fact->U[mode] = temp;
     }
     else {
@@ -309,16 +311,16 @@ int main(int argc, char* argv[])
   ////////////////////////////////////////////////////
   Tucker::Timer* reconstructTimer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
   reconstructTimer->start();
-  Tucker::Tensor* result = fact->G;
+  Tucker::Tensor<scalar_t>* result = fact->G;
   for(int i=0; i<nd; i++)
   {
     int mode = (*rec_order)[i];
 
     // Perform the TTM
-    Tucker::Tensor* temp = Tucker::ttm(result,mode,fact->U[mode]);
+    Tucker::Tensor<scalar_t>* temp = Tucker::ttm(result,mode,fact->U[mode]);
 
     if(result != fact->G) {
-      Tucker::MemoryManager::safe_delete<Tucker::Tensor>(result);
+      Tucker::MemoryManager::safe_delete(result);
     }
     result = temp;
 
@@ -340,8 +342,8 @@ int main(int argc, char* argv[])
       (*shifts)[i] = -(*shifts)[i];
     }
     if(Cs[scale_mode] != NULL) {
-      Tucker::Vector* temp = Cs[scale_mode]->multiply(shifts,true);
-      Tucker::MemoryManager::safe_delete<Tucker::Vector>(shifts);
+      Tucker::Vector<scalar_t>* temp = Cs[scale_mode]->multiply(shifts,true);
+      Tucker::MemoryManager::safe_delete(shifts);
       shifts = temp;
     }
     Tucker::transformSlices(result, scale_mode, scales->data(), shifts->data());
@@ -360,19 +362,19 @@ int main(int argc, char* argv[])
   /////////////////
   // Free memory //
   /////////////////
-  Tucker::MemoryManager::safe_delete<Tucker::TuckerTensor>(fact);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(coreSize);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(I_dims);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(rec_order);
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(result);
-  if(scales != NULL) Tucker::MemoryManager::safe_delete<Tucker::Vector>(scales);
-  if(shifts != NULL) Tucker::MemoryManager::safe_delete<Tucker::Vector>(shifts);
+  Tucker::MemoryManager::safe_delete(fact);
+  Tucker::MemoryManager::safe_delete(coreSize);
+  Tucker::MemoryManager::safe_delete(I_dims);
+  Tucker::MemoryManager::safe_delete(rec_order);
+  Tucker::MemoryManager::safe_delete(result);
+  if(scales != NULL) Tucker::MemoryManager::safe_delete(scales);
+  if(shifts != NULL) Tucker::MemoryManager::safe_delete(shifts);
   for(int i=0; i<nd; i++) {
     if(Cs[i] != NULL) {
-      Tucker::MemoryManager::safe_delete<Tucker::SparseMatrix>(Cs[i]);
+      Tucker::MemoryManager::safe_delete(Cs[i]);
     }
   }
-  Tucker::MemoryManager::safe_delete_array<Tucker::SparseMatrix*>(Cs,nd);
+  Tucker::MemoryManager::safe_delete_array(Cs,nd);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();

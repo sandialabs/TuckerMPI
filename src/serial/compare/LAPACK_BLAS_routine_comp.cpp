@@ -28,10 +28,10 @@ int main(int argc, char* argv[])
 
   int info;
   //dgeqr
-  Tucker::Matrix* Y = Tucker::MemoryManager::safe_new<Tucker::Matrix>(YNrows, YNcols);
+  Tucker::Matrix<double>* Y = Tucker::MemoryManager::safe_new<Tucker::Matrix<double>>(YNrows, YNcols);
   int sizeOfY = YNrows*YNcols;
   Y->rand();
-  Tucker::Matrix* YCopy = Tucker::MemoryManager::safe_new<Tucker::Matrix>(YNrows, YNcols);
+  Tucker::Matrix<double>* YCopy = Tucker::MemoryManager::safe_new<Tucker::Matrix<double>>(YNrows, YNcols);
   double* work = Tucker::MemoryManager::safe_new_array<double>(1);
   qrWorkSpaceQueryTimer.start();
   work = Tucker::MemoryManager::safe_new_array<double>(1);
@@ -47,28 +47,28 @@ int main(int argc, char* argv[])
   work = Tucker::MemoryManager::safe_new_array<double>(lwork);
   T = Tucker::MemoryManager::safe_new_array<double>(TSize);
   for(int i=0; i<avgIteration; i++){
-    dcopy_(&sizeOfY, Y->data(), &one, YCopy->data(), &one);
+    Tucker::copy(&sizeOfY, Y->data(), &one, YCopy->data(), &one);
     qrTimer.start();
     Tucker::dgeqr_(&YNrows, &YNcols, YCopy->data(), &YNrows, T, &TSize, work, &lwork, &info);
     qrTimer.stop();
   }
   double avgQrTime = qrTimer.duration() / avgIteration;
   std::cout << "avgQrTime: " << avgQrTime <<  std::endl;
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(Y);
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(YCopy);
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix<double>>(Y);
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix<double>>(YCopy);
   Tucker::MemoryManager::safe_delete_array<double>(work, lwork);
   Tucker::MemoryManager::safe_delete_array<double>(T, TSize);
 
   int ANrows = YNrows;
   int ANcols = YNcols;
-  Tucker::Matrix* A = Tucker::MemoryManager::safe_new<Tucker::Matrix>(ANrows, ANcols);
+  Tucker::Matrix<double>* A = Tucker::MemoryManager::safe_new<Tucker::Matrix<double>>(ANrows, ANcols);
   A->rand();
   //compute A'*A
   char uplo = 'U';
   char trans = 'T';
   double alpha = 1;
   double beta = 0;
-  Tucker::Matrix* S = Tucker::MemoryManager::safe_new<Tucker::Matrix>(ANcols, ANcols);
+  Tucker::Matrix<double>* S = Tucker::MemoryManager::safe_new<Tucker::Matrix<double>>(ANcols, ANcols);
   for(int i=0; i<avgIteration; i++){
     ATATimer.start();
     Tucker::dsyrk_(&uplo, &trans, &ANcols, &ANrows, &alpha,
@@ -76,9 +76,9 @@ int main(int argc, char* argv[])
     ATATimer.stop();
   }
   double avgATATime = ATATimer.duration() / avgIteration;
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(S);
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix<double>>(S);
   //comput A*A'
-  Tucker::Matrix* S1 = Tucker::MemoryManager::safe_new<Tucker::Matrix>(ANrows, ANrows);
+  Tucker::Matrix<double>* S1 = Tucker::MemoryManager::safe_new<Tucker::Matrix<double>>(ANrows, ANrows);
   S1->rand();
   trans = 'N';
   for(int i=0; i<avgIteration; i++){
@@ -88,8 +88,8 @@ int main(int argc, char* argv[])
     AATTimer.stop();
   }
   double avgAATTime = AATTimer.duration() / avgIteration;
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(A);
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(S1);
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix<double>>(A);
+  Tucker::MemoryManager::safe_delete<Tucker::Matrix<double>>(S1);
 
   std::cout << "work space query takes: " << qrWorkSpaceQueryTimer.duration() << " seconds. \n";
   std::cout << "dgeqr takes: " << avgQrTime << " seconds. \n";

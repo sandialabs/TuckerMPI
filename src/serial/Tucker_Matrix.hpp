@@ -42,13 +42,8 @@
 #include <cassert>
 #include <iostream>
 #include <string>
+#include "Tucker_BlasWrapper.hpp"
 #include "Tucker_Tensor.hpp"
-
-/// @cond EXCLUDE
-// Copy from one array to another
-extern "C" void dcopy_(const int*, const double*, const int*,
-    double*, const int*);
-/// @endcond
 
 namespace Tucker {
 
@@ -57,14 +52,15 @@ namespace Tucker {
  * Since a matrix is a 2-dimensional tensor, this class
  * inherits from the tensor class.
  */
-class Matrix : public Tensor {
+template<class scalar_t>
+class Matrix : public Tensor<scalar_t> {
 public:
   /** \brief Constructor
    * \param[in] nrows Number of rows
    * \param[in] ncols Number of columns
    */
   Matrix(const int nrows, const int ncols) :
-    Tensor(nrows,ncols)
+    Tensor<scalar_t>::Tensor(nrows,ncols)
   {
 
   }
@@ -72,38 +68,38 @@ public:
   /// Returns the number of rows
   int nrows() const
   {
-    return I_[0];
+    return this->I_[0];
   }
 
   /// Returns the number of columns
   int ncols() const
   {
-    return I_[1];
+    return this->I_[1];
   }
 
-  Matrix* getSubmatrix(const int rbegin, const int rend) const
+  Matrix<scalar_t>* getSubmatrix(const int rbegin, const int rend) const
   {
     const int ONE = 1;
     int new_nrows = rend-rbegin+1;
     int old_nrows = nrows();
     int myncols = ncols();
-    Matrix* newMat = MemoryManager::safe_new<Matrix>(new_nrows,myncols);
+    Matrix<scalar_t>* newMat = MemoryManager::safe_new<Matrix<scalar_t>>(new_nrows,myncols);
 
     for(int c=0; c<myncols; c++)
     {
-      dcopy_(&new_nrows, data()+c*old_nrows+rbegin, &ONE,
+      Tucker::copy(&new_nrows, this->data()+c*old_nrows+rbegin, &ONE,
           newMat->data()+c*new_nrows, &ONE);
     }
 
     return newMat;
   }
 
-  Matrix* getTranspose()
+  Matrix<scalar_t>* getTranspose()
   {
-    Matrix* T = MemoryManager::safe_new<Matrix>(ncols(), nrows());
+    Matrix<scalar_t>* T = MemoryManager::safe_new<Matrix<scalar_t>>(ncols(), nrows());
     const int ONE = 1;
     for(int i=0; i<nrows(); i++){
-      dcopy_(&I_[1], data()+i, &I_[0], T->data()+(i*T->nrows()), &ONE);
+      Tucker::copy(&this->I_[1], this->data()+i, &this->I_[0], T->data()+(i*T->nrows()), &ONE);
     }
     return T;
   }
@@ -116,7 +112,7 @@ public:
     std::string s = "";
     for(int i=0; i<nrows(); i++){
       for(int j=0; j<ncols(); j++){
-        s = s + std::to_string(data()[i+j*nrows()]) + ", ";
+        s = s + std::to_string(this->data()[i+j*nrows()]) + ", ";
       }
       s = s + "\n";
     }
@@ -125,7 +121,7 @@ public:
 
 protected:
   Matrix(const int nrows) :
-    Tensor(nrows)
+    Tensor<scalar_t>::Tensor(nrows)
   {
 
   }
@@ -133,9 +129,13 @@ protected:
 private:
   /// @cond EXCLUDE
   // Disables the copy constructor
-  Matrix(const Matrix& m);
+  Matrix(const Matrix<scalar_t>& m);
   /// @endcond
 };
+
+// Explicit instantiations to build static library for both single and double precision
+template class Matrix<float>;
+template class Matrix<double>;
 
 } // end of namespace Tucker
 

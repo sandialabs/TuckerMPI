@@ -22,8 +22,8 @@ int main(int argc, char* argv[])
   // We store them as single dimensional arrays
   int nEntries = atoi(argv[1]);
   Tucker::SizeArray sz(1); sz[0] = nEntries;
-  Tucker::Tensor t1(sz);
-  Tucker::Tensor t2(sz);
+  Tucker::Tensor<double> t1(sz);
+  Tucker::Tensor<double> t2(sz);
 
   // Read the binary files
   Tucker::importTensorBinary(&t1, argv[2]);

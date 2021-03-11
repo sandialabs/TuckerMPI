@@ -46,7 +46,8 @@
 
 namespace TuckerMPI {
 
-void printSingularValues(const TuckerTensor* factorization,
+template <class scalar_t>
+void printSingularValues(const TuckerTensor<scalar_t>* factorization,
     std::string filePrefix, bool useLQ)
 {
   // For each mode...
@@ -81,7 +82,8 @@ void printSingularValues(const TuckerTensor* factorization,
  * which should be the same as the eigenvectors in the gram approach up to a
  * sign change.
  */
-void printEigenvectors(const TuckerTensor* factorization,
+template <class scalar_t>
+void printEigenvectors(const TuckerTensor<scalar_t>* factorization,
     std::string filePrefix)
 {
   // For each mode...
@@ -102,6 +104,11 @@ void printEigenvectors(const TuckerTensor* factorization,
   }
 }
 
+// Explicit instantiations to build static library for both single and double precision
+template void printSingularValues(const TuckerTensor<float>*, std::string, bool);
+template void printSingularValues(const TuckerTensor<double>*, std::string, bool);
+template void printEigenvectors(const TuckerTensor<float>*, std::string);
+template void printEigenvectors(const TuckerTensor<double>*, std::string);
 } // end namespace
 
 #endif /* TUCKERMPI_IO_UTIL_HPP_ */

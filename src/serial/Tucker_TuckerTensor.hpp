@@ -49,6 +49,7 @@ namespace Tucker {
  *
  * Allows users to access the data directly
  */
+template<class scalar_t>
 class TuckerTensor {
 public:
   /** \brief Constructor
@@ -74,9 +75,9 @@ public:
     }
 
     N = ndims;
-    U = MemoryManager::safe_new_array<Matrix*>(N);
-    eigenvalues = MemoryManager::safe_new_array<double*>(N);
-    singularValues = MemoryManager::safe_new_array<double*>(N);
+    U = MemoryManager::safe_new_array<Matrix<scalar_t>*>(N);
+    eigenvalues = MemoryManager::safe_new_array<scalar_t*>(N);
+    singularValues = MemoryManager::safe_new_array<scalar_t*>(N);
     G = 0;
 
     for(int i=0; i<N; i++) {
@@ -99,21 +100,21 @@ public:
    */
   ~TuckerTensor()
   {
-    if(G) MemoryManager::safe_delete<Tensor>(G);
+    if(G) MemoryManager::safe_delete(G);
     for(int i=0; i<N; i++) {
-      if(singularValues[i]) MemoryManager::safe_delete_array<double>(singularValues[i],U[i]->nrows());
-      if(eigenvalues[i]) MemoryManager::safe_delete_array<double>(eigenvalues[i],U[i]->nrows());
-      if(U[i]) MemoryManager::safe_delete<Matrix>(U[i]);
+      if(singularValues[i]) MemoryManager::safe_delete_array(singularValues[i],U[i]->nrows());
+      if(eigenvalues[i]) MemoryManager::safe_delete_array(eigenvalues[i],U[i]->nrows());
+      if(U[i]) MemoryManager::safe_delete(U[i]);
     }
-    MemoryManager::safe_delete_array<Matrix*>(U,N);
-    MemoryManager::safe_delete_array<double*>(eigenvalues,N);
-    MemoryManager::safe_delete_array<double*>(singularValues,N);
+    MemoryManager::safe_delete_array(U,N);
+    MemoryManager::safe_delete_array(eigenvalues,N);
+    MemoryManager::safe_delete_array(singularValues,N);
 
-    MemoryManager::safe_delete_array<Timer>(LQ_timer_, N);
-    MemoryManager::safe_delete_array<Timer>(svd_timer_, N);
-    MemoryManager::safe_delete_array<Timer>(gram_timer_,N);
-    MemoryManager::safe_delete_array<Timer>(eigen_timer_,N);
-    MemoryManager::safe_delete_array<Timer>(ttm_timer_,N);
+    MemoryManager::safe_delete_array(LQ_timer_, N);
+    MemoryManager::safe_delete_array(svd_timer_, N);
+    MemoryManager::safe_delete_array(gram_timer_,N);
+    MemoryManager::safe_delete_array(eigen_timer_,N);
+    MemoryManager::safe_delete_array(ttm_timer_,N);
   }
 
   /** \brief Prints some runtime information
@@ -137,7 +138,7 @@ public:
   }
 
   //! The core tensor
-  Tensor* G;
+  Tensor<scalar_t>* G;
 
   /** \brief Factors
    *
@@ -146,7 +147,7 @@ public:
    * \note These are stored as pointers because Matrix has no
    * default constructor.
    */
-  Matrix** U;
+  Matrix<scalar_t>** U;
 
   //! The number of factors
   int N;
@@ -156,38 +157,18 @@ public:
    * #eigenvalues[n] is an array which holds the eigenvalues of
    * the n-th Gram matrix
    */
-  double** eigenvalues;
+  scalar_t** eigenvalues;
 
   /** \brief Sigular Values of the lower triangular L
    *
    * #singularValues[n] is an array which holds the singular values of
    * the n-th L matrix
    */
-  double** singularValues;
-
-  /** \note STHOSVD has been declared as a friend function of
-   * TuckerTensor so that the timers can remain private
-   */
-  friend const struct TuckerTensor* STHOSVD(const Tensor* const X,
-      const double epsilon, bool flipSign, bool useQR);
-
-  /** \note STHOSVD has been declared as a friend function of
-   * TuckerTensor so that the timers can remain private
-   */
-  friend const struct TuckerTensor* STHOSVD(const Tensor* const X,
-      const SizeArray* const reducedI, bool flipSign, bool useQR);
-
-private:
-  /// @cond EXCLUDE
-  TuckerTensor(const TuckerTensor& tt);
-  /// @endcond
+  scalar_t** singularValues;
   
-  /// \brief Array of timers for Gram matrix computation
-  Timer* LQ_timer_;
-  
-  /// \brief Array of timers for Gram matrix computation
-  Timer* svd_timer_;
-
+  /** \note timers have been declared public because befriending the templated
+   * STHOSVD functions is difficult to do for static library
+   */
   /// \brief Array of timers for Gram matrix computation
   Timer* gram_timer_;
 
@@ -199,7 +180,23 @@ private:
 
   /// \brief Total ST-HOSVD runtime
   Timer total_timer_;
+
+  /// \brief Array of timers for Gram matrix computation
+  Timer* LQ_timer_;
+  
+  /// \brief Array of timers for Gram matrix computation
+  Timer* svd_timer_;
+
+private:
+  /// @cond EXCLUDE
+  TuckerTensor(const TuckerTensor<scalar_t>& tt);
+  /// @endcond
+
 };
+
+// Explicit instantiations to build static library for both single and double precision
+template class TuckerTensor<float>;
+template class TuckerTensor<double>;
 
 } // end namespace Tucker
 

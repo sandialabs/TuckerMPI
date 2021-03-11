@@ -11,15 +11,23 @@
 
 int main()
 {
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+#else
+  typedef double scalar_t;
+#endif
+
   Tucker::SizeArray* size =
       Tucker::MemoryManager::safe_new<Tucker::SizeArray>(3);
   (*size)[0] = 2;
   (*size)[1] = 3;
   (*size)[2] = 5;
-  Tucker::Tensor* t =
-      Tucker::MemoryManager::safe_new<Tucker::Tensor>(*size);
+  Tucker::Tensor<scalar_t>* t =
+      Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*size);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(size);
-  double* data = t->data();
+  scalar_t* data = t->data();
   data[0] = 2;    data[1] = 3;    data[2] = 5;    data[3] = 7;
   data[4] = 11;   data[5] = 13;   data[6] = 17;   data[7] = 19;
   data[8] = 23;   data[9] = 29;   data[10] = 31;  data[11] = 37;
@@ -29,18 +37,18 @@ int main()
   data[24] = 101; data[25] = 103; data[26] = 107; data[27] = 109;
   data[28] = 113; data[29] = 127;
 
-  Tucker::Matrix* mat =
-      Tucker::MemoryManager::safe_new<Tucker::Matrix>(7,2);
+  Tucker::Matrix<scalar_t>* mat =
+      Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(7,2);
   data = mat->data();
   data[0] = 131;  data[1] = 137; data[2] = 139;  data[3] = 149;
   data[4] = 151;  data[5] = 157; data[6] = 163;  data[7] = 167;
   data[8] = 173;  data[9] = 179; data[10] = 181; data[11] = 191;
   data[12] = 193; data[13] = 197;
 
-  Tucker::Tensor* result = Tucker::ttm(t,0,mat,false);
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(mat);
+  Tucker::Tensor<scalar_t>* result = Tucker::ttm(t,0,mat,false);
+  Tucker::MemoryManager::safe_delete(mat);
   data = result->data();
-  double* trueData = Tucker::MemoryManager::safe_new_array<double>(105);
+  scalar_t* trueData = Tucker::MemoryManager::safe_new_array<scalar_t>(105);
   trueData[0] = 763; trueData[1] = 793; trueData[2] = 815; trueData[3] = 841;
   trueData[4] = 875; trueData[5] = 893; trueData[6] = 917; trueData[7] = 1824;
   trueData[8] = 1896; trueData[9] = 1948; trueData[10] = 2012; trueData[11] = 2092;
@@ -74,10 +82,10 @@ int main()
       return EXIT_FAILURE;
     }
   }
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(result);
+  Tucker::MemoryManager::safe_delete(result);
 
-  Tucker::Matrix* matt =
-      Tucker::MemoryManager::safe_new<Tucker::Matrix>(2,7);
+  Tucker::Matrix<scalar_t>* matt =
+      Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(2,7);
   data = matt->data();
   data[0] = 131; data[1] = 137; data[2] = 139; data[3] = 149;
   data[4] = 151; data[5] = 157; data[6] = 163; data[7] = 167;
@@ -85,7 +93,7 @@ int main()
   data[12] = 193; data[13] = 197;
 
   result = Tucker::ttm(t,0,matt,true);
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(matt);
+  Tucker::MemoryManager::safe_delete(matt);
   data = result->data();
   trueData[0] = 673; trueData[1] = 725; trueData[2] = 773;
   trueData[3] = 827; trueData[4] = 883; trueData[5] = 935;
@@ -128,10 +136,10 @@ int main()
       return EXIT_FAILURE;
     }
   }
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(result);
+  Tucker::MemoryManager::safe_delete(result);
 
-  Tucker::Matrix* mat1 =
-      Tucker::MemoryManager::safe_new<Tucker::Matrix>(7,3);
+  Tucker::Matrix<scalar_t>* mat1 =
+      Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(7,3);
   data = mat1->data();
   data[0] = 131; data[1] = 137; data[2] = 139; data[3] = 149;
   data[4] = 151; data[5] = 157; data[6] = 163; data[7] = 167;
@@ -141,7 +149,7 @@ int main()
   data[20] = 239;
 
   result = Tucker::ttm(t,1,mat1,false);
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(mat1);
+  Tucker::MemoryManager::safe_delete(mat1);
   data = result->data();
   trueData[0] = 3286; trueData[1] = 4149; trueData[2] = 3460;
   trueData[3] = 4365; trueData[4] = 3626; trueData[5] = 4569;
@@ -175,10 +183,10 @@ int main()
       return EXIT_FAILURE;
     }
   }
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(result);
+  Tucker::MemoryManager::safe_delete(result);
 
-  Tucker::Matrix* mat1t =
-      Tucker::MemoryManager::safe_new<Tucker::Matrix>(3,7);
+  Tucker::Matrix<scalar_t>* mat1t =
+      Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(3,7);
   data = mat1t->data();
   data[0] = 131; data[1] = 137; data[2] = 139; data[3] = 149;
   data[4] = 151; data[5] = 157; data[6] = 163; data[7] = 167;
@@ -188,7 +196,7 @@ int main()
   data[20] = 239;
 
   result = Tucker::ttm(t,1,mat1t,true);
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(mat1t);
+  Tucker::MemoryManager::safe_delete(mat1t);
   data = result->data();
   trueData[0] = 2476; trueData[1] = 3159; trueData[2] = 2780;
   trueData[3] = 3545; trueData[4] = 3064; trueData[5] = 3907;
@@ -220,10 +228,10 @@ int main()
       return EXIT_FAILURE;
     }
   }
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(result);
+  Tucker::MemoryManager::safe_delete(result);
 
-  Tucker::MemoryManager::safe_delete_array<double>(trueData,105);
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(t);
+  Tucker::MemoryManager::safe_delete_array<scalar_t>(trueData,105);
+  Tucker::MemoryManager::safe_delete(t);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();
