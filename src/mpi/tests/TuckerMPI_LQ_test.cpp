@@ -267,7 +267,6 @@ int main(int argc, char* argv[])
   int root = 0;
   int LSize = 12; // length of the side of the square that L is in.
   int compareResultBuff;
-  // std::string filename = "input_files/lq_data.mpi";
   for(int t=0; t<nPossibleProcGrid; t++){
     Tucker::SizeArray* nprocsPerDim = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(ndims);
     (*nprocsPerDim)[0] = *(processorGridLayouts+t*4);
@@ -281,12 +280,7 @@ int main(int argc, char* argv[])
     TuckerMPI::importTensorBinary(filename.c_str(),tensor);
 
     Tucker::Matrix<scalar_t>* L0 = TuckerMPI::LQ<scalar_t>(tensor, 0, false);
-    if(rank == 0){
-      //std::cout << L0->prettyPrint();
-      compareResultBuff = (int)checkEqual(L0->data(), trueL0, LSize, LSize);
-      std::cout << "mode 1 result: " << compareResultBuff << std::endl;
-    }
-    MPI_Bcast(&compareResultBuff, 1, MPI_INT, root, MPI_COMM_WORLD);
+    compareResultBuff = (int)checkEqual(L0->data(), trueL0, LSize, LSize);
     if(compareResultBuff != 1){
       Tucker::MemoryManager::safe_delete(tensor);
       MPI_Finalize();
@@ -295,10 +289,7 @@ int main(int argc, char* argv[])
     Tucker::MemoryManager::safe_delete(L0);
   
     Tucker::Matrix<scalar_t>* L1 = TuckerMPI::LQ<scalar_t>(tensor, 1, false);
-    if(rank == 0){
-      compareResultBuff = checkEqual(L1->data(), trueL1, LSize, LSize);
-    }
-    MPI_Bcast(&compareResultBuff, 1, MPI_INT, root, MPI_COMM_WORLD);
+    compareResultBuff = checkEqual(L1->data(), trueL1, LSize, LSize);
     if(compareResultBuff != 1){
       Tucker::MemoryManager::safe_delete(tensor);
       MPI_Finalize();
@@ -307,10 +298,7 @@ int main(int argc, char* argv[])
     Tucker::MemoryManager::safe_delete(L1);
     
     Tucker::Matrix<scalar_t>* L2 = TuckerMPI::LQ<scalar_t>(tensor, 2, false);
-    if(rank == 0){
-      compareResultBuff = checkEqual(L2->data(), trueL2, LSize, LSize);
-    }
-    MPI_Bcast(&compareResultBuff, 1, MPI_INT, root, MPI_COMM_WORLD);
+    compareResultBuff = checkEqual(L2->data(), trueL2, LSize, LSize);
     if(compareResultBuff != 1){
       Tucker::MemoryManager::safe_delete(tensor);
       MPI_Finalize();
@@ -320,10 +308,7 @@ int main(int argc, char* argv[])
     MPI_Barrier(MPI_COMM_WORLD);
 
     Tucker::Matrix<scalar_t>* L3 = TuckerMPI::LQ<scalar_t>(tensor, 3, false);
-    if(rank == 0){
-      compareResultBuff = checkEqual(L3->data(), trueL3, LSize, LSize);
-    }
-    MPI_Bcast(&compareResultBuff, 1, MPI_INT, root, MPI_COMM_WORLD);
+    compareResultBuff = checkEqual(L3->data(), trueL3, LSize, LSize);
     if(compareResultBuff != 1){
       Tucker::MemoryManager::safe_delete(tensor);
       MPI_Finalize();
