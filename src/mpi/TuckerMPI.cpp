@@ -208,38 +208,29 @@ void ButterflyTSQR(Tucker::Matrix<scalar_t>* R, Tucker::Matrix<scalar_t>* L){
       MPI_Recv(&tempBnrows, 1, MPI_INT, target, target, MPI_COMM_WORLD, &status);
       Tucker::Matrix<scalar_t>* tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(tempBnrows, Rncols);
       MPI_Recv_(tempB->data(), tempBnrows*Rncols, target, target, MPI_COMM_WORLD, &status);
-      Tucker::Matrix<scalar_t>* newR = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(tempBnrows+Rnrows, Rncols);
-      for(int i=0; i< Rncols; i++){
-        Tucker::copy(&Rnrows, R->data()+i*Rnrows, &one, newR->data()+i*(tempBnrows+Rnrows), &one);
-        Tucker::copy(&tempBnrows, tempB->data()+i*tempBnrows, &one, newR->data()+i*(tempBnrows+Rnrows)+Rnrows, &one)
+      if(Rncols > Rnrows){
+        Tucker::Matrix<scalar_t>* squareR = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rncols, Rncols);
+        int sizeOfSquareR = Rncols*Rncols;
+        for(int i=0; i<Rncols; i++){
+          Tucker::copy(&Rnrows, R->data()+i*Rnrows, &one, squareR->data()+i*Rncols, &one); //copy the top part over
+          for(int j=i*Rncols+Rnrows; j<(i+1)*Rncols; j++){// padd the bottom with zeros
+            squareR->data()[j] = 0;
+          }
+        }
+        Tucker::MemoryManager::safe_delete(R);
+        R = squareR;
+        squareR = NULL;
+        Rnrows = R->nrows();
       }
-      Tucker::MemoryManager::safe_delete(R);
+      int nb = (Rncols > 32)? 32 : Rncols;
+      double* T = Tucker::MemoryManager::safe_new_array<double>(nb*Rncols);
+      double* work = Tucker::MemoryManager::safe_new_array<double>(nb*Rncols);
+      int info;
+      Tucker::tpqrt(&tempBnrows, &Rncols, &tempBnrows, &nb, R->data(), &Rncols, tempB->data(),
+      &tempBnrows, T, &nb, work, &info);
       Tucker::MemoryManager::safe_delete(tempB);
-      R = newR;
-      // //padd the top R with zeros if necessary before the dtpqrt
-      // if(Rncols > Rnrows){
-      //   Tucker::Matrix<scalar_t>* squareR = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rncols, Rncols);
-      //   int sizeOfSquareR = Rncols*Rncols;
-      //   for(int i=0; i<Rncols; i++){
-      //     Tucker::copy(&Rnrows, R->data()+i*Rnrows, &one, squareR->data()+i*Rncols, &one); //copy the top part over
-      //     for(int j=i*Rncols+Rnrows; j<(i+1)*Rncols; j++){// padd the bottom with zeros
-      //       squareR->data()[j] = 0;
-      //     }
-      //   }
-      //   Tucker::MemoryManager::safe_delete(R);
-      //   R = squareR;
-      //   squareR = NULL;
-      //   Rnrows = R->nrows();
-      // }
-      // int nb = (Rncols > 32)? 32 : Rncols;
-      // double* T = Tucker::MemoryManager::safe_new_array<double>(nb*Rncols);
-      // double* work = Tucker::MemoryManager::safe_new_array<double>(nb*Rncols);
-      // int info;
-      // Tucker::tpqrt(&tempBnrows, &Rncols, &tempBnrows, &nb, R->data(), &Rncols, tempB->data(),
-      // &tempBnrows, T, &nb, work, &info);
-      // Tucker::MemoryManager::safe_delete(tempB);
-      // Tucker::MemoryManager::safe_delete_array<double>(work, nb*Rncols);
-      // Tucker::MemoryManager::safe_delete_array<double>(T, nb*Rncols);
+      Tucker::MemoryManager::safe_delete_array<double>(work, nb*Rncols);
+      Tucker::MemoryManager::safe_delete_array<double>(T, nb*Rncols);
     }
   }
   //Butterfly TSQR part

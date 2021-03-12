@@ -7,6 +7,9 @@ TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_threshold_test mpi_tucker serial_tucker 
 ADD_EXECUTABLE(TuckerMPI_sthosvd_reduced_dims_test TuckerMPI_sthosvd_reduced_dims_test.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_reduced_dims_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
+ADD_EXECUTABLE(uckerMPI_LQ_all_reduce_TSQR_test TuckerMPI_LQ_butterfly_TSQR_test.cpp)
+TARGET_LINK_LIBRARIES(uckerMPI_LQ_all_reduce_TSQR_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 ADD_EXECUTABLE(TuckerMPI_LQ_edgecase_test TuckerMPI_LQ_edgecase_test.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_LQ_edgecase_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
@@ -79,6 +82,9 @@ TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_threshold_test_single mpi_tucker serial_
 
 ADD_EXECUTABLE(TuckerMPI_sthosvd_reduced_dims_test_single TuckerMPI_sthosvd_reduced_dims_test.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_reduced_dims_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(TuckerMPI_LQ_butterfly_TSQR_test_single TuckerMPI_LQ_butterfly_TSQR_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_LQ_butterfly_TSQR_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 ADD_EXECUTABLE(TuckerMPI_LQ_edgecase_test_single TuckerMPI_LQ_edgecase_test.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_LQ_edgecase_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
@@ -179,6 +185,8 @@ ADD_TEST(TuckerMPI_sthosvd_threshold_test10 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1
 ADD_TEST(TuckerMPI_sthosvd_threshold_test10_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_sthosvd_threshold_test_single)
 ADD_TEST(TuckerMPI_sthosvd_reduced_dims_test10 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_sthosvd_reduced_dims_test)
 ADD_TEST(TuckerMPI_sthosvd_reduced_dims_test10_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 10 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_sthosvd_reduced_dims_test_single)
+ADD_TEST(TuckerMPI_LQ_butterfly_TSQR_test ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_butterfly_TSQR_test)
+ADD_TEST(TuckerMPI_LQ_butterfly_TSQR_test_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_butterfly_TSQR_test_single)
 ADD_TEST(TuckerMPI_LQ_edgecase_test ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_edgecase_test)
 ADD_TEST(TuckerMPI_LQ_edgecase_test_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_edgecase_test_single)
 ADD_TEST(TuckerMPI_LQ_test12 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_test)
@@ -389,6 +397,7 @@ ADD_TEST(TuckerMPI_ttm_test_file24 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 24 ${CMAKE
 SET_PROPERTY(TEST TuckerMPI_part_rec_test PROPERTY LABELS SystemTest ManyProcs)
 SET_PROPERTY(TEST TuckerMPI_sthosvd_threshold_test10 PROPERTY LABELS UnitTest ManyProcs)
 SET_PROPERTY(TEST TuckerMPI_sthosvd_reduced_dims_test10 PROPERTY LABELS UnitTest ManyProcs)
+SET_PROPERTY(TEST TuckerMPI_LQ_butterfly_TSQR_test PROPERTY LABELS UnitTest ManyProcs)
 SET_PROPERTY(TEST TuckerMPI_LQ_edgecase_test PROPERTY LABELS UnitTest ManyProcs)
 SET_PROPERTY(TEST TuckerMPI_LQ_test12 PROPERTY LABELS UnitTest ManyProcs)
 SET_PROPERTY(TEST TuckerMPI_LQ_test11 PROPERTY LABELS UnitTest ManyProcs)
