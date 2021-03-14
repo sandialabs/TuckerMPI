@@ -107,7 +107,7 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool 
   }
   else{
     TSQR(R);
-    localqr_bcast_timer->start();
+    if(localqr_bcast_timer) localqr_bcast_timer->start();
     if(globalRank == 0){
       //add zeros at the lower triangle
       for(int c=0; c<R->ncols(); c++){
@@ -124,14 +124,14 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool 
     //bcast
     int sizeOfL = L->nrows()*L->ncols();
     MPI_Bcast_(L->data(), sizeOfL, 0, MPI_COMM_WORLD);
-    localqr_bcast_timer->stop();
+    if(localqr_bcast_timer) localqr_bcast_timer->stop();
   }
   if(tsqr_timer) tsqr_timer->stop();
   return L;
 }
 
 template <class scalar_t>
-Tucker::Matrix<scalar_t>* TSQR(Tucker::Matrix<scalar_t>* R){
+void TSQR(Tucker::Matrix<scalar_t>*& R){
   int one = 1;
   int globalRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
@@ -187,7 +187,7 @@ Tucker::Matrix<scalar_t>* TSQR(Tucker::Matrix<scalar_t>* R){
 }
 
 template <class scalar_t>
-void ButterflyTSQR(Tucker::Matrix<scalar_t>* R, Tucker::Matrix<scalar_t>* L){
+void ButterflyTSQR(Tucker::Matrix<scalar_t>* R, Tucker::Matrix<scalar_t>*& L){
   int one = 1;
   int globalRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);

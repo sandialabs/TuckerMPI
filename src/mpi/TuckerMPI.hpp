@@ -67,10 +67,10 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool 
     Tucker::Timer* localqr_bcast_timer=0);
 
 template <class scalar_t>
-Tucker::Matrix<scalar_t>* TSQR(Tucker::Matrix<scalar_t>* R);
+void TSQR(Tucker::Matrix<scalar_t>*& R);
 
 template <class scalar_t>
-void ButterflyTSQR(Tucker::Matrix<scalar_t>* R, Tucker::Matrix<scalar_t>* L);
+void ButterflyTSQR(Tucker::Matrix<scalar_t>* R, Tucker::Matrix<scalar_t>*& L);
 
 /** \brief Computes the Gram matrix using the old algorithm
  *

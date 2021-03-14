@@ -19,6 +19,7 @@ bool checkEqual(const scalar_t* arr1, const scalar_t* arr2, int nrows, int ncols
   return true;
 }
 
+//Testing the edge case where each processor owns a tall and skinny submatrix the unfolded tensor.
 int main(int argc, char* argv[])
 {
 // specify precision
@@ -58,11 +59,7 @@ int main(int argc, char* argv[])
   int compareResultBuff;
 
   Tucker::Matrix<scalar_t>* L = TuckerMPI::LQ<scalar_t>(tensor, 0, false);
-  // if(rank == 0) std::cout << L->prettyPrint();
-  if(rank == 0){
-    compareResultBuff = checkEqual(L->data(), trueL->data(), 96, 96);
-  }
-  MPI_Bcast(&compareResultBuff, 1, MPI_INT, root, MPI_COMM_WORLD);
+  compareResultBuff = checkEqual(L->data(), trueL->data(), 96, 96);
   Tucker::MemoryManager::safe_delete(L);
   Tucker::MemoryManager::safe_delete(tensor);
   if(compareResultBuff != 1){
@@ -70,26 +67,23 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  nprocsPerDim = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(ndims);
-  (*nprocsPerDim)[0] = 2; 
-  (*nprocsPerDim)[1] = 1; 
-  (*nprocsPerDim)[2] = 2; 
-  (*nprocsPerDim)[3] = 2;
-  dist = Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*tensorSizeArray,*nprocsPerDim);
-  tensor = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
-  TuckerMPI::importTensorBinary(inputFilename.c_str(),tensor);
-  L = TuckerMPI::LQ(tensor, 0, false);
-  if(rank == 0){
-    compareResultBuff = checkEqual(L->data(), trueL->data(), 96, 96);
-  }
-  MPI_Bcast(&compareResultBuff, 1, MPI_INT, root, MPI_COMM_WORLD);
-  Tucker::MemoryManager::safe_delete(L);
-  Tucker::MemoryManager::safe_delete(tensor);
-  Tucker::MemoryManager::safe_delete(trueL);
-  if(compareResultBuff != 1){
-    MPI_Finalize();
-    return EXIT_FAILURE;
-  }
+  // nprocsPerDim = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(ndims);
+  // (*nprocsPerDim)[0] = 2; 
+  // (*nprocsPerDim)[1] = 1; 
+  // (*nprocsPerDim)[2] = 2; 
+  // (*nprocsPerDim)[3] = 2;
+  // dist = Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*tensorSizeArray,*nprocsPerDim);
+  // tensor = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
+  // TuckerMPI::importTensorBinary(inputFilename.c_str(),tensor);
+  // L = TuckerMPI::LQ(tensor, 0, false);
+  // compareResultBuff = checkEqual(L->data(), trueL->data(), 96, 96);
+  // Tucker::MemoryManager::safe_delete(L);
+  // Tucker::MemoryManager::safe_delete(tensor);
+  // Tucker::MemoryManager::safe_delete(trueL);
+  // if(compareResultBuff != 1){
+  //   MPI_Finalize();
+  //   return EXIT_FAILURE;
+  // }
   MPI_Finalize();
   return EXIT_SUCCESS;
 }
