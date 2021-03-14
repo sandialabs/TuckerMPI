@@ -51,6 +51,7 @@ int main(int argc, char* argv[])
   bool boolWritePreprocessed            = Tucker::stringParse<bool>(fileAsString, "Write preprocessed data", false);
   bool boolUseOldGram                   = Tucker::stringParse<bool>(fileAsString, "Use old Gram", false);
   bool useLQ                            = Tucker::stringParse<bool>(fileAsString, "Compute SVD via LQ", false);
+  bool useButterflyTSQR                 = Tucker::stringParse<bool>(fileAsString, "Use butterfly TSQR", false);
   bool boolReconstruct                  = Tucker::stringParse<bool>(fileAsString, "Reconstruct tensor", false);
 
   double tol                            = Tucker::stringParse<double>(fileAsString, "SV Threshold", 1e-6);
@@ -404,10 +405,10 @@ int main(int argc, char* argv[])
     const TuckerMPI::TuckerTensor<scalar_t>* solution;
     bool flipSign = false; // confirm its default as false
     if(boolAuto) {
-      solution = TuckerMPI::STHOSVD(&X, tol, modeOrder->data(), boolUseOldGram, flipSign, useLQ);
+      solution = TuckerMPI::STHOSVD(&X, tol, modeOrder->data(), boolUseOldGram, flipSign, useLQ, useButterflyTSQR);
     }
     else {
-      solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, flipSign, useLQ);
+      solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, flipSign, useLQ, useButterflyTSQR);
     }
 
     // Send the timing information to a CSV

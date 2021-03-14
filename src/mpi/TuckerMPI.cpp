@@ -57,10 +57,14 @@ namespace TuckerMPI
 //There isn't a check for this since we might handle this case later but for now
 //it is assumed that the processor grid is never bigger than the tensor in any mode.
 template <class scalar_t>
-Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, Tucker::Timer* tsqr_timer,
-    Tucker::Timer* local_qr_timer, Tucker::Timer* redistribute_timer,
-    Tucker::Timer* localqr_dcopy_timer, Tucker::Timer* localqr_decompose_timer, 
-    Tucker::Timer* localqr_transpose_timer){
+Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool useButterflyTSQR,  
+    Tucker::Timer* tsqr_timer,
+    Tucker::Timer* local_qr_timer, 
+    Tucker::Timer* redistribute_timer,
+    Tucker::Timer* localqr_dcopy_timer, 
+    Tucker::Timer* localqr_decompose_timer, 
+    Tucker::Timer* localqr_transpose_timer,
+    Tucker::Timer* localqr_bcast_timer){
   int one = 1;
   int globalRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
@@ -95,19 +99,58 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, Tucker::Tim
   }
   if(local_qr_timer) local_qr_timer->stop();
 
-  int sizeOfR = R->nrows()*R->ncols();
+  if(tsqr_timer) tsqr_timer->start();
+  //Since we are padding we can assume the R and thus L are always sqaure.
   Tucker::Matrix<scalar_t>* L = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rncols, Rncols);
+  if(useButterflyTSQR){
+    ButterflyTSQR(R, L);
+  }
+  else{
+    TSQR(R);
+    if(localqr_bcast_timer) localqr_bcast_timer->start();
+    if(globalRank == 0){
+      //add zeros at the lower triangle
+      for(int c=0; c<R->ncols(); c++){
+        for(int r=c+1; r<R->nrows(); r++){
+          R->data()[r+c*R->nrows()] = 0;
+        }
+      }
+      //transpose
+      for(int i=0; i<Rncols; i++){
+        Tucker::copy(&Rncols, R->data()+i*Rncols, &one, L->data()+i, &Rncols); 
+      }
+      Tucker::MemoryManager::safe_delete(R);
+    }
+    //bcast
+    int sizeOfL = L->nrows()*L->ncols();
+    MPI_Bcast_(L->data(), sizeOfL, 0, MPI_COMM_WORLD);
+    if(localqr_bcast_timer) localqr_bcast_timer->stop();
+  }
+  if(tsqr_timer) tsqr_timer->stop();
+  return L;
+}
+
+template <class scalar_t>
+void TSQR(Tucker::Matrix<scalar_t>*& R){
+  int one = 1;
+  int globalRank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
+  int globalnp;
+  MPI_Comm_size(MPI_COMM_WORLD, &globalnp);
+  int Rnrows = R->nrows();
+  int Rncols = R->ncols();
+  int sizeOfR = R->nrows()*R->ncols();
+  
   Tucker::Matrix<scalar_t>* tempB;
   int treeDepth = (int)ceil(log2(globalnp));
   MPI_Status status;
-  if(tsqr_timer) tsqr_timer->start();
   for(int i=0; i < treeDepth; i++){
     if(globalRank % (int)pow(2, i+1) == 0){
       if(globalRank+ pow(2, i) < globalnp){
-        int tempBNrows;
-        MPI_Recv(&tempBNrows, 1, MPI_INT, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
-        tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(tempBNrows, Rncols);
-        MPI_Recv_(tempB->data(), Rncols*Rncols, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
+        int tempBnrows;
+        MPI_Recv(&tempBnrows, 1, MPI_INT, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
+        tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(tempBnrows, Rncols);
+        MPI_Recv_(tempB->data(), tempBnrows*Rncols, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
         int nb = (Rncols > 32)? 32 : Rncols;
         scalar_t* T = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
         scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
@@ -127,8 +170,8 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, Tucker::Tim
           R = squareR;
           Rnrows = R->nrows();//Rnrows might change here
         }
-        Tucker::tpqrt(&tempBNrows, &Rncols, &tempBNrows, &nb, R->data(), &Rncols, tempB->data(),
-        &tempBNrows, T, &nb, work, &info);
+        Tucker::tpqrt(&tempBnrows, &Rncols, &tempBnrows, &nb, R->data(), &Rncols, tempB->data(),
+        &tempBnrows, T, &nb, work, &info);
         Tucker::MemoryManager::safe_delete(tempB);
         Tucker::MemoryManager::safe_delete_array(work, nb*Rncols);
         Tucker::MemoryManager::safe_delete_array(T, nb*Rncols);
@@ -141,24 +184,123 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, Tucker::Tim
       MPI_Send_(R->data(), sizeOfR, globalRank-pow(2, i), globalRank, MPI_COMM_WORLD);
     }
   }
-  if(tsqr_timer) tsqr_timer->stop();
-  if(globalRank == 0){
-    //add zeros at the lower triangle
-    for(int c=0; c<R->ncols(); c++){
-      for(int r=c+1; r<R->nrows(); r++){
-        R->data()[r+c*R->nrows()] = 0;
-      }
-    }
-    
-    //transpose
-    for(int i=0; i<Rncols; i++){
-      Tucker::copy(&Rncols, R->data()+i*Rncols, &one, L->data()+i, &Rncols); 
-    }
-    Tucker::MemoryManager::safe_delete(R);
-  }
-  return L;
 }
 
+template <class scalar_t>
+void ButterflyTSQR(Tucker::Matrix<scalar_t>* R, Tucker::Matrix<scalar_t>*& L){
+  int one = 1;
+  int globalRank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
+  int globalnp;
+  MPI_Comm_size(MPI_COMM_WORLD, &globalnp);
+  int treeDepth = (int)floor(log2(globalnp)); //depth of the binary TSQR tree
+  MPI_Status status;
+  int cutOff = pow(2, treeDepth);//largest power of 2 that is smaller than globalnp, also the index of the first element not participating in the butterfly
+  //This means globalnp is not a power of 2. 
+  //If so, do pairs of send-receive to address the processors with rank >= cutOff not participating in the butterfly TSQR.
+  if(globalnp > cutOff){
+    if(globalRank >= cutOff){
+      int target = globalRank - cutOff;
+      int sizeOfR = R->nrows()* R->ncols();
+      int Rnrows = R->nrows();
+      MPI_Send(&Rnrows, 1, MPI_INT, target, globalRank, MPI_COMM_WORLD);
+      MPI_Send_(R->data(), sizeOfR, target, globalRank, MPI_COMM_WORLD);
+    }
+    else if(globalRank + cutOff < globalnp){
+      int target = globalRank + cutOff;
+      int tempBnrows;
+      int Rncols = R->ncols();
+      int Rnrows = R->nrows();
+      MPI_Recv(&tempBnrows, 1, MPI_INT, target, target, MPI_COMM_WORLD, &status);
+      Tucker::Matrix<scalar_t>* tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(tempBnrows, Rncols);
+      MPI_Recv_(tempB->data(), tempBnrows*Rncols, target, target, MPI_COMM_WORLD, &status);
+      if(Rncols > Rnrows){
+        Tucker::Matrix<scalar_t>* squareR = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rncols, Rncols);
+        int sizeOfSquareR = Rncols*Rncols;
+        for(int i=0; i<Rncols; i++){
+          Tucker::copy(&Rnrows, R->data()+i*Rnrows, &one, squareR->data()+i*Rncols, &one); //copy the top part over
+          for(int j=i*Rncols+Rnrows; j<(i+1)*Rncols; j++){// padd the bottom with zeros
+            squareR->data()[j] = 0;
+          }
+        }
+        Tucker::MemoryManager::safe_delete(R);
+        R = squareR;
+        squareR = NULL;
+        Rnrows = R->nrows();
+      }
+      int nb = (Rncols > 32)? 32 : Rncols;
+      scalar_t* T = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
+      scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
+      int info;
+      Tucker::tpqrt(&tempBnrows, &Rncols, &tempBnrows, &nb, R->data(), &Rncols, tempB->data(),
+      &tempBnrows, T, &nb, work, &info);
+      Tucker::MemoryManager::safe_delete(tempB);
+      Tucker::MemoryManager::safe_delete_array<scalar_t>(work, nb*Rncols);
+      Tucker::MemoryManager::safe_delete_array<scalar_t>(T, nb*Rncols);
+    }
+  }
+  //Butterfly TSQR part
+  if(globalRank < cutOff){
+    for(int i=0; i < treeDepth; i++){
+      int partnerRank;
+      if(globalRank % (int)pow(2, i+1) < (int)pow(2,i)){
+        partnerRank = globalRank + (int)pow(2,i);
+      }
+      else{
+        partnerRank = globalRank - (int)pow(2,i);
+      }
+      int sizeOfR = R->nrows()* R->ncols();
+      int Rnrows = R->nrows();
+      int Rncols = R->ncols();
+      MPI_Send(&Rnrows, 1, MPI_INT, partnerRank, globalRank, MPI_COMM_WORLD);
+      MPI_Send_(R->data(), sizeOfR, partnerRank, globalRank, MPI_COMM_WORLD);
+      int tempBnrows;
+      MPI_Recv(&tempBnrows, 1, MPI_INT, partnerRank, partnerRank, MPI_COMM_WORLD, &status);
+      Tucker::Matrix<scalar_t>* tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(tempBnrows, Rncols);
+      MPI_Recv_(tempB->data(), tempBnrows*Rncols, partnerRank, partnerRank, MPI_COMM_WORLD, &status);
+            int nb = (Rncols > 32)? 32 : Rncols;
+      scalar_t* T = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
+      scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
+      int info;
+      Tucker::tpqrt(&tempBnrows, &Rncols, &tempBnrows, &nb, R->data(), &Rncols, tempB->data(),
+      &tempBnrows, T, &nb, work, &info);
+      Tucker::MemoryManager::safe_delete(tempB);
+      Tucker::MemoryManager::safe_delete_array<scalar_t>(work, nb*Rncols);
+      Tucker::MemoryManager::safe_delete_array<scalar_t>(T, nb*Rncols);
+    }
+  }
+  if(globalnp > cutOff){
+    //since those with rank >= cutOff didn't participate in TSQR, they have to recieve the final solution.
+    if(globalRank >= cutOff){
+      int target = globalRank - cutOff;
+      int Rncols = R->ncols();
+      Tucker::Matrix<scalar_t>* finalR = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rncols, Rncols);
+      int sizeOfR = Rncols*Rncols;
+      MPI_Recv_(finalR->data(), sizeOfR, target, target, MPI_COMM_WORLD, &status);
+      Tucker::MemoryManager::safe_delete(R);
+      R = finalR;
+    }
+    else if(globalRank + cutOff < globalnp){
+      int target = globalRank + cutOff;
+      int sizeOfR = R->nrows()* R->ncols();
+      int Rnrows = R->nrows();
+      MPI_Send_(R->data(), sizeOfR, target, globalRank, MPI_COMM_WORLD);
+    }
+  }
+
+  //Add zeros
+  int Rncols = R->ncols(); int Rnrows = R->nrows();
+  for(int c=0; c<Rncols; c++){
+    for(int r=c+1; r<Rnrows; r++){
+      R->data()[r+c*Rnrows] = 0;
+    }
+  }
+  //transpose
+  for(int i=0; i<Rncols; i++){
+    Tucker::copy(&Rncols, R->data()+i*Rncols, &one, L->data()+i, &Rncols); 
+  }
+  Tucker::MemoryManager::safe_delete(R);
+}
 /**
  * \test TuckerMPI_old_gram_test_file.cpp
  */
@@ -480,11 +622,10 @@ Tucker::Matrix<scalar_t>* newGram(const Tensor<scalar_t>* Y, const int n,
   return gramMat;
 }
 
-// \todo STHOSVD is never tested with the new Gram computation
 template <class scalar_t>
 const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
     const scalar_t epsilon, int* modeOrder, bool useOldGram, bool flipSign,
-    bool useLQ)
+    bool useLQ, bool useButterflyTSQR)
 {
   // Get this rank
   int rank;
@@ -525,14 +666,15 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
     if(useLQ){
       if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting LQ(" << mode << ")...\n";
       factorization->LQ_timer_[mode].start();
-      Tucker::Matrix<scalar_t>* L = LQ(Y, mode, &factorization->LQ_tsqr_timer_[mode], &factorization->LQ_localqr_timer_[mode], 
-        &factorization->LQ_redistribute_timer_[mode], &factorization->LQ_dcopy_timer_[mode],
-        &factorization->LQ_decompose_timer_[mode], &factorization->LQ_transpose_timer_[mode]);
+      Tucker::Matrix<scalar_t>* L = LQ(Y, mode, useButterflyTSQR, 
+        &factorization->LQ_tsqr_timer_[mode], 
+        &factorization->LQ_localqr_timer_[mode], 
+        &factorization->LQ_redistribute_timer_[mode], 
+        &factorization->LQ_dcopy_timer_[mode],
+        &factorization->LQ_decompose_timer_[mode], 
+        &factorization->LQ_transpose_timer_[mode], 
+        &factorization->LQ_bcast_timer_[mode]);
       factorization->LQ_timer_[mode].stop();
-      int SizeOfL = L->nrows()*L->ncols();
-      factorization->LQ_bcast_timer_[mode].start();
-      MPI_Bcast_(L->data(), SizeOfL, 0, MPI_COMM_WORLD);
-      factorization->LQ_bcast_timer_[mode].stop();
       if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << mode << ")...\n";
       factorization->svd_timer_[mode].start();
       Tucker::computeSVD(L, factorization->singularValues[mode], factorization->U[mode], thresh);
@@ -625,11 +767,11 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
   return factorization;
 }
 
-// \todo This function is never tested
+
 template <class scalar_t>
 const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
     const Tucker::SizeArray* const reducedI, int* modeOrder, bool useOldGram,
-    bool flipSign, bool useLQ)
+    bool flipSign, bool useLQ, bool useButterflyTSQR)
 {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -658,23 +800,19 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
   {
     int mode = modeOrder ? modeOrder[n] : n;
     if(useLQ){
-      Tucker::Matrix<scalar_t>* L;
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::Starting LQ(" << mode << ")...\n";
       }
       factorization->LQ_timer_[mode].start();
-      L = LQ(Y, mode, 
+      Tucker::Matrix<scalar_t>* L = LQ(Y, mode, useButterflyTSQR,
         &factorization->LQ_tsqr_timer_[mode], 
         &factorization->LQ_localqr_timer_[mode], 
         &factorization->LQ_redistribute_timer_[mode], 
         &factorization->LQ_dcopy_timer_[mode],
         &factorization->LQ_decompose_timer_[mode], 
-        &factorization->LQ_transpose_timer_[mode]);
+        &factorization->LQ_transpose_timer_[mode],
+        &factorization->LQ_bcast_timer_[mode]);
       factorization->LQ_timer_[mode].stop();
-      int SizeOfL = L->nrows()*L->ncols();
-      factorization->LQ_bcast_timer_[mode].start();
-      MPI_Bcast_(L->data(), SizeOfL, 0, MPI_COMM_WORLD);
-      factorization->LQ_bcast_timer_[mode].stop();
       if(rank == 0) {
         std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << mode << ")...\n";
       }
@@ -1538,9 +1676,9 @@ template Tucker::Matrix<float>* oldGram(const Tensor<float>*, const int,
 template Tucker::Matrix<float>* newGram(const Tensor<float>*, const int,
     Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
 template const TuckerTensor<float>* STHOSVD(const Tensor<float>* const, const float, 
-    int*, bool, bool, bool);
+    int*, bool, bool, bool, bool);
 template const TuckerTensor<float>* STHOSVD(const Tensor<float>* const, 
-    const Tucker::SizeArray* const, int*, bool, bool, bool);
+    const Tucker::SizeArray* const, int*, bool, bool, bool, bool);
 template Tucker::MetricData<float>* computeSliceMetrics(const Tensor<float>* const,
     int, int);
 template void transformSlices(Tensor<float>*, int, const float*, const float*);
@@ -1558,8 +1696,8 @@ template void exportTensorBinary(const char*, const Tucker::Tensor<float>*);
 template void exportTimeSeries(const char*, const Tensor<float>*);
 template Tensor<float>* generateTensor(int, TuckerTensor<float>*, Tucker::SizeArray*, 
     Tucker::SizeArray*, Tucker::SizeArray*, float);
-template Tucker::Matrix<float>* LQ(const Tensor<float>*, const int, Tucker::Timer*,
-    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
+template Tucker::Matrix<float>* LQ(const Tensor<float>*, const int, const bool, Tucker::Timer*,
+    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
 
 
 template Tucker::Matrix<double>* oldGram(const Tensor<double>*, const int,
@@ -1567,9 +1705,9 @@ template Tucker::Matrix<double>* oldGram(const Tensor<double>*, const int,
 template Tucker::Matrix<double>* newGram(const Tensor<double>*, const int,
     Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
 template const TuckerTensor<double>* STHOSVD(const Tensor<double>* const, const double, 
-    int*, bool, bool, bool);
+    int*, bool, bool, bool, bool);
 template const TuckerTensor<double>* STHOSVD(const Tensor<double>* const, 
-    const Tucker::SizeArray* const, int*, bool, bool, bool);
+    const Tucker::SizeArray* const, int*, bool, bool, bool, bool);
 template Tucker::MetricData<double>* computeSliceMetrics(const Tensor<double>* const,
     int, int);
 template void transformSlices(Tensor<double>*, int, const double*, const double*);
@@ -1587,7 +1725,7 @@ template void exportTensorBinary(const char*, const Tucker::Tensor<double>*);
 template void exportTimeSeries(const char*, const Tensor<double>*);
 template Tensor<double>* generateTensor(int, TuckerTensor<double>*, Tucker::SizeArray*, 
     Tucker::SizeArray*, Tucker::SizeArray*, double);
-template Tucker::Matrix<double>* LQ(const Tensor<double>*, const int, Tucker::Timer*,
-    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
+template Tucker::Matrix<double>* LQ(const Tensor<double>*, const int, const bool, Tucker::Timer*,
+    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
 
 } // end namespace TuckerMPI

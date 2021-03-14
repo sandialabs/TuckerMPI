@@ -267,6 +267,7 @@ int main(int argc, char* argv[])
   int root = 0;
   int LSize = 12; // length of the side of the square that L is in.
   int compareResultBuff;
+  // std::string filename = "input_files/lq_data.mpi";
   for(int t=0; t<nPossibleProcGrid; t++){
     Tucker::SizeArray* nprocsPerDim = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(ndims);
     (*nprocsPerDim)[0] = *(processorGridLayouts+t*4);
@@ -279,7 +280,7 @@ int main(int argc, char* argv[])
     TuckerMPI::Tensor<scalar_t>* tensor = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
     TuckerMPI::importTensorBinary(filename.c_str(),tensor);
 
-    Tucker::Matrix<scalar_t>* L0 = TuckerMPI::LQ<scalar_t>(tensor, 0, false);
+    Tucker::Matrix<scalar_t>* L0 = TuckerMPI::LQ<scalar_t>(tensor, 0, true);
     compareResultBuff = (int)checkEqual(L0->data(), trueL0, LSize, LSize);
     if(compareResultBuff != 1){
       Tucker::MemoryManager::safe_delete(tensor);
@@ -288,7 +289,7 @@ int main(int argc, char* argv[])
     }
     Tucker::MemoryManager::safe_delete(L0);
   
-    Tucker::Matrix<scalar_t>* L1 = TuckerMPI::LQ<scalar_t>(tensor, 1, false);
+    Tucker::Matrix<scalar_t>* L1 = TuckerMPI::LQ<scalar_t>(tensor, 1, true);
     compareResultBuff = checkEqual(L1->data(), trueL1, LSize, LSize);
     if(compareResultBuff != 1){
       Tucker::MemoryManager::safe_delete(tensor);
@@ -297,7 +298,7 @@ int main(int argc, char* argv[])
     }
     Tucker::MemoryManager::safe_delete(L1);
     
-    Tucker::Matrix<scalar_t>* L2 = TuckerMPI::LQ<scalar_t>(tensor, 2, false);
+    Tucker::Matrix<scalar_t>* L2 = TuckerMPI::LQ<scalar_t>(tensor, 2, true);
     compareResultBuff = checkEqual(L2->data(), trueL2, LSize, LSize);
     if(compareResultBuff != 1){
       Tucker::MemoryManager::safe_delete(tensor);
@@ -307,7 +308,7 @@ int main(int argc, char* argv[])
     Tucker::MemoryManager::safe_delete(L2);
     MPI_Barrier(MPI_COMM_WORLD);
 
-    Tucker::Matrix<scalar_t>* L3 = TuckerMPI::LQ<scalar_t>(tensor, 3, false);
+    Tucker::Matrix<scalar_t>* L3 = TuckerMPI::LQ<scalar_t>(tensor, 3, true);
     compareResultBuff = checkEqual(L3->data(), trueL3, LSize, LSize);
     if(compareResultBuff != 1){
       Tucker::MemoryManager::safe_delete(tensor);

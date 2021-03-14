@@ -57,10 +57,20 @@ namespace TuckerMPI {
  * \param n The dimension for the tensor unfolding
  */
 template <class scalar_t>
-Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, Tucker::Timer* tsqr_timer=0,
-    Tucker::Timer* local_qr_timer=0, Tucker::Timer* redistribute_timer=0,
-    Tucker::Timer* localqr_dcopy_timer=0, Tucker::Timer* localqr_decompose_timer=0, 
-    Tucker::Timer* localqr_transpose_timer=0);
+Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool useButterflyTSQR, 
+    Tucker::Timer* tsqr_timer=0,
+    Tucker::Timer* local_qr_timer=0, 
+    Tucker::Timer* redistribute_timer=0,
+    Tucker::Timer* localqr_dcopy_timer=0, 
+    Tucker::Timer* localqr_decompose_timer=0, 
+    Tucker::Timer* localqr_transpose_timer=0,
+    Tucker::Timer* localqr_bcast_timer=0);
+
+template <class scalar_t>
+void TSQR(Tucker::Matrix<scalar_t>*& R);
+
+template <class scalar_t>
+void ButterflyTSQR(Tucker::Matrix<scalar_t>* R, Tucker::Matrix<scalar_t>*& L);
 
 /** \brief Computes the Gram matrix using the old algorithm
  *
@@ -109,7 +119,7 @@ Tucker::Matrix<scalar_t>* newGram(const Tensor<scalar_t>* Y, const int n,
 template <class scalar_t>
 const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
     const scalar_t epsilon, int* modeOrder = nullptr, bool useOldGram=true,
-    bool flipSign=false, bool useLQ=false);
+    bool flipSign=false, bool useLQ=false, bool useButterflyTSQR=false);
 
 /** \brief Computes a Tucker decomposition
  *
@@ -128,8 +138,8 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
  */
 template <class scalar_t>
 const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
-    const Tucker::SizeArray* const reducedI, int* modeOrder = nullptr, bool useOldGram=true,
-    bool flipSign=false, bool useLQ=false);
+    const Tucker::SizeArray* const reducedI, int* modeOrder=nullptr, bool useOldGram=true,
+    bool flipSign=false, bool useLQ=false, bool useButterflyTSQR=false);
 
 /** \brief Compute some information about slices of a tensor
  *
