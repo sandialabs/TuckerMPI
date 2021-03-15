@@ -10,6 +10,9 @@ TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_reduced_dims_test mpi_tucker serial_tuck
 ADD_EXECUTABLE(TuckerMPI_LQ_butterfly_TSQR_test TuckerMPI_LQ_butterfly_TSQR_test.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_LQ_butterfly_TSQR_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
+ADD_EXECUTABLE(TuckerMPI_LQ_edgecase_butterfly_TSQR_test TuckerMPI_LQ_edgecase_butterfly_TSQR_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_LQ_edgecase_butterfly_TSQR_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 ADD_EXECUTABLE(TuckerMPI_LQ_edgecase_test TuckerMPI_LQ_edgecase_test.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_LQ_edgecase_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
@@ -86,6 +89,9 @@ TARGET_LINK_LIBRARIES(TuckerMPI_sthosvd_reduced_dims_test_single mpi_tucker seri
 ADD_EXECUTABLE(TuckerMPI_LQ_butterfly_TSQR_test_single TuckerMPI_LQ_butterfly_TSQR_test.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_LQ_butterfly_TSQR_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
+ADD_EXECUTABLE(TuckerMPI_LQ_edgecase_butterfly_TSQR_test_single TuckerMPI_LQ_edgecase_butterfly_TSQR_test.cpp)
+TARGET_LINK_LIBRARIES(TuckerMPI_LQ_edgecase_butterfly_TSQR_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 ADD_EXECUTABLE(TuckerMPI_LQ_edgecase_test_single TuckerMPI_LQ_edgecase_test.cpp)
 TARGET_LINK_LIBRARIES(TuckerMPI_LQ_edgecase_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
@@ -156,6 +162,9 @@ TARGET_LINK_LIBRARIES(TuckerMPI_ttm_test_file_single mpi_tucker serial_tucker ${
 SET_TARGET_PROPERTIES(
     TuckerMPI_sthosvd_threshold_test_single
     TuckerMPI_sthosvd_reduced_dims_test_single
+    TuckerMPI_LQ_edgecase_butterfly_TSQR_test_single
+    TuckerMPI_LQ_edgecase_test_single
+    TuckerMPI_LQ_butterfly_TSQR_test_single
     TuckerMPI_LQ_test_single
     TuckerMPI_IO_test_single
     TuckerMPI_pack_data_single
@@ -198,8 +207,11 @@ ADD_TEST(TuckerMPI_LQ_butterfly_TSQR_test3 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 3 
 ADD_TEST(TuckerMPI_LQ_butterfly_TSQR_test2 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_butterfly_TSQR_test)
 ADD_TEST(TuckerMPI_LQ_butterfly_TSQR_test1 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_butterfly_TSQR_test)
 ADD_TEST(TuckerMPI_LQ_butterfly_TSQR_test12_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_butterfly_TSQR_test_single)
-ADD_TEST(TuckerMPI_LQ_edgecase_test ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_edgecase_test)
-ADD_TEST(TuckerMPI_LQ_edgecase_test_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_edgecase_test_single)
+ADD_TEST(TuckerMPI_LQ_edgecase_butterfly_TSQR_test ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_edgecase_butterfly_TSQR_test)
+ADD_TEST(TuckerMPI_LQ_edgecase_butterfly_TSQR_test_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_edgecase_butterfly_TSQR_test_single)
+ADD_TEST(TuckerMPI_LQ_edgecase_test9 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 9 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_edgecase_test)
+ADD_TEST(TuckerMPI_LQ_edgecase_test8 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_edgecase_test)
+ADD_TEST(TuckerMPI_LQ_edgecase_test8_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_edgecase_test_single)
 ADD_TEST(TuckerMPI_LQ_test12 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_test)
 ADD_TEST(TuckerMPI_LQ_test12_single ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 12 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_test_single)
 ADD_TEST(TuckerMPI_LQ_test11 ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 11 ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/TuckerMPI_LQ_test)
@@ -420,7 +432,9 @@ SET_PROPERTY(TEST TuckerMPI_LQ_butterfly_TSQR_test4 PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST TuckerMPI_LQ_butterfly_TSQR_test3 PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST TuckerMPI_LQ_butterfly_TSQR_test2 PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST TuckerMPI_LQ_butterfly_TSQR_test1 PROPERTY LABELS UnitTest)
-SET_PROPERTY(TEST TuckerMPI_LQ_edgecase_test PROPERTY LABELS UnitTest ManyProcs)
+SET_PROPERTY(TEST TuckerMPI_LQ_edgecase_butterfly_TSQR_test PROPERTY LABELS UnitTest ManyProcs)
+SET_PROPERTY(TEST TuckerMPI_LQ_edgecase_test9 PROPERTY LABELS UnitTest ManyProcs)
+SET_PROPERTY(TEST TuckerMPI_LQ_edgecase_test8 PROPERTY LABELS UnitTest ManyProcs)
 SET_PROPERTY(TEST TuckerMPI_LQ_test12 PROPERTY LABELS UnitTest ManyProcs)
 SET_PROPERTY(TEST TuckerMPI_LQ_test11 PROPERTY LABELS UnitTest ManyProcs)
 SET_PROPERTY(TEST TuckerMPI_LQ_test10 PROPERTY LABELS UnitTest ManyProcs)

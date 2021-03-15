@@ -1678,10 +1678,25 @@ void premultByDiag(const Vector<scalar_t>* diag, Matrix<scalar_t>* mat)
 }
 
 template <class scalar_t>
-Tensor<scalar_t>* generateTensor(int seed, TuckerTensor<scalar_t>* fact, SizeArray* tensor_dims,
- SizeArray* core_dims, scalar_t noise){
-
+void padToSquare(Matrix<scalar_t>*& R)
+{
+  int one = 1;
+  int Rncols = R->ncols();
+  int Rnrows = R->nrows();
+  Tucker::Matrix<scalar_t>* squareR = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rncols, Rncols);
+  int sizeOfSquareR = Rncols*Rncols;
+  for(int i=0; i<Rncols; i++){
+    //copy the top part over
+    Tucker::copy(&Rnrows, R->data()+i*Rnrows, &one, squareR->data()+i*Rncols, &one); 
+    //padding with zeros
+    for(int j=i*Rncols+Rnrows; j<(i+1)*Rncols; j++){
+      squareR->data()[j] = 0;
+    }
+  }
+  Tucker::MemoryManager::safe_delete(R);
+  R = squareR;
 }
+
 // Explicit instantiations to build static library for both single and double precision
 template Matrix<float>* computeGram(const Tensor<float>* Y, const int n);
 template void computeGram(const Tensor<float>*, const int, float*, const int);
@@ -1711,6 +1726,7 @@ template void exportTensor(const Tensor<float>*, const char*);
 template void exportTensorBinary(const Tensor<float>*, const char*);
 template void exportTimeSeries(const Tensor<float>*, const char*);
 template void premultByDiag(const Vector<float>*, Matrix<float>*);
+template void padToSquare(Matrix<float>*&);
 template void combineColumnMajorBlocks(const Tensor<float>*, Matrix<float>*, const int, const int, const int);
 template Matrix<float>* computeLQ(const Tensor<float>*, const int);
 template void computeLQ(const Tensor<float>*, const int, Matrix<float>*);
@@ -1746,6 +1762,7 @@ template void exportTensor(const Tensor<double>*, const char*);
 template void exportTensorBinary(const Tensor<double>*, const char*);
 template void exportTimeSeries(const Tensor<double>*, const char*);
 template void premultByDiag(const Vector<double>*, Matrix<double>*);
+template void padToSquare(Matrix<double>*&);
 template void combineColumnMajorBlocks(const Tensor<double>*, Matrix<double>*, const int, const int, const int);
 template Matrix<double>* computeLQ(const Tensor<double>*, const int);
 template void computeLQ(const Tensor<double>*, const int, Matrix<double>*);

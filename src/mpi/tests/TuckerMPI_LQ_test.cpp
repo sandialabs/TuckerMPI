@@ -12,7 +12,7 @@ bool checkEqual(const scalar_t* arr1, const scalar_t* arr2, int nrows, int ncols
     for(int c=0; c<ncols; c++) {
       for(int r=0; r<nrows; r++) {
         //std::cout << "matching:  arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
-        if(std::abs(std::abs(arr1[r+c*nrows]) - std::abs(arr2[ind]))/std::abs(arr1[r+c*nrows]) > 100 * std::numeric_limits<scalar_t>::epsilon()) {
+        if(std::abs(std::abs(arr1[r+c*nrows]) - std::abs(arr2[ind])) > 100 * std::numeric_limits<scalar_t>::epsilon() * std::abs(arr2[ind])) {
           std::cout << "epsilon: " << std::numeric_limits<scalar_t>::epsilon() << std::endl;
           std::cout << std::setprecision(9) << "mismatch :" << "arr1["<< r << ", " << c<< "]: " << arr1[r+c*nrows] << ", arr2[" << ind << "]: " << arr2[ind] << std::endl;
           return false;
@@ -97,13 +97,10 @@ int main(int argc, char* argv[])
                         ,0,0,0,0,0,0,0,0,0,0,0,12273.8705245290};
 
   int ndims = 4;
-  Tucker::SizeArray* sz =
-    Tucker::MemoryManager::safe_new<Tucker::SizeArray>(ndims);
-  (*sz)[0] = 12; (*sz)[1] = 12; (*sz)[2] = 12; (*sz)[3] = 12;
-  std::map<int, scalar_t*> pointerMap;
+  std::map<int, int*> pointerMap;
   std::map<int, int> sizeMap;
-  long d = (sizeof(scalar_t)*ndims);
-  scalar_t processorGridLayouts_12[160] = {1,1,1,12
+  long d = (sizeof(int)*ndims);
+  int processorGridLayouts_12[160] = {1,1,1,12
                                         ,1,1,12,1
                                         ,1,12,1,1
                                         ,12,1,1,1
@@ -143,15 +140,13 @@ int main(int argc, char* argv[])
                                         ,3,1,2,2
                                         ,3,2,1,2
                                         ,3,2,2,1};
-  scalar_t* pGridLayouts_12 = processorGridLayouts_12;
-  pointerMap[12] = pGridLayouts_12; sizeMap[12] = sizeof(processorGridLayouts_12)/d;
-  scalar_t processorGridLayouts_11[16] ={1,1,1,11
+  pointerMap[12] = &processorGridLayouts_12[0]; sizeMap[12] = sizeof(processorGridLayouts_12)/d;
+  int processorGridLayouts_11[16] ={1,1,1,11
                                       ,1,1,11,1
                                       ,1,11,1,1
                                       ,11,1,1,1};
-  scalar_t* pGridLayouts_11 = processorGridLayouts_11;
-  pointerMap[11] = pGridLayouts_11; sizeMap[11] = sizeof(processorGridLayouts_11)/d;
-  scalar_t processorGridLayouts_10[64] = {1,1,2,5
+  pointerMap[11] = &processorGridLayouts_11[0]; sizeMap[11] = sizeof(processorGridLayouts_11)/d;
+  int processorGridLayouts_10[64] = {1,1,2,5
                                         ,1,1,5,2
                                         ,1,2,1,5
                                         ,1,2,5,1
@@ -167,9 +162,8 @@ int main(int argc, char* argv[])
                                         ,1,1,10,1
                                         ,1,10,1,1
                                         ,10,1,1,1};
-  scalar_t* pGridLayouts_10 = processorGridLayouts_10;
-  pointerMap[10] = pGridLayouts_10; sizeMap[10] = sizeof(processorGridLayouts_10)/d;
-  scalar_t processorGridLayouts_9[40] = {1,1,3,3
+  pointerMap[10] = &processorGridLayouts_10[0]; sizeMap[10] = sizeof(processorGridLayouts_10)/d;
+  int processorGridLayouts_9[40] = {1,1,3,3
                                       ,1,3,1,3
                                       ,1,3,3,1
                                       ,3,1,1,3
@@ -179,9 +173,8 @@ int main(int argc, char* argv[])
                                       ,1,1,9,1
                                       ,1,9,1,1
                                       ,9,1,1,1};
-  scalar_t* pGridLayouts_9 = processorGridLayouts_9;
-  pointerMap[9] = pGridLayouts_9; sizeMap[9] = sizeof(processorGridLayouts_9)/d;
-  scalar_t processorGridLayouts_8[80] = {1,1,1,8
+  pointerMap[9] = &processorGridLayouts_9[0]; sizeMap[9] = sizeof(processorGridLayouts_9)/d;
+  int processorGridLayouts_8[80] = {1,1,1,8
                                       ,1,1,8,1
                                       ,1,8,1,1
                                       ,8,1,1,1
@@ -201,15 +194,13 @@ int main(int argc, char* argv[])
                                       ,4,1,1,2
                                       ,4,1,2,1
                                       ,4,2,1,1};                                      
-  scalar_t* pGridLayouts_8 = processorGridLayouts_8;
-  pointerMap[8] = pGridLayouts_8; sizeMap[8] = sizeof(processorGridLayouts_8)/d;
-  scalar_t processorGridLayouts_7[16] = {1,1,1,7
+  pointerMap[8] = &processorGridLayouts_8[0]; sizeMap[8] = sizeof(processorGridLayouts_8)/d;
+  int processorGridLayouts_7[16] = {1,1,1,7
                                       ,1,1,7,1
                                       ,1,7,1,1
                                       ,7,1,1,1};
-  scalar_t* pGridLayouts_7 = processorGridLayouts_7;
-  pointerMap[7] = pGridLayouts_7; sizeMap[7] = sizeof(processorGridLayouts_7)/d;
-  scalar_t processorGridLayouts_6[64] = {1,1,1,6
+  pointerMap[7] = &processorGridLayouts_7[0]; sizeMap[7] = sizeof(processorGridLayouts_7)/d;
+  int processorGridLayouts_6[64] = {1,1,1,6
                                       ,1,1,6,1
                                       ,1,6,1,1
                                       ,6,1,1,1
@@ -225,15 +216,13 @@ int main(int argc, char* argv[])
                                       ,3,1,1,2
                                       ,3,1,2,1
                                       ,3,2,1,1};
-  scalar_t* pGridLayouts_6 = processorGridLayouts_6;
-  pointerMap[6] = pGridLayouts_6; sizeMap[6] = sizeof(processorGridLayouts_6)/d;
-  scalar_t processorGridLayouts_5[16] = {1,1,1,5
+  pointerMap[6] = &processorGridLayouts_6[0]; sizeMap[6] = sizeof(processorGridLayouts_6)/d;
+  int processorGridLayouts_5[16] = {1,1,1,5
                                       ,1,1,5,1
                                       ,1,5,1,1
                                       ,5,1,1,1};
-  scalar_t* pGridLayouts_5 = processorGridLayouts_5;
-  pointerMap[5] = pGridLayouts_5; sizeMap[5] = sizeof(processorGridLayouts_5)/d;
-  scalar_t processorGridLayouts_4[40] = {1,1,1,4
+  pointerMap[5] = &processorGridLayouts_5[0]; sizeMap[5] = sizeof(processorGridLayouts_5)/d;
+  int processorGridLayouts_4[40] = {1,1,1,4
                                       ,1,1,4,1
                                       ,1,4,1,1
                                       ,4,1,1,1
@@ -243,26 +232,25 @@ int main(int argc, char* argv[])
                                       ,2,1,1,2
                                       ,2,1,2,1
                                       ,2,2,1,1};                                    
-  scalar_t* pGridLayouts_4 = processorGridLayouts_4;
-  pointerMap[4] = pGridLayouts_4; sizeMap[4] = sizeof(processorGridLayouts_4)/d;
-  scalar_t processorGridLayouts_3[16] = {1,1,1,3
+  pointerMap[4] = &processorGridLayouts_4[0]; sizeMap[4] = sizeof(processorGridLayouts_4)/d;
+  int processorGridLayouts_3[16] = {1,1,1,3
                                       ,1,1,3,1
                                       ,1,3,1,1
                                       ,3,1,1,1};
-  scalar_t* pGridLayouts_3 = processorGridLayouts_3;
-  pointerMap[3] = pGridLayouts_3; sizeMap[3] = sizeof(processorGridLayouts_3)/d;
-  scalar_t processorGridLayouts_2[16] = {1,1,1,2
+  pointerMap[3] = &processorGridLayouts_3[0]; sizeMap[3] = sizeof(processorGridLayouts_3)/d;
+  int processorGridLayouts_2[16] = {1,1,1,2
                                       ,1,1,2,1
                                       ,1,2,1,1
                                       ,2,1,1,1};
-  scalar_t* pGridLayouts_2 = processorGridLayouts_2;
-  pointerMap[2] = pGridLayouts_2; sizeMap[2] = sizeof(processorGridLayouts_2)/d;
-  scalar_t processorGridLayouts_1[4] = {1,1,1,1};
-  scalar_t* pGridLayouts_1 = processorGridLayouts_1;
-  pointerMap[1] = pGridLayouts_1; sizeMap[1] = sizeof(processorGridLayouts_1)/d;
+  pointerMap[2] = &processorGridLayouts_2[0]; sizeMap[2] = sizeof(processorGridLayouts_2)/d;
+  int processorGridLayouts_1[4] = {1,1,1,1};
+  pointerMap[1] = &processorGridLayouts_1[0]; sizeMap[1] = sizeof(processorGridLayouts_1)/d;
 
   int nPossibleProcGrid = sizeMap[np];
-  scalar_t* processorGridLayouts = pointerMap[np];
+  int* processorGridLayouts = pointerMap[np];
+
+  Tucker::SizeArray* sz =Tucker::MemoryManager::safe_new<Tucker::SizeArray>(ndims);
+  (*sz)[0] = 12; (*sz)[1] = 12; (*sz)[2] = 12; (*sz)[3] = 12;
 
   int root = 0;
   int LSize = 12; // length of the side of the square that L is in.

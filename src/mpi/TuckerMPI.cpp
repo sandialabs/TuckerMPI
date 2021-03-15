@@ -70,7 +70,6 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool 
   MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
   int globalnp;
   MPI_Comm_size(MPI_COMM_WORLD, &globalnp);
-  // const Matrix* redistYn = redistributeTensorForGram(Y, n, pack_timer, alltoall_timer, unpack_timer);
   if(redistribute_timer) redistribute_timer->start();
   const Matrix<scalar_t>* redistYn = redistributeTensorForGram(Y, n);
   if(redistribute_timer) redistribute_timer->stop();
@@ -151,25 +150,17 @@ void TSQR(Tucker::Matrix<scalar_t>*& R){
         MPI_Recv(&tempBnrows, 1, MPI_INT, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
         tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(tempBnrows, Rncols);
         MPI_Recv_(tempB->data(), tempBnrows*Rncols, globalRank+pow(2, i), globalRank+pow(2, i), MPI_COMM_WORLD, &status);
+        // Edge case
+        // padd with rows of zeros to make R square
+        if(R->nrows() < R->ncols()){
+          // std::cout << "in edge case !!!!!!!!!!!" << std::endl;
+          Tucker::padToSquare(R);
+          Rnrows = R->nrows();//Rnrows might change here
+        }
         int nb = (Rncols > 32)? 32 : Rncols;
         scalar_t* T = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
         scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
         int info;
-        // Edge case
-        // padd with rows of zeros to make R square
-        if(R->nrows() < R->ncols()){
-          Tucker::Matrix<scalar_t>* squareR = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rncols, Rncols);
-          int sizeOfSquareR = Rncols*Rncols;
-          for(int i=0; i<Rncols; i++){
-            Tucker::copy(&Rnrows, R->data()+i*Rnrows, &one, squareR->data()+i*Rncols, &one); //copy the top part over
-            for(int j=i*Rncols+Rnrows; j<(i+1)*Rncols; j++){// padd the bottom with zeros
-              squareR->data()[j] = 0;
-            }
-          }
-          Tucker::MemoryManager::safe_delete(R);
-          R = squareR;
-          Rnrows = R->nrows();//Rnrows might change here
-        }
         Tucker::tpqrt(&tempBnrows, &Rncols, &tempBnrows, &nb, R->data(), &Rncols, tempB->data(),
         &tempBnrows, T, &nb, work, &info);
         Tucker::MemoryManager::safe_delete(tempB);
@@ -215,17 +206,7 @@ void ButterflyTSQR(Tucker::Matrix<scalar_t>* R, Tucker::Matrix<scalar_t>*& L){
       Tucker::Matrix<scalar_t>* tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(tempBnrows, Rncols);
       MPI_Recv_(tempB->data(), tempBnrows*Rncols, target, target, MPI_COMM_WORLD, &status);
       if(Rncols > Rnrows){
-        Tucker::Matrix<scalar_t>* squareR = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rncols, Rncols);
-        int sizeOfSquareR = Rncols*Rncols;
-        for(int i=0; i<Rncols; i++){
-          Tucker::copy(&Rnrows, R->data()+i*Rnrows, &one, squareR->data()+i*Rncols, &one); //copy the top part over
-          for(int j=i*Rncols+Rnrows; j<(i+1)*Rncols; j++){// padd the bottom with zeros
-            squareR->data()[j] = 0;
-          }
-        }
-        Tucker::MemoryManager::safe_delete(R);
-        R = squareR;
-        squareR = NULL;
+        Tucker::padToSquare(R);
         Rnrows = R->nrows();
       }
       int nb = (Rncols > 32)? 32 : Rncols;
@@ -259,14 +240,34 @@ void ButterflyTSQR(Tucker::Matrix<scalar_t>* R, Tucker::Matrix<scalar_t>*& L){
       Tucker::Matrix<scalar_t>* tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(tempBnrows, Rncols);
       MPI_Recv_(tempB->data(), tempBnrows*Rncols, partnerRank, partnerRank, MPI_COMM_WORLD, &status);
             int nb = (Rncols > 32)? 32 : Rncols;
+      Tucker::Matrix<scalar_t>* top;
+      Tucker::Matrix<scalar_t>* bot;
+      if(globalRank > partnerRank){
+        if(tempBnrows < Rncols){
+          Tucker::padToSquare(tempB);
+          tempBnrows = tempB->nrows();
+        }
+        top = tempB;
+        bot = R;
+      }
+      else{
+        if(Rncols > Rnrows){
+          Tucker::padToSquare(R);
+          Rnrows = R->nrows();
+        }
+        top = R;
+        bot = tempB;
+      }
+      int botnrows = bot->nrows();
       scalar_t* T = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
       scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
       int info;
-      Tucker::tpqrt(&tempBnrows, &Rncols, &tempBnrows, &nb, R->data(), &Rncols, tempB->data(),
-      &tempBnrows, T, &nb, work, &info);
-      Tucker::MemoryManager::safe_delete(tempB);
+      Tucker::tpqrt(&botnrows, &Rncols, &botnrows, &nb, top->data(), &Rncols, bot->data(),
+      &botnrows, T, &nb, work, &info);
+      Tucker::MemoryManager::safe_delete(bot);
       Tucker::MemoryManager::safe_delete_array<scalar_t>(work, nb*Rncols);
       Tucker::MemoryManager::safe_delete_array<scalar_t>(T, nb*Rncols);
+      R = top;
     }
   }
   if(globalnp > cutOff){

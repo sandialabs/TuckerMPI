@@ -479,6 +479,15 @@ void exportTimeSeries(const Tensor<scalar_t>* Y, const char* filename);
 template <class scalar_t>
 void premultByDiag(const Vector<scalar_t>* diag, Matrix<scalar_t>* mat);
 
+/** \brief Pad a mxn matrix (m<n) with rows of zeros so that it becomes nxn.
+ *
+ * \param[in] R original short and fat matrix
+ */
+template <class scalar_t>
+void padToSquare(Matrix<scalar_t>*& R);
+
 } // end of namespace Tucker
+
+
 
 #endif /* TUCKER_HPP_ */
