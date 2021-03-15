@@ -17,7 +17,11 @@
 
 int main(int argc, char* argv[])
 {
-  typedef double scalar_t;
+  #ifdef DRIVER_SINGLE
+    using scalar_t = float;
+  #else
+    using scalar_t = double;
+  #endif
   //
   // Initialize MPI
   //
@@ -46,7 +50,7 @@ int main(int argc, char* argv[])
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
   bool boolUseOldGram                   = Tucker::stringParse<bool>(fileAsString, "Use old Gram", false);
   bool boolUseLQ                        = Tucker::stringParse<bool>(fileAsString, "Use LQ", false);
-
+  bool useButterflyTSQR                 = Tucker::stringParse<bool>(fileAsString, "Use butterfly TSQR", false);
 
   Tucker::SizeArray* I_dims             = Tucker::stringParseSizeArray(fileAsString, "Global dims");
   Tucker::SizeArray* R_dims             = Tucker::stringParseSizeArray(fileAsString, "Ranks");
@@ -54,6 +58,8 @@ int main(int argc, char* argv[])
   Tucker::SizeArray* modeOrder          = Tucker::stringParseSizeArray(fileAsString, "Decompose mode order");
 
   std::string timing_file               = Tucker::stringParse<std::string>(fileAsString, "Timing file", "runtime.csv");
+
+
 
   int nd = I_dims->size();
 
@@ -69,6 +75,13 @@ int main(int argc, char* argv[])
   // Print options
   //
   if (rank == 0 && boolPrintOptions) {
+    if(sizeof(scalar_t) == 4){
+      std::cout << "Precision: single." << std::endl;
+    }
+    else if(sizeof(scalar_t) == 8){
+      std::cout << "Precision: double." << std::endl;
+    }
+
     std::cout << "The global dimensions of the tensor to be scaled or compressed\n";
     std::cout << "- Global dims = " << *I_dims << std::endl << std::endl;
 
