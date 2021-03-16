@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
   /////////////////////
   // Perform STHOSVD //
   /////////////////////
-  const TuckerMPI::TuckerTensor<scalar_t>* solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, false, boolUseLQ);
+  const TuckerMPI::TuckerTensor<scalar_t>* solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, false, boolUseLQ, useButterflyTSQR);
 
   // Send the timing information to a CSV
   if(boolUseLQ) solution->printTimersLQ(timing_file);
