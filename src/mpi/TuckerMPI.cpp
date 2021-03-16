@@ -98,6 +98,7 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool 
   }
   if(local_qr_timer) local_qr_timer->stop();
 
+  if(rank == 0) std::cout << "\tAutoLQ::Starting TSQR(" << n << ")..."<<std::endl;
   if(tsqr_timer) tsqr_timer->start();
   //Since we are padding we can assume the R and thus L are always sqaure.
   Tucker::Matrix<scalar_t>* L = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rncols, Rncols);
@@ -126,6 +127,7 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool 
     if(localqr_bcast_timer) localqr_bcast_timer->stop();
   }
   if(tsqr_timer) tsqr_timer->stop();
+  if(rank == 0) std::cout << "\tAutoLQ::TSQR(" << n << ") Done" <<std::endl;
   return L;
 }
 
@@ -802,7 +804,7 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
     int mode = modeOrder ? modeOrder[n] : n;
     if(useLQ){
       if(rank == 0) {
-        std::cout << "\tAutoST-HOSVD::Starting LQ(" << mode << ")...\n";
+        std::cout << "\tAutoST-HOSVD::Starting LQ(" << mode << ")..." << std::endl;
       }
       factorization->LQ_timer_[mode].start();
       Tucker::Matrix<scalar_t>* L = LQ(Y, mode, useButterflyTSQR,
@@ -815,7 +817,7 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
         &factorization->LQ_bcast_timer_[mode]);
       factorization->LQ_timer_[mode].stop();
       if(rank == 0) {
-        std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << mode << ")...\n";
+        std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << mode << ")..."<< std::endl;
       }
       factorization->svd_timer_[mode].start();
       Tucker::computeSVD(L, factorization->singularValues[mode], factorization->U[mode], (*reducedI)[mode]);
