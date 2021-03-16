@@ -98,7 +98,7 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool 
   }
   if(local_qr_timer) local_qr_timer->stop();
 
-  if(rank == 0) std::cout << "\tAutoLQ::Starting TSQR(" << n << ")..."<<std::endl;
+  if(globalRank == 0) std::cout << "\tAutoLQ::Starting TSQR(" << n << ")..."<<std::endl;
   if(tsqr_timer) tsqr_timer->start();
   //Since we are padding we can assume the R and thus L are always sqaure.
   Tucker::Matrix<scalar_t>* L = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rncols, Rncols);
@@ -127,7 +127,7 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool 
     if(localqr_bcast_timer) localqr_bcast_timer->stop();
   }
   if(tsqr_timer) tsqr_timer->stop();
-  if(rank == 0) std::cout << "\tAutoLQ::TSQR(" << n << ") Done" <<std::endl;
+  if(globalRank == 0) std::cout << "\tAutoLQ::TSQR(" << n << ") Done" <<std::endl;
   return L;
 }
 
