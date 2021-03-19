@@ -155,9 +155,8 @@ void TSQR(Tucker::Matrix<scalar_t>*& R){
         // Edge case
         // padd with rows of zeros to make R square
         if(R->nrows() < R->ncols()){
-          // std::cout << "in edge case !!!!!!!!!!!" << std::endl;
           Tucker::padToSquare(R);
-          Rnrows = R->nrows();//Rnrows might change here
+          Rnrows = R->nrows();//update Rnrows as Rnrows might have changed
         }
         int nb = (Rncols > 32)? 32 : Rncols;
         scalar_t* T = Tucker::MemoryManager::safe_new_array<scalar_t>(nb*Rncols);
@@ -235,13 +234,11 @@ void ButterflyTSQR(Tucker::Matrix<scalar_t>* R, Tucker::Matrix<scalar_t>*& L){
       int sizeOfR = R->nrows()* R->ncols();
       int Rnrows = R->nrows();
       int Rncols = R->ncols();
-      MPI_Send(&Rnrows, 1, MPI_INT, partnerRank, globalRank, MPI_COMM_WORLD);
-      MPI_Send_(R->data(), sizeOfR, partnerRank, globalRank, MPI_COMM_WORLD);
       int tempBnrows;
-      MPI_Recv(&tempBnrows, 1, MPI_INT, partnerRank, partnerRank, MPI_COMM_WORLD, &status);
+      MPI_Sendrecv(&Rnrows, 1, MPI_INT, partnerRank, globalRank, &tempBnrows, 1, MPI_INT, partnerRank, partnerRank, MPI_COMM_WORLD, &status);
       Tucker::Matrix<scalar_t>* tempB = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(tempBnrows, Rncols);
-      MPI_Recv_(tempB->data(), tempBnrows*Rncols, partnerRank, partnerRank, MPI_COMM_WORLD, &status);
-            int nb = (Rncols > 32)? 32 : Rncols;
+      MPI_Sendrecv_(R->data(), Rnrows*Rncols, partnerRank, globalRank, tempB->data(), tempBnrows*Rncols, partnerRank, partnerRank, MPI_COMM_WORLD, &status);
+      int nb = (Rncols > 32)? 32 : Rncols;
       Tucker::Matrix<scalar_t>* top;
       Tucker::Matrix<scalar_t>* bot;
       if(globalRank > partnerRank){

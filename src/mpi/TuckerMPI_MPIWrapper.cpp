@@ -80,6 +80,20 @@ void MPI_Reduce_(const double* sendbuf, double* recvbuf, int count,
   MPI_Reduce(sendbuf, recvbuf, count, MPI_DOUBLE, op, root, comm);
 }
 
+void MPI_Sendrecv_(const double* sendbuf, int sendcount, int dest, 
+    int sendtag, double* recvbuf, int recvcount, int source, 
+    int recvtag, MPI_Comm comm, MPI_Status * status){
+  MPI_Sendrecv(sendbuf, sendcount, MPI_DOUBLE, dest, sendtag, recvbuf, 
+    recvcount, MPI_DOUBLE, source, recvtag, comm, status);
+}
+
+void MPI_Sendrecv_(const float* sendbuf, int sendcount, int dest, 
+    int sendtag, float* recvbuf, int recvcount, int source, 
+    int recvtag, MPI_Comm comm, MPI_Status * status){
+  MPI_Sendrecv(sendbuf, sendcount, MPI_FLOAT, dest, sendtag, recvbuf, 
+    recvcount, MPI_FLOAT, source, recvtag, comm, status);
+}
+
 void MPI_Allreduce_(const float* sendbuf, float* recvbuf, int count, 
      MPI_Op op, MPI_Comm comm)
 {

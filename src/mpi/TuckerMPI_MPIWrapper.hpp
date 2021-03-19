@@ -30,6 +30,11 @@ void MPI_Isend_(const double*, int, int, int, MPI_Comm, MPI_Request*);
 void MPI_Irecv_(float*, int, int, int, MPI_Comm, MPI_Request*);
 void MPI_Irecv_(double*, int, int, int, MPI_Comm, MPI_Request*);
 
+void MPI_Sendrecv_(const double*, int, int, int, double*, int, int, 
+    int, MPI_Comm, MPI_Status *);
+void MPI_Sendrecv_(const float*, int, int, int, float*, int, int, 
+    int, MPI_Comm, MPI_Status *);
+
 void MPI_Reduce_(const float*, float*, int, MPI_Op, int, MPI_Comm);
 void MPI_Reduce_(const double*, double*, int, MPI_Op, int, MPI_Comm);
 
