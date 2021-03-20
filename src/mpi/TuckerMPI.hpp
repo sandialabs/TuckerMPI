@@ -61,9 +61,6 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool 
     Tucker::Timer* tsqr_timer=0,
     Tucker::Timer* local_qr_timer=0, 
     Tucker::Timer* redistribute_timer=0,
-    Tucker::Timer* localqr_dcopy_timer=0, 
-    Tucker::Timer* localqr_decompose_timer=0, 
-    Tucker::Timer* localqr_transpose_timer=0,
     Tucker::Timer* localqr_bcast_timer=0);
 
 template <class scalar_t>

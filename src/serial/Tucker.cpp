@@ -137,9 +137,6 @@ void computeLQ(const Tensor <scalar_t>* Y, const int n, Matrix<scalar_t>* L){
     copy(&sizeOfL, Y0->data(), &one, L->data(), &one);
   }
   else{//Serial TSQR:
-    Tucker::Timer* dcopy_timer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
-    Tucker::Timer* reorganize_timer = Tucker::MemoryManager::safe_new<Tucker::Timer>();  
-    Tucker::Timer* tsqr_timer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
     //get number of rows of each column major submatrix of Yn transpose.
     int submatrixNrows = 1;
     for(int i=0; i<n; i++) {
@@ -169,12 +166,10 @@ void computeLQ(const Tensor <scalar_t>* Y, const int n, Matrix<scalar_t>* L){
       Rnrows = numSubmatrices * submatrixNrows;
       R = MemoryManager::safe_new<Matrix<scalar_t>>(Rnrows, modeNDimension);
       Rncols = R->ncols();
-      reorganize_timer->start();
       combineColumnMajorBlocks(Y, R, n, 0, numSubmatrices);
-      reorganize_timer->stop();
+
 
       int info;
-      tsqr_timer->start();
       //workspace query
       scalar_t * work = MemoryManager::safe_new_array<scalar_t>(1);
       scalar_t * TforGeqr = Tucker::MemoryManager::safe_new_array<scalar_t>(5);
@@ -186,7 +181,6 @@ void computeLQ(const Tensor <scalar_t>* Y, const int n, Matrix<scalar_t>* L){
       work = MemoryManager::safe_new_array<scalar_t>(lwork);
       TforGeqr = Tucker::MemoryManager::safe_new_array<scalar_t>(TSize);    
       geqr(&Rnrows, &Rncols, R->data(), &Rnrows, TforGeqr, &TSize, work, &lwork, &info);
-      tsqr_timer->stop();
       if(info != 0){
         std::ostringstream oss;
           oss << "the" << info*-1 << "th argument to geqr is invalid.";
@@ -219,9 +213,7 @@ void computeLQ(const Tensor <scalar_t>* Y, const int n, Matrix<scalar_t>* L){
         Bnrows = B->nrows();
         Bncols = B->ncols();
         sizeOfB = Bnrows*Bncols;
-        tsqr_timer->start();
         tpqrt(&Bnrows, &Bncols, &ZERO, &nb, R->data(), &Rnrows, B->data(), &Bnrows, TforTpqrt, &nb, work, &info);
-        tsqr_timer->stop();
         Tucker::MemoryManager::safe_delete(B);
       }
       MemoryManager::safe_delete_array(work, nb*modeNDimension);
@@ -232,12 +224,9 @@ void computeLQ(const Tensor <scalar_t>* Y, const int n, Matrix<scalar_t>* L){
       Rnrows = R->nrows();
       Rncols = R->ncols();
       sizeOfR = Rnrows * Rncols;
-      dcopy_timer->start();
       copy(&sizeOfR, Y->data(), &one, R->data(), &one);
-      dcopy_timer->stop();
 
       int info;
-      tsqr_timer->start();
       //workspace query
       scalar_t * work = MemoryManager::safe_new_array<scalar_t>(1);
       scalar_t * TforGeqr = Tucker::MemoryManager::safe_new_array<scalar_t>(5);
@@ -264,10 +253,7 @@ void computeLQ(const Tensor <scalar_t>* Y, const int n, Matrix<scalar_t>* L){
       work = MemoryManager::safe_new_array<scalar_t>(nb*modeNDimension);
       int ZERO = 0;
       for(int i = 1; i < totalNumSubmatrices; i++){
-        dcopy_timer->start();
         copy(&sizeOfB, Y->data()+i*sizeOfB, &one, B->data(), &one);
-        dcopy_timer->stop();
-        tsqr_timer->start();
         //call tpqrt(M, N, L, NB, A, LDA, B, LDB, T, LDT, WORK, INFO)
         tpqrt(&submatrixNrows, &Rncols, &ZERO, &nb, R->data(), &Rnrows, B->data(), &submatrixNrows, TforTpqrt, &nb, work, &info);
         if(info != 0){
@@ -275,7 +261,6 @@ void computeLQ(const Tensor <scalar_t>* Y, const int n, Matrix<scalar_t>* L){
           oss << "the " << info*-1 << "th argument to tpqrt is invalid.";
           throw std::runtime_error(oss.str());
         }
-        tsqr_timer->stop();
       }
       MemoryManager::safe_delete_array(work, nb*modeNDimension);
       MemoryManager::safe_delete(B);

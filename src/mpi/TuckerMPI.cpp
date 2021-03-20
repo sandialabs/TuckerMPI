@@ -61,9 +61,6 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool 
     Tucker::Timer* tsqr_timer,
     Tucker::Timer* local_qr_timer, 
     Tucker::Timer* redistribute_timer,
-    Tucker::Timer* localqr_dcopy_timer, 
-    Tucker::Timer* localqr_decompose_timer, 
-    Tucker::Timer* localqr_transpose_timer,
     Tucker::Timer* localqr_bcast_timer){
   int one = 1;
   int globalRank;
@@ -91,7 +88,7 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool 
   }
   else{
     bool isLastMode = n == Y->getNumDimensions()-1;
-    R = localQR(redistYn, isLastMode, localqr_dcopy_timer, localqr_decompose_timer, localqr_transpose_timer);
+    R = localQR(redistYn, isLastMode);
     Rnrows = R->nrows();
     Rncols = R->ncols();
     Tucker::MemoryManager::safe_delete(redistYn);  
@@ -675,9 +672,6 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
         &factorization->LQ_tsqr_timer_[mode], 
         &factorization->LQ_localqr_timer_[mode], 
         &factorization->LQ_redistribute_timer_[mode], 
-        &factorization->LQ_dcopy_timer_[mode],
-        &factorization->LQ_decompose_timer_[mode], 
-        &factorization->LQ_transpose_timer_[mode], 
         &factorization->LQ_bcast_timer_[mode]);
       factorization->LQ_timer_[mode].stop();
       if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting computeSVD(" << mode << ")...\n";
@@ -813,9 +807,6 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
         &factorization->LQ_tsqr_timer_[mode], 
         &factorization->LQ_localqr_timer_[mode], 
         &factorization->LQ_redistribute_timer_[mode], 
-        &factorization->LQ_dcopy_timer_[mode],
-        &factorization->LQ_decompose_timer_[mode], 
-        &factorization->LQ_transpose_timer_[mode],
         &factorization->LQ_bcast_timer_[mode]);
       factorization->LQ_timer_[mode].stop();
       if(rank == 0) {
@@ -1702,7 +1693,7 @@ template void exportTimeSeries(const char*, const Tensor<float>*);
 template Tensor<float>* generateTensor(int, TuckerTensor<float>*, Tucker::SizeArray*, 
     Tucker::SizeArray*, Tucker::SizeArray*, float);
 template Tucker::Matrix<float>* LQ(const Tensor<float>*, const int, const bool, Tucker::Timer*,
-    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
+    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
 
 
 template Tucker::Matrix<double>* oldGram(const Tensor<double>*, const int,
@@ -1731,6 +1722,6 @@ template void exportTimeSeries(const char*, const Tensor<double>*);
 template Tensor<double>* generateTensor(int, TuckerTensor<double>*, Tucker::SizeArray*, 
     Tucker::SizeArray*, Tucker::SizeArray*, double);
 template Tucker::Matrix<double>* LQ(const Tensor<double>*, const int, const bool, Tucker::Timer*,
-    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
+    Tucker::Timer*, Tucker::Timer*, Tucker::Timer*);
 
 } // end namespace TuckerMPI

@@ -50,8 +50,7 @@ namespace TuckerMPI {
  * If isLastMode is true then a call to dgeqr is made, Otherwise a call to dgelq is made.
  */
 template <class scalar_t>
-Tucker::Matrix<scalar_t>* localQR(const Matrix<scalar_t>* M, bool isLastMode, Tucker::Timer* dcopy_timer=0, 
-    Tucker::Timer* decompose_timer=0, Tucker::Timer* transpose_timer=0);
+Tucker::Matrix<scalar_t>* localQR(const Matrix<scalar_t>* M, bool isLastMode);
 
 /** \brief Determines whether packing is necessary for computing the Gram matrix
  */

@@ -77,9 +77,6 @@ public:
     LQ_redistribute_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
     LQ_tsqr_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
     LQ_localqr_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
-    LQ_dcopy_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
-    LQ_decompose_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
-    LQ_transpose_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
 
     svd_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
 
@@ -129,9 +126,6 @@ public:
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_redistribute_timer_,N);
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_tsqr_timer_,N);
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_localqr_timer_,N);
-    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_dcopy_timer_,N);
-    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_decompose_timer_,N);
-    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_transpose_timer_,N);
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_bcast_timer_,N);
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(svd_timer_,N);
 
@@ -163,7 +157,7 @@ public:
    */
   void printTimersLQ(const std::string& filename) const
   {
-    const int ntimers = 14;
+    const int ntimers = 11;
     scalar_t* raw_array = Tucker::MemoryManager::safe_new_array<scalar_t>(ntimers*N+1);
 
     // Get the MPI data
@@ -176,19 +170,16 @@ public:
       raw_array[i*ntimers] = LQ_timer_[i].duration();
       raw_array[i*ntimers+1] = LQ_redistribute_timer_[i].duration();
       raw_array[i*ntimers+2] = LQ_localqr_timer_[i].duration();
-      raw_array[i*ntimers+3] = LQ_dcopy_timer_[i].duration();
-      raw_array[i*ntimers+4] = LQ_decompose_timer_[i].duration();
-      raw_array[i*ntimers+5] = LQ_transpose_timer_[i].duration();
-      raw_array[i*ntimers+6] = LQ_tsqr_timer_[i].duration();
-      raw_array[i*ntimers+7] = LQ_bcast_timer_[i].duration();
+      raw_array[i*ntimers+3] = LQ_tsqr_timer_[i].duration();
+      raw_array[i*ntimers+4] = LQ_bcast_timer_[i].duration();
 
-      raw_array[i*ntimers+8] = svd_timer_[i].duration();
+      raw_array[i*ntimers+5] = svd_timer_[i].duration();
 
-      raw_array[i*ntimers+9] = ttm_timer_[i].duration();
-      raw_array[i*ntimers+10] = ttm_matmul_timer_[i].duration();
-      raw_array[i*ntimers+11] = ttm_pack_timer_[i].duration();
-      raw_array[i*ntimers+12] = ttm_reducescatter_timer_[i].duration();
-      raw_array[i*ntimers+13] = ttm_reduce_timer_[i].duration();
+      raw_array[i*ntimers+6] = ttm_timer_[i].duration();
+      raw_array[i*ntimers+7] = ttm_matmul_timer_[i].duration();
+      raw_array[i*ntimers+8] = ttm_pack_timer_[i].duration();
+      raw_array[i*ntimers+9] = ttm_reducescatter_timer_[i].duration();
+      raw_array[i*ntimers+10] = ttm_reduce_timer_[i].duration();
     }
     raw_array[ntimers*N] = total_timer_.duration();
 
@@ -296,8 +287,7 @@ public:
       // Create the header row
       for(int d=0; d<N; d++) {
         os << "LQ(" << d << "),redistribute(" << d << "),localqr(" << d 
-            << "),dcopy(" << d << "),decompose(" << d << "),transpose(" << d 
-            <<"),tsqr(" << d <<"),bcast(" << d << "),svd(" << d
+            << "),tsqr(" << d <<"),bcast(" << d << "),svd(" << d
             << "),TTM(" << d << "),TTM local multiply(" << d
             << "),TTM packing(" << d << "),TTM reduce-scatter(" << d
             << "),TTM reduce(" << d << "),";
@@ -548,15 +538,6 @@ public:
 
   /// \brief Array of timers for broadcasting L
   Tucker::Timer* LQ_localqr_timer_;
-
-  /// \brief Array of timers for broadcasting L
-  Tucker::Timer* LQ_dcopy_timer_;
-
-  /// \brief Array of timers for broadcasting L
-  Tucker::Timer* LQ_decompose_timer_;
-  
-  /// \brief Array of timers for broadcasting L
-  Tucker::Timer* LQ_transpose_timer_;
 
 
   /// \brief Array of timers for broadcasting L
