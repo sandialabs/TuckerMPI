@@ -99,14 +99,19 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool 
   if(local_qr_timer) local_qr_timer->stop();
 
   if(globalRank == 0) std::cout << "\tAutoLQ::Starting TSQR(" << n << ")..."<<std::endl;
-  if(tsqr_timer) tsqr_timer->start();
   //Since we are padding we can assume the R and thus L are always sqaure.
   Tucker::Matrix<scalar_t>* L = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rncols, Rncols);
   if(useButterflyTSQR){
+    if(tsqr_timer) tsqr_timer->start();
     ButterflyTSQR(R, L);
+    if(tsqr_timer) tsqr_timer->stop();
   }
   else{
+    if(tsqr_timer) tsqr_timer->start();
     TSQR(R);
+    //realign to get consistent bcast time across processors
+    MPI_Barrier(MPI_COMM_WORLD);
+    if(tsqr_timer) tsqr_timer->stop();
     if(localqr_bcast_timer) localqr_bcast_timer->start();
     if(globalRank == 0){
       //add zeros at the lower triangle
@@ -126,7 +131,7 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool 
     MPI_Bcast_(L->data(), sizeOfL, 0, MPI_COMM_WORLD);
     if(localqr_bcast_timer) localqr_bcast_timer->stop();
   }
-  if(tsqr_timer) tsqr_timer->stop();
+  
   if(globalRank == 0) std::cout << "\tAutoLQ::TSQR(" << n << ") Done" <<std::endl;
   return L;
 }
