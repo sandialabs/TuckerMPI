@@ -52,7 +52,7 @@ Tucker::Matrix<scalar_t>* localQR(const Matrix<scalar_t>* M, bool isLastMode){
   int sizeOfM = ncolsM*nrowsM;
   int info;
   int nrowsR = nrowsM > ncolsM ? ncolsM : nrowsM;
-  Tucker::Matrix<scalar_t>* R = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nrowsR, nrowsM);
+  Tucker::Matrix<scalar_t>* R; 
   scalar_t* tempT = Tucker::MemoryManager::safe_new_array<scalar_t>(5);
   scalar_t* tempWork = Tucker::MemoryManager::safe_new_array<scalar_t>(1);
   if(isLastMode){
@@ -62,15 +62,20 @@ Tucker::Matrix<scalar_t>* localQR(const Matrix<scalar_t>* M, bool isLastMode){
     Tucker::geqr(&ncolsM, &nrowsM, Mcopy->data(), &ncolsM, tempT, &negOne, tempWork, &negOne, &info);
     int lwork = tempWork[0];
     int TSize = tempT[0];
+    if(globalRank == 0) std::cout << "\tAutoLQ::Starting dgeqr(lwork:" << lwork <<  " TSize:" << TSize <<")" << std::endl;
     Tucker::MemoryManager::safe_delete_array(tempWork, 1);
     Tucker::MemoryManager::safe_delete_array(tempT, 5);
     scalar_t* T = Tucker::MemoryManager::safe_new_array<scalar_t>(TSize);
     scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(lwork);    
+
+    if(globalRank == 0) Tucker::MemoryManager::printMaxMemUsage();
+
     Tucker::geqr(&ncolsM, &nrowsM, Mcopy->data(), &ncolsM, T, &TSize, work, &lwork, &info);
     Tucker::MemoryManager::safe_delete_array(work, lwork);
     Tucker::MemoryManager::safe_delete_array(T, TSize);
     //this is in the transpose timer to be consistent with other mode, but note this is not
     //actually doing a transpose, we are just getting the upper triangle of Mcopy here.
+    R = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nrowsR, nrowsM);
     for(int i=0; i<nrowsM; i++){
       Tucker::copy(&nrowsR, Mcopy->data()+i*ncolsM, &one, R->data()+i*nrowsR, &one);
     }
@@ -82,14 +87,19 @@ Tucker::Matrix<scalar_t>* localQR(const Matrix<scalar_t>* M, bool isLastMode){
     Tucker::gelq(&nrowsM, &ncolsM, Mcopy->data(), &nrowsM, tempT, &negOne, tempWork, &negOne, &info);
     int lwork = tempWork[0];
     int TSize = tempT[0];
+    if(globalRank == 0) std::cout << "\tAutoLQ::Starting dgeqr(lwork:" << lwork <<  " TSize:" << TSize <<")" << std::endl;
     Tucker::MemoryManager::safe_delete_array(tempWork, 1);
     Tucker::MemoryManager::safe_delete_array(tempT, 5);
     scalar_t* T = Tucker::MemoryManager::safe_new_array<scalar_t>(TSize);
     scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(lwork);  
+    
+    if(globalRank == 0) Tucker::MemoryManager::printMaxMemUsage();
+    
     Tucker::gelq(&nrowsM, &ncolsM, Mcopy->data(), &nrowsM, T, &TSize, work, &lwork, &info);
     Tucker::MemoryManager::safe_delete_array(work, lwork);
     Tucker::MemoryManager::safe_delete_array(T, TSize);
     
+    R = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nrowsR, nrowsM);
     if(nrowsM < ncolsM){
       //transpose the leftmost square of Mcopy one column at a time.
       for(int i=0; i<nrowsM; i++){

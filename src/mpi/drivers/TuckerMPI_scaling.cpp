@@ -99,9 +99,6 @@ int main(int argc, char* argv[])
     std::cout << "If true, use the old Gram algorithm; otherwise use the new one\n";
     std::cout << "- Use old Gram = " << (boolUseOldGram ? "true" : "false") << std::endl << std::endl;
 
-    std::cout << "If true, use the old Gram algorithm; otherwise use the new one\n";
-    std::cout << "- Use old Gram = " << (boolUseOldGram ? "true" : "false") << std::endl << std::endl;
-
     std::cout << "Name of the CSV file holding the timing results\n";
     std::cout << "- Timing file = " << timing_file << std::endl << std::endl;
 
