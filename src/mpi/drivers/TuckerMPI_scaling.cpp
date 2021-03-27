@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
   bool boolUseOldGram                   = Tucker::stringParse<bool>(fileAsString, "Use old Gram", false);
   bool boolUseLQ                        = Tucker::stringParse<bool>(fileAsString, "Use LQ", false);
-  bool useButterflyTSQR                 = Tucker::stringParse<bool>(fileAsString, "Use butterfly TSQR", false);
+  bool boolUseButterflyTSQR             = Tucker::stringParse<bool>(fileAsString, "Use butterfly TSQR", false);
 
   Tucker::SizeArray* I_dims             = Tucker::stringParseSizeArray(fileAsString, "Global dims");
   Tucker::SizeArray* R_dims             = Tucker::stringParseSizeArray(fileAsString, "Ranks");
@@ -90,6 +90,14 @@ int main(int argc, char* argv[])
 
     std::cout << "Global dimensions of the desired core tensor\n";
     std::cout << "- Ranks = " << *R_dims << std::endl << std::endl;
+
+    std::cout << "If true, use the QR algorithm; otherwise use Gram\n";
+    std::cout << "- Use QR = " << (boolUseLQ ? "true" : "false") << std::endl << std::endl;
+
+    std::cout << "Mode order = " << *modeOrder << std::endl;
+
+    std::cout << "If true, use the old Gram algorithm; otherwise use the new one\n";
+    std::cout << "- Use old Gram = " << (boolUseOldGram ? "true" : "false") << std::endl << std::endl;
 
     std::cout << "If true, use the old Gram algorithm; otherwise use the new one\n";
     std::cout << "- Use old Gram = " << (boolUseOldGram ? "true" : "false") << std::endl << std::endl;
@@ -168,7 +176,7 @@ int main(int argc, char* argv[])
   /////////////////////
   // Perform STHOSVD //
   /////////////////////
-  const TuckerMPI::TuckerTensor<scalar_t>* solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, false, boolUseLQ, useButterflyTSQR);
+  const TuckerMPI::TuckerTensor<scalar_t>* solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, false, boolUseLQ, boolUseButterflyTSQR);
 
   // Send the timing information to a CSV
   if(boolUseLQ) solution->printTimersLQ(timing_file);
