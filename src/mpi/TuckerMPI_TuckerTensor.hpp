@@ -228,50 +228,56 @@ public:
           << max_array[i*ntimers] << " " << std::scientific
           << mean_array[i*ntimers] << std::endl;
 
-        std::cout << " localqr(" << i << ")         : " << std::scientific
+        std::cout << "redistribute(" << i << ")         : " << std::scientific
           << min_array[i*ntimers+1] << " " << std::scientific
           << max_array[i*ntimers+1] << " " << std::scientific
           << mean_array[i*ntimers+1] << std::endl;
 
-        std::cout << " tsqr(" << i << ")         : " << std::scientific
+        std::cout << "local qr(" << i << ")         : " << std::scientific
           << min_array[i*ntimers+2] << " " << std::scientific
           << max_array[i*ntimers+2] << " " << std::scientific
           << mean_array[i*ntimers+2] << std::endl;
 
-        std::cout << " bcast : " << std::scientific
+        std::cout << "TSQR(" << i << ")         : " << std::scientific
           << min_array[i*ntimers+3] << " " << std::scientific
           << max_array[i*ntimers+3] << " " << std::scientific
           << mean_array[i*ntimers+3] << std::endl;
 
-        std::cout << " svd          : " << std::scientific
+        std::cout << "bcast(" << i << ")         : " << std::scientific
           << min_array[i*ntimers+4] << " " << std::scientific
           << max_array[i*ntimers+4] << " " << std::scientific
           << mean_array[i*ntimers+4] << std::endl;
 
-        std::cout << "TTM(" << i << ")          : " << std::scientific
+        std::cout << "SVD(" << i << ")         : " << std::scientific
           << min_array[i*ntimers+5] << " " << std::scientific
           << max_array[i*ntimers+5] << " " << std::scientific
           << mean_array[i*ntimers+5] << std::endl;
 
-        std::cout << " local multiply : " << std::scientific
+        std::cout << "TTM(" << i << ")         : " << std::scientific
           << min_array[i*ntimers+6] << " " << std::scientific
           << max_array[i*ntimers+6] << " " << std::scientific
           << mean_array[i*ntimers+6] << std::endl;
 
-        std::cout << " packing        : " << std::scientific
+        std::cout << " local multiply : " << std::scientific
           << min_array[i*ntimers+7] << " " << std::scientific
           << max_array[i*ntimers+7] << " " << std::scientific
           << mean_array[i*ntimers+7] << std::endl;
 
-        std::cout << " reduce-scatter : " << std::scientific
+        std::cout << " packing        : " << std::scientific
           << min_array[i*ntimers+8] << " " << std::scientific
           << max_array[i*ntimers+8] << " " << std::scientific
           << mean_array[i*ntimers+8] << std::endl;
 
-        std::cout << " reduce         : " << std::scientific
+        std::cout << " reduce-scatter         : " << std::scientific
           << min_array[i*ntimers+9] << " " << std::scientific
           << max_array[i*ntimers+9] << " " << std::scientific
           << mean_array[i*ntimers+9] << std::endl;
+
+        std::cout << " reduce         : " << std::scientific
+          << min_array[i*ntimers+10] << " " << std::scientific
+          << max_array[i*ntimers+10] << " " << std::scientific
+          << mean_array[i*ntimers+10] << std::endl;
+        
 
         std::cout << std::endl;
       }
