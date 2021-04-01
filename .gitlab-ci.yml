@@ -1,25 +1,19 @@
-image: ubuntu:20.04
-
-variables:
-  OMPI_ALLOW_RUN_AS_ROOT: 1
-  OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+image: gcc:6.3
 
 before_script:
-- DEBIAN_FRONTEND=noninteractive apt-get update
-- DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential cmake python libopenmpi3 openmpi-bin liblapack-dev doxygen libjs-mathjax lcov
+- apt-get update && apt-get install -y cmake libopenmpi-dev openmpi-bin liblapack-dev doxygen libjs-mathjax lcov
 
 build:
   stage: build
   script:
   - mkdir build
   - cd build
-  - cmake -DMPIEXEC_PREFLAGS="--oversubscribe" -DCMAKE_C_FLAGS="--coverage" -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage" ../src
+  - cmake -DCMAKE_C_FLAGS="--coverage" -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage" ../src
   - make
   artifacts:
     paths:
     - build/
        
-
 test:
   stage: test
   script:
@@ -32,7 +26,6 @@ test:
   # Uploading report to CodeCov
   - export CODECOV_TOKEN="e1c7849f-e69a-4c85-88e0-27926cd800bc"
   - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
-
   dependencies:
   - build
 
@@ -43,4 +36,3 @@ pages:
   artifacts:
     paths:
     - public
-
