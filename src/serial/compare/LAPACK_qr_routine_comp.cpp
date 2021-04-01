@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
   Tucker::Timer qrTimer;
   Tucker::Timer lqtTimer;
   Tucker::Timer lqTimer;
+  Tucker::Timer syrkTimer;
 
   Tucker::Matrix<scalar_t>* Y = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(YNrows, YNcols);
   int sizeOfY = YNrows*YNcols;
@@ -88,7 +89,6 @@ int main(int argc, char* argv[])
 
   // //dgeqr
   qrWorkSpaceQueryTimer.start();
-
   work = Tucker::MemoryManager::safe_new_array<scalar_t>(1);
   //T has to have space for at least 5 doubles, see dgeqr.
   T = Tucker::MemoryManager::safe_new_array<scalar_t>(5);
@@ -108,10 +108,27 @@ int main(int argc, char* argv[])
     qrTimer.stop();
   }
   scalar_t avgQrTime = qrTimer.duration() / avgIteration;
-  Tucker::MemoryManager::safe_delete(YCopy);
   Tucker::MemoryManager::safe_delete_array(work, lwork);
   Tucker::MemoryManager::safe_delete_array(T, TSize);
 
+  //dsyrk
+  scalar_t* gram = Tucker::MemoryManager::safe_new_array<scalar_t>(YNcols*YNcols);
+  std::cout << "hello" <<std::endl;
+  for(int i=0; i<avgIteration; i++){
+    Tucker::copy(&sizeOfY, Y->data(), &one, YCopy->data(), &one);
+    std::cout << "hello" <<std::endl;
+    syrkTimer.start();
+    char uplo = 'U';
+    char trans = 'T';
+    scalar_t alpha = 1;
+    scalar_t beta = 0;
+    Tucker::syrk(&uplo, &trans, &YNcols, &YNrows, &alpha,
+        YCopy->data(), &YNrows, &beta, gram, &YNcols);
+    syrkTimer.stop();
+  }
+  scalar_t avgsyrkTime = syrkTimer.duration() / avgIteration;
+   Tucker::MemoryManager::safe_delete(YCopy);
+  Tucker::MemoryManager::safe_delete_array(gram, YNcols*YNcols);
 
   //Get YTranspose
   transposeTimer.start();
@@ -186,6 +203,7 @@ int main(int argc, char* argv[])
   // std::cout << "geqrf takes: " << avgQrfTime << " seconds. \n";
   // std::cout << "geqrt takes: " << avgQrtTime << " seconds. \n";
   std::cout << "geqr takes: " << avgQrTime << " seconds. \n";
+  std::cout << "syrk takes: " << avgsyrkTime << " seconds. \n";
   std::cout << "lq work space query takes: " << lqfWorkSpaceQueryTimer.duration() << " seconds. \n";
   // std::cout << "gelqf takes: " << avgLqfTime << " seconds. \n";
   // std::cout << "gelqt takes: " << avgLqtTime << " seconds, \n";

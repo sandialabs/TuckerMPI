@@ -381,7 +381,7 @@ void computeGram(const Tensor<scalar_t>* Y, const int n, scalar_t* gram,
     for(int i=0; i<nmats; i++) {
       // Call symmetric rank-k update
       // call dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
-      // C := alpha*A*A' + beta*C
+      // C := alpha*A'*A + beta*C
       char uplo = 'U';
       char trans = 'T';
       scalar_t alpha = 1;
