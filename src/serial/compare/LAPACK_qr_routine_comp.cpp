@@ -113,10 +113,8 @@ int main(int argc, char* argv[])
 
   //dsyrk
   scalar_t* gram = Tucker::MemoryManager::safe_new_array<scalar_t>(YNcols*YNcols);
-  std::cout << "hello" <<std::endl;
   for(int i=0; i<avgIteration; i++){
     Tucker::copy(&sizeOfY, Y->data(), &one, YCopy->data(), &one);
-    std::cout << "hello" <<std::endl;
     syrkTimer.start();
     char uplo = 'U';
     char trans = 'T';
