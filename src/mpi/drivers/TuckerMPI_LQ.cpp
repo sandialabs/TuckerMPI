@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
 
   MPI_Barrier(MPI_COMM_WORLD);
   total_timer.start();
-  Tucker::Matrix<scalar_t>* L0 = TuckerMPI::LQ<scalar_t>(&X, 0, boolUseButterflyTSQR, &tsqr_timer, &local_qr_timer, &redistribute_timer, &bcast_timer);
+  Tucker::Matrix<scalar_t>* L0 = TuckerMPI::LQ<scalar_t>(&X, mode, boolUseButterflyTSQR, &tsqr_timer, &local_qr_timer, &redistribute_timer, &bcast_timer);
   total_timer.stop();
   if(rank == 0){
     std::cout << "total time used: " << total_timer.duration()
@@ -186,6 +186,7 @@ if(rank == 0) {
   /////////////////
   // Free memory //
   /////////////////
+  Tucker::MemoryManager::safe_delete(L0);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(I_dims);
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(proc_grid_dims);
   MPI_Finalize();
