@@ -12,7 +12,11 @@
 
 int main(int argc, char* argv[])
 {
-  typedef double scalar_t;  // specify precision
+  #ifdef DRIVER_SINGLE
+    using scalar_t = float;
+  #else
+    using scalar_t = double;
+  #endif  // specify precision
 
   //
   // Initialize MPI

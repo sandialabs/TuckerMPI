@@ -10,7 +10,11 @@
 
 int main(int argc, char* argv[])
 {
-  typedef double scalar_t;
+  #ifdef DRIVER_SINGLE
+    using scalar_t = float;
+  #else
+    using scalar_t = double;
+  #endif
   MPI_Init(&argc, &argv);
 
   //
