@@ -41,7 +41,8 @@ int main(int argc, char* argv[])
   Tucker::Timer qrTimer;
   Tucker::Timer lqtTimer;
   Tucker::Timer lqTimer;
-  Tucker::Timer syrkTimer;
+  Tucker::Timer ATATimer;
+  Tucker::Timer AATTimer;
 
   Tucker::Matrix<scalar_t>* Y = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(YNrows, YNcols);
   int sizeOfY = YNrows*YNcols;
@@ -115,16 +116,16 @@ int main(int argc, char* argv[])
   scalar_t* gram = Tucker::MemoryManager::safe_new_array<scalar_t>(YNcols*YNcols);
   for(int i=0; i<avgIteration; i++){
     Tucker::copy(&sizeOfY, Y->data(), &one, YCopy->data(), &one);
-    syrkTimer.start();
+    ATATimer.start();
     char uplo = 'U';
     char trans = 'T';
     scalar_t alpha = 1;
     scalar_t beta = 0;
     Tucker::syrk(&uplo, &trans, &YNcols, &YNrows, &alpha,
         YCopy->data(), &YNrows, &beta, gram, &YNcols);
-    syrkTimer.stop();
+    ATATimer.stop();
   }
-  scalar_t avgsyrkTime = syrkTimer.duration() / avgIteration;
+  scalar_t avgATATime = ATATimer.duration() / avgIteration;
    Tucker::MemoryManager::safe_delete(YCopy);
   Tucker::MemoryManager::safe_delete_array(gram, YNcols*YNcols);
 
@@ -192,17 +193,37 @@ int main(int argc, char* argv[])
   scalar_t avgLqTime = lqTimer.duration() / avgIteration;
   Tucker::MemoryManager::safe_delete_array(work, lwork);
   Tucker::MemoryManager::safe_delete_array(T, TSize);
+
+    //dsyrk
+  int YTransposeNrows = YTranspose->nrows();
+  int YTransposeNcols = YTranspose->ncols();
+  gram = Tucker::MemoryManager::safe_new_array<scalar_t>(YTransposeNrows*YTransposeNrows);
+  for(int i=0; i<avgIteration; i++){
+    Tucker::copy(&sizeOfY, YTranspose->data(), &one, YTransposeCopy->data(), &one);
+    AATTimer.start();
+    char uplo = 'U';
+    char trans = 'N';
+    scalar_t alpha = 1;
+    scalar_t beta = 0;
+    Tucker::syrk(&uplo, &trans, &YTransposeNrows, &YTransposeNcols, &alpha,
+        YTransposeCopy->data(), &YTransposeNrows, &beta, gram, &YTransposeNrows);
+    AATTimer.stop();
+  }
+  scalar_t avgAATTime = AATTimer.duration() / avgIteration;
+  Tucker::MemoryManager::safe_delete_array(gram, YTransposeNrows*YTransposeNrows);
+
   Tucker::MemoryManager::safe_delete(YTransposeCopy);
   Tucker::MemoryManager::safe_delete(YTranspose);
   Tucker::MemoryManager::safe_delete(Y);
 
-  std::cout << "Explicity transpose takes: " << transposeTimer.duration() << " seconds. \n";
-  std::cout << "work space query takes: " << qrfWorkSpaceQueryTimer.duration() << " seconds. \n";
+  // std::cout << "Explicity transpose takes: " << transposeTimer.duration() << " seconds. \n";
+  // std::cout << "work space query takes: " << qrfWorkSpaceQueryTimer.duration() << " seconds. \n";
   // std::cout << "geqrf takes: " << avgQrfTime << " seconds. \n";
   // std::cout << "geqrt takes: " << avgQrtTime << " seconds. \n";
   std::cout << "geqr takes: " << avgQrTime << " seconds. \n";
-  std::cout << "syrk takes: " << avgsyrkTime << " seconds. \n";
-  std::cout << "lq work space query takes: " << lqfWorkSpaceQueryTimer.duration() << " seconds. \n";
+  std::cout << "AAT takes: " << avgAATTime << " seconds. \n";
+  std::cout << "ATA takes: " << avgATATime << " seconds. \n";
+  // std::cout << "lq work space query takes: " << lqfWorkSpaceQueryTimer.duration() << " seconds. \n";
   // std::cout << "gelqf takes: " << avgLqfTime << " seconds. \n";
   // std::cout << "gelqt takes: " << avgLqtTime << " seconds, \n";
   std::cout << "gelq takes: " << avgLqTime << " seconds, \n";
