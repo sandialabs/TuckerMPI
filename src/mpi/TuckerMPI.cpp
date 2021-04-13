@@ -1193,9 +1193,9 @@ void importTensorBinary(const char* filename, Tensor<scalar_t>* Y)
   // Read the file
   size_t count = Y->getLocalNumEntries();
   assert(count <= std::numeric_limits<int>::max());
-  if(rank == 0 && 8*count > std::numeric_limits<int>::max()) {
+  if(rank == 0 && sizeof(scalar_t)*count > std::numeric_limits<int>::max()) {
     std::cout << "WARNING: We are attempting to call MPI_File_read_all to read ";
-    Tucker::printBytes(8*count);
+    Tucker::printBytes(sizeof(scalar_t)*count);
     std::cout << "Depending on your MPI implementation, this may fail "
               << "because you are trying to read over 2.1 GB.\nIf MPI_File_read_all"
               << " crashes, please try again with a more favorable processor grid.\n";

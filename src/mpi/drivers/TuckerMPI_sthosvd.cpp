@@ -17,7 +17,11 @@
 
 int main(int argc, char* argv[])
 {
-  typedef double scalar_t;  // specify precision
+  #ifdef DRIVER_SINGLE
+    using scalar_t = float;
+  #else
+    using scalar_t = double;
+  #endif  // specify precision
 
   //
   // Initialize MPI
@@ -54,8 +58,8 @@ int main(int argc, char* argv[])
   bool useButterflyTSQR                 = Tucker::stringParse<bool>(fileAsString, "Use butterfly TSQR", false);
   bool boolReconstruct                  = Tucker::stringParse<bool>(fileAsString, "Reconstruct tensor", false);
 
-  double tol                            = Tucker::stringParse<double>(fileAsString, "SV Threshold", 1e-6);
-  double stdThresh                      = Tucker::stringParse<double>(fileAsString, "STD Threshold", 1e-9);
+  scalar_t tol                          = Tucker::stringParse<scalar_t>(fileAsString, "SV Threshold", 1e-6);
+  scalar_t stdThresh                    = Tucker::stringParse<scalar_t>(fileAsString, "STD Threshold", 1e-9);
 
   Tucker::SizeArray* I_dims             = Tucker::stringParseSizeArray(fileAsString, "Global dims");
   Tucker::SizeArray* R_dims = 0;
@@ -401,7 +405,7 @@ int main(int argc, char* argv[])
   if(boolWritePreprocessed) {
     TuckerMPI::writeTensorBinary(pre_fns_file,X);
   }
-
+  
   /////////////////////
   // Perform STHOSVD //
   /////////////////////
