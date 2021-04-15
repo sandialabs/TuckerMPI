@@ -9,6 +9,9 @@ TARGET_LINK_LIBRARIES(general_reconstruct mpi_tucker serial_tucker ${BLAS_LIBRAR
 ADD_EXECUTABLE(sthosvd TuckerMPI_sthosvd.cpp)
 TARGET_LINK_LIBRARIES(sthosvd mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
+ADD_EXECUTABLE(sthosvd_test TuckerMPI_sthosvd_test.cpp)
+TARGET_LINK_LIBRARIES(sthosvd_test mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 ADD_EXECUTABLE(scaling TuckerMPI_scaling.cpp)
 TARGET_LINK_LIBRARIES(scaling mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
@@ -31,6 +34,9 @@ TARGET_LINK_LIBRARIES(general_reconstruct_single mpi_tucker serial_tucker ${BLAS
 ADD_EXECUTABLE(sthosvd_single TuckerMPI_sthosvd.cpp)
 TARGET_LINK_LIBRARIES(sthosvd_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
+ADD_EXECUTABLE(sthosvd_test_single TuckerMPI_sthosvd_test.cpp)
+TARGET_LINK_LIBRARIES(sthosvd_test_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 ADD_EXECUTABLE(scaling_single TuckerMPI_scaling.cpp)
 TARGET_LINK_LIBRARIES(scaling_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
@@ -47,6 +53,7 @@ SET_TARGET_PROPERTIES(
   reconstruct_single
   general_reconstruct_single
   sthosvd_single
+  sthosvd_test_single
   scaling_single
   generate_single
   gram_single
