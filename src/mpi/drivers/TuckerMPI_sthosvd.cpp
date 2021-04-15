@@ -58,7 +58,6 @@ int main(int argc, char* argv[])
   bool boolPrintSV                      = Tucker::stringParse<bool>(fileAsString, "Print factor matrices", false);
   bool boolReconstruct                  = Tucker::stringParse<bool>(fileAsString, "Reconstruct tensor", false);
   bool useButterflyTSQR                 = Tucker::stringParse<bool>(fileAsString, "Use butterfly TSQR", false);
-  bool boolReconstruct                  = Tucker::stringParse<bool>(fileAsString, "Reconstruct tensor", false);
 
   scalar_t tol                          = Tucker::stringParse<scalar_t>(fileAsString, "SV Threshold", 1e-6);
   scalar_t stdThresh                    = Tucker::stringParse<scalar_t>(fileAsString, "STD Threshold", 1e-9);
