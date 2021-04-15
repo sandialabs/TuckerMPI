@@ -54,7 +54,9 @@ int main(int argc, char* argv[])
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
   bool boolWritePreprocessed            = Tucker::stringParse<bool>(fileAsString, "Write preprocessed data", false);
   bool boolUseOldGram                   = Tucker::stringParse<bool>(fileAsString, "Use old Gram", false);
-  bool useLQ                            = Tucker::stringParse<bool>(fileAsString, "Compute SVD via LQ", false);
+  bool boolUseLQ                        = Tucker::stringParse<bool>(fileAsString, "Compute SVD via LQ", false);
+  bool boolPrintSV                      = Tucker::stringParse<bool>(fileAsString, "Print factor matrices", false);
+  bool boolReconstruct                  = Tucker::stringParse<bool>(fileAsString, "Reconstruct tensor", false);
   bool useButterflyTSQR                 = Tucker::stringParse<bool>(fileAsString, "Use butterfly TSQR", false);
   bool boolReconstruct                  = Tucker::stringParse<bool>(fileAsString, "Reconstruct tensor", false);
 
@@ -413,22 +415,24 @@ int main(int argc, char* argv[])
     const TuckerMPI::TuckerTensor<scalar_t>* solution;
     bool flipSign = false; // confirm its default as false
     if(boolAuto) {
-      solution = TuckerMPI::STHOSVD(&X, tol, modeOrder->data(), boolUseOldGram, flipSign, useLQ, useButterflyTSQR);
+      solution = TuckerMPI::STHOSVD(&X, tol, modeOrder->data(), boolUseOldGram, flipSign, boolUseLQ, useButterflyTSQR);
     }
     else {
-      solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, flipSign, useLQ, useButterflyTSQR);
+      solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, flipSign, boolUseLQ, useButterflyTSQR);
     }
 
     // Send the timing information to a CSV
-    if(useLQ) solution->printTimersLQ(timing_file);
+    if(boolUseLQ) solution->printTimersLQ(timing_file);
     else solution->printTimers(timing_file);
 
     if(rank == 0) {
       // Write the eigenvalues to files
       std::string filePrefix = sv_dir + "/" + sv_fn + "value_mode_";
-      TuckerMPI::printSingularValues(solution, filePrefix, useLQ);
-      filePrefix = sv_dir + "/" + sv_fn + "vector_mode_";
-      TuckerMPI::printEigenvectors(solution, filePrefix);
+      TuckerMPI::printSingularValues(solution, filePrefix, boolUseLQ);
+      if(boolPrintSV){
+        filePrefix = sv_dir + "/" + sv_fn + "vector_mode_";
+        TuckerMPI::printEigenvectors(solution, filePrefix);
+      }
     }
     MPI_Barrier(MPI_COMM_WORLD);
     scalar_t xnorm2 = X.norm2();
@@ -441,7 +445,7 @@ int main(int argc, char* argv[])
       std::cout << "Norm of core tensor: " << gnorm << std::endl;
       // Compute the error bound based on the eigenvalues
       
-      if(useLQ){
+      if(boolUseLQ){
         for(int i=0; i<nd; i++) {
           for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
             errorBound += solution->singularValues[i][j];
