@@ -190,7 +190,7 @@ int main(int argc, char* argv[])
       }
     }
 
-    MPI_Bcast(dataptr,nnz,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    TuckerMPI::MPI_Bcast_(dataptr,nnz,0,MPI_COMM_WORLD);
   }
   factorTimer.stop();
   if(rank == 0) std::cout << "Time spent generating factor matrices: " << factorTimer.duration() << "s\n";

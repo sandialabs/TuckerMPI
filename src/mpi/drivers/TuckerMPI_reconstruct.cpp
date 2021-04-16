@@ -349,9 +349,9 @@ int main(int argc, char* argv[])
     size_t local_nnz = fact->G->getLocalNumEntries();
     size_t global_nnz = fact->G->getGlobalNumEntries();
     std::cout << "Local core tensor size: " << fact->G->getLocalSize() << ", or ";
-    Tucker::printBytes(local_nnz*sizeof(double));
+    Tucker::printBytes(local_nnz*sizeof(scalar_t));
     std::cout << "Global core tensor size: " << fact->G->getGlobalSize() << ", or ";
-    Tucker::printBytes(global_nnz*sizeof(double));
+    Tucker::printBytes(global_nnz*sizeof(scalar_t));
   }
 
   //////////////////////////
@@ -400,10 +400,10 @@ int main(int argc, char* argv[])
       size_t global_nnz = result->getGlobalNumEntries();
       std::cout << "Local tensor size after reconstruction iteration "
           << i << ": " << result->getLocalSize() << ", or ";
-      Tucker::printBytes(local_nnz*sizeof(double));
+      Tucker::printBytes(local_nnz*sizeof(scalar_t));
       std::cout << "Global tensor size after reconstruction iteration "
           << i << ": " << result->getGlobalSize() << ", or ";
-      Tucker::printBytes(global_nnz*sizeof(double));
+      Tucker::printBytes(global_nnz*sizeof(scalar_t));
     }
   }
 
@@ -436,11 +436,11 @@ int main(int argc, char* argv[])
 
     // \todo This could involve a scatterv.  I have replaced it with an all-gather for simplicity
     int scale_size = 1 + (*subs_end)[scale_mode] - (*subs_begin)[scale_mode];
-    double* scales = Tucker::MemoryManager::safe_new_array<double>(scale_size);
-    double* shifts = Tucker::MemoryManager::safe_new_array<double>(scale_size);
+    scalar_t* scales = Tucker::MemoryManager::safe_new_array<scalar_t>(scale_size);
+    scalar_t* shifts = Tucker::MemoryManager::safe_new_array<scalar_t>(scale_size);
     if(rank == 0) {
       for(int i=0; i<(*I_dims)[scale_mode]; i++) {
-        double scale, shift;
+        scalar_t scale, shift;
         ifs >> scale >> shift;
         if(i >= (*subs_begin)[scale_mode] && i <= (*subs_end)[scale_mode]) {
           scales[i-(*subs_begin)[scale_mode]] = 1./scale;
@@ -450,14 +450,14 @@ int main(int argc, char* argv[])
       ifs.close();
     } // end if(rank == 0)
 
-    MPI_Bcast(scales,scale_size,MPI_DOUBLE,0,MPI_COMM_WORLD);
-    MPI_Bcast(shifts,scale_size,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    TuckerMPI::MPI_Bcast_(scales,scale_size,0,MPI_COMM_WORLD);
+    TuckerMPI::MPI_Bcast_(shifts,scale_size,0,MPI_COMM_WORLD);
 
     int row_begin = result->getDistribution()->getMap(scale_mode,false)->getGlobalIndex(0);
     if(row_begin >= 0) TuckerMPI::transformSlices(result, scale_mode, scales+row_begin, shifts+row_begin);
 
-    Tucker::MemoryManager::safe_delete_array<double>(scales, scale_size);
-    Tucker::MemoryManager::safe_delete_array<double>(shifts, scale_size);
+    Tucker::MemoryManager::safe_delete_array<scalar_t>(scales, scale_size);
+    Tucker::MemoryManager::safe_delete_array<scalar_t>(shifts, scale_size);
   } // end if(scale_mode < nd)
 
   ////////////////////////////////////////////

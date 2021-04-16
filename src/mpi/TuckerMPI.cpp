@@ -121,14 +121,13 @@ Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool 
       for(int i=0; i<Rncols; i++){
         Tucker::copy(&Rncols, R->data()+i*Rncols, &one, L->data()+i, &Rncols); 
       }
-      Tucker::MemoryManager::safe_delete(R);
     }
     //bcast
     int sizeOfL = L->nrows()*L->ncols();
     MPI_Bcast_(L->data(), sizeOfL, 0, MPI_COMM_WORLD);
     if(localqr_bcast_timer) localqr_bcast_timer->stop();
   }
-  
+  Tucker::MemoryManager::safe_delete(R);
   if(globalRank == 0) std::cout << "\tAutoLQ::TSQR(" << n << ") Done" <<std::endl;
   return L;
 }
