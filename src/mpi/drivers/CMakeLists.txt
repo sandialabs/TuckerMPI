@@ -1,5 +1,11 @@
 INCLUDE_DIRECTORIES(.. ../../serial)
 
+ADD_EXECUTABLE(test_input test.cpp)
+TARGET_LINK_LIBRARIES(test_input mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(test_input_single test.cpp)
+TARGET_LINK_LIBRARIES(test_input_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 ADD_EXECUTABLE(reconstruct TuckerMPI_reconstruct.cpp)
 TARGET_LINK_LIBRARIES(reconstruct mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
@@ -50,6 +56,7 @@ ADD_EXECUTABLE(LQ_single TuckerMPI_LQ.cpp)
 TARGET_LINK_LIBRARIES(LQ_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 SET_TARGET_PROPERTIES(
+  test_input_single
   reconstruct_single
   general_reconstruct_single
   sthosvd_single
