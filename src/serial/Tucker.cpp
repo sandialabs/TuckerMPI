@@ -531,7 +531,7 @@ void computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues,
   int numEvecs=nrows;
   scalar_t sum = 0;
   for(int i=nrows-1; i>=0; i--) {
-    sum += eigenvalues[i];
+    sum += std::abs(eigenvalues[i]);
     if(sum > thresh) {
       break;
     }

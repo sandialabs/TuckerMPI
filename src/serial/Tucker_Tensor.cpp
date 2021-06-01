@@ -152,14 +152,16 @@ scalar_t Tensor<scalar_t>::norm2() const
   if(numElements == 0)
     return 0;
 
-  scalar_t norm=0;
+  double normDouble =0;
+  scalar_t norm = 0;
   size_t i;
   const scalar_t* dataPtr = data();
 //#pragma omp parallel for reduction ( + : norm ) \
 //  shared( numElements, dataPtr ) private(i)
   for(i=0; i<numElements; i++) {
-    norm += (dataPtr[i]*dataPtr[i]);
+    normDouble += (dataPtr[i]*dataPtr[i]);
   }
+  norm = (scalar_t) normDouble;
   return norm;
 }
 
