@@ -51,14 +51,11 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
 {
   // Get number of dimensions
   int ndims = dims.size();
-
   // Copy the global dimensions
   for(int i=0; i<ndims; i++) {
     globalDims_[i] = dims[i];
   }
-
   grid_ = Tucker::MemoryManager::safe_new<ProcessorGrid>(procs,MPI_COMM_WORLD);
-
   // Create the maps
   createMaps();
 

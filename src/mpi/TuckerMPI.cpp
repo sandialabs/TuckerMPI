@@ -264,7 +264,6 @@ void ButterflyTSQR(Tucker::Matrix<scalar_t>* R, Tucker::Matrix<scalar_t>*& L){
       int info;
       Tucker::tpqrt(&botnrows, &Rncols, &botnrows, &nb, top->data(), &Rncols, bot->data(),
       &botnrows, T, &nb, work, &info);
-      Tucker::MemoryManager::safe_delete(bot);
       Tucker::MemoryManager::safe_delete_array<scalar_t>(work, nb*Rncols);
       Tucker::MemoryManager::safe_delete_array<scalar_t>(T, nb*Rncols);
       R = top;
@@ -278,7 +277,6 @@ void ButterflyTSQR(Tucker::Matrix<scalar_t>* R, Tucker::Matrix<scalar_t>*& L){
       Tucker::Matrix<scalar_t>* finalR = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(Rncols, Rncols);
       int sizeOfR = Rncols*Rncols;
       MPI_Recv_(finalR->data(), sizeOfR, target, target, MPI_COMM_WORLD, &status);
-      Tucker::MemoryManager::safe_delete(R);
       R = finalR;
     }
     else if(globalRank + cutOff < globalnp){
@@ -300,7 +298,6 @@ void ButterflyTSQR(Tucker::Matrix<scalar_t>* R, Tucker::Matrix<scalar_t>*& L){
   for(int i=0; i<Rncols; i++){
     Tucker::copy(&Rncols, R->data()+i*Rncols, &one, L->data()+i, &Rncols); 
   }
-  Tucker::MemoryManager::safe_delete(R);
 }
 /**
  * \test TuckerMPI_old_gram_test_file.cpp
