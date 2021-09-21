@@ -1,7 +1,7 @@
 image: gcc:6.3
 
 before_script:
-- apt-get update && apt-get install -y cmake libopenmpi-dev openmpi-bin liblapack-dev doxygen libjs-mathjax lcov
+- apt-get update && apt-get install -y cmake libopenmpi-dev openmpi-bin libblas-dev liblapack-dev doxygen libjs-mathjax 
 
 build:
   stage: build
