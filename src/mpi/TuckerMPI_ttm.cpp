@@ -10,8 +10,9 @@
 namespace TuckerMPI
 {
 
-Tensor* ttm(const Tensor* X, const int n,
-    const Tucker::Matrix* const U, bool Utransp,
+template <class scalar_t>
+Tensor<scalar_t>* ttm(const Tensor<scalar_t>* X, const int n,
+    const Tucker::Matrix<scalar_t>* const U, bool Utransp,
     Tucker::Timer* mult_timer, Tucker::Timer* pack_timer,
     Tucker::Timer* reduce_scatter_timer,
     Tucker::Timer* reduce_timer, size_t nnz_limit)
@@ -40,11 +41,11 @@ Tensor* ttm(const Tensor* X, const int n,
           X->getDistribution()->getProcessorGrid()->size());
 
   // Create the new tensor
-  Tensor* Y = Tucker::MemoryManager::safe_new<Tensor>(dist);
+  Tensor<scalar_t>* Y = Tucker::MemoryManager::safe_new<Tensor<scalar_t>>(dist);
 
   // Get the local part of the tensor
-  const Tucker::Tensor* localX = X->getLocalTensor();
-  Tucker::Tensor* localY = Y->getLocalTensor();
+  const Tucker::Tensor<scalar_t>* localX = X->getLocalTensor();
+  Tucker::Tensor<scalar_t>* localY = Y->getLocalTensor();
 
   // Determine whether there are multiple MPI processes along this dimension
   int Pn = X->getDistribution()->getProcessorGrid()->getNumProcs(n,false);
@@ -73,7 +74,7 @@ Tensor* ttm(const Tensor* X, const int n,
     const Map* xMap = X->getDistribution()->getMap(n,false);
     const Map* yMap = Y->getDistribution()->getMap(n,false);
 
-    const double* Uptr;
+    const scalar_t* Uptr;
     assert(U->getNumElements() > 0);
     if(Utransp)
       Uptr = U->data() + xMap->getGlobalIndex(0);
@@ -109,14 +110,14 @@ Tensor* ttm(const Tensor* X, const int n,
     // If the required memory is small, we can do a single reduce_scatter
     if(nnz_reduce_scatter <= std::max(max_lcl_nnz_x,nnz_limit)) {
       // Compute the TTM
-      Tucker::Tensor* localResult;
+      Tucker::Tensor<scalar_t>* localResult;
       if(X->getDistribution()->ownNothing()) {
         Tucker::SizeArray sz(ndims);
         for(int i=0; i<ndims; i++) {
           sz[i] = X->getLocalSize(i);
         }
         sz[n] = Y->getGlobalSize(n);
-        localResult = Tucker::MemoryManager::safe_new<Tucker::Tensor>(sz);
+        localResult = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(sz);
         localResult->initialize();
       }
       else {
@@ -132,12 +133,12 @@ Tensor* ttm(const Tensor* X, const int n,
       if(pack_timer) pack_timer->stop();
 
       // Perform a reduce-scatter
-      const double* sendBuf;
+      const scalar_t* sendBuf;
       if(localResult->getNumElements() > 0)
         sendBuf = localResult->data();
       else
         sendBuf = 0;
-      double* recvBuf;
+      scalar_t* recvBuf;
       if(localY->getNumElements() > 0)
         recvBuf = localY->data();
       else
@@ -153,11 +154,10 @@ Tensor* ttm(const Tensor* X, const int n,
       }
 
       if(reduce_scatter_timer) reduce_scatter_timer->start();
-      MPI_Reduce_scatter((void*)sendBuf, recvBuf, recvCounts, MPI_DOUBLE,
-          MPI_SUM, comm);
+      MPI_Reduce_scatter_(sendBuf, recvBuf, recvCounts, MPI_SUM, comm);
       if(reduce_scatter_timer) reduce_scatter_timer->stop();
-      Tucker::MemoryManager::safe_delete_array<int>(recvCounts,nprocs);
-      Tucker::MemoryManager::safe_delete<Tucker::Tensor>(localResult);
+      Tucker::MemoryManager::safe_delete_array(recvCounts,nprocs);
+      Tucker::MemoryManager::safe_delete(localResult);
     } // end if(K < std::ceil(Jn/Pn))
     else {
       for(int root=0; root<Pn; root++) {
@@ -168,14 +168,14 @@ Tensor* ttm(const Tensor* X, const int n,
         }
 
         // Compute the local TTM
-        Tucker::Tensor* localResult;
+        Tucker::Tensor<scalar_t>* localResult;
         if(X->getDistribution()->ownNothing()) {
           Tucker::SizeArray sz(ndims);
           for(int i=0; i<ndims; i++) {
             sz[i] = X->getLocalSize(i);
           }
           sz[n] = uLocalRows;
-          localResult = Tucker::MemoryManager::safe_new<Tucker::Tensor>(sz);
+          localResult = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(sz);
           localResult->initialize();
         }
         else {
@@ -185,12 +185,12 @@ Tensor* ttm(const Tensor* X, const int n,
         }
 
         // Combine the local results with a reduce operation
-        const double* sendBuf;
+        const scalar_t* sendBuf;
         if(localResult->getNumElements() > 0)
           sendBuf = localResult->data();
         else
           sendBuf = 0;
-        double* recvBuf;
+        scalar_t* recvBuf;
         if(localY->getNumElements() > 0)
           recvBuf = localY->data();
         else
@@ -200,13 +200,12 @@ Tensor* ttm(const Tensor* X, const int n,
 
         if(count > 0) {
           if(reduce_timer) reduce_timer->start();
-          MPI_Reduce((void*)sendBuf, recvBuf, (int)count, MPI_DOUBLE, MPI_SUM,
-              root, comm);
+          MPI_Reduce_(sendBuf, recvBuf, (int)count, MPI_SUM, root, comm);
           if(reduce_timer) reduce_timer->stop();
         }
 
         // Free memory
-        Tucker::MemoryManager::safe_delete<Tucker::Tensor>(localResult);
+        Tucker::MemoryManager::safe_delete(localResult);
 
         // Increment the data pointer
         if(Utransp)
@@ -220,5 +219,17 @@ Tensor* ttm(const Tensor* X, const int n,
   // Return the result
   return Y;
 }
+
+// Explicit instantiations to build static library for both single and double precision
+template Tensor<float>* ttm(const Tensor<float>* X, const int n,
+    const Tucker::Matrix<float>* const U, bool Utransp,
+    Tucker::Timer* mult_timer, Tucker::Timer* pack_timer,
+    Tucker::Timer* reduce_scatter_timer,
+    Tucker::Timer* reduce_timer, size_t nnz_limit);
+template Tensor<double>* ttm(const Tensor<double>* X, const int n,
+    const Tucker::Matrix<double>* const U, bool Utransp,
+    Tucker::Timer* mult_timer, Tucker::Timer* pack_timer,
+    Tucker::Timer* reduce_scatter_timer,
+    Tucker::Timer* reduce_timer, size_t nnz_limit);
 
 } // end namespace TuckerMPI

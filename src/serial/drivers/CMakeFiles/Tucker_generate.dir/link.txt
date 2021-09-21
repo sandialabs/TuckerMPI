@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/Tucker_generate.dir/Tucker_generate.o  -o Tucker_generate  -Wl,-rpath,/home/fangq18/TuckerMPI/src/serial ../libserial_tucker.so 

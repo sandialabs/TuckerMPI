@@ -17,6 +17,12 @@
 
 int main(int argc, char* argv[])
 {
+  #ifdef DRIVER_SINGLE
+    using scalar_t = float;
+  #else
+    using scalar_t = double;
+  #endif  // specify precision
+
   //
   // Initialize MPI
   //
@@ -116,7 +122,7 @@ int main(int argc, char* argv[])
   Tucker::Timer readTimer;
   MPI_Barrier(MPI_COMM_WORLD);
   readTimer.start();
-  TuckerMPI::Tensor X(dist);
+  TuckerMPI::Tensor<scalar_t> X(dist);
   TuckerMPI::readTensorBinary(in_fns_file,X);
   MPI_Barrier(MPI_COMM_WORLD);
   readTimer.stop();
@@ -131,7 +137,7 @@ int main(int argc, char* argv[])
   Tucker::Timer mult_timer, shift_timer, allreduce_timer, allgather_timer,
                   pack_timer, alltoall_timer, unpack_timer, total_timer;
 
-  Tucker::Matrix* temp;
+  Tucker::Matrix<scalar_t>* temp;
 
   MPI_Barrier(MPI_COMM_WORLD);
   total_timer.start();
@@ -146,7 +152,7 @@ int main(int argc, char* argv[])
   MPI_Barrier(MPI_COMM_WORLD);
   total_timer.stop();
 
-  Tucker::MemoryManager::safe_delete<Tucker::Matrix>(temp);
+  Tucker::MemoryManager::safe_delete(temp);
 
   if(rank == 0) {
     std::cout << "Gram runtime: " << total_timer.duration() << std::endl;

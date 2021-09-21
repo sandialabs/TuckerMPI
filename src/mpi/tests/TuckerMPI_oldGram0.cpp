@@ -8,10 +8,21 @@
 #include<cstdlib>
 #include "TuckerMPI.hpp"
 
-bool checkUTEqual(const double* arr1, const double* arr2, int numRows);
+template <class scalar_t>
+bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows);
 
 int main(int argc, char* argv[])
 {
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t;
+  std::string filename = "input_files/tensor64_single.mpi"; 
+#else
+  typedef double scalar_t;
+  std::string filename = "input_files/tensor64.mpi";
+#endif
+
   // Initialize MPI
   MPI_Init(&argc,&argv);
 
@@ -29,21 +40,20 @@ int main(int argc, char* argv[])
   (*nprocsPerDim)[0] = 2; (*nprocsPerDim)[1] = 2; (*nprocsPerDim)[2] = 2;
   TuckerMPI::Distribution* dist =
         Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*sz,*nprocsPerDim);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(sz);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(nprocsPerDim);
+  Tucker::MemoryManager::safe_delete(sz);
+  Tucker::MemoryManager::safe_delete(nprocsPerDim);
 
   // Create a tensor
-  TuckerMPI::Tensor* tensor =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
+  TuckerMPI::Tensor<scalar_t>* tensor =
+      Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
 
   // Read the entries from a file
-  std::string filename = "input_files/tensor64.mpi";
   TuckerMPI::importTensorBinary(filename.c_str(),tensor);
 
   // Compute the gram matrix in dimension 0
-  const Tucker::Matrix* mat = TuckerMPI::oldGram(tensor,0);
+  const Tucker::Matrix<scalar_t>* mat = TuckerMPI::oldGram(tensor,0);
 
-  double trueData0[36] = {19840, 20320, 20800, 21280,
+  scalar_t trueData0[36] = {19840, 20320, 20800, 21280,
                          20320, 20816, 21312, 21808,
                          20800, 21312, 21824, 22336,
                          21280, 21808, 22336, 22864};
@@ -55,12 +65,12 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  Tucker::MemoryManager::safe_delete<const Tucker::Matrix>(mat);
+  Tucker::MemoryManager::safe_delete(mat);
 
   // Compute the gram matrix in dimension 1
   mat = TuckerMPI::oldGram(tensor,1);
 
-  double trueData1[36] = {15544, 17176, 18808, 20440,
+  scalar_t trueData1[36] = {15544, 17176, 18808, 20440,
                           17176, 19064, 20952, 22840,
                           18808, 20952, 23096, 25240,
                           20440, 22840, 25240, 27640};
@@ -72,12 +82,12 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  Tucker::MemoryManager::safe_delete<const Tucker::Matrix>(mat);
+  Tucker::MemoryManager::safe_delete(mat);
 
   // Compute the gram matrix in dimension 2
   mat = TuckerMPI::oldGram(tensor,2);
 
-  double trueData2[36] = {1240, 3160, 5080, 7000,
+  scalar_t trueData2[36] = {1240, 3160, 5080, 7000,
                           3160, 9176, 15192, 21208,
                           5080, 15192, 25304, 35416,
                           7000, 21208, 35416, 49624};
@@ -89,8 +99,8 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(tensor);
-  Tucker::MemoryManager::safe_delete<const Tucker::Matrix>(mat);
+  Tucker::MemoryManager::safe_delete(tensor);
+  Tucker::MemoryManager::safe_delete(mat);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();
@@ -103,7 +113,8 @@ int main(int argc, char* argv[])
   return EXIT_SUCCESS;
 }
 
-bool checkUTEqual(const double* arr1, const double* arr2, int numRows)
+template <class scalar_t>
+bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
 {
   for(int r=0; r<numRows; r++) {
     for(int c=r; c<numRows; c++) {

@@ -41,6 +41,8 @@
 #include "Tucker_IO_Util.hpp"
 #include<fstream>
 #include<sstream>
+#include<iomanip>
+#include<cmath>
 
 namespace Tucker
 {
@@ -119,8 +121,9 @@ SizeArray* stringParseSizeArray(const std::vector<std::string>& lines,
   return arr; // Returns empty array if nothing is ever pushed onto tmp vector
 }
 
-void printEigenvalues(const TuckerTensor* factorization,
-    const std::string& filePrefix)
+template <class scalar_t>
+void printEigenvalues(const TuckerTensor<scalar_t>* factorization,
+    const std::string& filePrefix, bool useLQ)
 {
   // For each mode...
   int nmodes = factorization->N;
@@ -134,12 +137,24 @@ void printEigenvalues(const TuckerTensor* factorization,
 
     // Determine the number of eigenvalues for this mode
     int nevals = factorization->U[mode]->nrows();
-    for(int i=0; i<nevals; i++) {
-      ofs << factorization->eigenvalues[mode][i] << std::endl;
+    if(useLQ){
+      for(int i=0; i<nevals; i++) {
+        ofs << std::setprecision(16) << std::pow(factorization->singularValues[mode][i], 2) << std::endl;
+      }
+    }
+    else{
+      for(int i=0; i<nevals; i++) {
+        ofs << std::setprecision(16) << factorization->eigenvalues[mode][i] << std::endl;
+      }
     }
 
     ofs.close();
   }
 }
+
+// Explicit instantiations to build static library for both single and double precision
+template void printEigenvalues(const TuckerTensor<float>*, const std::string&, bool);
+
+template void printEigenvalues(const TuckerTensor<double>*, const std::string&, bool);
 
 }

@@ -12,6 +12,12 @@
 
 int main(int argc, char* argv[])
 {
+  #ifdef DRIVER_SINGLE
+    using scalar_t = float;
+  #else
+    using scalar_t = double;
+  #endif  // specify precision
+
   //
   // Initialize MPI
   //
@@ -45,7 +51,7 @@ int main(int argc, char* argv[])
   std::string out_fns_file              = Tucker::stringParse<std::string>(fileAsString, "Output file list", "rec.txt");
   unsigned int seed                     = Tucker::stringParse<unsigned int>(fileAsString, "RNG seed",
                                           std::chrono::system_clock::now().time_since_epoch().count());
-  double eps                            = Tucker::stringParse<double>(fileAsString, "Noise", 1e-8);
+  scalar_t eps                          = Tucker::stringParse<scalar_t>(fileAsString, "Noise", 1e-8);
 
   /////////////////////////////////////////////////
   // Assert that none of the SizeArrays are null //
@@ -141,7 +147,7 @@ int main(int argc, char* argv[])
   // Create the normal distribution generator //
   //////////////////////////////////////////////
   std::default_random_engine generator(myseed);
-  std::normal_distribution<double> distribution;
+  std::normal_distribution<scalar_t> distribution;
 
   /////////////////////////////////////////////
   // Set up distribution object for the core //
@@ -155,10 +161,10 @@ int main(int argc, char* argv[])
   if(rank == 0) std::cout << "Generating a random core tensor...\n";
   Tucker::Timer coreTimer;
   coreTimer.start();
-  TuckerMPI::TuckerTensor fact(nd);
-  fact.G = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
+  TuckerMPI::TuckerTensor<scalar_t> fact(nd);
+  fact.G = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
   size_t nnz = dist->getLocalDims().prod();
-  double* dataptr = fact.G->getLocalTensor()->data();
+  scalar_t* dataptr = fact.G->getLocalTensor()->data();
   for(size_t i=0; i<nnz; i++) {
     dataptr[i] = distribution(generator);
   }
@@ -175,7 +181,7 @@ int main(int argc, char* argv[])
     if(rank == 0) std::cout << "Generating factor matrix " << d << "...\n";
     int nrows = (*I_dims)[d];
     int ncols = (*R_dims)[d];
-    fact.U[d] = Tucker::MemoryManager::safe_new<Tucker::Matrix>(nrows,ncols);
+    fact.U[d] = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nrows,ncols);
     nnz = nrows*ncols;
     dataptr = fact.U[d]->data();
     if(rank == 0) {
@@ -184,7 +190,7 @@ int main(int argc, char* argv[])
       }
     }
 
-    MPI_Bcast(dataptr,nnz,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    TuckerMPI::MPI_Bcast_(dataptr,nnz,0,MPI_COMM_WORLD);
   }
   factorTimer.stop();
   if(rank == 0) std::cout << "Time spent generating factor matrices: " << factorTimer.duration() << "s\n";
@@ -193,15 +199,15 @@ int main(int argc, char* argv[])
   ////////////////////////////////////////////////////////
   // Construct the global tensor using a series of TTMs //
   ////////////////////////////////////////////////////////
-  TuckerMPI::Tensor* product = fact.G;
+  TuckerMPI::Tensor<scalar_t>* product = fact.G;
   for(int d=0; d<nd; d++) {
     Tucker::Timer ttmTimer;
     ttmTimer.start();
     if(rank == 0) std::cout << "Performing mode " << d << " TTM...\n";
-    TuckerMPI::Tensor* temp = TuckerMPI::ttm(product, d, fact.U[d]);
+    TuckerMPI::Tensor<scalar_t>* temp = TuckerMPI::ttm(product, d, fact.U[d]);
 
     if(product != fact.G) {
-      Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(product);
+      Tucker::MemoryManager::safe_delete(product);
     }
     product = temp;
     ttmTimer.stop();
@@ -215,7 +221,7 @@ int main(int argc, char* argv[])
   if(rank == 0) std::cout << "Computing the global tensor norm...\n";
   Tucker::Timer normTimer;
   normTimer.start();
-  double normM = std::sqrt(product->norm2());
+  scalar_t normM = std::sqrt(product->norm2());
   normTimer.stop();
   if(rank == 0) std::cout << "Time spent computing the tensor norm: " << normTimer.duration() << "s\n";
 
@@ -225,12 +231,12 @@ int main(int argc, char* argv[])
   // squared, so this quantity should be sqrt(nnz * stdev^2)       //
   ///////////////////////////////////////////////////////////////////
   nnz = I_dims->prod();
-  double normN = std::sqrt(nnz);
+  scalar_t normN = std::sqrt(nnz);
 
   ///////////////////
   // Compute alpha //
   ///////////////////
-  double alpha = eps*normM/normN;
+  scalar_t alpha = eps*normM/normN;
 
   //////////////////////////////////////////////////////////////////////
   // For each entry of the global tensor, add alpha*randn             //

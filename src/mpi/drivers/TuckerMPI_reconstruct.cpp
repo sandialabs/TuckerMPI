@@ -17,6 +17,12 @@
 
 int main(int argc, char* argv[])
 {
+  #ifdef DRIVER_SINGLE
+    using scalar_t = float;
+  #else
+    using scalar_t = double;
+  #endif  // specify precision
+
   //
   // Initialize MPI
   //
@@ -323,8 +329,8 @@ int main(int argc, char* argv[])
   /////////////////////////////////
   // Set up factorization object //
   /////////////////////////////////
-  TuckerMPI::TuckerTensor* fact =
-      Tucker::MemoryManager::safe_new<TuckerMPI::TuckerTensor>(nd);
+  TuckerMPI::TuckerTensor<scalar_t>* fact =
+      Tucker::MemoryManager::safe_new<TuckerMPI::TuckerTensor<scalar_t>>(nd);
 
   /////////////////////////////////////////////
   // Set up distribution object for the core //
@@ -337,15 +343,15 @@ int main(int argc, char* argv[])
   ///////////////////////////
   std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn +
             "_core.mpi";
-  fact->G = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor>(dist);
+  fact->G = Tucker::MemoryManager::safe_new<TuckerMPI::Tensor<scalar_t>>(dist);
   TuckerMPI::importTensorBinary(coreFilename.c_str(),fact->G);
   if(rank == 0) {
     size_t local_nnz = fact->G->getLocalNumEntries();
     size_t global_nnz = fact->G->getGlobalNumEntries();
     std::cout << "Local core tensor size: " << fact->G->getLocalSize() << ", or ";
-    Tucker::printBytes(local_nnz*sizeof(double));
+    Tucker::printBytes(local_nnz*sizeof(scalar_t));
     std::cout << "Global core tensor size: " << fact->G->getGlobalSize() << ", or ";
-    Tucker::printBytes(global_nnz*sizeof(double));
+    Tucker::printBytes(global_nnz*sizeof(scalar_t));
   }
 
   //////////////////////////
@@ -356,14 +362,14 @@ int main(int argc, char* argv[])
     std::ostringstream ss;
     ss << sthosvd_dir << "/" << sthosvd_fn << "_mat_" << mode << ".mpi";
 
-    fact->U[mode] = Tucker::MemoryManager::safe_new<Tucker::Matrix>((*I_dims)[mode],(*coreSize)[mode]);
+    fact->U[mode] = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>((*I_dims)[mode],(*coreSize)[mode]);
     TuckerMPI::importTensorBinary(ss.str().c_str(), fact->U[mode]);
   }
 
   ////////////////////////////////////////////////////
   // Reconstruct the requested pieces of the tensor //
   ////////////////////////////////////////////////////
-  TuckerMPI::Tensor* result = fact->G;
+  TuckerMPI::Tensor<scalar_t>* result = fact->G;
 
   // Compute the nnz of the largest tensor piece being stored by any process
   size_t max_lcl_nnz = 1;
@@ -377,15 +383,15 @@ int main(int argc, char* argv[])
     // Grab the requested rows of the factor matrix
     int start_subs = (*subs_begin)[mode];
     int end_subs = (*subs_end)[mode];
-    Tucker::Matrix* factMat =
+    Tucker::Matrix<scalar_t>* factMat =
         fact->U[mode]->getSubmatrix(start_subs, end_subs);
 
     // Perform the TTM
-    TuckerMPI::Tensor* temp = TuckerMPI::ttm(result,mode,factMat,false,0,0,0,0,max_lcl_nnz);
+    TuckerMPI::Tensor<scalar_t>* temp = TuckerMPI::ttm(result,mode,factMat,false,0,0,0,0,max_lcl_nnz);
 
-    Tucker::MemoryManager::safe_delete<Tucker::Matrix>(factMat);
+    Tucker::MemoryManager::safe_delete(factMat);
     if(result != fact->G) {
-      Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);
+      Tucker::MemoryManager::safe_delete(result);
     }
     result = temp;
 
@@ -394,10 +400,10 @@ int main(int argc, char* argv[])
       size_t global_nnz = result->getGlobalNumEntries();
       std::cout << "Local tensor size after reconstruction iteration "
           << i << ": " << result->getLocalSize() << ", or ";
-      Tucker::printBytes(local_nnz*sizeof(double));
+      Tucker::printBytes(local_nnz*sizeof(scalar_t));
       std::cout << "Global tensor size after reconstruction iteration "
           << i << ": " << result->getGlobalSize() << ", or ";
-      Tucker::printBytes(global_nnz*sizeof(double));
+      Tucker::printBytes(global_nnz*sizeof(scalar_t));
     }
   }
 
@@ -430,11 +436,11 @@ int main(int argc, char* argv[])
 
     // \todo This could involve a scatterv.  I have replaced it with an all-gather for simplicity
     int scale_size = 1 + (*subs_end)[scale_mode] - (*subs_begin)[scale_mode];
-    double* scales = Tucker::MemoryManager::safe_new_array<double>(scale_size);
-    double* shifts = Tucker::MemoryManager::safe_new_array<double>(scale_size);
+    scalar_t* scales = Tucker::MemoryManager::safe_new_array<scalar_t>(scale_size);
+    scalar_t* shifts = Tucker::MemoryManager::safe_new_array<scalar_t>(scale_size);
     if(rank == 0) {
       for(int i=0; i<(*I_dims)[scale_mode]; i++) {
-        double scale, shift;
+        scalar_t scale, shift;
         ifs >> scale >> shift;
         if(i >= (*subs_begin)[scale_mode] && i <= (*subs_end)[scale_mode]) {
           scales[i-(*subs_begin)[scale_mode]] = 1./scale;
@@ -444,14 +450,14 @@ int main(int argc, char* argv[])
       ifs.close();
     } // end if(rank == 0)
 
-    MPI_Bcast(scales,scale_size,MPI_DOUBLE,0,MPI_COMM_WORLD);
-    MPI_Bcast(shifts,scale_size,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    TuckerMPI::MPI_Bcast_(scales,scale_size,0,MPI_COMM_WORLD);
+    TuckerMPI::MPI_Bcast_(shifts,scale_size,0,MPI_COMM_WORLD);
 
     int row_begin = result->getDistribution()->getMap(scale_mode,false)->getGlobalIndex(0);
     if(row_begin >= 0) TuckerMPI::transformSlices(result, scale_mode, scales+row_begin, shifts+row_begin);
 
-    Tucker::MemoryManager::safe_delete_array<double>(scales, scale_size);
-    Tucker::MemoryManager::safe_delete_array<double>(shifts, scale_size);
+    Tucker::MemoryManager::safe_delete_array<scalar_t>(scales, scale_size);
+    Tucker::MemoryManager::safe_delete_array<scalar_t>(shifts, scale_size);
   } // end if(scale_mode < nd)
 
   ////////////////////////////////////////////
@@ -462,14 +468,14 @@ int main(int argc, char* argv[])
   /////////////////
   // Free memory //
   /////////////////
-  Tucker::MemoryManager::safe_delete<TuckerMPI::TuckerTensor>(fact);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(coreSize);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(I_dims);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(proc_grid_dims);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(subs_begin);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(subs_end);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(rec_order);
-  Tucker::MemoryManager::safe_delete<TuckerMPI::Tensor>(result);
+  Tucker::MemoryManager::safe_delete(fact);
+  Tucker::MemoryManager::safe_delete(coreSize);
+  Tucker::MemoryManager::safe_delete(I_dims);
+  Tucker::MemoryManager::safe_delete(proc_grid_dims);
+  Tucker::MemoryManager::safe_delete(subs_begin);
+  Tucker::MemoryManager::safe_delete(subs_end);
+  Tucker::MemoryManager::safe_delete(rec_order);
+  Tucker::MemoryManager::safe_delete(result);
 
   if(Tucker::MemoryManager::curMemUsage > 0) {
     Tucker::MemoryManager::printCurrentMemUsage();

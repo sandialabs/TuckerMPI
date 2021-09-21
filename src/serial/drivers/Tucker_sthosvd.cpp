@@ -15,6 +15,8 @@
 
 int main(int argc, char* argv[])
 {
+  typedef double scalar_t;  // specify precision
+  
   Tucker::Timer totalTimer;
   totalTimer.start();
 
@@ -35,6 +37,7 @@ int main(int argc, char* argv[])
   bool boolWriteSTHOSVD                 = Tucker::stringParse<bool>(fileAsString, "Write STHOSVD result", false);
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
   bool boolWritePreprocessed            = Tucker::stringParse<bool>(fileAsString, "Write preprocessed data", false);
+  bool useLQ                            = Tucker::stringParse<bool>(fileAsString, "Compute SVD via LQ", false);
 
   double tol                            = Tucker::stringParse<double>(fileAsString, "SV Threshold", 1e-6);
   double stdThresh                      = Tucker::stringParse<double>(fileAsString, "STD Threshold", 1e-9);
@@ -150,7 +153,7 @@ int main(int argc, char* argv[])
   ///////////////////////////
   Tucker::Timer readTimer;
   readTimer.start();
-  Tucker::Tensor* X = Tucker::MemoryManager::safe_new<Tucker::Tensor>(*I_dims);
+  Tucker::Tensor<scalar_t>* X = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*I_dims);
   Tucker::readTensorBinary(X,in_fns_file.c_str());
   readTimer.stop();
 
@@ -161,7 +164,7 @@ int main(int argc, char* argv[])
   ////////////////////////
   // Compute statistics //
   ////////////////////////
-  Tucker::MetricData* metrics = Tucker::computeSliceMetrics(X,
+  Tucker::MetricData<scalar_t>* metrics = Tucker::computeSliceMetrics(X,
       scale_mode,
       Tucker::MIN+Tucker::MAX+Tucker::MEAN+Tucker::VARIANCE);
 
@@ -233,20 +236,20 @@ int main(int argc, char* argv[])
   /////////////////////
   Tucker::Timer sthosvdTimer, writeTimer;
   if(boolSTHOSVD) {
-    const Tucker::TuckerTensor* solution;
+    const Tucker::TuckerTensor<scalar_t>* solution;
 
     sthosvdTimer.start();
     if(boolAuto) {
-      solution = Tucker::STHOSVD(X, tol);
+      solution = Tucker::STHOSVD(X, tol, useLQ);
     }
     else {
-      solution = Tucker::STHOSVD(X, R_dims);
+      solution = Tucker::STHOSVD(X, R_dims, useLQ);
     }
     sthosvdTimer.stop();
 
     // Write the eigenvalues to files
     std::string filePrefix = sv_dir + "/" + sv_fn + "_mode_";
-    Tucker::printEigenvalues(solution, filePrefix);
+    Tucker::printEigenvalues(solution, filePrefix, useLQ);
 
     double xnorm = std::sqrt(X->norm2());
     double gnorm = std::sqrt(solution->G->norm2());
@@ -255,12 +258,21 @@ int main(int argc, char* argv[])
 
     // Compute the error bound based on the eigenvalues
     double eb =0;
-    for(int i=0; i<nd; i++) {
-      for(int j=solution->G->size(i); j<X->size(i); j++) {
-        eb += solution->eigenvalues[i][j];
+    if(useLQ){
+      for(int i=0; i<nd; i++) {
+        for(int j=solution->G->size(i); j<X->size(i); j++) {
+          eb += std::pow(solution->singularValues[i][j],2);
+        }
       }
     }
-    std::cout << "Error bound: " << std::sqrt(eb)/xnorm << std::endl;
+    else{
+      for(int i=0; i<nd; i++) {
+        for(int j=solution->G->size(i); j<X->size(i); j++) {
+          eb += solution->eigenvalues[i][j];
+        }
+      }
+    }
+    std::cout << "Error bound: " << eb << ", " << std::sqrt(eb) << " / " << xnorm << std::endl;
 
     writeTimer.start();
     if(boolWriteSTHOSVD) {

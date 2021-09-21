@@ -42,6 +42,7 @@
 #include <fstream>
 #include "Tucker_Timer.hpp"
 #include "Tucker_Matrix.hpp"
+#include "TuckerMPI_MPIWrapper.hpp"
 #include "TuckerMPI_Tensor.hpp"
 #include "TuckerMPI_ttm.hpp"
 
@@ -52,6 +53,7 @@ namespace TuckerMPI {
  * It is essentially a struct (all data is public),
  * but with a constructor and destructor
  */
+template <class scalar_t>
 class TuckerTensor {
 public:
   /** Constructor
@@ -60,13 +62,23 @@ public:
   TuckerTensor(const int numDims)
   {
     N = numDims;
-    U = Tucker::MemoryManager::safe_new_array<Tucker::Matrix*>(N);
-    eigenvalues = Tucker::MemoryManager::safe_new_array<double*>(N);
+    U = Tucker::MemoryManager::safe_new_array<Tucker::Matrix<scalar_t>*>(N);
+    eigenvalues = Tucker::MemoryManager::safe_new_array<scalar_t*>(N);
+    singularValues = Tucker::MemoryManager::safe_new_array<scalar_t*>(N);
     for(int i=0; i<N; i++) {
       U[i] = 0;
       eigenvalues[i] = 0;
+      singularValues[i] = 0;
     }
     G = 0;
+
+    LQ_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    LQ_bcast_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    LQ_redistribute_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    LQ_tsqr_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+    LQ_localqr_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
+
+    svd_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
 
     gram_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
     gram_matmul_timer_ = Tucker::MemoryManager::safe_new_array<Tucker::Timer>(numDims);
@@ -89,13 +101,15 @@ public:
   /** Destructor */
   ~TuckerTensor()
   {
-    if(G) Tucker::MemoryManager::safe_delete<Tensor>(G);
+    if(G) Tucker::MemoryManager::safe_delete(G);
     for(int i=0; i<N; i++) {
-      if(eigenvalues[i]) Tucker::MemoryManager::safe_delete_array<double>(eigenvalues[i],U[i]->nrows());
-      if(U[i]) Tucker::MemoryManager::safe_delete<Tucker::Matrix>(U[i]);
+      if(eigenvalues[i]) Tucker::MemoryManager::safe_delete_array(eigenvalues[i],U[i]->nrows());
+      if(U[i]) Tucker::MemoryManager::safe_delete(U[i]);
+      if(singularValues[i]) Tucker::MemoryManager::safe_delete_array(singularValues[i],U[i]->nrows());
     }
-    Tucker::MemoryManager::safe_delete_array<Tucker::Matrix*>(U,N);
-    Tucker::MemoryManager::safe_delete_array<double*>(eigenvalues,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Matrix<scalar_t>*>(U,N);
+    Tucker::MemoryManager::safe_delete_array<scalar_t*>(eigenvalues,N);
+    Tucker::MemoryManager::safe_delete_array<scalar_t*>(singularValues,N);
 
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(gram_timer_,N);
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(gram_matmul_timer_,N);
@@ -108,6 +122,13 @@ public:
 
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(eigen_timer_,N);
 
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_redistribute_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_tsqr_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_localqr_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(LQ_bcast_timer_,N);
+    Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(svd_timer_,N);
+
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(ttm_timer_,N);
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(ttm_matmul_timer_,N);
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(ttm_pack_timer_,N);
@@ -115,15 +136,15 @@ public:
     Tucker::MemoryManager::safe_delete_array<Tucker::Timer>(ttm_reduce_timer_,N);
   }
 
-  Tensor* reconstructTensor() const
+  Tensor<scalar_t>* reconstructTensor() const
   {
-    Tensor* temp = G;
+    Tensor<scalar_t>* temp = G;
     for(int mode=0; mode<N; mode++) {
-      Tensor* t = ttm(temp,mode,U[mode]);
+      Tensor<scalar_t>* t = ttm(temp,mode,U[mode]);
 
       // At iteration 0, temp = G
       if(mode > 0) {
-        Tucker::MemoryManager::safe_delete<Tensor>(temp);
+        Tucker::MemoryManager::safe_delete(temp);
       }
       temp = t;
     }
@@ -134,10 +155,178 @@ public:
    *
    * \todo This can be made more efficient
    */
+  void printTimersLQ(const std::string& filename) const
+  {
+    const int ntimers = 11;
+    scalar_t* raw_array = Tucker::MemoryManager::safe_new_array<scalar_t>(ntimers*N+1);
+
+    // Get the MPI data
+    int rank, nprocs;
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+    MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
+
+    // Pack the data
+    for(int i=0; i<N; i++) {
+      raw_array[i*ntimers] = LQ_timer_[i].duration();
+      raw_array[i*ntimers+1] = LQ_redistribute_timer_[i].duration();
+      raw_array[i*ntimers+2] = LQ_localqr_timer_[i].duration();
+      raw_array[i*ntimers+3] = LQ_tsqr_timer_[i].duration();
+      raw_array[i*ntimers+4] = LQ_bcast_timer_[i].duration();
+
+      raw_array[i*ntimers+5] = svd_timer_[i].duration();
+
+      raw_array[i*ntimers+6] = ttm_timer_[i].duration();
+      raw_array[i*ntimers+7] = ttm_matmul_timer_[i].duration();
+      raw_array[i*ntimers+8] = ttm_pack_timer_[i].duration();
+      raw_array[i*ntimers+9] = ttm_reducescatter_timer_[i].duration();
+      raw_array[i*ntimers+10] = ttm_reduce_timer_[i].duration();
+    }
+    raw_array[ntimers*N] = total_timer_.duration();
+
+    // Allocate memory on process 0
+    scalar_t* gathered_data;
+    scalar_t* min_array;
+    scalar_t* max_array;
+    scalar_t* mean_array;
+    if(rank == 0) {
+      min_array = Tucker::MemoryManager::safe_new_array<scalar_t>(ntimers*N+1);
+      max_array = Tucker::MemoryManager::safe_new_array<scalar_t>(ntimers*N+1);
+      mean_array = Tucker::MemoryManager::safe_new_array<scalar_t>(ntimers*N+1);
+      gathered_data = Tucker::MemoryManager::safe_new_array<scalar_t>((ntimers*N+1)*nprocs);
+    }
+    else {
+      min_array = 0;
+      max_array = 0;
+      mean_array = 0;
+      gathered_data = 0;
+    }
+
+    // Perform the reductions
+    MPI_Reduce_(raw_array, min_array, ntimers*N+1,
+        MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce_(raw_array, max_array, ntimers*N+1,
+        MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce_(raw_array, mean_array, ntimers*N+1,
+        MPI_SUM, 0, MPI_COMM_WORLD);
+
+    // Gather all the data to process 0
+    MPI_Gather_(raw_array, ntimers*N+1,
+        gathered_data, ntimers*N+1, 0, MPI_COMM_WORLD);
+
+    if(rank == 0) {
+      // mean_array currently holds the sum, so divide by # entries
+      for(int i=0; i<ntimers*N+1; i++) {
+        mean_array[i] /= nprocs;
+      }
+
+      std::cout << "\n\n           Timing results for " << nprocs << " MPI processes\n"
+                << "Timer             Min          Max          Mean\n"
+                << "--------------------------------------------------------\n";
+      for(int i=0; i<N; i++) {
+        std::cout << "LQ(" << i << ")         : " << std::scientific
+          << min_array[i*ntimers] << " " << std::scientific
+          << max_array[i*ntimers] << " " << std::scientific
+          << mean_array[i*ntimers] << std::endl;
+
+        std::cout << "redistribute(" << i << ")         : " << std::scientific
+          << min_array[i*ntimers+1] << " " << std::scientific
+          << max_array[i*ntimers+1] << " " << std::scientific
+          << mean_array[i*ntimers+1] << std::endl;
+
+        std::cout << "local qr(" << i << ")         : " << std::scientific
+          << min_array[i*ntimers+2] << " " << std::scientific
+          << max_array[i*ntimers+2] << " " << std::scientific
+          << mean_array[i*ntimers+2] << std::endl;
+
+        std::cout << "TSQR(" << i << ")         : " << std::scientific
+          << min_array[i*ntimers+3] << " " << std::scientific
+          << max_array[i*ntimers+3] << " " << std::scientific
+          << mean_array[i*ntimers+3] << std::endl;
+
+        std::cout << "bcast(" << i << ")         : " << std::scientific
+          << min_array[i*ntimers+4] << " " << std::scientific
+          << max_array[i*ntimers+4] << " " << std::scientific
+          << mean_array[i*ntimers+4] << std::endl;
+
+        std::cout << "SVD(" << i << ")         : " << std::scientific
+          << min_array[i*ntimers+5] << " " << std::scientific
+          << max_array[i*ntimers+5] << " " << std::scientific
+          << mean_array[i*ntimers+5] << std::endl;
+
+        std::cout << "TTM(" << i << ")         : " << std::scientific
+          << min_array[i*ntimers+6] << " " << std::scientific
+          << max_array[i*ntimers+6] << " " << std::scientific
+          << mean_array[i*ntimers+6] << std::endl;
+
+        std::cout << " local multiply : " << std::scientific
+          << min_array[i*ntimers+7] << " " << std::scientific
+          << max_array[i*ntimers+7] << " " << std::scientific
+          << mean_array[i*ntimers+7] << std::endl;
+
+        std::cout << " packing        : " << std::scientific
+          << min_array[i*ntimers+8] << " " << std::scientific
+          << max_array[i*ntimers+8] << " " << std::scientific
+          << mean_array[i*ntimers+8] << std::endl;
+
+        std::cout << " reduce-scatter         : " << std::scientific
+          << min_array[i*ntimers+9] << " " << std::scientific
+          << max_array[i*ntimers+9] << " " << std::scientific
+          << mean_array[i*ntimers+9] << std::endl;
+
+        std::cout << " reduce         : " << std::scientific
+          << min_array[i*ntimers+10] << " " << std::scientific
+          << max_array[i*ntimers+10] << " " << std::scientific
+          << mean_array[i*ntimers+10] << std::endl;
+        
+
+        std::cout << std::endl;
+      }
+
+      std::cout << "Total           : " << std::scientific
+          << min_array[ntimers*N] << " " << std::scientific
+          << max_array[ntimers*N] << " " << std::scientific
+          << mean_array[ntimers*N] << std::endl << std::endl;
+
+      // Send the data to a file
+      std::ofstream os(filename);
+
+      // Create the header row
+      for(int d=0; d<N; d++) {
+        os << "LQ(" << d << "),redistribute(" << d << "),localqr(" << d 
+            << "),tsqr(" << d <<"),bcast(" << d << "),svd(" << d
+            << "),TTM(" << d << "),TTM local multiply(" << d
+            << "),TTM packing(" << d << "),TTM reduce-scatter(" << d
+            << "),TTM reduce(" << d << "),";
+      }
+      os << "Total\n";
+
+      // For each MPI process
+      for(int r=0; r<nprocs; r++) {
+        // For each timer belonging to that process
+        for(int t=0; t<ntimers*N; t++) {
+          os << gathered_data[r*(ntimers*N+1)+t] << ",";
+        }
+        os << gathered_data[r*(ntimers*N+1)+ntimers*N] << std::endl;
+      }
+
+      os.close();
+
+      Tucker::MemoryManager::safe_delete_array<scalar_t>(min_array,ntimers*N+1);
+      Tucker::MemoryManager::safe_delete_array<scalar_t>(max_array,ntimers*N+1);
+      Tucker::MemoryManager::safe_delete_array<scalar_t>(mean_array,ntimers*N+1);
+    }
+
+    Tucker::MemoryManager::safe_delete_array<scalar_t>(raw_array,ntimers*N+1);
+  }
+
+  /** \brief Prints some runtime information
+   *
+   * \todo This can be made more efficient
+   */
   void printTimers(const std::string& filename) const
   {
     const int ntimers = 14;
-    double* raw_array = Tucker::MemoryManager::safe_new_array<double>(ntimers*N+1);
+    scalar_t* raw_array = Tucker::MemoryManager::safe_new_array<scalar_t>(ntimers*N+1);
 
     // Get the MPI data
     int rank, nprocs;
@@ -166,15 +355,15 @@ public:
     raw_array[ntimers*N] = total_timer_.duration();
 
     // Allocate memory on process 0
-    double* gathered_data;
-    double* min_array;
-    double* max_array;
-    double* mean_array;
+    scalar_t* gathered_data;
+    scalar_t* min_array;
+    scalar_t* max_array;
+    scalar_t* mean_array;
     if(rank == 0) {
-      min_array = Tucker::MemoryManager::safe_new_array<double>(ntimers*N+1);
-      max_array = Tucker::MemoryManager::safe_new_array<double>(ntimers*N+1);
-      mean_array = Tucker::MemoryManager::safe_new_array<double>(ntimers*N+1);
-      gathered_data = Tucker::MemoryManager::safe_new_array<double>((ntimers*N+1)*nprocs);
+      min_array = Tucker::MemoryManager::safe_new_array<scalar_t>(ntimers*N+1);
+      max_array = Tucker::MemoryManager::safe_new_array<scalar_t>(ntimers*N+1);
+      mean_array = Tucker::MemoryManager::safe_new_array<scalar_t>(ntimers*N+1);
+      gathered_data = Tucker::MemoryManager::safe_new_array<scalar_t>((ntimers*N+1)*nprocs);
     }
     else {
       min_array = 0;
@@ -184,16 +373,16 @@ public:
     }
 
     // Perform the reductions
-    MPI_Reduce((void*)raw_array, (void*)min_array, ntimers*N+1,
-        MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce((void*)raw_array, (void*)max_array, ntimers*N+1,
-        MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce((void*)raw_array, (void*)mean_array, ntimers*N+1,
-        MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce_(raw_array, min_array, ntimers*N+1,
+        MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce_(raw_array, max_array, ntimers*N+1,
+        MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce_(raw_array, mean_array, ntimers*N+1,
+        MPI_SUM, 0, MPI_COMM_WORLD);
 
     // Gather all the data to process 0
-    MPI_Gather((void*)raw_array, ntimers*N+1, MPI_DOUBLE,
-        (void*)gathered_data, ntimers*N+1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gather_(raw_array, ntimers*N+1, 
+        gathered_data, ntimers*N+1, 0, MPI_COMM_WORLD);
 
     if(rank == 0) {
       // mean_array currently holds the sum, so divide by # entries
@@ -327,37 +516,39 @@ public:
 
       os.close();
 
-      Tucker::MemoryManager::safe_delete_array<double>(min_array,ntimers*N+1);
-      Tucker::MemoryManager::safe_delete_array<double>(max_array,ntimers*N+1);
-      Tucker::MemoryManager::safe_delete_array<double>(mean_array,ntimers*N+1);
+      Tucker::MemoryManager::safe_delete_array(min_array,ntimers*N+1);
+      Tucker::MemoryManager::safe_delete_array(max_array,ntimers*N+1);
+      Tucker::MemoryManager::safe_delete_array(mean_array,ntimers*N+1);
     }
-
-    Tucker::MemoryManager::safe_delete_array<double>(raw_array,ntimers*N+1);
+    Tucker::MemoryManager::safe_delete_array(raw_array,ntimers*N+1);
   }
 
-  Tensor* G; //!< the tensor of reduced size
-  Tucker::Matrix** U; //!< an array of factors/dense matrices
+  Tensor<scalar_t>* G; //!< the tensor of reduced size
+  Tucker::Matrix<scalar_t>** U; //!< an array of factors/dense matrices
   int N; //!< the number of factors
-  double** eigenvalues; //!< the eigenvalues of each Gram matrix
+  scalar_t** eigenvalues; //!< the eigenvalues of each Gram matrix
+  scalar_t** singularValues; // the singular values of L, same as that of the tensor unfolding.
 
-  /** \note STHOSVD has been declared as a friend function of
-   * TuckerTensor so that the timers can remain private
-   */
-  friend const TuckerTensor* STHOSVD(const Tensor* const X,
-      const double epsilon, bool useOldGram, bool flipSign);
 
-  /** \note STHOSVD has been declared as a friend function of
-   * TuckerTensor so that the timers can remain private
-   */
-  friend const TuckerTensor* STHOSVD(const Tensor* const X,
-      const Tucker::SizeArray* const reducedI, bool useOldGram,
-      bool flipSign);
+  /// \brief Array of timers for LQ computation
+  Tucker::Timer* LQ_timer_;
 
-private:
-  /// @cond EXCLUDE
-  TuckerTensor(const TuckerTensor& tt);
-  /// @endcond
+  /// \brief Array of timers for broadcasting L
+  Tucker::Timer* LQ_bcast_timer_;
 
+  /// \brief Array of timers for broadcasting L
+  Tucker::Timer* LQ_redistribute_timer_;
+
+  /// \brief Array of timers for broadcasting L
+  Tucker::Timer* LQ_tsqr_timer_;
+
+  /// \brief Array of timers for broadcasting L
+  Tucker::Timer* LQ_localqr_timer_;
+
+
+  /// \brief Array of timers for broadcasting L
+  Tucker::Timer* svd_timer_;
+    
   /// \brief Array of timers for Gram matrix computation
   Tucker::Timer* gram_timer_;
 
@@ -402,8 +593,19 @@ private:
 
   /// \brief Total ST-HOSVD runtime
   Tucker::Timer total_timer_;
+
+private:
+  /// @cond EXCLUDE
+  TuckerTensor(const TuckerTensor& tt);
+  /// @endcond
+
+  
 };
 
-} // end namespace Tucker
+// Explicit instantiations to build static library for both single and scalar_t precision
+template class TuckerTensor<float>;
+template class TuckerTensor<double>;
+
+} // end namespace TuckerMPI
 
 #endif /* TUCKERTENSOR_MPI_HPP_ */

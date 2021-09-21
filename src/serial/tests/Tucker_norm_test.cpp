@@ -10,21 +10,29 @@
 
 int main()
 {
-  const double TRUE_SOLUTION = 9.690249359274157;
+
+// specify precision
+#ifdef TEST_SINGLE
+  typedef float scalar_t; 
+#else
+  typedef double scalar_t;
+#endif
+
+  const scalar_t TRUE_SOLUTION = 9.690249359274157;
 
   // Read the matrix from a binary file
-  Tucker::Tensor* tensor =
-      Tucker::importTensor("input_files/3x5x7x11.txt");
+  Tucker::Tensor<scalar_t>* tensor =
+      Tucker::importTensor<scalar_t>("input_files/3x5x7x11.txt");
 
   // Compute its norm
-  double norm = sqrt(tensor->norm2());
+  scalar_t norm = sqrt(tensor->norm2());
 
   // Free memory
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor>(tensor);
+  Tucker::MemoryManager::safe_delete(tensor);
 
   // Compare computed solution to true solution
-  double diff = std::abs(norm-TRUE_SOLUTION);
-  if(diff < 1e-10)
+  scalar_t diff = std::abs(norm-TRUE_SOLUTION);
+  if(diff < 100 * std::numeric_limits<scalar_t>::epsilon())
     return EXIT_SUCCESS;
   else {
     std::cerr << "ERROR: The true solution is " << TRUE_SOLUTION

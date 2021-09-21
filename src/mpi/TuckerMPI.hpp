@@ -42,6 +42,7 @@
 #ifndef TUCKER_MPI_HPP_
 #define TUCKER_MPI_HPP_
 
+#include "TuckerMPI_MPIWrapper.hpp"
 #include "TuckerMPI_TuckerTensor.hpp"
 #include "TuckerMPI_Matrix.hpp"
 #include "Tucker_Metric.hpp"
@@ -50,6 +51,23 @@
  * functions necessary for a parallel tucker decomposition
  */
 namespace TuckerMPI {
+/** \brief Compute LQ defactorization
+ *
+ * \param Y A parallel tensor
+ * \param n The dimension for the tensor unfolding
+ */
+template <class scalar_t>
+Tucker::Matrix<scalar_t>* LQ(const Tensor<scalar_t>* Y, const int n, const bool useButterflyTSQR, 
+    Tucker::Timer* tsqr_timer=0,
+    Tucker::Timer* local_qr_timer=0, 
+    Tucker::Timer* redistribute_timer=0,
+    Tucker::Timer* localqr_bcast_timer=0);
+
+template <class scalar_t>
+void TSQR(Tucker::Matrix<scalar_t>*& R);
+
+template <class scalar_t>
+void ButterflyTSQR(Tucker::Matrix<scalar_t>* R, Tucker::Matrix<scalar_t>*& L);
 
 /** \brief Computes the Gram matrix using the old algorithm
  *
@@ -60,7 +78,8 @@ namespace TuckerMPI {
  * \param allreduce_timer Timer for the all-reduce
  * \param allgather_timer Timer for the all-gather
  */
-Tucker::Matrix* oldGram(const Tensor* Y, const int n,
+template <class scalar_t>
+Tucker::Matrix<scalar_t>* oldGram(const Tensor<scalar_t>* Y, const int n,
     Tucker::Timer* mult_timer=0, Tucker::Timer* shift_timer=0,
     Tucker::Timer* allreduce_timer=0,
     Tucker::Timer* allgather_timer=0);
@@ -75,7 +94,8 @@ Tucker::Matrix* oldGram(const Tensor* Y, const int n,
  * \param unpack_timer Timer for unpacking the data
  * \param allreduce_timer Timer for the all-reduce
  */
-Tucker::Matrix* newGram(const Tensor* Y, const int n,
+template <class scalar_t>
+Tucker::Matrix<scalar_t>* newGram(const Tensor<scalar_t>* Y, const int n,
     Tucker::Timer* mult_timer=0, Tucker::Timer* pack_timer=0,
     Tucker::Timer* alltoall_timer=0, Tucker::Timer* unpack_timer=0,
     Tucker::Timer* allreduce_timer=0);
@@ -93,26 +113,30 @@ Tucker::Matrix* newGram(const Tensor* Y, const int n,
  *
  * \todo There are no tests for this function yet.
  */
-const TuckerTensor* STHOSVD(const Tensor* const X,
-    const double epsilon, bool useOldGram=true,
-    bool flipSign=false);
+template <class scalar_t>
+const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
+    const scalar_t epsilon, int* modeOrder = nullptr, bool useOldGram=true,
+    bool flipSign=false, bool useLQ=false, bool useButterflyTSQR=false);
 
 /** \brief Computes a Tucker decomposition
  *
  * \param X A parallel tensor
  * \param reducedI Dimensions of the desired core tensor
+ * \param modeOrder
  * \param useOldGram Determines whether the old Gram algorithm
  * is used, or the new one
  * \param flipSign If enabled, it flips the sign to be
  * comparable to the Matlab tensor toolbox results, where
  * the maximum magnitude entry in each vector of the factors U_n
  * is forced to be positive
+ * \param useLQ
  *
  * \todo There are no tests for this function yet.
  */
-const TuckerTensor* STHOSVD(const Tensor* const X,
-    const Tucker::SizeArray* const reducedI, bool useOldGram=true,
-    bool flipSign=false);
+template <class scalar_t>
+const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
+    const Tucker::SizeArray* const reducedI, int* modeOrder=nullptr, bool useOldGram=true,
+    bool flipSign=false, bool useLQ=false, bool useButterflyTSQR=false);
 
 /** \brief Compute some information about slices of a tensor
  *
@@ -120,7 +144,8 @@ const TuckerTensor* STHOSVD(const Tensor* const X,
  * \param mode The mode used to determine the slices
  * \param metrics A sum of #Tucker::Metric to be computed
  */
-Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
+template <class scalar_t>
+Tucker::MetricData<scalar_t>* computeSliceMetrics(const Tensor<scalar_t>* const Y,
     int mode, int metrics);
 
 /** \brief Perform a transformation on each slice of a tensor
@@ -133,8 +158,9 @@ Tucker::MetricData* computeSliceMetrics(const Tensor* const Y,
  * \param scales Array of numbers to divide by
  * \param shifts Array of numbers to add
  */
-void transformSlices(Tensor* Y, int mode, const double* scales,
-    const double* shifts);
+template <class scalar_t>
+void transformSlices(Tensor<scalar_t>* Y, int mode, const scalar_t* scales,
+    const scalar_t* shifts);
 
 /** \brief Normalize each slice of the tensor so its data lies in the range [0,1]
  *
@@ -142,16 +168,21 @@ void transformSlices(Tensor* Y, int mode, const double* scales,
  * \param mode The mode which determines the slices
  * \param stdThresh If the standard deviation is less than this value, set it to 1
  */
-void normalizeTensorStandardCentering(Tensor* Y, int mode, double stdThresh=1e-9);
+template <class scalar_t>
+void normalizeTensorStandardCentering(Tensor<scalar_t>* Y, int mode, scalar_t stdThresh=1e-9);
 
-void normalizeTensorMinMax(Tensor* Y, int mode);
+template <class scalar_t>
+void normalizeTensorMinMax(Tensor<scalar_t>* Y, int mode);
 
-void normalizeTensorMax(Tensor* Y, int mode);
+template <class scalar_t>
+void normalizeTensorMax(Tensor<scalar_t>* Y, int mode);
 
-const Tensor* reconstructSingleSlice(const TuckerTensor* fact,
+template <class scalar_t>
+const Tensor<scalar_t>* reconstructSingleSlice(const TuckerTensor<scalar_t>* fact,
     const int mode, const int sliceNum);
 
-void readTensorBinary(std::string& filename, Tensor& Y);
+template <class scalar_t>
+void readTensorBinary(std::string& filename, Tensor<scalar_t>& Y);
 
 /** \brief Imports a parallel tensor using MPI_IO
  *
@@ -161,7 +192,8 @@ void readTensorBinary(std::string& filename, Tensor& Y);
  *
  * \warning This function will crash if any process owns nothing
  */
-void importTensorBinary(const char* filename, Tensor* Y);
+template <class scalar_t>
+void importTensorBinary(const char* filename, Tensor<scalar_t>* Y);
 
 /** \brief Imports a sequential tensor using MPI_IO
  *
@@ -169,28 +201,47 @@ void importTensorBinary(const char* filename, Tensor* Y);
  * \param Y Sequential tensor to store the data.  This function will
  * not allocate any memory for Y; it will only change the values.
  */
-void importTensorBinary(const char* filename, Tucker::Tensor* Y);
+template <class scalar_t>
+void importTensorBinary(const char* filename, Tucker::Tensor<scalar_t>* Y);
 
-void importTimeSeries(const char* filename, Tensor* Y);
+template <class scalar_t>
+void importTimeSeries(const char* filename, Tensor<scalar_t>* Y);
 
-void writeTensorBinary(std::string& filename, const Tensor& Y);
+template <class scalar_t>
+void writeTensorBinary(std::string& filename, const Tensor<scalar_t>& Y);
 
 /** \brief Exports a parallel tensor using MPI_IO
  *
  * \param filename Binary file to be written to
  * \param Y Parallel tensor to be written to a file
  */
-void exportTensorBinary(const char* filename, const Tensor* Y);
+template <class scalar_t>
+void exportTensorBinary(const char* filename, const Tensor<scalar_t>* Y);
 
 /** \brief Exports a sequential tensor using MPI_IO
  *
  * \param filename Binary file to be written to
  * \param Y Sequential tensor to be written to a file
  */
-void exportTensorBinary(const char* filename, const Tucker::Tensor* Y);
+template <class scalar_t>
+void exportTensorBinary(const char* filename, const Tucker::Tensor<scalar_t>* Y);
 
-void exportTimeSeries(const char* filename, const Tensor* Y);
+template <class scalar_t>
+void exportTimeSeries(const char* filename, const Tensor<scalar_t>* Y);
 
+/** \brief Generate core tensor and factor matrices. Combine them with a 
+ * series of ttm and then add noise to generate the output tensor. 
+ * 
+ * \param[in] seed for the random generator
+ * \param[in/out] TuckerTensor that will store the original core tensor and
+ * factor matrices
+ * \param[in] dimensions of the desired output tensor
+ * \param[in] dimensions of the core tensor
+ * \param[in] noise to be added. 
+ */
+template <class scalar_t>
+Tensor<scalar_t>* generateTensor(int seed, TuckerTensor<scalar_t>* fact, Tucker::SizeArray* proc_dims, 
+  Tucker::SizeArray* tensor_dims, Tucker::SizeArray* core_dims, scalar_t noise);
 } // end namespace TuckerMPI
 
 #endif /* TUCKER_MPI_HPP_ */

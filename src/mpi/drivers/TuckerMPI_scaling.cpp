@@ -17,6 +17,11 @@
 
 int main(int argc, char* argv[])
 {
+  #ifdef DRIVER_SINGLE
+    using scalar_t = float;
+  #else
+    using scalar_t = double;
+  #endif
   //
   // Initialize MPI
   //
@@ -44,12 +49,17 @@ int main(int argc, char* argv[])
   std::vector<std::string> fileAsString = Tucker::getFileAsStrings(paramfn);
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
   bool boolUseOldGram                   = Tucker::stringParse<bool>(fileAsString, "Use old Gram", false);
+  bool boolUseLQ                        = Tucker::stringParse<bool>(fileAsString, "Use LQ", false);
+  bool boolUseButterflyTSQR             = Tucker::stringParse<bool>(fileAsString, "Use butterfly TSQR", false);
 
   Tucker::SizeArray* I_dims             = Tucker::stringParseSizeArray(fileAsString, "Global dims");
   Tucker::SizeArray* R_dims             = Tucker::stringParseSizeArray(fileAsString, "Ranks");
   Tucker::SizeArray* proc_grid_dims     = Tucker::stringParseSizeArray(fileAsString, "Grid dims");
+  Tucker::SizeArray* modeOrder          = Tucker::stringParseSizeArray(fileAsString, "Decompose mode order");
 
   std::string timing_file               = Tucker::stringParse<std::string>(fileAsString, "Timing file", "runtime.csv");
+
+
 
   int nd = I_dims->size();
 
@@ -65,6 +75,13 @@ int main(int argc, char* argv[])
   // Print options
   //
   if (rank == 0 && boolPrintOptions) {
+    if(sizeof(scalar_t) == 4){
+      std::cout << "Precision: single." << std::endl;
+    }
+    else if(sizeof(scalar_t) == 8){
+      std::cout << "Precision: double." << std::endl;
+    }
+
     std::cout << "The global dimensions of the tensor to be scaled or compressed\n";
     std::cout << "- Global dims = " << *I_dims << std::endl << std::endl;
 
@@ -73,6 +90,11 @@ int main(int argc, char* argv[])
 
     std::cout << "Global dimensions of the desired core tensor\n";
     std::cout << "- Ranks = " << *R_dims << std::endl << std::endl;
+
+    std::cout << "If true, use the QR algorithm; otherwise use Gram\n";
+    std::cout << "- Use QR = " << (boolUseLQ ? "true" : "false") << std::endl << std::endl;
+
+    std::cout << "Mode order = " << *modeOrder << std::endl;
 
     std::cout << "If true, use the old Gram algorithm; otherwise use the new one\n";
     std::cout << "- Use old Gram = " << (boolUseOldGram ? "true" : "false") << std::endl << std::endl;
@@ -136,39 +158,50 @@ int main(int argc, char* argv[])
   /////////////////////////////////
   // Generate random tensor data //
   /////////////////////////////////
-  TuckerMPI::Tensor X(dist);
+  TuckerMPI::Tensor<scalar_t> X(dist);
   X.rand();
 
   if(rank == 0) {
     size_t local_nnz = X.getLocalNumEntries();
     size_t global_nnz = X.getGlobalNumEntries();
     std::cout << "Local input tensor size: " << X.getLocalSize() << ", or ";
-    Tucker::printBytes(local_nnz*sizeof(double));
+    Tucker::printBytes(local_nnz*sizeof(scalar_t));
     std::cout << "Global input tensor size: " << X.getGlobalSize() << ", or ";
-    Tucker::printBytes(global_nnz*sizeof(double));
+    Tucker::printBytes(global_nnz*sizeof(scalar_t));
   }
 
   /////////////////////
   // Perform STHOSVD //
   /////////////////////
-  const TuckerMPI::TuckerTensor* solution = TuckerMPI::STHOSVD(&X, R_dims, boolUseOldGram);
+  const TuckerMPI::TuckerTensor<scalar_t>* solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, false, boolUseLQ, boolUseButterflyTSQR);
 
   // Send the timing information to a CSV
-  solution->printTimers(timing_file);
+  if(boolUseLQ) solution->printTimersLQ(timing_file);
+  else solution->printTimers(timing_file);
 
-  double xnorm = std::sqrt(X.norm2());
-  double gnorm = std::sqrt(solution->G->norm2());
+  scalar_t xnorm = std::sqrt(X.norm2());
+  scalar_t gnorm = std::sqrt(solution->G->norm2());
   if(rank == 0) {
     std::cout << "Norm of input tensor: " << xnorm << std::endl;
     std::cout << "Norm of core tensor: " << gnorm << std::endl;
 
     // Compute the error bound based on the eigenvalues
-    double eb =0;
-    for(int i=0; i<nd; i++) {
-      for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
-        eb += solution->eigenvalues[i][j];
+    scalar_t eb =0;
+    if(boolUseLQ){
+      for(int i=0; i<nd; i++) {
+        for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
+          eb += solution->singularValues[i][j];
+        }
       }
     }
+    else{
+      for(int i=0; i<nd; i++) {
+        for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
+          eb += solution->eigenvalues[i][j];
+        }
+      }
+    }
+    
     std::cout << "Error bound: " << std::sqrt(eb)/xnorm << std::endl;
   }
 

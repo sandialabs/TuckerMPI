@@ -41,10 +41,49 @@
 
 #include<fstream>
 #include<sstream>
+#include<cmath>
+#include<iomanip>
 
 namespace TuckerMPI {
 
-void printEigenvalues(const TuckerTensor* factorization,
+template <class scalar_t>
+void printSingularValues(const TuckerTensor<scalar_t>* factorization,
+    std::string filePrefix, bool useLQ)
+{
+  // For each mode...
+  int nmodes = factorization->N;
+  for(int mode=0; mode<nmodes; mode++) {
+    // Create the filename by appending the mode #
+    std::ostringstream ss;
+    ss << filePrefix << mode << ".txt";
+
+    // Open the file
+    std::ofstream ofs(ss.str());
+    std::cout << "Writing singular values to " << ss.str() << std::endl;
+
+    // Determine the number of eigenvalues for this mode
+    int nevals = factorization->U[mode]->nrows();
+    if(useLQ){
+      for(int i=0; i<nevals; i++) {
+        ofs << std::setprecision(16) << factorization->singularValues[mode][i] << std::endl;
+      }
+    }
+    else{
+      for(int i=0; i<nevals; i++) {
+        ofs << std::setprecision(16) << sqrt(std::abs(factorization->eigenvalues[mode][i])) << std::endl;
+      }
+    }
+    ofs.close();
+  }
+}
+
+/**
+ * If used in LQ approch, this will print the left singular vector of the L,
+ * which should be the same as the eigenvectors in the gram approach up to a
+ * sign change.
+ */
+template <class scalar_t>
+void printEigenvectors(const TuckerTensor<scalar_t>* factorization,
     std::string filePrefix)
 {
   // For each mode...
@@ -56,18 +95,20 @@ void printEigenvalues(const TuckerTensor* factorization,
 
     // Open the file
     std::ofstream ofs(ss.str());
-    std::cout << "Writing eigenvalues to " << ss.str() << std::endl;
+    std::cout << "Writing eigenvectors to " << ss.str() << std::endl;
 
     // Determine the number of eigenvalues for this mode
-    int nevals = factorization->U[mode]->nrows();
-    for(int i=0; i<nevals; i++) {
-      ofs << factorization->eigenvalues[mode][i] << std::endl;
-    }
+    ofs << factorization->U[mode]->prettyPrint();
 
     ofs.close();
   }
 }
 
+// Explicit instantiations to build static library for both single and double precision
+template void printSingularValues(const TuckerTensor<float>*, std::string, bool);
+template void printSingularValues(const TuckerTensor<double>*, std::string, bool);
+template void printEigenvectors(const TuckerTensor<float>*, std::string);
+template void printEigenvectors(const TuckerTensor<double>*, std::string);
 } // end namespace
 
 #endif /* TUCKERMPI_IO_UTIL_HPP_ */

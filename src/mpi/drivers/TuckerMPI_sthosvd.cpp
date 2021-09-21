@@ -17,6 +17,12 @@
 
 int main(int argc, char* argv[])
 {
+  #ifdef DRIVER_SINGLE
+    using scalar_t = float;
+  #else
+    using scalar_t = double;
+  #endif  // specify precision
+
   //
   // Initialize MPI
   //
@@ -44,19 +50,23 @@ int main(int argc, char* argv[])
   std::vector<std::string> fileAsString = Tucker::getFileAsStrings(paramfn);
   bool boolAuto                         = Tucker::stringParse<bool>(fileAsString, "Automatic rank determination", false);
   bool boolSTHOSVD                      = Tucker::stringParse<bool>(fileAsString, "Perform STHOSVD", false);
-  bool boolWriteSTHOSVD                 = Tucker::stringParse<bool>(fileAsString, "Write STHOSVD result", false);
+  bool boolWriteSTHOSVD                 = Tucker::stringParse<bool>(fileAsString, "Write core tensor and factor matrices", false);
   bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
   bool boolWritePreprocessed            = Tucker::stringParse<bool>(fileAsString, "Write preprocessed data", false);
   bool boolUseOldGram                   = Tucker::stringParse<bool>(fileAsString, "Use old Gram", false);
+  bool boolUseLQ                        = Tucker::stringParse<bool>(fileAsString, "Compute SVD via LQ", false);
+  bool boolPrintSV                      = Tucker::stringParse<bool>(fileAsString, "Print factor matrices", false);
   bool boolReconstruct                  = Tucker::stringParse<bool>(fileAsString, "Reconstruct tensor", false);
+  bool useButterflyTSQR                 = Tucker::stringParse<bool>(fileAsString, "Use butterfly TSQR", false);
 
-  double tol                            = Tucker::stringParse<double>(fileAsString, "SV Threshold", 1e-6);
-  double stdThresh                      = Tucker::stringParse<double>(fileAsString, "STD Threshold", 1e-9);
+  scalar_t tol                          = Tucker::stringParse<scalar_t>(fileAsString, "SV Threshold", 1e-6);
+  scalar_t stdThresh                    = Tucker::stringParse<scalar_t>(fileAsString, "STD Threshold", 1e-9);
 
   Tucker::SizeArray* I_dims             = Tucker::stringParseSizeArray(fileAsString, "Global dims");
   Tucker::SizeArray* R_dims = 0;
   if(!boolAuto)  R_dims                 = Tucker::stringParseSizeArray(fileAsString, "Ranks");
   Tucker::SizeArray* proc_grid_dims     = Tucker::stringParseSizeArray(fileAsString, "Grid dims");
+  Tucker::SizeArray* modeOrder          = Tucker::stringParseSizeArray(fileAsString, "Decompose mode order");
 
   std::string scaling_type              = Tucker::stringParse<std::string>(fileAsString, "Scaling type", "None");
   std::string sthosvd_dir               = Tucker::stringParse<std::string>(fileAsString, "STHOSVD directory", "compressed");
@@ -65,6 +75,7 @@ int main(int argc, char* argv[])
   std::string sv_fn                     = Tucker::stringParse<std::string>(fileAsString, "SV file prefix", "sv");
   std::string in_fns_file               = Tucker::stringParse<std::string>(fileAsString, "Input file list", "raw.txt");
   std::string pre_fns_file              = Tucker::stringParse<std::string>(fileAsString, "Preprocessed output file list", "pre.txt");
+  std::string reconstruct_report_file   = Tucker::stringParse<std::string>(fileAsString, "Reconstruction report file", "reconstruction.txt");
   std::string stats_file                = Tucker::stringParse<std::string>(fileAsString, "Stats file", "stats.txt");
   std::string timing_file               = Tucker::stringParse<std::string>(fileAsString, "Timing file", "runtime.csv");
 
@@ -91,6 +102,9 @@ int main(int argc, char* argv[])
 
     std::cout << "The global dimensions of the processor grid\n";
     std::cout << "- Grid dims = " << *proc_grid_dims << std::endl << std::endl;
+
+    std::cout << "Mode order for decomposition\n";
+    std::cout << "- Decompose mode order " << *modeOrder << std::endl << std::endl;
 
     std::cout << "If true, automatically determine rank; otherwise, use the user-defined ranks\n";
     std::cout << "- Automatic rank determination = " << (boolAuto ? "true" : "false") << std::endl << std::endl;
@@ -122,6 +136,9 @@ int main(int argc, char* argv[])
 
     std::cout << "If true, use the old Gram algorithm; otherwise use the new one\n";
     std::cout << "- Use old Gram = " << (boolUseOldGram ? "true" : "false") << std::endl << std::endl;
+
+    std::cout << "Location of a report of the reconstruction errors \n";
+    std::cout << "- Reconstruction report file = " << reconstruct_report_file << std::endl << std::endl;
 
     std::cout << "Location of statistics file containing min, max, mean, and std of each hyperslice\n";
     std::cout << "- Stats file = " << stats_file << std::endl << std::endl;
@@ -214,7 +231,7 @@ int main(int argc, char* argv[])
   ///////////////////////////
   Tucker::Timer readTimer;
   readTimer.start();
-  TuckerMPI::Tensor X(dist);
+  TuckerMPI::Tensor<scalar_t> X(dist);
   TuckerMPI::readTensorBinary(in_fns_file,X);
   readTimer.stop();
 
@@ -229,15 +246,15 @@ int main(int argc, char* argv[])
     size_t local_nnz = X.getLocalNumEntries();
     size_t global_nnz = X.getGlobalNumEntries();
     std::cout << "Local input tensor size: " << X.getLocalSize() << ", or ";
-    Tucker::printBytes(local_nnz*sizeof(double));
+    Tucker::printBytes(local_nnz*sizeof(scalar_t));
     std::cout << "Global input tensor size: " << X.getGlobalSize() << ", or ";
-    Tucker::printBytes(global_nnz*sizeof(double));
+    Tucker::printBytes(global_nnz*sizeof(scalar_t));
   }
 
   ////////////////////////
   // Compute statistics //
   ////////////////////////
-  Tucker::MetricData* metrics = TuckerMPI::computeSliceMetrics(&X,
+  Tucker::MetricData<scalar_t>* metrics = TuckerMPI::computeSliceMetrics(&X,
       scale_mode,
       Tucker::MIN+Tucker::MAX+Tucker::MEAN+Tucker::VARIANCE);
 
@@ -262,22 +279,22 @@ int main(int argc, char* argv[])
   const MPI_Comm& rowComm = grid->getColComm(scale_mode,false);
   if(needToSendToZero) {
     int numEntries = map->getGlobalNumEntries();
-    double* mins = Tucker::MemoryManager::safe_new_array<double>(numEntries);
-    double* maxs = Tucker::MemoryManager::safe_new_array<double>(numEntries);
-    double* means = Tucker::MemoryManager::safe_new_array<double>(numEntries);
-    double* vars = Tucker::MemoryManager::safe_new_array<double>(numEntries);
-    MPI_Gatherv (metrics->getMinData(), map->getLocalNumEntries(),
-        MPI_DOUBLE, mins, (int*)map->getNumElementsPerProc()->data(),
-        (int*)map->getOffsets()->data(), MPI_DOUBLE, 0, rowComm);
-    MPI_Gatherv (metrics->getMaxData(), map->getLocalNumEntries(),
-        MPI_DOUBLE, maxs, (int*)map->getNumElementsPerProc()->data(),
-        (int*)map->getOffsets()->data(), MPI_DOUBLE, 0, rowComm);
-    MPI_Gatherv (metrics->getMeanData(), map->getLocalNumEntries(),
-        MPI_DOUBLE, means, (int*)map->getNumElementsPerProc()->data(),
-        (int*)map->getOffsets()->data(), MPI_DOUBLE, 0, rowComm);
-    MPI_Gatherv (metrics->getVarianceData(), map->getLocalNumEntries(),
-        MPI_DOUBLE, vars, (int*)map->getNumElementsPerProc()->data(),
-        (int*)map->getOffsets()->data(), MPI_DOUBLE, 0, rowComm);
+    scalar_t* mins = Tucker::MemoryManager::safe_new_array<scalar_t>(numEntries);
+    scalar_t* maxs = Tucker::MemoryManager::safe_new_array<scalar_t>(numEntries);
+    scalar_t* means = Tucker::MemoryManager::safe_new_array<scalar_t>(numEntries);
+    scalar_t* vars = Tucker::MemoryManager::safe_new_array<scalar_t>(numEntries);
+    TuckerMPI::MPI_Gatherv_ (metrics->getMinData(), map->getLocalNumEntries(),
+        mins, (int*)map->getNumElementsPerProc()->data(),
+        (int*)map->getOffsets()->data(), 0, rowComm);
+    TuckerMPI::MPI_Gatherv_ (metrics->getMaxData(), map->getLocalNumEntries(),
+        maxs, (int*)map->getNumElementsPerProc()->data(),
+        (int*)map->getOffsets()->data(), 0, rowComm);
+    TuckerMPI::MPI_Gatherv_ (metrics->getMeanData(), map->getLocalNumEntries(),
+        means, (int*)map->getNumElementsPerProc()->data(),
+        (int*)map->getOffsets()->data(), 0, rowComm);
+    TuckerMPI::MPI_Gatherv_ (metrics->getVarianceData(), map->getLocalNumEntries(),
+        vars, (int*)map->getNumElementsPerProc()->data(),
+        (int*)map->getOffsets()->data(), 0, rowComm);
 
     if(rank == 0) {
       std::cout << "Writing file " << stats_file << std::endl;
@@ -389,76 +406,108 @@ int main(int argc, char* argv[])
   if(boolWritePreprocessed) {
     TuckerMPI::writeTensorBinary(pre_fns_file,X);
   }
-
+  
   /////////////////////
   // Perform STHOSVD //
   /////////////////////
   if(boolSTHOSVD) {
-    const TuckerMPI::TuckerTensor* solution;
-
+    const TuckerMPI::TuckerTensor<scalar_t>* solution;
+    bool flipSign = false; // confirm its default as false
     if(boolAuto) {
-      solution = TuckerMPI::STHOSVD(&X, tol, boolUseOldGram);
+      solution = TuckerMPI::STHOSVD(&X, tol, modeOrder->data(), boolUseOldGram, flipSign, boolUseLQ, useButterflyTSQR);
     }
     else {
-      solution = TuckerMPI::STHOSVD(&X, R_dims, boolUseOldGram);
+      solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, flipSign, boolUseLQ, useButterflyTSQR);
     }
 
     // Send the timing information to a CSV
-    solution->printTimers(timing_file);
-
-    if(boolReconstruct) {
-      TuckerMPI::Tensor* t = solution->reconstructTensor();
-
-      TuckerMPI::Tensor* diff = X.subtract(t);
-      double nrm = X.norm2();
-      double err = diff->norm2();
-      double maxEntry = diff->maxEntry();
-      double minEntry = diff->minEntry();
-      if(rank == 0) {
-        std::cout << "Norm of X: " << std::sqrt(nrm) << std::endl;
-        std::cout << "Norm of X - Xtilde: "
-            << std::sqrt(err) << std::endl;
-        std::cout << "Maximum entry of X - Xtilde: "
-            << std::max(maxEntry,-minEntry) << std::endl;
-      }
-    }
+    if(boolUseLQ) solution->printTimersLQ(timing_file);
+    else solution->printTimers(timing_file);
 
     if(rank == 0) {
       // Write the eigenvalues to files
-      std::string filePrefix = sv_dir + "/" + sv_fn + "_mode_";
-      TuckerMPI::printEigenvalues(solution, filePrefix);
+      std::string filePrefix = sv_dir + "/" + sv_fn + "value_mode_";
+      TuckerMPI::printSingularValues(solution, filePrefix, boolUseLQ);
+      if(boolPrintSV){
+        filePrefix = sv_dir + "/" + sv_fn + "vector_mode_";
+        TuckerMPI::printEigenvectors(solution, filePrefix);
+      }
     }
-
-    double xnorm = std::sqrt(X.norm2());
-    double gnorm = std::sqrt(solution->G->norm2());
+    MPI_Barrier(MPI_COMM_WORLD);
+    scalar_t xnorm2 = X.norm2();
+    scalar_t xnorm = std::sqrt(xnorm2);
+    scalar_t gnorm = std::sqrt(solution->G->norm2());
+    scalar_t errorBound =0;
+    
     if(rank == 0) {
       std::cout << "Norm of input tensor: " << xnorm << std::endl;
       std::cout << "Norm of core tensor: " << gnorm << std::endl;
-
       // Compute the error bound based on the eigenvalues
-      double eb =0;
-      for(int i=0; i<nd; i++) {
-        for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
-          eb += solution->eigenvalues[i][j];
+      
+      if(boolUseLQ){
+        for(int i=0; i<nd; i++) {
+          for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
+            errorBound += solution->singularValues[i][j];
+          }
         }
       }
-      std::cout << "Error bound: " << std::sqrt(eb)/xnorm << std::endl;
+      else{
+        for(int i=0; i<nd; i++) {
+          for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
+            errorBound += solution->eigenvalues[i][j];
+          }
+        }
+      }
+      std::cout << "Error bound: " << std::sqrt(errorBound)/xnorm << std::endl;
+    
+      
+      // Write dimension of core tensor
+      std::string dimFilename = sthosvd_dir + "/" + sthosvd_fn +
+          "_ranks.txt";
+      std::ofstream of(dimFilename);
+      for(int mode=0; mode<nd; mode++) {
+        of << solution->G->getGlobalSize(mode) << std::endl;
+      }
+      of.close();
+      of.clear();
+      // Write dimension of global tensor
+      std::string sizeFilename = sthosvd_dir + "/" + sthosvd_fn +
+          "_size.txt";
+      of.open(sizeFilename);
+      for(int mode=0; mode<nd; mode++) {
+        of << (*I_dims)[mode] << std::endl;
+      }
+      of.close();
+    }
+
+    if(boolReconstruct) {
+      TuckerMPI::Tensor<scalar_t>* t = solution->reconstructTensor();
+      TuckerMPI::Tensor<scalar_t>* diff = X.subtract(t);
+      // scalar_t nrm = X.norm2();
+      scalar_t err = diff->norm2();
+      scalar_t maxEntry = diff->maxEntry();
+      scalar_t minEntry = diff->minEntry();
+      if(rank == 0) {
+        std::ofstream of(reconstruct_report_file);
+        of << "Norm of input tensor: " << xnorm2 << std::endl;
+        of << "Norm of core tensor: " << gnorm << std::endl;
+        of << "Error bound: " << std::sqrt(errorBound)/xnorm << std::endl;
+
+        of << "Norm of inputTensor - reconstruction: "
+            << std::sqrt(err) << std::endl;
+        of << "relative error: "
+            << std::sqrt(err/xnorm2) << std::endl;
+        of << "Maximum entry of inputTensor - reconstruction: "
+            << std::max(maxEntry,-minEntry) << std::endl;
+        of.close();
+      }
+      Tucker::MemoryManager::safe_delete(diff);
+      Tucker::MemoryManager::safe_delete(t);
     }
 
     if(boolWriteSTHOSVD) {
       Tucker::Timer writeTimer;
       writeTimer.start();
-
-      // Write dimension of core tensor
-      if(rank == 0) {
-        std::string dimFilename = sthosvd_dir + "/" + sthosvd_fn +
-            "_ranks.txt";
-        std::ofstream of(dimFilename);
-        for(int mode=0; mode<nd; mode++) {
-          of << solution->G->getGlobalSize(mode) << std::endl;
-        }
-        of.close();
-      }
 
       // Write core tensor
       std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn +
@@ -474,17 +523,7 @@ int main(int argc, char* argv[])
               << ".mpi";       // Open the file
           TuckerMPI::exportTensorBinary(ss.str().c_str(), solution->U[mode]);
         }
-
-        // Write dimension of global tensor
-        std::string sizeFilename = sthosvd_dir + "/" + sthosvd_fn +
-            "_size.txt";
-        std::ofstream of(sizeFilename);
-        for(int mode=0; mode<nd; mode++) {
-          of << (*I_dims)[mode] << std::endl;
-        }
-        of.close();
       }
-
       writeTimer.stop();
 
       double localWriteTime = writeTimer.duration();
