@@ -93,6 +93,20 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
+  if(tol >= 1) {
+    std::cerr << "ERROR: The reconstruction error tolerance should be smaller than 1. \n";
+    return EXIT_FAILURE;
+  }
+
+  if(!modeOrder){
+    modeOrder = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
+    for(int i=0; i<nd; i++){
+      modeOrder->data()[i] = i;
+      std::cout <<"modeOrder[" <<i<<"]: " << modeOrder->data()[i];
+    }
+    std::cout << std::endl;
+  }
+
   //
   // Print options
   //
