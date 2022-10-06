@@ -2,11 +2,11 @@ INCLUDE_DIRECTORIES(.. ../../serial)
 
 # Double precision converter
 ADD_EXECUTABLE(TuckerMPI_converter TuckerMPI_converter.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_converter mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_converter mpi_tucker serial_tucker)
 
 # Create single precision converter as well
 ADD_EXECUTABLE(TuckerMPI_converter_single TuckerMPI_converter.cpp)
-TARGET_LINK_LIBRARIES(TuckerMPI_converter_single mpi_tucker serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(TuckerMPI_converter_single mpi_tucker serial_tucker)
 SET_TARGET_PROPERTIES(TuckerMPI_converter_single PROPERTIES COMPILE_DEFINITIONS TEST_SINGLE)
 
 SET(CMAKE_TUCKER_CONVERTER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE INTERNAL "binary directory of converter executable")

@@ -2,101 +2,101 @@ INCLUDE_DIRECTORIES(..)
 
 # Double precision tests
 ADD_EXECUTABLE(Tucker_svd_test Tucker_svd_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_svd_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_svd_test serial_tucker)
 
 ADD_EXECUTABLE(Tucker_LQ_edgecase_test Tucker_LQ_edgecase_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_LQ_edgecase_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_LQ_edgecase_test serial_tucker)
 
 ADD_EXECUTABLE(Tucker_LQ_test Tucker_LQ_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_LQ_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_LQ_test serial_tucker)
 
 ADD_EXECUTABLE(Tucker_IO_test Tucker_IO_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_IO_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_IO_test serial_tucker)
 
 ADD_EXECUTABLE(Tucker_shift_scale_test Tucker_shift_scale_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_shift_scale_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_shift_scale_test serial_tucker)
 
 ADD_EXECUTABLE(Tucker_eig_test Tucker_eig_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_eig_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_eig_test serial_tucker)
 
 ADD_EXECUTABLE(Tucker_norm_test Tucker_norm_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_norm_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_norm_test serial_tucker)
 
 ADD_EXECUTABLE(Tucker_normalize_test Tucker_normalize_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_normalize_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_normalize_test serial_tucker)
 
 ADD_EXECUTABLE(Tucker_reconstruct_test Tucker_reconstruct_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_reconstruct_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_reconstruct_test serial_tucker)
 
 ADD_EXECUTABLE(Tucker_reconstruct_test2 Tucker_reconstruct_test2.cpp)
-TARGET_LINK_LIBRARIES(Tucker_reconstruct_test2 serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_reconstruct_test2 serial_tucker)
 
 ADD_EXECUTABLE(Tucker_gram_test_file Tucker_gram_test_file.cpp)
-TARGET_LINK_LIBRARIES(Tucker_gram_test_file serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_gram_test_file serial_tucker)
 
 ADD_EXECUTABLE(Tucker_gram_test_nofile Tucker_gram_test_nofile.cpp)
-TARGET_LINK_LIBRARIES(Tucker_gram_test_nofile serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_gram_test_nofile serial_tucker)
 
 ADD_EXECUTABLE(Tucker_ttm_test_file Tucker_ttm_test_file.cpp)
-TARGET_LINK_LIBRARIES(Tucker_ttm_test_file serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_ttm_test_file serial_tucker)
 
 ADD_EXECUTABLE(Tucker_ttm_test_nofile Tucker_ttm_test_nofile.cpp)
-TARGET_LINK_LIBRARIES(Tucker_ttm_test_nofile serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_ttm_test_nofile serial_tucker)
 
 ADD_EXECUTABLE(Tucker_slice_test_file Tucker_slice_test_file.cpp)
-TARGET_LINK_LIBRARIES(Tucker_slice_test_file serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_slice_test_file serial_tucker)
 
 ADD_EXECUTABLE(Tucker_slice_test_nofile Tucker_slice_test_nofile.cpp)
-TARGET_LINK_LIBRARIES(Tucker_slice_test_nofile serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_slice_test_nofile serial_tucker)
 
 # Single precision tests
 ADD_EXECUTABLE(Tucker_svd_test_single Tucker_svd_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_svd_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_svd_test_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_LQ_edgecase_test_single Tucker_LQ_edgecase_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_LQ_edgecase_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_LQ_edgecase_test_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_LQ_test_single Tucker_LQ_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_LQ_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_LQ_test_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_IO_test_single Tucker_IO_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_IO_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_IO_test_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_shift_scale_test_single Tucker_shift_scale_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_shift_scale_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_shift_scale_test_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_eig_test_single Tucker_eig_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_eig_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_eig_test_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_norm_test_single Tucker_norm_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_norm_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_norm_test_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_normalize_test_single Tucker_normalize_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_normalize_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_normalize_test_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_reconstruct_test_single Tucker_reconstruct_test.cpp)
-TARGET_LINK_LIBRARIES(Tucker_reconstruct_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_reconstruct_test_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_reconstruct_test2_single Tucker_reconstruct_test2.cpp)
-TARGET_LINK_LIBRARIES(Tucker_reconstruct_test2_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_reconstruct_test2_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_gram_test_file_single Tucker_gram_test_file.cpp)
-TARGET_LINK_LIBRARIES(Tucker_gram_test_file_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_gram_test_file_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_gram_test_nofile_single Tucker_gram_test_nofile.cpp)
-TARGET_LINK_LIBRARIES(Tucker_gram_test_nofile_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_gram_test_nofile_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_ttm_test_file_single Tucker_ttm_test_file.cpp)
-TARGET_LINK_LIBRARIES(Tucker_ttm_test_file_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_ttm_test_file_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_ttm_test_nofile_single Tucker_ttm_test_nofile.cpp)
-TARGET_LINK_LIBRARIES(Tucker_ttm_test_nofile_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_ttm_test_nofile_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_slice_test_file_single Tucker_slice_test_file.cpp)
-TARGET_LINK_LIBRARIES(Tucker_slice_test_file_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_slice_test_file_single serial_tucker)
 
 ADD_EXECUTABLE(Tucker_slice_test_nofile_single Tucker_slice_test_nofile.cpp)
-TARGET_LINK_LIBRARIES(Tucker_slice_test_nofile_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+TARGET_LINK_LIBRARIES(Tucker_slice_test_nofile_single serial_tucker)
 
 # Use compile-time definition of TEST_SINGLE to specify precision
 SET_TARGET_PROPERTIES(
