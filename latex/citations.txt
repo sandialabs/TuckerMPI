@@ -1,3 +1,17 @@
+@article{BaKlKo20,  
+author = {Grey Ballard and Alicia Klinvex and Tamara G. Kolda}, 
+title = {{TuckerMPI}: A Parallel {C++/MPI} Software Package for Large-scale Data Compression via the {Tucker} Tensor Decomposition}, 
+journal = {ACM Transactions on Mathematical Software}, 
+volume = {46}, 
+number = {2},
+eid = {13},
+pagetotal = {31} 
+month = {June}, 
+year = {2020},
+doi = {10.1145/3378445},
+eprint = {1901.06043},
+}
+
 @inproceedings{AuBaKo16,  
 author = {Woody Austin and Grey Ballard and Tamara G. Kolda}, 
 title = {Parallel Tensor Compression for Large-Scale Scientific Data}, 
