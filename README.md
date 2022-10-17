@@ -1,4 +1,4 @@
-[![build status](https://gitlab.com/tensors/TuckerMPI/badges/master/build.svg)](https://gitlab.com/tensors/TuckerMPI/commits/master)
+<!--[![build status](https://gitlab.com/tensors/TuckerMPI/badges/master/build.svg)](https://gitlab.com/tensors/TuckerMPI/commits/master)-->
 [![codecov](https://codecov.io/gl/tensors/tuckermpi/branch/master/graph/badge.svg?token=FO5DT6r7wc)](https://codecov.io/gl/tensors/tuckermpi)
 <a href="https://scan.coverity.com/projects/tuckermpi">
   <img alt="Coverity Scan Build Status"
