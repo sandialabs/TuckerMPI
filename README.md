@@ -34,11 +34,16 @@ Please see https://tensors.gitlab.io/TuckerMPI
 
 Papers
 ------
+G. Ballard, A. Klinvex, T. G. Kolda. TuckerMPI: A Parallel C++/MPI Software Package for Large-scale Data Compression via the Tucker Tensor Decomposition. ACM Transactions on Mathematical Software, Vol. 46, No. 2, Article ID 13, 31 pages, 2020. https://doi.org/10.1145/3378445
+
+[Find it on arXiv!](http://arxiv.org/abs/1901.06043)
+
 Parallel Tensor Compression for Large-Scale Scientific Data  
 Woody Austin, Grey Ballard, and Tamara G. Kolda  
 IPDPS'16, [doi:10.1109/IPDPS.2016.67](https://doi.org/10.1109/IPDPS.2016.67)
 
 [Find it on arXiv!](https://arxiv.org/abs/1510.06689)  
+
 [Cite this!](latex/citations.txt)
 
 Funding Statement
