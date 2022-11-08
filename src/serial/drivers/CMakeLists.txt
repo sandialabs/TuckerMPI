@@ -11,3 +11,6 @@ TARGET_LINK_LIBRARIES(Tucker_sthosvd serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LI
 
 ADD_EXECUTABLE(Tucker_generate Tucker_generate.cpp)
 TARGET_LINK_LIBRARIES(Tucker_generate serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
+ADD_EXECUTABLE(Tucker_streaminghosvd Tucker_streaminghosvd.cpp)
+TARGET_LINK_LIBRARIES(Tucker_streaminghosvd serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
