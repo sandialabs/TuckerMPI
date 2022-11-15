@@ -1422,8 +1422,9 @@ void importTimeSeries(Tensor<scalar_t>* Y, const char* filename)
      size = end - begin;
 
      // Assert that this size is consistent with the number of tensor entries
-     size_t numEntries = Y->getNumElements();
-     assert(size == numEntries*sizeof(scalar_t));
+     //HKsize_t numEntries = Y->getNumElements();
+     //HKassert(size == numEntries*sizeof(scalar_t));
+     assert(size == count*sizeof(scalar_t));
 
      // Read the file
      bifs.seekg(0, std::ios::beg);
