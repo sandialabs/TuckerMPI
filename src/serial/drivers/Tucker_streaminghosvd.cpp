@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
 
     const Tucker::StreamingTuckerTensor<scalar_t>* solution;
 
-    solution = Tucker::StreamingHOSVD(initial_solution, tol, useLQ);
+    solution = Tucker::StreamingHOSVD(X, initial_solution, streaming_fns_file.c_str(), tol, useLQ);
 
     /*
     writeTimer.start();
