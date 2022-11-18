@@ -55,14 +55,13 @@
 namespace Tucker {
 
 template <class scalar_t>
-void updateStreamingGram(const Matrix<scalar_t>* Gram, const Tensor<scalar_t>* Y, const int n)
+void updateStreamingGram(Matrix<scalar_t>* Gram, const Tensor<scalar_t>* Y, const int n)
 {
 
   Matrix<scalar_t>* gram_to_add = computeGram(Y,n);
   size_t nnz = gram_to_add->getNumElements();
-  scalar_t* dataPtr = const_cast<scalar_t*>(Gram->data());
   for(int i=0; i<nnz; i++) {
-    *(dataPtr+i) += *(gram_to_add->data()+i);
+    *(Gram->data()+i) += *(gram_to_add->data()+i);
   }
   MemoryManager::safe_delete(gram_to_add);
 }
@@ -115,11 +114,11 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
   return factorization;
 }
 
-template void updateStreamingGram(const Matrix<float>*, const Tensor<float>*, const int);
+template void updateStreamingGram(Matrix<float>*, const Tensor<float>*, const int);
 template const struct StreamingTuckerTensor<float>* StreamingHOSVD(const Tensor<float>*, const TuckerTensor<float>*, 
              const char* filename, const float, bool, bool);
 
-template void updateStreamingGram(const Matrix<double>*, const Tensor<double>*, const int);
+template void updateStreamingGram(Matrix<double>*, const Tensor<double>*, const int);
 template const struct StreamingTuckerTensor<double>* StreamingHOSVD(const Tensor<double>*, const TuckerTensor<double>*,
              const char* filename, const double, bool, bool);
 

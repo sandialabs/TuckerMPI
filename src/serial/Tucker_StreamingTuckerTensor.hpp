@@ -125,7 +125,7 @@ template class StreamingTuckerTensor<double>;
 
 
 template <class scalar_t>
-void updateStreamingGram(const Matrix<scalar_t>* Gram, const Tensor<scalar_t>* Y, const int n=-1);
+void updateStreamingGram(Matrix<scalar_t>* Gram, const Tensor<scalar_t>* Y, const int n=-1);
 
 template <class scalar_t>
 const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar_t>* X, const TuckerTensor<scalar_t>* initial_factorization,
