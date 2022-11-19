@@ -63,7 +63,7 @@ void updateStreamingGram(Matrix<scalar_t>* Gram, const Tensor<scalar_t>* Y, cons
   for(int i=0; i<nnz; i++) {
     *(Gram->data()+i) += *(gram_to_add->data()+i);
   }
-  MemoryManager::safe_delete(gram_to_add);
+  MemoryManager::safe_delete<Matrix<scalar_t>>(gram_to_add);
 }
 
 template <class scalar_t>
@@ -75,6 +75,8 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
   struct StreamingTuckerTensor<scalar_t>* factorization = MemoryManager::safe_new<StreamingTuckerTensor<scalar_t>>(initial_factorization);
 
   int ndims = X->N();
+  scalar_t tensorNorm = X->norm2();
+  scalar_t thresh = epsilon*epsilon*tensorNorm/X->N();
   Tucker::SizeArray* slice_dims = MemoryManager::safe_new<SizeArray>((ndims-1));
 
   // Compute the initial Gram matrices for all non-streaming modes
@@ -94,12 +96,47 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
   while(inStream >> snapshot_file) {
     std::cout<< "Reading snaphot " << snapshot_file << std::endl;
     importTensorBinary(Y,snapshot_file.c_str());
-    // TO DO //
-    //HK std::cout << "Sample Element Value is " << *(Y->data()+ (Y->getNumElements())/2 ) << std::endl;
-    //Update Gram of non-streaming modes
+
+    // Update Gram of non-streaming modes
     for(int n=0; n<ndims-1; n++) {
       updateStreamingGram(factorization->Gram[n], Y, n);
     }
+
+    // Allocate memory for the new bases (factor matrices) along all modes
+    Matrix<scalar_t>** U_new = MemoryManager::safe_new_array<Matrix<scalar_t>*>(ndims);
+
+    // Update the bases (factor matrices) of non-streaming modes
+    for(int n=0; n<ndims-1; n++) {
+      computeEigenpairs(factorization->Gram[n], factorization->factorization->eigenvalues[n],
+          U_new[n], thresh, flipSign);
+    }
+
+    // For the streaming mode initialize ISVD with full set of left singular vectors 
+    //int numRows = X->size(ndims - 1);
+    //U_new[ndims-1] = MemoryManager::safe_new<Matrix<scalar_t>>(numRows,numRows); 
+    Matrix<scalar_t>* gram_last_mode = computeGram(X,ndims-1);
+    computeEigenpairs(gram_last_mode, factorization->factorization->eigenvalues[ndims-1],
+        U_new[ndims-1], 0.0 /* thresh */, flipSign);  
+   
+    //HK ISVD<scalar_t>* iSVD = MemoryManager::safe_new<ISVD<scalar_t>>();
+    //
+
+    // TO DO
+
+    //
+    // Free memory
+    //
+    for (int n=0; n<ndims; n++) {
+      MemoryManager::safe_delete(factorization->factorization->U[n]);
+    }
+    MemoryManager::safe_delete_array(factorization->factorization->U,ndims);
+
+    // Set the factor matrices to the updated ones
+    factorization->factorization->U = U_new;
+    for (int n=0; n<ndims; n++) {
+      factorization->factorization->U[n] = U_new[n];
+    }
+
   }
 
   //Close the file containing snapshot filenames

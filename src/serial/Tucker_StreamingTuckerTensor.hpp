@@ -44,6 +44,7 @@
 #define STREAMINGTUCKERTENSOR_HPP_
 
 #include "Tucker_TuckerTensor.hpp"
+#include "Tucker_ISVD.hpp"
 
 namespace Tucker {
 
@@ -75,6 +76,13 @@ public:
       throw std::runtime_error(oss.str());
     }
 
+    // const_cast below is due to a legacy issue. 
+    // STHOSVD which is originally used to compute the Tucker factorization 
+    // returns const Tucker_Tensor<scalar_t> * type. But the underlying
+    // data members are non const pointers (core tensor, factor matrices, etc).
+    // So making a copy of those underlying (non const pointer) data types will
+    // potentially have dangling pointers. Best to just copy the
+    // Tucker_Tensor<scalar_t> pointer itself, and delete it in the destructor.  
     factorization = const_cast<TuckerTensor<scalar_t>*>(X);
     N = X->N;
     Gram = MemoryManager::safe_new_array<Matrix<scalar_t>*>(N-1);
@@ -122,7 +130,6 @@ private:
 // Explicit instantiations to build static library for both single and double precision
 template class StreamingTuckerTensor<float>;
 template class StreamingTuckerTensor<double>;
-
 
 template <class scalar_t>
 void updateStreamingGram(Matrix<scalar_t>* Gram, const Tensor<scalar_t>* Y, const int n=-1);
