@@ -71,4 +71,7 @@ int ISVD<scalar_t>::rank() const {
   return s_->nrows();
 }
 
+template class ISVD<float>;
+template class ISVD<double>;
+
 }  // namespace Tucker

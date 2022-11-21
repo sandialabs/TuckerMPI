@@ -125,9 +125,6 @@ class ISVD {
   scalar_t squared_frobenius_norm_error_; /**< Frobenius norm of error */
 };
 
-template class ISVD<float>;
-template class ISVD<double>;
-
 }  // namespace Tucker
 
 #endif

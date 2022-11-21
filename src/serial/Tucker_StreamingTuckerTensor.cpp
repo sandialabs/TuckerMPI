@@ -118,7 +118,7 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
     computeEigenpairs(gram_last_mode, factorization->factorization->eigenvalues[ndims-1],
         U_new[ndims-1], 0.0 /* thresh */, flipSign);  
    
-    //HK ISVD<scalar_t>* iSVD = MemoryManager::safe_new<ISVD<scalar_t>>();
+    ISVD<scalar_t>* iSVD = MemoryManager::safe_new<ISVD<scalar_t>>();
     //
 
     // TO DO
