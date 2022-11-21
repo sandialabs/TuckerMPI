@@ -67,6 +67,32 @@ void updateStreamingGram(Matrix<scalar_t>* Gram, const Tensor<scalar_t>* Y, cons
 }
 
 template <class scalar_t>
+void updateCore(Tensor<scalar_t>* G, const Matrix<scalar_t>* U_old, 
+    const Matrix<scalar_t>* U_new, const int dim)
+{
+
+  // First the matrix multiplication U_new^T * U_old
+  // Do sanity check of dimensions
+  assert( U_new->nrows() == U_old->nrows() );
+
+  int m = U_new->ncols();
+  int n = U_old->ncols();
+  int k = U_new->nrows();
+  Matrix<scalar_t>* S = MemoryManager::safe_new<Matrix<scalar_t>>(m,n);
+
+  char transa = 'T';
+  char transb = 'N';
+  int lda = k;
+  int ldb = k;
+  int ldc = m; 
+  scalar_t alpha = 1.0;
+  scalar_t beta = 0.0;
+  gemm(&transa, &transb, &m, &n, &k, &alpha, U_new->data(),
+        &lda, U_old->data(), &ldb, &beta, S->data(), &ldc);
+
+}
+
+template <class scalar_t>
 const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar_t>* X, const TuckerTensor<scalar_t>* initial_factorization,
     const char* filename, const scalar_t epsilon, bool useQR, bool flipSign)
 {
@@ -109,6 +135,8 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
     for(int n=0; n<ndims-1; n++) {
       computeEigenpairs(factorization->Gram[n], factorization->factorization->eigenvalues[n],
           U_new[n], thresh, flipSign);
+
+      updateCore(factorization->factorization->G, factorization->factorization->U[n], U_new[n], n);
     }
 
     // For the streaming mode initialize ISVD with full set of left singular vectors 
@@ -152,10 +180,12 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
 }
 
 template void updateStreamingGram(Matrix<float>*, const Tensor<float>*, const int);
+template void updateCore(Tensor<float>*, const Matrix<float>*, const Matrix<float>*, const int);
 template const struct StreamingTuckerTensor<float>* StreamingHOSVD(const Tensor<float>*, const TuckerTensor<float>*, 
              const char* filename, const float, bool, bool);
 
 template void updateStreamingGram(Matrix<double>*, const Tensor<double>*, const int);
+template void updateCore(Tensor<double>*, const Matrix<double>*, const Matrix<double>*, const int);
 template const struct StreamingTuckerTensor<double>* StreamingHOSVD(const Tensor<double>*, const TuckerTensor<double>*,
              const char* filename, const double, bool, bool);
 
