@@ -24,7 +24,7 @@ ISVD<scalar_t>::~ISVD() {
 
 template <class scalar_t>
 int ISVD<scalar_t>::nrows() const {
-  if (!is_allocated_) {
+  if (U_ == nullptr) {
     throw std::runtime_error("ISVD object is not initialized");
   }
 
@@ -33,7 +33,7 @@ int ISVD<scalar_t>::nrows() const {
 
 template <class scalar_t>
 int ISVD<scalar_t>::ncols() const {
-  if (!is_allocated_) {
+  if (Vt_ == nullptr) {
     throw std::runtime_error("ISVD object is not initialized");
   }
 
@@ -42,7 +42,7 @@ int ISVD<scalar_t>::ncols() const {
 
 template <class scalar_t>
 int ISVD<scalar_t>::rank() const {
-  if (!is_allocated_) {
+  if (s_ == nullptr) {
     throw std::runtime_error("ISVD object is not initialized");
   }
 
