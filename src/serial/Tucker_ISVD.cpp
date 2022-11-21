@@ -1,9 +1,3 @@
-/**
- * @file
- * @brief Contains incremental SVD definition
- * @author Saibal De
- */
-
 #include "Tucker_ISVD.hpp"
 
 #include <stdexcept>
@@ -29,6 +23,33 @@ ISVD<scalar_t>::~ISVD() {
 }
 
 template <class scalar_t>
+int ISVD<scalar_t>::nrows() const {
+  if (!is_allocated_) {
+    throw std::runtime_error("ISVD object is not initialized");
+  }
+
+  return U_->nrows();
+}
+
+template <class scalar_t>
+int ISVD<scalar_t>::ncols() const {
+  if (!is_allocated_) {
+    throw std::runtime_error("ISVD object is not initialized");
+  }
+
+  return Vt_->ncols();
+}
+
+template <class scalar_t>
+int ISVD<scalar_t>::rank() const {
+  if (!is_allocated_) {
+    throw std::runtime_error("ISVD object is not initialized");
+  }
+
+  return s_->nrows();
+}
+
+template <class scalar_t>
 void ISVD<scalar_t>::initializeFactors(const Matrix<scalar_t> *U,
                                        const scalar_t *s,
                                        const Tensor<scalar_t> *X) {}
@@ -41,35 +62,12 @@ void ISVD<scalar_t>::initializeFactors(const Matrix<scalar_t> *U,
                                        scalar_t squared_frobenius_norm_error) {}
 
 template <class scalar_t>
-void ISVD<scalar_t>::updateFactors(const Tensor<scalar_t> *C,
-                                   scalar_t tolerance) {}
+void updateRightSingularVectors(int k, const Matrix<scalar_t> *U_new,
+                                const Matrix<scalar_t> *U_old) {}
 
 template <class scalar_t>
-int ISVD<scalar_t>::nrows() const {
-  if (U_ == nullptr) {
-    throw std::runtime_error("ISVD object is not initialized");
-  }
-
-  return U_->nrows();
-}
-
-template <class scalar_t>
-int ISVD<scalar_t>::ncols() const {
-  if (Vt_ == nullptr) {
-    throw std::runtime_error("ISVD object is not initialized");
-  }
-
-  return Vt_->ncols();
-}
-
-template <class scalar_t>
-int ISVD<scalar_t>::rank() const {
-  if (s_ == nullptr) {
-    throw std::runtime_error("ISVD object is not initialized");
-  }
-
-  return s_->nrows();
-}
+void ISVD<scalar_t>::updateFactorsWithNewSlice(const Tensor<scalar_t> *Y,
+                                               scalar_t tolerance) {}
 
 template class ISVD<float>;
 template class ISVD<double>;
