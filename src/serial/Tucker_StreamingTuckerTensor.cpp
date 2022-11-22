@@ -90,6 +90,18 @@ void updateCore(Tensor<scalar_t>* G, const Matrix<scalar_t>* U_old,
   gemm(&transa, &transb, &m, &n, &k, &alpha, U_new->data(),
         &lda, U_old->data(), &ldb, &beta, S->data(), &ldc);
 
+  /*
+  Tensor<scalar_t>* temp = ttm(G,dim,S,false);
+  MemoryManager::safe_delete<Tensor<scalar_t>>(G);
+  G = temp;
+  */
+ 
+  // TO DO: Someone should vet this in-place update of G via ttm
+  // The commented pattern above is what's apparently in STHOSVD
+  // but it's causing issues. 
+  G = ttm(G,dim,S,false);
+
+  MemoryManager::safe_delete<Matrix<scalar_t>>(S);
 }
 
 template <class scalar_t>
@@ -120,7 +132,7 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
   std::string snapshot_file;
 
   while(inStream >> snapshot_file) {
-    std::cout<< "Reading snaphot " << snapshot_file << std::endl;
+    std::cout<< "Reading snapshot " << snapshot_file << std::endl;
     importTensorBinary(Y,snapshot_file.c_str());
 
     // Update Gram of non-streaming modes
