@@ -60,6 +60,18 @@ void copy(const int* n, const float* dx, const int* incx,
   scopy_(n, dx, incx, dy, incy);
 }
 
+void axpy(const int *n, const double *alpha, const double *x,
+    const int *incx, double *y, const int *incy)
+{
+    daxpy_(n, alpha, x, incx, y, incy);
+}
+
+void axpy(const int *n, const float *alpha, const float *x,
+    const int *incx, float *y, const int *incy)
+{
+    saxpy_(n, alpha, x, incx, y, incy);
+}
+
 void scal(const int* n, const double* da, double* dx, const int* incx)
 {
   dscal_(n, da, dx, incx);

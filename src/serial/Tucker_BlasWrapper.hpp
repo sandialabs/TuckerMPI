@@ -43,6 +43,13 @@ extern "C" void dcopy_(const int*, const double*, const int*,
 extern "C" void scopy_(const int*, const float*, const int*,
     float*, const int*);
 
+// add two arrays
+extern "C" void daxpy_(const int *n, const double *alpha, const double *x,
+    const int *incx, double *y, const int *incy);
+
+extern "C" void saxpy_(const int *n, const float *alpha, const float *x,
+    const int *incx, float *y, const int *incy);
+
 // Scale an array
 extern "C" void dscal_(const int*, const double*, double*, const int*);
 
@@ -151,6 +158,12 @@ void copy(const int*, const double*, const int*,
 
 void copy(const int*, const float*, const int*,
     float*, const int*);
+
+void axpy(const int *n, const double *alpha, const double *x,
+    const int *incx, double *y, const int *incy);
+
+void axpy(const int *n, const float *alpha, const float *x,
+    const int *incx, float *y, const int *incy);
 
 void scal(const int*, const double*, double*, const int*);
 
