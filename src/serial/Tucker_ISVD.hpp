@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief Contains incremental SVD implementation
+ * @brief Incremental SVD definition
  * @author Saibal De
  */
 
