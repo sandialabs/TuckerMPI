@@ -96,7 +96,7 @@ void computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scala
     const char &trans = 'T';
     const scalar_t &alpha = 1;
     const scalar_t &beta = 0;
-    gemv(&trans, &nrows, &nproj, &alpha, old_eigenvectors->data(), &nrows, eigenvectors->data() + i * nrows, &ONE, &beta, projection->data(), &ONE);
+    gemv(&trans, &nrows, &nproj, &alpha, old_eigenvectors->data(), &nrows, G->data() + i * nrows, &ONE, &beta, projection->data(), &ONE);
     (*projectionNorms)[i] = nrm2(&nproj, projection->data(), &ONE);
   }
   MemoryManager::safe_delete(projection);
