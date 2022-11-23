@@ -70,6 +70,30 @@ void scal(const int* n, const float* da, float* dx, const int* incx)
   sscal_(n, da, dx, incx);
 }
 
+double nrm2(const int *n, const double *x, const int *inc)
+{
+  return dnrm2_(n, x, inc);
+}
+
+float nrm2(const int *n, const float *x, const int *inc)
+{
+  return snrm2_(n, x, inc);
+}
+
+void gemv(const char *trans, const int *m, const int *n, const double *alpha,
+    const double *A, const int *lda, const double *x, const int *incx,
+    const double *beta, double *y, const int *incy)
+{
+  dgemv_(trans, m, n, alpha, A, lda, x, incx, beta, y, incy);
+}
+
+void gemv(const char *trans, const int *m, const int *n, const float *alpha,
+    const float *A, const int *lda, const float *x, const int *incx,
+    const float *beta, float *y, const int *incy)
+{
+  sgemv_(trans, m, n, alpha, A, lda, x, incx, beta, y, incy);
+}
+
 void gemm(const char* transa, const char* transb, const int* m,
     const int* n, const int* k, const double* alpha, const double* a, const int* lda,
     const double* b, const int* ldb, const double* beta, double* c, const int* ldc)

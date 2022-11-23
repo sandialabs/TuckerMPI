@@ -48,6 +48,20 @@ extern "C" void dscal_(const int*, const double*, double*, const int*);
 
 extern "C" void sscal_(const int*, const float*, float*, const int*);
 
+// array norm
+extern "C" double dnrm2_(const int *n, const double *x, const int *inc);
+
+extern "C" float snrm2_(const int *n, const float *x, const int *inc);
+
+// Matrix vector multiply
+extern "C" void dgemv_(const char *transa, const int *m, const int *n,
+    const double *alpha, const double *A, const int *lda, const double *x,
+    const int *incx, const double *beta, double *y, const int *incy);
+
+extern "C" void sgemv_(const char *transa, const int *m, const int *n,
+    const float *alpha, const float *A, const int *lda, const float *x,
+    const int *incx, const float *beta, float *y, const int *incy);
+
 // Matrix matrix multiply
 extern "C" void dgemm_(const char*, const char*, const int*,
     const int*, const int*, const double*, const double*, const int*,
@@ -141,6 +155,18 @@ void copy(const int*, const float*, const int*,
 void scal(const int*, const double*, double*, const int*);
 
 void scal(const int*, const float*, float*, const int*);
+
+double nrm2(const int *n, const double *x, const int *inc);
+
+float nrm2(const int *n, const float *x, const int *inc);
+
+void gemv(const char *trans, const int *m, const int *n, const double *alpha,
+    const double *A, const int *lda, const double *x, const int *incx,
+    const double *beta, double *y, const int *incy);
+
+void gemv(const char *trans, const int *m, const int *n, const float *alpha,
+    const float *A, const int *lda, const float *x, const int *incx,
+    const float *beta, float *y, const int *incy);
 
 void gemm(const char*, const char*, const int*,
     const int*, const int*, const double*, const double*, const int*,
