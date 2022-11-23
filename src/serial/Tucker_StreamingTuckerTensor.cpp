@@ -90,12 +90,6 @@ Tensor<scalar_t>* updateCore(Tensor<scalar_t>* G, const Matrix<scalar_t>* U_old,
   gemm(&transa, &transb, &m, &n, &k, &alpha, U_new->data(),
         &lda, U_old->data(), &ldb, &beta, S->data(), &ldc);
 
-  /*
-  Tensor<scalar_t>* temp = ttm(G,dim,S,false);
-  MemoryManager::safe_delete<Tensor<scalar_t>>(G);
-  G = temp;
-  */
- 
   Tensor<scalar_t>* ttm_result = ttm(G,dim,S,false);
 
   MemoryManager::safe_delete<Matrix<scalar_t>>(S);
@@ -164,8 +158,6 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
     factorization->factorization->G = core;
 
     // For the streaming mode initialize ISVD with full set of left singular vectors 
-    //int numRows = X->size(ndims - 1);
-    //U_new[ndims-1] = MemoryManager::safe_new<Matrix<scalar_t>>(numRows,numRows); 
     Matrix<scalar_t>* gram_last_mode = computeGram(X,ndims-1);
     computeEigenpairs(gram_last_mode, factorization->factorization->eigenvalues[ndims-1],
         U_new[ndims-1], 0.0 /* thresh */, flipSign);  
