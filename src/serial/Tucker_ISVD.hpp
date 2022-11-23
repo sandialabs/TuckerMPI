@@ -51,7 +51,7 @@ public:
    */
   int ncols() const {
     checkIsAllocated();
-    return V_->ncols();
+    return V_->getNumElements() / rank();
   }
 
   /**
@@ -84,7 +84,7 @@ public:
   /**
    * @brief Constant pointer to right singular vectors
    */
-  const Matrix<scalar_t> *getRightSingularVectors() const {
+  const Tensor<scalar_t> *getRightSingularVectors() const {
     checkIsAllocated();
     return V_;
   }
@@ -162,7 +162,7 @@ private:
   bool is_allocated_;   /**< Flag specifying if memory is allocated */
   Matrix<scalar_t> *U_; /**< Pointer to left singular vectors */
   Vector<scalar_t> *s_; /**< Pointer to singular values */
-  Matrix<scalar_t> *V_; /**< Pointer to right singular vectors */
+  Tensor<scalar_t> *V_; /**< Pointer to right singular vectors */
   scalar_t squared_frobenius_norm_data_;  /**< Frobenius norm of data */
   scalar_t squared_frobenius_norm_error_; /**< Frobenius norm of error */
 };

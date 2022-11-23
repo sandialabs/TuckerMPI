@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 
+#include "Tucker.hpp"
 #include "Tucker_BlasWrapper.hpp"
 #include "Tucker_Util.hpp"
 
@@ -174,11 +175,11 @@ scalar_t ISVD<scalar_t>::getRightSingularVectorsError() const {
   const int r = rank();
   Matrix<scalar_t> *E = MemoryManager::safe_new<Matrix<scalar_t>>(r, r);
   {
-    const char &transa = 'N';
-    const char &transb = 'T';
+    const char &transa = 'T';
+    const char &transb = 'N';
     const scalar_t &alpha = static_cast<scalar_t>(1);
     const scalar_t &beta = static_cast<scalar_t>(0);
-    gemm(&transa, &transb, &r, &r, &n, &alpha, V_->data(), &r, V_->data(), &r,
+    gemm(&transa, &transb, &r, &r, &n, &alpha, V_->data(), &n, V_->data(), &n,
          &beta, E->data(), &r);
   }
   for (int i = 0; i < r; ++i) {
@@ -239,51 +240,36 @@ void ISVD<scalar_t>::initializeFactors(const Matrix<scalar_t> *U,
     }
   }
 
-  // allocate memory -----------------------------------------------------------
-
-  U_ = MemoryManager::safe_new<Matrix<scalar_t>>(nrow, rank);
-  s_ = MemoryManager::safe_new<Vector<scalar_t>>(rank);
-  V_ = MemoryManager::safe_new<Matrix<scalar_t>>(rank, ncol);
-
   // copy U and s --------------------------------------------------------------
 
+  U_ = MemoryManager::safe_new<Matrix<scalar_t>>(nrow, rank);
   {
     const int nelm = nrow * rank;
     copy(&nelm, U->data(), &INT_ONE, U_->data(), &INT_ONE);
   }
 
+  s_ = MemoryManager::safe_new<Vector<scalar_t>>(rank);
   copy(&rank, s, &INT_ONE, s_->data(), &INT_ONE);
 
-  // construct V and compute Y = X - U * s * V -------------------------------
+  // construct V and compute Y s.t. Y_{(d)} = X - U * s * V_{(d)} --------------
 
-  {
-    const char transa = 'T';
-    const char transb = 'T';
-    const scalar_t alpha = static_cast<scalar_t>(1);
-    const scalar_t beta = static_cast<scalar_t>(0);
+  // V = X x_d U.T
+  V_ = ttm(X, ndim - 1, U_, /* trans = */ true);
 
-    gemm(&transa, &transb, &rank, &ncol, &nrow, &alpha, U_->data(), &nrow,
-         X->data(), &ncol, &beta, V_->data(), &rank);
+  // Y = V x_d U
+  Tensor<scalar_t> *Y = ttm(V_, ndim - 1, U_, /* trans = */ false);
+
+  // V = V x_d inv(diag(s))
+  for (int j = 0; j < rank; ++j) {
+    const scalar_t &alpha = 1 / (*s_)[j];
+    scal(&ncol, &alpha, V_->data() + ncol * j, &INT_ONE);
   }
 
-  Matrix<scalar_t> *Y = MemoryManager::safe_new<Matrix<scalar_t>>(nrow, ncol);
+  // Y = -1 * X + Y
   {
     const int nelm = nrow * ncol;
-    copy(&nelm, X->data(), &INT_ONE, Y->data(), &INT_ONE);
-  }
-  {
-    const char transa = 'T';
-    const char transb = 'T';
     const scalar_t alpha = -static_cast<scalar_t>(1);
-    const scalar_t beta = static_cast<scalar_t>(1);
-
-    gemm(&transa, &transb, &ncol, &nrow, &rank, &alpha, V_->data(), &rank,
-         U_->data(), &nrow, &beta, Y->data(), &ncol);
-  }
-
-  for (int i = 0; i < rank; ++i) {
-    const scalar_t temp = 1 / s_->data()[i];
-    scal(&ncol, &temp, V_->data() + i, &rank);
+    axpy(&nelm, &alpha, X->data(), &INT_ONE, Y->data(), &INT_ONE);
   }
 
   // compute norms -------------------------------------------------------------
@@ -291,7 +277,11 @@ void ISVD<scalar_t>::initializeFactors(const Matrix<scalar_t> *U,
   squared_frobenius_norm_data_ = X->norm2();
   squared_frobenius_norm_error_ = Y->norm2();
 
+  // deallocate tempoary memory ------------------------------------------------
+
   MemoryManager::safe_delete(Y);
+
+  // flag factorization as initialized -----------------------------------------
 
   is_allocated_ = true;
 }
@@ -323,26 +313,26 @@ void ISVD<scalar_t>::addSingleRowNaive(const scalar_t *c, scalar_t tolerance) {
   const int n = ncols();
   const int r = rank();
 
-  // projection: j[r] = V[rxn] * c[n]
+  // projection: j[r] = V[nxr].T * c[n]
   Vector<scalar_t> *j = MemoryManager::safe_new<Vector<scalar_t>>(r);
   {
-    const char &trans = 'N';
+    const char &trans = 'T';
     const scalar_t &alpha = SCALAR_ONE;
     const scalar_t &beta = SCALAR_ZERO;
-    gemv(&trans, &r, &n, &alpha, V_->data(), &r, c, &INT_ONE, &beta, j->data(),
+    gemv(&trans, &n, &r, &alpha, V_->data(), &n, c, &INT_ONE, &beta, j->data(),
          &INT_ONE);
   }
 
-  // orthogonal complement: q[n] = (c[n] - V[rxn].T * j[r]).normalized()
-  //                        l    = (c[n] - V[rxn].T * j[r]).norm()
+  // orthogonal complement: q[n] = (c[n] - V[nxr] * j[r]).normalized()
+  //                        l    = (c[n] - V[nxr] * j[r]).norm()
   Vector<scalar_t> *q = MemoryManager::safe_new<Vector<scalar_t>>(n);
   {
     copy(&n, c, &INT_ONE, q->data(), &INT_ONE);
 
-    const char &trans = 'T';
+    const char &trans = 'N';
     const scalar_t &alpha = -SCALAR_ONE;
     const scalar_t &beta = SCALAR_ONE;
-    gemv(&trans, &r, &n, &alpha, V_->data(), &r, j->data(), &INT_ONE, &beta,
+    gemv(&trans, &n, &r, &alpha, V_->data(), &n, j->data(), &INT_ONE, &beta,
          q->data(), &INT_ONE);
   }
   const scalar_t l = nrm2(&n, q->data(), &INT_ONE);
@@ -382,16 +372,13 @@ void ISVD<scalar_t>::addSingleRowNaive(const scalar_t *c, scalar_t tolerance) {
   }
   *(S1->data() + (r + 1) * (r + 1) - 1) = l;
 
-  // assemble V1[(r+1)xn] = [ V[rxn] ]
-  //                        [ q[1xn]  ]
-  Matrix<scalar_t> *V1 = MemoryManager::safe_new<Matrix<scalar_t>>(r + 1, n);
-  for (int j = 0; j < n; ++j) {
-    copy(&r, V_->data() + j * r, &INT_ONE, V1->data() + j * (r + 1), &INT_ONE);
-  }
+  // assemble V1[nx(r+1)] = [ V[nxr] q[nx1] ]
+  Matrix<scalar_t> *V1 = MemoryManager::safe_new<Matrix<scalar_t>>(n, r + 1);
   {
-    const int &incr = r + 1;
-    copy(&n, q->data(), &INT_ONE, V1->data() + r, &incr);
+    const int nelm = n * r;
+    copy(&nelm, V_->data(), &INT_ONE, V1->data(), &INT_ONE);
   }
+  copy(&n, q->data(), &INT_ONE, V1->data() + n * r, &INT_ONE);
 
   // SVD: S1 = U2 * diag(s2) * V2
   const scalar_t c_norm = nrm2(&n, c, &INT_ONE);
@@ -410,11 +397,19 @@ void ISVD<scalar_t>::addSingleRowNaive(const scalar_t *c, scalar_t tolerance) {
   U_ = MemoryManager::safe_new<Matrix<scalar_t>>(m + 1, r_new);
 
   if (r_new != r) {
+    const int ndim = V_->N();
+
+    SizeArray size(ndim);
+    for (int d = 0; d < ndim - 1; ++d) {
+      size[d] = V_->size(d);
+    }
+    size[ndim - 1] = r_new;
+
     MemoryManager::safe_delete(V_);
-    V_ = MemoryManager::safe_new<Matrix<scalar_t>>(r_new, n);
+    V_ = MemoryManager::safe_new<Tensor<scalar_t>>(size);
   }
 
-  // U[(m+p)xr_new] = U1[(m+p)x(r+p)] * U2[(r+p)xr_new]
+  // U[(m+1)xr_new] = U1[(m+1)x(r+1)] * U2[(r+1)xr_new]
   {
     const char transa = 'N';
     const char transb = 'N';
@@ -430,17 +425,17 @@ void ISVD<scalar_t>::addSingleRowNaive(const scalar_t *c, scalar_t tolerance) {
   // s[r_new] = s2[r_new]
   std::swap(s_, s2);
 
-  // V[r_newxn] = V2[r_newx(r+s)] * V1[(r+s)xn]
+  // V[nxr_new] = V1[nx(r+1)] * V2[r_newx(r+1)].T
   {
     const char transa = 'N';
-    const char transb = 'N';
-    const int &m_new = r_new;
-    const int &n_new = n;
+    const char transb = 'T';
+    const int &m_new = n;
+    const int &n_new = r_new;
     const int k_new = r + 1;
     const scalar_t &alpha = SCALAR_ONE;
     const scalar_t &beta = SCALAR_ZERO;
-    gemm(&transa, &transb, &m_new, &n_new, &k_new, &alpha, V2->data(), &m_new,
-         V1->data(), &k_new, &beta, V_->data(), &m_new);
+    gemm(&transa, &transb, &m_new, &n_new, &k_new, &alpha, V1->data(), &m_new,
+         V2->data(), &n_new, &beta, V_->data(), &m_new);
   }
 
   // update norm estimates
