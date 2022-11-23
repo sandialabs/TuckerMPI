@@ -287,8 +287,34 @@ void ISVD<scalar_t>::initializeFactors(const Matrix<scalar_t> *U,
 }
 
 template <class scalar_t>
-void updateRightSingularVectors(int k, const Matrix<scalar_t> *U_new,
-                                const Matrix<scalar_t> *U_old) {}
+void ISVD<scalar_t>::updateRightSingularVectors(int k,
+                                                const Matrix<scalar_t> *U_new,
+                                                const Matrix<scalar_t> *U_old) {
+  const int n = U_new->nrows();
+  const int r_new = U_new->ncols();
+  const int r_old = U_old->ncols();
+
+  if (U_old->nrows() != n) {
+    throw std::invalid_argument(
+        "old and new basis matrices must have the same number of rows");
+  }
+
+  Matrix<scalar_t> *M = MemoryManager::safe_new<Matrix<scalar_t>>(r_new, r_old);
+  {
+    const char &transa = 'T';
+    const char &transb = 'N';
+    const scalar_t &alpha = static_cast<scalar_t>(1);
+    const scalar_t &beta = static_cast<scalar_t>(0);
+    gemm(&transa, &transb, &r_new, &r_old, &n, &alpha, U_new->data(), &n,
+         U_old->data(), &n, &beta, M->data(), &r_new);
+  }
+
+  Tensor<scalar_t> *V_new = ttm(V_, k, M, /* trans = */ false);
+  std::swap(V_, V_new);
+
+  MemoryManager::safe_delete(M);
+  MemoryManager::safe_delete(V_new);
+}
 
 template <class scalar_t>
 void ISVD<scalar_t>::updateFactorsWithNewSlice(const Tensor<scalar_t> *Y,

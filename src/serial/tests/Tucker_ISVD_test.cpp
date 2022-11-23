@@ -133,6 +133,47 @@ bool testInitializeFactors() {
   return success;
 }
 
+bool testUpdateRightSingularVectors() {
+  bool success = true;
+
+  const int m = 100;
+  const int n = 10;
+  const scalar_t dt = 1;
+  const scalar_t t_cut = 50;
+  const int k_max = 5;
+  const scalar_t tolerance = 1.0e-2;
+
+  Tucker::Matrix<scalar_t> *A =
+      Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(m, n);
+
+  DataSource data_source(m, dt, t_cut, k_max);
+  data_source.constructInitialMatrix(n, A);
+
+  Tucker::Matrix<scalar_t> *G = Tucker::computeGram(A, 1);
+
+  scalar_t *s;
+  Tucker::Matrix<scalar_t> *U;
+  const scalar_t thresh = tolerance * std::sqrt(A->norm2());
+  Tucker::computeEigenpairs(G, s, U, thresh);
+
+  for (int j = 0; j < U->ncols(); ++j) {
+    s[j] = std::sqrt(s[j]);
+  }
+
+  Tucker::ISVD<scalar_t> isvd;
+  isvd.initializeFactors(U, s, A);
+
+  // TODO: write better test
+  isvd.updateRightSingularVectors(0, U, U);
+
+  Tucker::MemoryManager::safe_delete(A);
+  Tucker::MemoryManager::safe_delete(G);
+  Tucker::MemoryManager::safe_delete_array(s, n);
+  Tucker::MemoryManager::safe_delete(U);
+
+  return success;
+}
+
 bool testUpdateFactors() {
   bool success = true;
 
