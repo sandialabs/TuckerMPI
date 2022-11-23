@@ -67,7 +67,7 @@ void updateStreamingGram(Matrix<scalar_t>* Gram, const Tensor<scalar_t>* Y, cons
 }
 
 template <class scalar_t>
-void updateCore(Tensor<scalar_t>* G, const Matrix<scalar_t>* U_old, 
+Tensor<scalar_t>* updateCore(Tensor<scalar_t>* G, const Matrix<scalar_t>* U_old, 
     const Matrix<scalar_t>* U_new, const int dim)
 {
 
@@ -96,12 +96,10 @@ void updateCore(Tensor<scalar_t>* G, const Matrix<scalar_t>* U_old,
   G = temp;
   */
  
-  // TO DO: Someone should vet this in-place update of G via ttm
-  // The commented pattern above is what's apparently in STHOSVD
-  // but it's causing issues. 
-  G = ttm(G,dim,S,false);
+  Tensor<scalar_t>* ttm_result = ttm(G,dim,S,false);
 
   MemoryManager::safe_delete<Matrix<scalar_t>>(S);
+  return ttm_result;
 }
 
 template <class scalar_t>
@@ -123,17 +121,21 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
     (*slice_dims)[n] = X->size(n); 
   }
 
-  //Create an object for the Tensor slice
-  Tucker::Tensor<scalar_t>* Y = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*slice_dims); 
-
   //Open the file containing names of stream of snapshot files
   //Loop over, read each snapshot, update the Tucker model
   std::ifstream inStream(filename);
   std::string snapshot_file;
-
+  
   while(inStream >> snapshot_file) {
+
+    //Create an object for the Tensor slice
+    Tucker::Tensor<scalar_t>* Y = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*slice_dims);
+
     std::cout<< "Reading snapshot " << snapshot_file << std::endl;
     importTensorBinary(Y,snapshot_file.c_str());
+
+    // Update epsilon
+    thresh += epsilon*epsilon*Y->norm2()/ndims;
 
     // Update Gram of non-streaming modes
     for(int n=0; n<ndims-1; n++) {
@@ -143,13 +145,23 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
     // Allocate memory for the new bases (factor matrices) along all modes
     Matrix<scalar_t>** U_new = MemoryManager::safe_new_array<Matrix<scalar_t>*>(ndims);
 
-    // Update the bases (factor matrices) of non-streaming modes
+    Tensor<scalar_t>* core = factorization->factorization->G;
+
+    // Loop over non-streaming modes
     for(int n=0; n<ndims-1; n++) {
+      // Update bases (factor matrices)
       computeEigenpairs(factorization->Gram[n], factorization->factorization->eigenvalues[n],
           U_new[n], thresh, flipSign);
-
-      updateCore(factorization->factorization->G, factorization->factorization->U[n], U_new[n], n);
+      // Accumulate ttm products into existing core
+      Tensor<scalar_t>* temp = updateCore(core, factorization->factorization->U[n], U_new[n], n);
+      MemoryManager::safe_delete<Tensor<scalar_t>>(core);
+      core = temp;
+      // Accumulate ttm products into new slice
+      Tensor<scalar_t>* temp2 = ttm(Y,n,U_new[n],true);
+      MemoryManager::safe_delete<Tensor<scalar_t>>(Y);
+      Y = temp2;
     }
+    factorization->factorization->G = core;
 
     // For the streaming mode initialize ISVD with full set of left singular vectors 
     //int numRows = X->size(ndims - 1);
@@ -177,6 +189,7 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
       factorization->factorization->U[n] = U_new[n];
     }
 
+    Tucker::MemoryManager::safe_delete<Tucker::Tensor<scalar_t>>(Y);
   }
 
   //Close the file containing snapshot filenames
@@ -186,18 +199,17 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
   //Free memory
   //
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(slice_dims);
-  Tucker::MemoryManager::safe_delete<Tucker::Tensor<scalar_t>>(Y);
 
   return factorization;
 }
 
 template void updateStreamingGram(Matrix<float>*, const Tensor<float>*, const int);
-template void updateCore(Tensor<float>*, const Matrix<float>*, const Matrix<float>*, const int);
+template Tensor<float>* updateCore(Tensor<float>*, const Matrix<float>*, const Matrix<float>*, const int);
 template const struct StreamingTuckerTensor<float>* StreamingHOSVD(const Tensor<float>*, const TuckerTensor<float>*, 
              const char* filename, const float, bool, bool);
 
 template void updateStreamingGram(Matrix<double>*, const Tensor<double>*, const int);
-template void updateCore(Tensor<double>*, const Matrix<double>*, const Matrix<double>*, const int);
+template Tensor<double>* updateCore(Tensor<double>*, const Matrix<double>*, const Matrix<double>*, const int);
 template const struct StreamingTuckerTensor<double>* StreamingHOSVD(const Tensor<double>*, const TuckerTensor<double>*,
              const char* filename, const double, bool, bool);
 

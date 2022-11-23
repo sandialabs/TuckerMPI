@@ -135,7 +135,7 @@ template <class scalar_t>
 void updateStreamingGram(Matrix<scalar_t>* Gram, const Tensor<scalar_t>* Y, const int n=-1);
 
 template <class scalar_t>
-void updateCore(Tensor<scalar_t>* G, const Matrix<scalar_t>* U_old,
+Tensor<scalar_t>* updateCore(Tensor<scalar_t>* G, const Matrix<scalar_t>* U_old,
     const Matrix<scalar_t>* U_new, const int dim=-1);
 
 template <class scalar_t>
