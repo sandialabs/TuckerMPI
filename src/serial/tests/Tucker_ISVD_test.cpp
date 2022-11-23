@@ -1,6 +1,8 @@
 #include "Tucker_ISVD.hpp"
 
 #include <cmath>
+#include <iomanip>
+#include <iostream>
 #include <limits>
 
 #include "Tucker.hpp"
@@ -140,7 +142,7 @@ bool testUpdateFactors() {
   const scalar_t dt = 1.0e-01;
   const scalar_t t_cut = 50;
   const int k_max = 5;
-  const scalar_t tolerance = 1.0e-02;
+  const scalar_t tolerance = 1.0e-01;
 
   Tucker::Matrix<scalar_t> *A =
       Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(m, n_init);
@@ -166,6 +168,14 @@ bool testUpdateFactors() {
     success = false;
   }
 
+  std::cout << std::setw(6) << isvd.nrows() << " " << std::flush;
+  std::cout << std::setw(6) << isvd.rank() << " " << std::flush;
+  std::cout << std::scientific;
+  std::cout << std::setw(12) << std::setprecision(6)
+            << isvd.getRelativeErrorEstimate() << " " << std::flush;
+  std::cout << std::defaultfloat;
+  std::cout << std::endl;
+
   Tucker::Vector<scalar_t> *v =
       Tucker::MemoryManager::safe_new<Tucker::Vector<scalar_t>>(m);
 
@@ -176,6 +186,15 @@ bool testUpdateFactors() {
       std::cout << "failed: factor update error constraint" << std::endl;
       success = false;
       break;
+    }
+    if ((j + 1) % 100 == 0) {
+      std::cout << std::setw(6) << isvd.nrows() << " " << std::flush;
+      std::cout << std::setw(6) << isvd.rank() << " " << std::flush;
+      std::cout << std::scientific;
+      std::cout << std::setw(12) << std::setprecision(6)
+                << isvd.getRelativeErrorEstimate() << " " << std::flush;
+      std::cout << std::defaultfloat;
+      std::cout << std::endl;
     }
   }
 
