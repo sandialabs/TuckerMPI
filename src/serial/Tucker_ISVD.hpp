@@ -21,7 +21,7 @@ namespace Tucker {
  */
 template <class scalar_t>
 class ISVD {
- public:
+public:
   /**
    * @brief Default constructor
    */
@@ -38,7 +38,10 @@ class ISVD {
    * @exception std::runtime_error If the ISVD factors are not initialized/null
    *                               pointers
    */
-  int nrows() const;
+  int nrows() const {
+    checkIsAllocated();
+    return U_->nrows();
+  }
 
   /**
    * @brief Number of columns in ISVD factorization
@@ -46,7 +49,10 @@ class ISVD {
    * @exception std::runtime_error If the ISVD factors are not initialized/null
    *                               pointers
    */
-  int ncols() const;
+  int ncols() const {
+    checkIsAllocated();
+    return V_->ncols();
+  }
 
   /**
    * @brief Rank of ISVD factorization
@@ -54,24 +60,58 @@ class ISVD {
    * @exception std::runtime_error If the ISVD factors are not
    * initialized/null pointers
    */
-  int rank() const;
+  int rank() const {
+    checkIsAllocated();
+    return s_->nrows();
+  }
+
+  /**
+   * @brief Constant pointer to singular values
+   */
+  const Vector<scalar_t> *getSingularValues() const {
+    checkIsAllocated();
+    return s_;
+  }
 
   /**
    * @brief Constant pointer to left singular vectors
    */
-  const Matrix<scalar_t> *getLeftSingularVectors() const { return U_; }
+  const Matrix<scalar_t> *getLeftSingularVectors() const {
+    checkIsAllocated();
+    return U_;
+  }
+
+  /**
+   * @brief Constant pointer to right singular vectors
+   */
+  const Matrix<scalar_t> *getRightSingularVectors() const {
+    checkIsAllocated();
+    return V_;
+  }
+
+  /**
+   * @brief Orthogonality error for left singular vectors
+   */
+  scalar_t getLeftSingularVectorsError() const;
+
+  /**
+   * @brief Orthogonality error for right singular vectors
+   */
+  scalar_t getRightSingularVectorsError() const;
 
   /**
    * @brief Absolute error estimate of approximation w.r.t. Frobenius norm
    */
-  scalar_t absoluteErrorEstimate() const {
+  scalar_t getAbsoluteErrorEstimate() const {
+    checkIsAllocated();
     return std::sqrt(squared_frobenius_norm_error_);
   }
 
   /**
    * @brief Relative error estimate of approximation w.r.t. Frobenius norm
    */
-  scalar_t relativeErrorEstimate() const {
+  scalar_t getRelativeErrorEstimate() const {
+    checkIsAllocated();
     return std::sqrt(squared_frobenius_norm_error_ /
                      squared_frobenius_norm_data_);
   }
@@ -87,26 +127,6 @@ class ISVD {
    */
   void initializeFactors(const Matrix<scalar_t> *U, const scalar_t *s,
                          const Tensor<scalar_t> *X);
-
-  /**
-   * @brief Initialize ISVD
-   *
-   * @param[in] U Pointer to left singular vectors; column major matrix with
-   *              orthonormal columns
-   * @param[in] s Pointer to singular values array; memory in the range [s, s +
-   *              U->ncols()) will be accessed
-   * @param[in] Vt Pointer to right singular vectors (transposed); column major
-   *               with U->ncols() orothonormal rows
-   * @param[in] squared_frobenius_norm_data Squared Frobenius norm of the data
-   *                                        from which initial SVD was computed
-   * @param[in] squared_frobenius_norm_error Squared Frobenius norm of the
-   *                                         approximation error of the initial
-   *                                         SVD
-   */
-  void initializeFactors(const Matrix<scalar_t> *U, const scalar_t *s,
-                         const Matrix<scalar_t> *Vt,
-                         scalar_t squared_frobenius_norm_data,
-                         scalar_t squared_frobenius_norm_error);
 
   /**
    * @brief Update right singular vectors corresponding to Tuker core updates
@@ -127,10 +147,17 @@ class ISVD {
    */
   void updateFactorsWithNewSlice(const Tensor<scalar_t> *Y, scalar_t tolerance);
 
- private:
-  Matrix<scalar_t> *U_;  /**< Pointer to left singular vectors */
-  Vector<scalar_t> *s_;  /**< Pointer to singular values */
-  Matrix<scalar_t> *Vt_; /**< Pointer to right singular vectors */
+private:
+  /**
+   * @brief Check if ISVD object is initialized
+   */
+  void checkIsAllocated() const;
+
+private:
+  bool is_allocated_;   /**< Flag specifying if memory is allocated */
+  Matrix<scalar_t> *U_; /**< Pointer to left singular vectors */
+  Vector<scalar_t> *s_; /**< Pointer to singular values */
+  Matrix<scalar_t> *V_; /**< Pointer to right singular vectors */
   scalar_t squared_frobenius_norm_data_;  /**< Frobenius norm of data */
   scalar_t squared_frobenius_norm_error_; /**< Frobenius norm of error */
 };
