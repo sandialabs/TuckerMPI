@@ -82,6 +82,8 @@ private:
 };
 
 bool testInitializeFactors() {
+  bool success = true;
+
   const int m = 100;
   const int n = 10;
   const scalar_t dt = 1;
@@ -111,19 +113,19 @@ bool testInitializeFactors() {
 
   if (isvd.getRelativeErrorEstimate() >= tolerance) {
     std::cout << "failed: relative error estimate check" << std::endl;
-    return false;
+    success = false;
   }
 
   if (isvd.getRightSingularVectorsError() >=
       10 * std::numeric_limits<scalar_t>::epsilon()) {
     std::cout << "failed: right singular vectors orthogonality check" << std::endl;
-    return false;
+    success = false;
   }
 
   Tucker::MemoryManager::safe_delete(G);
   Tucker::MemoryManager::safe_delete(A);
 
-  return true;
+  return success;
 }
 
 int main() {
