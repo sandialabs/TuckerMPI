@@ -49,6 +49,9 @@ TARGET_LINK_LIBRARIES(Tucker_slice_test_file serial_tucker ${BLAS_LIBRARIES} ${L
 ADD_EXECUTABLE(Tucker_slice_test_nofile Tucker_slice_test_nofile.cpp)
 TARGET_LINK_LIBRARIES(Tucker_slice_test_nofile serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
+ADD_EXECUTABLE(Tucker_ISVD_test Tucker_ISVD_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_ISVD_test serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 # Single precision tests
 ADD_EXECUTABLE(Tucker_svd_test_single Tucker_svd_test.cpp)
 TARGET_LINK_LIBRARIES(Tucker_svd_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
@@ -98,13 +101,16 @@ TARGET_LINK_LIBRARIES(Tucker_slice_test_file_single serial_tucker ${BLAS_LIBRARI
 ADD_EXECUTABLE(Tucker_slice_test_nofile_single Tucker_slice_test_nofile.cpp)
 TARGET_LINK_LIBRARIES(Tucker_slice_test_nofile_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
+ADD_EXECUTABLE(Tucker_ISVD_test_single Tucker_ISVD_test.cpp)
+TARGET_LINK_LIBRARIES(Tucker_ISVD_test_single serial_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+
 # Use compile-time definition of TEST_SINGLE to specify precision
 SET_TARGET_PROPERTIES(
     Tucker_svd_test_single
     Tucker_LQ_edgecase_test_single
     Tucker_LQ_test_single
     Tucker_IO_test_single
-    Tucker_shift_scale_test_single 
+    Tucker_shift_scale_test_single
     Tucker_eig_test_single
     Tucker_norm_test_single
     Tucker_normalize_test_single
@@ -116,7 +122,8 @@ SET_TARGET_PROPERTIES(
     Tucker_ttm_test_nofile_single
     Tucker_slice_test_file_single
     Tucker_slice_test_nofile_single
-    PROPERTIES 
+    Tucker_ISVD_test_single
+    PROPERTIES
         COMPILE_DEFINITIONS TEST_SINGLE)
 
 ENABLE_TESTING()
@@ -153,6 +160,8 @@ ADD_TEST(Tucker_serial_slice_test_file ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_
 ADD_TEST(Tucker_serial_slice_test_file_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_slice_test_file_single)
 ADD_TEST(Tucker_serial_slice_test_nofile ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_slice_test_nofile)
 ADD_TEST(Tucker_serial_slice_test_nofile_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_slice_test_nofile_single)
+ADD_TEST(Tucker_serial_ISVD_test ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_ISVD_test)
+ADD_TEST(Tucker_serial_ISVD_test_single ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE_OUTPUT_PATH}/Tucker_ISVD_test_single)
 
 
 SET_PROPERTY(TEST Tucker_noscale_fullrec_test PROPERTY LABELS SystemTest LongTest)
@@ -169,6 +178,7 @@ SET_PROPERTY(TEST Tucker_serial_ttm_test_file Tucker_serial_ttm_test_file_single
 SET_PROPERTY(TEST Tucker_serial_ttm_test_nofile Tucker_serial_ttm_test_nofile_single PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST Tucker_serial_slice_test_file Tucker_serial_slice_test_file_single PROPERTY LABELS UnitTest)
 SET_PROPERTY(TEST Tucker_serial_slice_test_nofile Tucker_serial_slice_test_nofile_single PROPERTY LABELS UnitTest)
+SET_PROPERTY(TEST Tucker_serial_ISVD_test Tucker_serial_ISVD_test_single PROPERTY LABELS UnitTest)
 
 FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/input_files)
 FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/output_files)
