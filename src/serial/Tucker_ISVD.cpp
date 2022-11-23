@@ -302,13 +302,162 @@ void updateRightSingularVectors(int k, const Matrix<scalar_t> *U_new,
 
 template <class scalar_t>
 void ISVD<scalar_t>::updateFactorsWithNewSlice(const Tensor<scalar_t> *Y,
-                                               scalar_t tolerance) {}
+                                               scalar_t tolerance) {
+  addSingleRowNaive(Y->data(), tolerance);
+}
 
 template <class scalar_t>
 void ISVD<scalar_t>::checkIsAllocated() const {
   if (!is_allocated_) {
     throw std::runtime_error("ISVD object is not initialized");
   }
+}
+
+template <class scalar_t>
+void ISVD<scalar_t>::addSingleRowNaive(const scalar_t *c, scalar_t tolerance) {
+  const scalar_t SCALAR_ZERO = static_cast<scalar_t>(0);
+  const scalar_t SCALAR_ONE = static_cast<scalar_t>(1);
+
+  // matrix sizes
+  const int m = nrows();
+  const int n = ncols();
+  const int r = rank();
+
+  // projection: j[r] = V[rxn] * c[n]
+  Vector<scalar_t> *j = MemoryManager::safe_new<Vector<scalar_t>>(r);
+  {
+    const char &trans = 'N';
+    const scalar_t &alpha = SCALAR_ONE;
+    const scalar_t &beta = SCALAR_ZERO;
+    gemv(&trans, &r, &n, &alpha, V_->data(), &r, c, &INT_ONE, &beta, j->data(),
+         &INT_ONE);
+  }
+
+  // orthogonal complement: q[n] = (c[n] - V[rxn].T * j[r]).normalized()
+  //                        l    = (c[n] - V[rxn].T * j[r]).norm()
+  Vector<scalar_t> *q = MemoryManager::safe_new<Vector<scalar_t>>(n);
+  {
+    copy(&n, c, &INT_ONE, q->data(), &INT_ONE);
+
+    const char &trans = 'T';
+    const scalar_t &alpha = -SCALAR_ONE;
+    const scalar_t &beta = SCALAR_ONE;
+    gemv(&trans, &r, &n, &alpha, V_->data(), &r, j->data(), &INT_ONE, &beta,
+         q->data(), &INT_ONE);
+  }
+  const scalar_t l = nrm2(&n, q->data(), &INT_ONE);
+  {
+    const scalar_t &alpha = SCALAR_ONE / l;
+    scal(&n, &alpha, q->data(), &INT_ONE);
+  }
+
+  // assemble U1[(m+1)x(r+1)] = [ U[mxr] 0[mx1] ]
+  //                            [ 0[1xr] I[1x1] ]
+  Matrix<scalar_t> *U1 =
+      MemoryManager::safe_new<Matrix<scalar_t>>(m + 1, r + 1);
+  for (int j = 0; j < r; ++j) {
+    copy(&m, U_->data() + j * m, &INT_ONE, U1->data() + j * (m + 1), &INT_ONE);
+  }
+  {
+    const int &incr = m + 1;
+    copy(&r, &SCALAR_ZERO, &INT_ZERO, U1->data() + m, &incr);
+  }
+  copy(&m, &SCALAR_ZERO, &INT_ZERO, U1->data() + (m + 1) * r, &INT_ONE);
+  *(U1->data() + (m + 1) * (r + 1) - 1) = SCALAR_ONE;
+
+  // assemble S1[(r+1)x(r+1)] = [ S[rxr] 0[rx1] ]
+  //                            [ J[1xr] L[1x1] ]
+  Matrix<scalar_t> *S1 =
+      MemoryManager::safe_new<Matrix<scalar_t>>(r + 1, r + 1);
+  for (int j = 0; j <= r; ++j) {
+    copy(&r, &SCALAR_ZERO, &INT_ZERO, S1->data() + j * (r + 1), &INT_ONE);
+  }
+  {
+    const int incr = r + 2;
+    copy(&r, s_->data(), &INT_ONE, S1->data(), &incr);
+  }
+  {
+    const int incr = r + 1;
+    copy(&r, j->data(), &INT_ONE, S1->data() + r, &incr);
+  }
+  *(S1->data() + (r + 1) * (r + 1) - 1) = l;
+
+  // assemble V1[(r+1)xn] = [ V[rxn] ]
+  //                        [ q[1xn]  ]
+  Matrix<scalar_t> *V1 = MemoryManager::safe_new<Matrix<scalar_t>>(r + 1, n);
+  for (int j = 0; j < n; ++j) {
+    copy(&r, V_->data() + j * r, &INT_ONE, V1->data() + j * (r + 1), &INT_ONE);
+  }
+  {
+    const int &incr = r + 1;
+    copy(&n, q->data(), &INT_ONE, V1->data() + r, &incr);
+  }
+
+  // SVD: S1 = U2 * diag(s2) * V2
+  const scalar_t c_norm = nrm2(&n, c, &INT_ONE);
+
+  Matrix<scalar_t> *U2 = nullptr;
+  Vector<scalar_t> *s2 = nullptr;
+  Matrix<scalar_t> *V2 = nullptr;
+  scalar_t new_squared_frobenius_norm_error;
+  truncatedSvd(S1, tolerance * c_norm, SCALAR_ZERO, &U2, &s2, &V2,
+               new_squared_frobenius_norm_error);
+
+  // memory allocation for update
+  const int r_new = s2->nrows();
+
+  MemoryManager::safe_delete(U_);
+  U_ = MemoryManager::safe_new<Matrix<scalar_t>>(m + 1, r_new);
+
+  if (r_new != r) {
+    MemoryManager::safe_delete(V_);
+    V_ = MemoryManager::safe_new<Matrix<scalar_t>>(r_new, n);
+  }
+
+  // U[(m+p)xr_new] = U1[(m+p)x(r+p)] * U2[(r+p)xr_new]
+  {
+    const char transa = 'N';
+    const char transb = 'N';
+    const int m_new = m + 1;
+    const int &n_new = r_new;
+    const int k_new = r + 1;
+    const scalar_t &alpha = SCALAR_ONE;
+    const scalar_t &beta = SCALAR_ZERO;
+    gemm(&transa, &transb, &m_new, &n_new, &k_new, &alpha, U1->data(), &m_new,
+         U2->data(), &k_new, &beta, U_->data(), &m_new);
+  }
+
+  // s[r_new] = s2[r_new]
+  std::swap(s_, s2);
+
+  // V[r_newxn] = V2[r_newx(r+s)] * V1[(r+s)xn]
+  {
+    const char transa = 'N';
+    const char transb = 'N';
+    const int &m_new = r_new;
+    const int &n_new = n;
+    const int k_new = r + 1;
+    const scalar_t &alpha = SCALAR_ONE;
+    const scalar_t &beta = SCALAR_ZERO;
+    gemm(&transa, &transb, &m_new, &n_new, &k_new, &alpha, V2->data(), &m_new,
+         V1->data(), &k_new, &beta, V_->data(), &m_new);
+  }
+
+  // update norm estimates
+  squared_frobenius_norm_data_ += c_norm * c_norm;
+  squared_frobenius_norm_error_ += new_squared_frobenius_norm_error;
+
+  // deallocate temporary variables
+  MemoryManager::safe_delete(j);
+  MemoryManager::safe_delete(q);
+
+  MemoryManager::safe_delete(U1);
+  MemoryManager::safe_delete(S1);
+  MemoryManager::safe_delete(V1);
+
+  MemoryManager::safe_delete(U2);
+  MemoryManager::safe_delete(s2);
+  MemoryManager::safe_delete(V2);
 }
 
 template class ISVD<float>;

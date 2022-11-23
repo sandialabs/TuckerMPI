@@ -153,6 +153,11 @@ private:
    */
   void checkIsAllocated() const;
 
+  /**
+   * @brief Update three-factor SVD given new rows
+   */
+  void addSingleRowNaive(const scalar_t *c, scalar_t tolerance);
+
 private:
   bool is_allocated_;   /**< Flag specifying if memory is allocated */
   Matrix<scalar_t> *U_; /**< Pointer to left singular vectors */

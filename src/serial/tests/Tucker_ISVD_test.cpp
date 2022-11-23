@@ -55,7 +55,7 @@ public:
     t_ = n * dt_;
   }
 
-  void constructSubsetquentVector(Tucker::Vector<scalar_t> *v) {
+  void constructNextVector(Tucker::Vector<scalar_t> *v) {
     t_ += dt_;
 
     for (int i = 0; i < m_; ++i) {
@@ -94,8 +94,8 @@ bool testInitializeFactors() {
   Tucker::Matrix<scalar_t> *A =
       Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(m, n);
 
-  DataSource data_source(n, dt, t_cut, k_max);
-  data_source.constructInitialMatrix(m, A);
+  DataSource data_source(m, dt, t_cut, k_max);
+  data_source.constructInitialMatrix(n, A);
 
   Tucker::Matrix<scalar_t> *G = Tucker::computeGram(A, 1);
 
@@ -118,20 +118,81 @@ bool testInitializeFactors() {
 
   if (isvd.getRightSingularVectorsError() >=
       10 * std::numeric_limits<scalar_t>::epsilon()) {
-    std::cout << "failed: right singular vectors orthogonality check" << std::endl;
+    std::cout << "failed: right singular vectors orthogonality check"
+              << std::endl;
     success = false;
   }
 
-  Tucker::MemoryManager::safe_delete(G);
   Tucker::MemoryManager::safe_delete(A);
+  Tucker::MemoryManager::safe_delete(G);
+  Tucker::MemoryManager::safe_delete_array(s, n);
+  Tucker::MemoryManager::safe_delete(U);
+
+  return success;
+}
+
+bool testUpdateFactors() {
+  bool success = true;
+
+  const int m = 100;
+  const int n_init = 10;
+  const int n = 10000;
+  const scalar_t dt = 1.0e-01;
+  const scalar_t t_cut = 50;
+  const int k_max = 5;
+  const scalar_t tolerance = 1.0e-02;
+
+  Tucker::Matrix<scalar_t> *A =
+      Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(m, n_init);
+
+  DataSource data_source(m, dt, t_cut, k_max);
+  data_source.constructInitialMatrix(n_init, A);
+
+  Tucker::Matrix<scalar_t> *G = Tucker::computeGram(A, 1);
+
+  scalar_t *s;
+  Tucker::Matrix<scalar_t> *U;
+  const scalar_t thresh = tolerance * std::sqrt(A->norm2());
+  Tucker::computeEigenpairs(G, s, U, thresh);
+
+  for (int j = 0; j < U->ncols(); ++j) {
+    s[j] = std::sqrt(s[j]);
+  }
+
+  Tucker::ISVD<scalar_t> isvd;
+  isvd.initializeFactors(U, s, A);
+  if (isvd.getRelativeErrorEstimate() >= tolerance) {
+    std::cout << "failed: factor initialization error constraint" << std::endl;
+    success = false;
+  }
+
+  Tucker::Vector<scalar_t> *v =
+      Tucker::MemoryManager::safe_new<Tucker::Vector<scalar_t>>(m);
+
+  for (int j = n_init; j < n; ++j) {
+    data_source.constructNextVector(v);
+    isvd.updateFactorsWithNewSlice(v, tolerance);
+    if (isvd.getRelativeErrorEstimate() >= tolerance) {
+      std::cout << "failed: factor update error constraint" << std::endl;
+      success = false;
+      break;
+    }
+  }
+
+  Tucker::MemoryManager::safe_delete(A);
+  Tucker::MemoryManager::safe_delete(v);
+  Tucker::MemoryManager::safe_delete_array(s, n_init);
+  Tucker::MemoryManager::safe_delete(U);
+  Tucker::MemoryManager::safe_delete(G);
 
   return success;
 }
 
 int main() {
   bool test1 = testInitializeFactors();
+  bool test2 = testUpdateFactors();
 
-  if (test1) {
+  if (test1 && test2) {
     return EXIT_SUCCESS;
   }
 
