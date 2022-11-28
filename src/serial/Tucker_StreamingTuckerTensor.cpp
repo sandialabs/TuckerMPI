@@ -84,6 +84,10 @@ void computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scala
     throw std::runtime_error(oss.str());
   }
 
+  // TO-DO
+  // The Gram matrix is overwritten inside computeEigenpairs
+  // Make a copy of it, retain it for later use
+
   computeEigenpairs(G, eigenvalues, flipSign);
 
   // Compute projection of new eigenvectors along old eigenvectors
@@ -165,6 +169,13 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
   // Create a struct to store the factorization
   struct StreamingTuckerTensor<scalar_t>* factorization = MemoryManager::safe_new<StreamingTuckerTensor<scalar_t>>(initial_factorization);
 
+  // TO-DO
+  // Line 13 of Algo 2
+  // ---Construct ISVD object
+  ISVD<scalar_t>* iSVD = MemoryManager::safe_new<ISVD<scalar_t>>();
+  // ---isvd.initializeFactors()
+  iSVD->initializeFactors(factorization->factorization->G, factorization->factorization->U, factorization->factorization->S);
+
   int ndims = X->N();
   scalar_t tensorNorm = X->norm2();
   scalar_t thresh = epsilon*epsilon*tensorNorm/X->N();
@@ -189,10 +200,17 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
     std::cout<< "Reading snapshot " << snapshot_file << std::endl;
     importTensorBinary(Y,snapshot_file.c_str());
 
-    // Update epsilon
-    thresh += epsilon*epsilon*Y->norm2()/ndims;
+    // TO-DO
+    // Line 1 of Algo 3
+    // Set the thresh based on norm of only the new slice
+    thresh = epsilon*epsilon*Y->norm2()/ndims;
 
+    // TO-DO
+    // Line 4 of Algo-3
     // Update Gram of non-streaming modes
+    // Should the input be the original slice or the projected version??
+    // If latter, then this goes in the main n=0:ndims-1 loop below, since
+    // Y is updated in place (per line 15 of Algo-3)
     for(int n=0; n<ndims-1; n++) {
       updateStreamingGram(factorization->Gram[n], Y, n);
     }
@@ -204,31 +222,62 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
 
     // Loop over non-streaming modes
     for(int n=0; n<ndims-1; n++) {
+
+      // TO-DO
+      // Lines 5-13 of Algo-3
       // Update bases (factor matrices)
+      // This function is overloaded, implemented above (line ~79)
       computeEigenpairs(factorization->Gram[n], factorization->factorization->eigenvalues[n],
-          U_new[n], thresh, flipSign);
+          factorization->factorization->U[n], U_new[n], thresh, flipSign);
+
+      // TO-DO
+      // Saibal to check the code below correctly implements line 14 of Algo-3
       // Accumulate ttm products into existing core
       Tensor<scalar_t>* temp = updateCore(core, factorization->factorization->U[n], U_new[n], n);
       MemoryManager::safe_delete<Tensor<scalar_t>>(core);
       core = temp;
+
+      // TO-DO
+      // Saibal to check the code below correctly implements line 15 of Algo-3
       // Accumulate ttm products into new slice
       Tensor<scalar_t>* temp2 = ttm(Y,n,U_new[n],true);
       MemoryManager::safe_delete<Tensor<scalar_t>>(Y);
       Y = temp2;
-    }
-    factorization->factorization->G = core;
 
+      // TO-DO
+      // Line 16 of Algo-3
+      iSVD->updateRightSingularVectors(n, U_new[n], factorization->factorization->U[n]);
+    }
+
+    /* DEFUNCT CODE; CHECK AND DELETE
     // For the streaming mode initialize ISVD with full set of left singular vectors 
     Matrix<scalar_t>* gram_last_mode = computeGram(X,ndims-1);
     computeEigenpairs(gram_last_mode, factorization->factorization->eigenvalues[ndims-1],
-        U_new[ndims-1], 0.0 /* thresh */, flipSign);  
-   
-    ISVD<scalar_t>* iSVD = MemoryManager::safe_new<ISVD<scalar_t>>();
-    //
+        U_new[ndims-1], 0.0, flipSign);  
+    */
 
-    // TO DO
+    // TO-DO
+    // Line 19 of Algo-3
+    iSVD->updateFactorsWithNewSlice(Y, std::sqrt(thresh));
 
-    //
+    // TO-DO
+    // Lines 20-21 of Algo-3
+    U_new[ndims-1] = iSVD->getLeftSingularVectors();
+    
+
+    // TO-DO
+    // Lines 22-23 of Algo-3
+    // Split Unew[d] into two submatrices
+    // Use first submatrix to update core (line 22)
+    // Use second submatrix to update new slice in-place (line 23)
+
+    // TO-DO
+    // Line 24 of Algo-3
+    // Add updated core with in-place updated new slice
+    
+    // TO-DO
+    // Lines 25-26 of Algo-3
+    // Swap U_old with U_new 
     // Free memory
     //
     for (int n=0; n<ndims; n++) {
