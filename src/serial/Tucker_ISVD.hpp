@@ -128,6 +128,9 @@ public:
   void initializeFactors(const Matrix<scalar_t> *U, const scalar_t *s,
                          const Tensor<scalar_t> *X);
 
+  void initializeFactors(const Tensor<scalar_t> *C, const Matrix<scalar_t> **U,
+                         const scalar_t *s_streaming);
+
   /**
    * @brief Update right singular vectors corresponding to Tuker core updates
    *
