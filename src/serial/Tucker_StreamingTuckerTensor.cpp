@@ -67,32 +67,39 @@ void updateStreamingGram(Matrix<scalar_t>* Gram, const Tensor<scalar_t>* Y, cons
 }
 
 template<class scalar_t>
-void computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign)
+void computeEigenpairs(const Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign)
 {
   if(G == 0) {
-    throw std::runtime_error("Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign): G is a null pointer");
+    throw std::runtime_error("Tucker::computeEigenpairs(const Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign): G is a null pointer");
   }
   if(G->getNumElements() == 0) {
-    throw std::runtime_error("Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign): G has no entries");
+    throw std::runtime_error("Tucker::computeEigenpairs(const Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign): G has no entries");
   }
   if (old_eigenvectors == 0) {
-    throw std::runtime_error("Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign): old_eigenvectors is a null pointer");
+    throw std::runtime_error("Tucker::computeEigenpairs(const Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign): old_eigenvectors is a null pointer");
   }
   if(thresh < 0) {
     std::ostringstream oss;
-    oss << "Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign): thresh = " << thresh << " < 0";
+    oss << "Tucker::computeEigenpairs(const Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign): thresh = " << thresh << " < 0";
     throw std::runtime_error(oss.str());
   }
 
-  // TO-DO
+  // TO-DO - DONE
   // The Gram matrix is overwritten inside computeEigenpairs
   // Make a copy of it, retain it for later use
+  int nrows = G->nrows();
+  Matrix<scalar_t>* G_copy =
+      MemoryManager::safe_new<Matrix<scalar_t>>(nrows, nrows);
+  {
+    const int& nelem = nrows * nrows;
+    const int& ONE = 1;
+    copy(&nelem, G->data(), &ONE, G_copy->data(), &ONE);
+  }
 
-  computeEigenpairs(G, eigenvalues, flipSign);
+  computeEigenpairs(G_copy, eigenvalues, flipSign);
 
   // Compute projection of new eigenvectors along old eigenvectors
   int nproj = old_eigenvectors->ncols();
-  int nrows = G->nrows();
   Vector<scalar_t> *projection = MemoryManager::safe_new<Vector<scalar_t>>(nproj);
   Vector<scalar_t> *projectionNorms = MemoryManager::safe_new<Vector<scalar_t>>(nrows);
   for (int i = 0; i < nrows; ++i) {
@@ -100,7 +107,7 @@ void computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scala
     const char &trans = 'T';
     const scalar_t &alpha = 1;
     const scalar_t &beta = 0;
-    gemv(&trans, &nrows, &nproj, &alpha, old_eigenvectors->data(), &nrows, G->data() + i * nrows, &ONE, &beta, projection->data(), &ONE);
+    gemv(&trans, &nrows, &nproj, &alpha, old_eigenvectors->data(), &nrows, G_copy->data() + i * nrows, &ONE, &beta, projection->data(), &ONE);
     (*projectionNorms)[i] = nrm2(&nproj, projection->data(), &ONE);
   }
   MemoryManager::safe_delete(projection);
@@ -128,7 +135,8 @@ void computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scala
   // Copy appropriate eigenvectors
   int nToCopy = numRows*numEvecs;
   const int ONE = 1;
-  Tucker::copy(&nToCopy, G->data(), &ONE, eigenvectors->data(), &ONE);
+  Tucker::copy(&nToCopy, G_copy->data(), &ONE, eigenvectors->data(), &ONE);
+  MemoryManager::safe_delete(G_copy);
 }
 
 template <class scalar_t>
