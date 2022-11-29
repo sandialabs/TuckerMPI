@@ -13,6 +13,7 @@
 #include "Tucker_Matrix.hpp"
 #include "Tucker_Tensor.hpp"
 #include "Tucker_Vector.hpp"
+#include "Tucker_TuckerTensor.hpp"
 
 namespace Tucker {
 
@@ -74,6 +75,14 @@ public:
   }
 
   /**
+   * @brief Pointer to singular values
+   */
+  Vector<scalar_t> *getSingularValues() {
+    checkIsAllocated();
+    return s_;
+  }
+
+  /**
    * @brief Constant pointer to left singular vectors
    */
   const Matrix<scalar_t> *getLeftSingularVectors() const {
@@ -82,9 +91,25 @@ public:
   }
 
   /**
+   * @brief Pointer to left singular vectors
+   */
+  Matrix<scalar_t> *getLeftSingularVectors() {
+    checkIsAllocated();
+    return U_;
+  }
+
+  /**
    * @brief Constant pointer to right singular vectors
    */
   const Tensor<scalar_t> *getRightSingularVectors() const {
+    checkIsAllocated();
+    return V_;
+  }
+
+  /**
+   * @brief Pointer to right singular vectors
+   */
+  Tensor<scalar_t> *getRightSingularVectors() {
     checkIsAllocated();
     return V_;
   }
@@ -128,8 +153,12 @@ public:
   void initializeFactors(const Matrix<scalar_t> *U, const scalar_t *s,
                          const Tensor<scalar_t> *X);
 
-  void initializeFactors(const Tensor<scalar_t> *C, const Matrix<scalar_t> **U,
-                         const scalar_t *s_streaming);
+  /**
+   * @brief Initialize ISVD for last mode of tensor in Tucker format
+   *
+   * @param[in] X TuckerTensor
+   */
+  void initializeFactors(const TuckerTensor<scalar_t> *X);
 
   /**
    * @brief Update right singular vectors corresponding to Tuker core updates

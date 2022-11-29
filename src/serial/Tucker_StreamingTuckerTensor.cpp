@@ -174,7 +174,7 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
   // ---Construct ISVD object
   ISVD<scalar_t>* iSVD = MemoryManager::safe_new<ISVD<scalar_t>>();
   // ---isvd.initializeFactors()
-  iSVD->initializeFactors(factorization->factorization->G, factorization->factorization->U, factorization->factorization->S);
+  iSVD->initializeFactors(factorization->factorization);
 
   int ndims = X->N();
   scalar_t tensorNorm = X->norm2();

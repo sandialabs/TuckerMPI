@@ -293,6 +293,62 @@ void ISVD<scalar_t>::initializeFactors(const Matrix<scalar_t> *U,
 }
 
 template <class scalar_t>
+void ISVD<scalar_t>::initializeFactors(const TuckerTensor<scalar_t> *X) {
+  if (is_allocated_) {
+    MemoryManager::safe_delete(U_);
+    MemoryManager::safe_delete(s_);
+    MemoryManager::safe_delete(V_);
+  }
+
+  const std::string method_signature =
+      "Tucker::ISVD<scalar_t>::initializeFactors(const "
+      "Tucker::TuckerTensor<scalar_t> *X)";
+
+  if (X == nullptr) {
+    throw std::invalid_argument(method_signature +
+                                " - pointer to Tucker tensor X cannot be null");
+  }
+
+  const Tensor<scalar_t> *G = X->G;
+  const Matrix<scalar_t> *const *U = X->U;
+  const scalar_t *const *s = X->singularValues;
+
+  const int &ndim = G->N();
+  const SizeArray &size = G->size();
+
+  const int &d = ndim - 1;
+  const int &I_d = U[d]->nrows();
+  const int &R_d = U[d]->ncols();
+
+  is_allocated_ = true;
+
+  U_ = MemoryManager::safe_new<Matrix<scalar_t>>(I_d, R_d);
+  {
+    const int &nelm = I_d * R_d;
+    copy(&nelm, U[d]->data(), &INT_ONE, U_->data(), &INT_ONE);
+  }
+
+  s_ = MemoryManager::safe_new<Vector<scalar_t>>(R_d);
+  copy(&R_d, s[d], &INT_ONE, s_->data(), &INT_ONE);
+
+  V_ = MemoryManager::safe_new<Tensor<scalar_t>>(size);
+  {
+    const int &nelm = size.prod();
+    copy(&nelm, G->data(), &INT_ONE, V_->data(), &INT_ONE);
+
+    const int &ncol = size.prod(0, d - 1, 1);
+    for (int j = 0; j < R_d; ++j) {
+      const scalar_t &alpha = 1 / (*s_)[j];
+      scal(&ncol, &alpha, V_->data() + ncol * j, &INT_ONE);
+    }
+  }
+
+  // TODO - Fix
+  squared_frobenius_norm_data_ = G->norm2();
+  squared_frobenius_norm_error_ = static_cast<scalar_t>(0);
+}
+
+template <class scalar_t>
 void ISVD<scalar_t>::updateRightSingularVectors(int k,
                                                 const Matrix<scalar_t> *U_new,
                                                 const Matrix<scalar_t> *U_old) {
