@@ -213,16 +213,6 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
     // Set the thresh based on norm of only the new slice
     thresh = epsilon*epsilon*Y->norm2()/ndims;
 
-    // TO-DO
-    // Line 4 of Algo-3
-    // Update Gram of non-streaming modes
-    // Should the input be the original slice or the projected version??
-    // If latter, then this goes in the main n=0:ndims-1 loop below, since
-    // Y is updated in place (per line 15 of Algo-3)
-    for(int n=0; n<ndims-1; n++) {
-      updateStreamingGram(factorization->Gram[n], Y, n);
-    }
-
     // Allocate memory for the new bases (factor matrices) along all modes
     Matrix<scalar_t>** U_new = MemoryManager::safe_new_array<Matrix<scalar_t>*>(ndims);
 
@@ -230,6 +220,10 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
 
     // Loop over non-streaming modes
     for(int n=0; n<ndims-1; n++) {
+      // TO-DO - DONE
+      // Line 4 of Algo-3
+      // Update Gram of non-streaming modes
+      updateStreamingGram(factorization->Gram[n], Y, n);
 
       // TO-DO
       // Lines 5-13 of Algo-3
@@ -273,15 +267,38 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
     U_new[ndims-1] = iSVD->getLeftSingularVectors();
     
 
-    // TO-DO
+    // TO-DO - DONE
     // Lines 22-23 of Algo-3
     // Split Unew[d] into two submatrices
     // Use first submatrix to update core (line 22)
     // Use second submatrix to update new slice in-place (line 23)
+    {
+      const int nrows = U_new[ndims - 1]->nrows();
+      Tucker::Matrix<scalar_t> *U_sub = U_new[ndims - 1]->getSubmatrix(0, nrows - 2);
+      Tensor<scalar_t>* temp =
+          updateCore(core, factorization->factorization->U[ndims - 1], U_sub, ndims - 1);
+      MemoryManager::safe_delete<Tensor<scalar_t>>(core);
+      core = temp;
+      MemoryManager::safe_delete(U_sub);
+    }
+    {
+      const int nrows = U_new[ndims - 1]->nrows();
+      Tucker::Matrix<scalar_t> *U_sub = U_new[ndims - 1]->getSubmatrix(nrows - 1, nrows - 1);
+      Tensor<scalar_t>* temp2 = ttm(Y, ndims - 1, U_sub, true);
+      MemoryManager::safe_delete<Tensor<scalar_t>>(Y);
+      Y = temp2;
+      MemoryManager::safe_delete(U_sub);
+    }
 
-    // TO-DO
+    // TO-DO - DONE
     // Line 24 of Algo-3
     // Add updated core with in-place updated new slice
+    {
+      const int &nelm = core->getNumElements();
+      const int &ONE = 1;
+      const scalar_t &alpha = static_cast<scalar_t>(1);
+      axpy(&nelm, &alpha, Y->data(), &ONE, core->data(), &ONE);
+    }
     
     // TO-DO
     // Lines 25-26 of Algo-3
