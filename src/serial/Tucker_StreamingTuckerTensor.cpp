@@ -84,7 +84,6 @@ void computeEigenpairs(const Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix
     throw std::runtime_error(oss.str());
   }
 
-  // TO-DO - DONE
   // The Gram matrix is overwritten inside computeEigenpairs
   // Make a copy of it, retain it for later use
   int nrows = G->nrows();
@@ -177,11 +176,8 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
   // Create a struct to store the factorization
   struct StreamingTuckerTensor<scalar_t>* factorization = MemoryManager::safe_new<StreamingTuckerTensor<scalar_t>>(initial_factorization);
 
-  // TO-DO
-  // Line 13 of Algo 2
-  // ---Construct ISVD object
+  // Construct and initialize ISVD object
   ISVD<scalar_t>* iSVD = MemoryManager::safe_new<ISVD<scalar_t>>();
-  // ---isvd.initializeFactors()
   iSVD->initializeFactors(factorization->factorization);
 
   int ndims = X->N();
@@ -201,17 +197,19 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
   std::string snapshot_file;
   
   while(inStream >> snapshot_file) {
-
-    //Create an object for the Tensor slice
+    // Create an object for the Tensor slice
     Tucker::Tensor<scalar_t>* Y = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*slice_dims);
 
     std::cout<< "Reading snapshot " << snapshot_file << std::endl;
     importTensorBinary(Y,snapshot_file.c_str());
 
-    // TO-DO
-    // Line 1 of Algo 3
-    // Set the thresh based on norm of only the new slice
-    thresh = epsilon*epsilon*Y->norm2()/ndims;
+    // Line 1 of StreamingTuckerUpdate algorithm
+    // Set the threshold for Gram SVDs
+    const scalar_t delta = epsilon*std::sqrt(Y->norm2()/ndims);
+
+    // Line 2 of StreamingTuckerUpdate algorithm
+    // Set the threshold for ISVD
+    thresh += delta * delta;
 
     // Allocate memory for the new bases (factor matrices) along all modes
     Matrix<scalar_t>** U_new = MemoryManager::safe_new_array<Matrix<scalar_t>*>(ndims);
@@ -220,55 +218,42 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
 
     // Loop over non-streaming modes
     for(int n=0; n<ndims-1; n++) {
-      // TO-DO - DONE
-      // Line 4 of Algo-3
+      // Line 4 of StreamingTuckerUpdate algorithm
       // Update Gram of non-streaming modes
       updateStreamingGram(factorization->Gram[n], Y, n);
 
-      // TO-DO
-      // Lines 5-13 of Algo-3
+      // Lines 5-13 of StreamingTuckerUpdate algorithm
       // Update bases (factor matrices)
-      // This function is overloaded, implemented above (line ~79)
+      // This function is overloaded, implemented above (line ~70)
       computeEigenpairs(factorization->Gram[n], factorization->factorization->eigenvalues[n],
           factorization->factorization->U[n], U_new[n], thresh, flipSign);
 
-      // TO-DO
-      // Saibal to check the code below correctly implements line 14 of Algo-3
+      // Line 14 of StreamingTuckerUpdate algorithm
       // Accumulate ttm products into existing core
       Tensor<scalar_t>* temp = updateCore(core, factorization->factorization->U[n], U_new[n], n);
       MemoryManager::safe_delete<Tensor<scalar_t>>(core);
       core = temp;
 
-      // TO-DO
-      // Saibal to check the code below correctly implements line 15 of Algo-3
+      // Line 15 of StreamingTuckerUpdate algorithm
       // Accumulate ttm products into new slice
       Tensor<scalar_t>* temp2 = ttm(Y,n,U_new[n],true);
       MemoryManager::safe_delete<Tensor<scalar_t>>(Y);
       Y = temp2;
 
-      // TO-DO
-      // Line 16 of Algo-3
+      // Line 16 of StreamingTuckerUpdate algorithm
+      // Update right singular vectors of ISVD factorization
       iSVD->updateRightSingularVectors(n, U_new[n], factorization->factorization->U[n]);
     }
 
-    /* DEFUNCT CODE; CHECK AND DELETE
-    // For the streaming mode initialize ISVD with full set of left singular vectors 
-    Matrix<scalar_t>* gram_last_mode = computeGram(X,ndims-1);
-    computeEigenpairs(gram_last_mode, factorization->factorization->eigenvalues[ndims-1],
-        U_new[ndims-1], 0.0, flipSign);  
-    */
+    // Line 19 of StreamingTuckerUpdate algorithm
+    // Add new row to ISVD factorization
+    iSVD->updateFactorsWithNewSlice(Y, delta);
 
-    // TO-DO
-    // Line 19 of Algo-3
-    iSVD->updateFactorsWithNewSlice(Y, std::sqrt(thresh));
-
-    // TO-DO
-    // Lines 20-21 of Algo-3
+    // Lines 20-21 of StreamingTuckerUpdate algorithm
+    // Retrieve updated left singular vectors from ISVD factorization
     U_new[ndims-1] = iSVD->getLeftSingularVectors();
-    
 
-    // TO-DO - DONE
-    // Lines 22-23 of Algo-3
+    // Lines 22-23 of StreamingTuckerUpdate algorithm
     // Split Unew[d] into two submatrices
     // Use first submatrix to update core (line 22)
     // Use second submatrix to update new slice in-place (line 23)
@@ -290,8 +275,7 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
       MemoryManager::safe_delete(U_sub);
     }
 
-    // TO-DO - DONE
-    // Line 24 of Algo-3
+    // Line 24 of StreamingTuckerUpdate algorithm
     // Add updated core with in-place updated new slice
     {
       const int &nelm = core->getNumElements();
@@ -300,31 +284,22 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
       axpy(&nelm, &alpha, Y->data(), &ONE, core->data(), &ONE);
     }
     
-    // TO-DO
-    // Lines 25-26 of Algo-3
+    // Lines 17, 25-26 of StreamingTuckerUpdate algorithm
     // Swap U_old with U_new 
     // Free memory
-    //
     for (int n=0; n<ndims; n++) {
       MemoryManager::safe_delete(factorization->factorization->U[n]);
     }
     MemoryManager::safe_delete_array(factorization->factorization->U,ndims);
-
-    // Set the factor matrices to the updated ones
     factorization->factorization->U = U_new;
-    for (int n=0; n<ndims; n++) {
-      factorization->factorization->U[n] = U_new[n];
-    }
 
     Tucker::MemoryManager::safe_delete<Tucker::Tensor<scalar_t>>(Y);
   }
 
-  //Close the file containing snapshot filenames
+  // Close the file containing snapshot filenames
   inStream.close();
 
-  //
-  //Free memory
-  //
+  // Free memory
   Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(slice_dims);
 
   return factorization;
