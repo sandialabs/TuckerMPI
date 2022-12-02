@@ -707,6 +707,13 @@ const struct TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* X,
       computeEigenpairs(S, factorization->eigenvalues[n],
           factorization->U[n], thresh, flipSign);
       factorization->eigen_timer_[n].stop();
+      {
+        const int nrows = factorization->U[n]->nrows();
+        factorization->singularValues[n] = MemoryManager::safe_new_array<scalar_t>(nrows);
+        for (int i = 0; i < nrows; ++i) {
+          factorization->singularValues[n][i] = std::sqrt(factorization->eigenvalues[n][i]);
+        }
+      }
       std::cout << std::endl;
       std::cout << "\tAutoST-HOSVD::EVECS(" << n << ") time: "
           << factorization->eigen_timer_[n].duration() << "s\n";
