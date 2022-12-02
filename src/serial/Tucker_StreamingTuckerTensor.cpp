@@ -48,6 +48,7 @@
 #include <cassert>
 #include <chrono>
 #include <iomanip>
+#include <iostream>
 
 /** \namespace Tucker \brief Contains the data structures and functions
  * necessary for a sequential tucker decomposition
@@ -115,7 +116,8 @@ void computeEigenpairs(const Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix
   int numEvecs=nrows;
   scalar_t sum = 0;
   for(int i=nrows-1; i>=0; i--) {
-    if ((*projectionNorms)[i] > 10 * std::numeric_limits<scalar_t>::epsilon()) {
+    // TODO discuss the truncation criteria
+    if ((*projectionNorms)[i] > std::sqrt(std::numeric_limits<scalar_t>::epsilon())) {
       break;
     }
 
@@ -211,11 +213,6 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
     // Set the threshold for ISVD
     thresh += delta * delta;
 
-    // Allocate memory for the new bases (factor matrices) along all modes
-    Matrix<scalar_t>** U_new = MemoryManager::safe_new_array<Matrix<scalar_t>*>(ndims);
-
-    Tensor<scalar_t>* core = factorization->factorization->G;
-
     // Loop over non-streaming modes
     for(int n=0; n<ndims-1; n++) {
       // Line 4 of StreamingTuckerUpdate algorithm
@@ -225,24 +222,30 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
       // Lines 5-13 of StreamingTuckerUpdate algorithm
       // Update bases (factor matrices)
       // This function is overloaded, implemented above (line ~70)
+      Matrix<scalar_t> *U_new;
       computeEigenpairs(factorization->Gram[n], factorization->factorization->eigenvalues[n],
-          factorization->factorization->U[n], U_new[n], thresh, flipSign);
+          U_new, factorization->factorization->U[n], thresh, flipSign);
 
       // Line 14 of StreamingTuckerUpdate algorithm
       // Accumulate ttm products into existing core
-      Tensor<scalar_t>* temp = updateCore(core, factorization->factorization->U[n], U_new[n], n);
-      MemoryManager::safe_delete<Tensor<scalar_t>>(core);
-      core = temp;
+      Tensor<scalar_t>* temp = updateCore(factorization->factorization->G, factorization->factorization->U[n], U_new, n);
+      MemoryManager::safe_delete<Tensor<scalar_t>>(factorization->factorization->G);
+      factorization->factorization->G = temp;
 
       // Line 15 of StreamingTuckerUpdate algorithm
       // Accumulate ttm products into new slice
-      Tensor<scalar_t>* temp2 = ttm(Y,n,U_new[n],true);
+      Tensor<scalar_t>* temp2 = ttm(Y,n,U_new,true);
       MemoryManager::safe_delete<Tensor<scalar_t>>(Y);
       Y = temp2;
 
       // Line 16 of StreamingTuckerUpdate algorithm
       // Update right singular vectors of ISVD factorization
-      iSVD->updateRightSingularVectors(n, U_new[n], factorization->factorization->U[n]);
+      iSVD->updateRightSingularVectors(n, U_new, factorization->factorization->U[n]);
+
+      // Line 17 of StreamingTuckerUpdate algorithm
+      // Save the new factor matrix
+      MemoryManager::safe_delete(factorization->factorization->U[n]);
+      factorization->factorization->U[n] = U_new;
     }
 
     // Line 19 of StreamingTuckerUpdate algorithm
@@ -251,49 +254,51 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
 
     // Lines 20-21 of StreamingTuckerUpdate algorithm
     // Retrieve updated left singular vectors from ISVD factorization
-    U_new[ndims-1] = iSVD->getLeftSingularVectors();
-
-    // Lines 22-23 of StreamingTuckerUpdate algorithm
-    // Split Unew[d] into two submatrices
-    // Use first submatrix to update core (line 22)
-    // Use second submatrix to update new slice in-place (line 23)
+    Matrix<scalar_t> *U_new = nullptr;
     {
-      const int nrows = U_new[ndims - 1]->nrows();
-      Tucker::Matrix<scalar_t> *U_sub = U_new[ndims - 1]->getSubmatrix(0, nrows - 2);
-      Tensor<scalar_t>* temp =
-          updateCore(core, factorization->factorization->U[ndims - 1], U_sub, ndims - 1);
-      MemoryManager::safe_delete<Tensor<scalar_t>>(core);
-      core = temp;
-      MemoryManager::safe_delete(U_sub);
-    }
-    {
-      const int nrows = U_new[ndims - 1]->nrows();
-      Tucker::Matrix<scalar_t> *U_sub = U_new[ndims - 1]->getSubmatrix(nrows - 1, nrows - 1);
-      Tensor<scalar_t>* temp2 = ttm(Y, ndims - 1, U_sub, true);
-      MemoryManager::safe_delete<Tensor<scalar_t>>(Y);
-      Y = temp2;
-      MemoryManager::safe_delete(U_sub);
-    }
-
-    // Line 24 of StreamingTuckerUpdate algorithm
-    // Add updated core with in-place updated new slice
-    {
-      const int &nelm = core->getNumElements();
+      const Matrix<scalar_t> *U_isvd = iSVD->getLeftSingularVectors();
+      const int &nrows = U_isvd->nrows();
+      const int &ncols = U_isvd->ncols();
+      const int &nelem = nrows * ncols;
       const int &ONE = 1;
-      const scalar_t &alpha = static_cast<scalar_t>(1);
-      axpy(&nelm, &alpha, Y->data(), &ONE, core->data(), &ONE);
+      U_new = MemoryManager::safe_new<Matrix<scalar_t>>(nrows, ncols);
+      copy(&nelem, U_isvd->data(), &ONE, U_new->data(), &ONE);
     }
-    
-    // Lines 17, 25-26 of StreamingTuckerUpdate algorithm
-    // Swap U_old with U_new 
-    // Free memory
-    for (int n=0; n<ndims; n++) {
-      MemoryManager::safe_delete(factorization->factorization->U[n]);
-    }
-    MemoryManager::safe_delete_array(factorization->factorization->U,ndims);
-    factorization->factorization->U = U_new;
 
-    Tucker::MemoryManager::safe_delete<Tucker::Tensor<scalar_t>>(Y);
+    // Line 22 of StreamingTuckerUpdate algorithm
+    // Split U_new into two submatrices
+    // Use first submatrix to update core
+    {
+      const int nrows = U_new->nrows();
+      Tucker::Matrix<scalar_t> *U_sub = U_new->getSubmatrix(0, nrows - 2);
+      Tensor<scalar_t>* temp3 = updateCore(factorization->factorization->G, factorization->factorization->U[ndims - 1], U_sub, ndims - 1);
+      MemoryManager::safe_delete(U_sub);
+      MemoryManager::safe_delete<Tensor<scalar_t>>(factorization->factorization->G);
+      factorization->factorization->G = temp3;
+    }
+
+    // Lines 23-24 of StreamingTuckerUpdate algorithm
+    // Use last row of Unew[d] to update scale new slice and update core in-place
+    {
+      const int &nrow = Y->getNumElements();
+      const int &ncol = U_new->nrows();
+      const int &rank = U_new->ncols();
+      const int &ONE = 1;
+      for (int j = 0; j < rank; ++j) {
+        axpy(&nrow,
+             U_new->data() + j * ncol - 1,
+             Y->data(), &ONE,
+             factorization->factorization->G->data() + j * nrow, &ONE);
+      }
+    }
+
+    // Line 25 of StreamingTuckerUpdate algorithm
+    // Save new factor matrix
+    MemoryManager::safe_delete(factorization->factorization->U[ndims - 1]);
+    factorization->factorization->U[ndims - 1] = U_new;
+
+    // Free memory
+    MemoryManager::safe_delete<Tucker::Tensor<scalar_t>>(Y);
   }
 
   // Close the file containing snapshot filenames
