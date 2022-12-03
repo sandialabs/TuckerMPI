@@ -230,7 +230,6 @@ int main(int argc, char* argv[])
     }
     std::cout << std::endl;
 
-    /*
     writeTimer.start();
     if(boolWriteSTHOSVD) {
       // Write dimension of core tensor
@@ -240,7 +239,7 @@ int main(int argc, char* argv[])
       std::ofstream of(dimFilename);
       assert(of.is_open());
       for(int mode=0; mode<nd; mode++) {
-        of << solution->G->size(mode) << std::endl;
+        of << solution->factorization->G->size(mode) << std::endl;
       }
       of.close();
 
@@ -259,7 +258,7 @@ int main(int argc, char* argv[])
       std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn +
           "_core.mpi";
       std::cout << "Writing core tensor to " << coreFilename << std::endl;
-      Tucker::exportTensorBinary(solution->G, coreFilename.c_str());
+      Tucker::exportTensorBinary(solution->factorization->G, coreFilename.c_str());
 
       // Write each factor
       for(int mode=0; mode<nd; mode++) {
@@ -268,11 +267,10 @@ int main(int argc, char* argv[])
         ss << sthosvd_dir << "/" << sthosvd_fn << "_mat_" << mode
             << ".mpi";       // Open the file
         std::cout << "Writing factor " << mode << " to " << ss.str() << std::endl;
-        Tucker::exportTensorBinary(solution->U[mode], ss.str().c_str());
+        Tucker::exportTensorBinary(solution->factorization->U[mode], ss.str().c_str());
       }
     }
     writeTimer.stop();
-    */
   }
 
   //
