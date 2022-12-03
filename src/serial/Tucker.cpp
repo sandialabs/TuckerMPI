@@ -711,7 +711,12 @@ const struct TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* X,
         const int nrows = factorization->U[n]->nrows();
         factorization->singularValues[n] = MemoryManager::safe_new_array<scalar_t>(nrows);
         for (int i = 0; i < nrows; ++i) {
-          factorization->singularValues[n][i] = std::sqrt(factorization->eigenvalues[n][i]);
+          if (factorization->eigenvalues[n][i] < static_cast<scalar_t>(0)) {
+            factorization->eigenvalues[n][i] = static_cast<scalar_t>(0);
+            factorization->singularValues[n][i] = static_cast<scalar_t>(0);
+          } else {
+            factorization->singularValues[n][i] = std::sqrt(factorization->eigenvalues[n][i]);
+          }
         }
       }
       std::cout << std::endl;
