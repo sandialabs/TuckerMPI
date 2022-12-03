@@ -119,7 +119,7 @@ bool testInitializeFactors() {
   Tucker::ISVD<scalar_t> isvd;
   isvd.initializeFactors(U, s, A);
 
-  if (isvd.getRelativeErrorEstimate() >= tolerance) {
+  if (isvd.getRelativeError() >= tolerance) {
     std::cout << "failed: relative error estimate check" << std::endl;
     success = false;
   }
@@ -210,7 +210,7 @@ bool testUpdateFactors() {
 
   Tucker::ISVD<scalar_t> isvd;
   isvd.initializeFactors(U, s, A);
-  if (isvd.getRelativeErrorEstimate() >= tolerance) {
+  if (isvd.getRelativeError() >= tolerance) {
     std::cout << "failed: factor initialization error constraint" << std::endl;
     success = false;
   }
@@ -219,7 +219,7 @@ bool testUpdateFactors() {
   std::cout << std::setw(6) << isvd.rank() << " " << std::flush;
   std::cout << std::scientific;
   std::cout << std::setw(12) << std::setprecision(6)
-            << isvd.getRelativeErrorEstimate() << " " << std::flush;
+            << isvd.getRelativeError() << " " << std::flush;
   std::cout << std::defaultfloat;
   std::cout << std::endl;
 
@@ -229,7 +229,7 @@ bool testUpdateFactors() {
   for (int j = n_init; j < n; ++j) {
     data_source.constructNextVector(v);
     isvd.updateFactorsWithNewSlice(v, tolerance);
-    if (isvd.getRelativeErrorEstimate() >= tolerance) {
+    if (isvd.getRelativeError() >= tolerance) {
       std::cout << "failed: factor update error constraint" << std::endl;
       success = false;
       break;
@@ -239,7 +239,7 @@ bool testUpdateFactors() {
       std::cout << std::setw(6) << isvd.rank() << " " << std::flush;
       std::cout << std::scientific;
       std::cout << std::setw(12) << std::setprecision(6)
-                << isvd.getRelativeErrorEstimate() << " " << std::flush;
+                << isvd.getRelativeError() << " " << std::flush;
       std::cout << std::defaultfloat;
       std::cout << std::endl;
     }

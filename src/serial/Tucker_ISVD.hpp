@@ -125,9 +125,17 @@ public:
   scalar_t getRightSingularVectorsError() const;
 
   /**
-   * @brief Absolute error estimate of approximation w.r.t. Frobenius norm
+   * @brief Frobenius norm of data matrix
    */
-  scalar_t getAbsoluteErrorEstimate() const {
+  scalar_t getDataNorm() const {
+    checkIsAllocated();
+    return std::sqrt(squared_frobenius_norm_data_);
+  }
+
+  /**
+   * @brief Forbenius norm of error matrix
+   */
+  scalar_t getErrorNorm() const {
     checkIsAllocated();
     return std::sqrt(squared_frobenius_norm_error_);
   }
@@ -135,7 +143,7 @@ public:
   /**
    * @brief Relative error estimate of approximation w.r.t. Frobenius norm
    */
-  scalar_t getRelativeErrorEstimate() const {
+  scalar_t getRelativeError() const {
     checkIsAllocated();
     return std::sqrt(squared_frobenius_norm_error_ /
                      squared_frobenius_norm_data_);
