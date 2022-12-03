@@ -178,30 +178,6 @@ int main(int argc, char* argv[])
     std::string filePrefix = sv_dir + "/" + sv_fn + "_mode_";
     Tucker::printEigenvalues(initial_solution, filePrefix, useLQ);
 
-    double xnorm = std::sqrt(X->norm2());
-    double gnorm = std::sqrt(initial_solution->G->norm2());
-    std::cout << "Norm of input tensor: " << xnorm << std::endl;
-    std::cout << "Norm of core tensor: " << gnorm << std::endl;
-
-    // Compute the error bound based on the eigenvalues
-    double eb =0;
-    if(useLQ){
-      for(int i=0; i<nd; i++) {
-        for(int j=initial_solution->G->size(i); j<X->size(i); j++) {
-          eb += std::pow(initial_solution->singularValues[i][j],2);
-        }
-      }
-    }
-    else{
-      for(int i=0; i<nd; i++) {
-        for(int j=initial_solution->G->size(i); j<X->size(i); j++) {
-          eb += initial_solution->eigenvalues[i][j];
-        }
-      }
-    }
-    std::cout << "Error bound: " << eb << ", " << std::sqrt(eb) << " / " << xnorm << std::endl;
-
-
     /////////////////////////////
     // Perform Streaming HOSVD //
     /////////////////////////////
@@ -209,6 +185,50 @@ int main(int argc, char* argv[])
     const Tucker::StreamingTuckerTensor<scalar_t>* solution;
 
     solution = Tucker::StreamingHOSVD(X, initial_solution, streaming_fns_file.c_str(), tol, useLQ);
+
+    /////////////////////////
+    // Compute Error Bound //
+    /////////////////////////
+
+    double xnorm = 0.0;
+    if(useLQ) {
+      for (int i = 0; i < solution->factorization->U[0]->nrows(); ++i) {
+        xnorm += std::pow(solution->factorization->singularValues[0][i], 2);
+      }
+    } else {
+      for (int i = 0; i < solution->factorization->U[0]->nrows(); ++i) {
+        xnorm += solution->factorization->eigenvalues[0][i];
+      }
+    }
+    xnorm = std::sqrt(xnorm);
+    std::cout << "Norm of input tensor: " << xnorm << std::endl;
+
+    double gnorm = std::sqrt(solution->factorization->G->norm2());
+    std::cout << "Norm of core tensor: " << gnorm << std::endl;
+
+    double enorm = 0.0;
+    if(useLQ) {
+      for(int i = 0; i < nd - 1; ++i) {
+        for(int j = solution->factorization->G->size(i); j < solution->factorization->U[i]->nrows(); ++j) {
+          enorm += std::pow(solution->factorization->singularValues[i][j], 2);
+        }
+      }
+    } else {
+      for(int i = 0; i < nd - 1; ++i) {
+        for(int j = solution->factorization->G->size(i); j < solution->factorization->U[i]->nrows(); ++j) {
+          enorm += solution->factorization->eigenvalues[i][j];
+        }
+      }
+    }
+    enorm = std::sqrt(enorm);
+    enorm = std::hypot(enorm, solution->isvd->getErrorNorm());
+    std::cout << "Error bound: absolute = " << enorm << ", relative = " << enorm / xnorm << std::endl;
+
+    std::cout << "Local tensor size after StreamingHOSVD iterations:" << std::flush;
+    for (int i = 0; i < nd; ++i) {
+      std::cout << " " << solution->factorization->G->size(i) << std::flush;
+    }
+    std::cout << std::endl;
 
     /*
     writeTimer.start();
