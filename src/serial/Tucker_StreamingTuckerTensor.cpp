@@ -286,7 +286,7 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
       const int &ONE = 1;
       for (int j = 0; j < rank; ++j) {
         axpy(&nrow,
-             U_new->data() + j * ncol - 1,
+             U_new->data() + (j + 1) * ncol - 1,
              Y->data(), &ONE,
              factorization->factorization->G->data() + j * nrow, &ONE);
       }
