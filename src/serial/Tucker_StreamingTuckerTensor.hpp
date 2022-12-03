@@ -86,7 +86,7 @@ public:
     factorization = const_cast<TuckerTensor<scalar_t>*>(X);
     N = X->N;
     Gram = MemoryManager::safe_new_array<Matrix<scalar_t>*>(N-1);
-
+    isvd = MemoryManager::safe_new<ISVD<scalar_t>>();
   }
 
   /** \brief Destructor
@@ -101,7 +101,7 @@ public:
       if(Gram[i]) MemoryManager::safe_delete(Gram[i]);
     }
     MemoryManager::safe_delete_array(Gram,N-1);
-
+    MemoryManager::safe_delete(isvd);
   }
 
   // The TuckerTensor factorization
@@ -116,6 +116,10 @@ public:
    * default constructor.
    */
   Matrix<scalar_t>** Gram;
+
+  /** \brief Pointer to ISVD factorization
+   */
+  ISVD<scalar_t> *isvd;
 
   //! The number of dimensions
   int N;

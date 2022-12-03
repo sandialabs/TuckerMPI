@@ -179,8 +179,7 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
   struct StreamingTuckerTensor<scalar_t>* factorization = MemoryManager::safe_new<StreamingTuckerTensor<scalar_t>>(initial_factorization);
 
   // Construct and initialize ISVD object
-  ISVD<scalar_t>* iSVD = MemoryManager::safe_new<ISVD<scalar_t>>();
-  iSVD->initializeFactors(factorization->factorization);
+  factorization->isvd->initializeFactors(factorization->factorization);
 
   int ndims = X->N();
   scalar_t tensorNorm = X->norm2();
@@ -240,7 +239,7 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
 
       // Line 16 of StreamingTuckerUpdate algorithm
       // Update right singular vectors of ISVD factorization
-      iSVD->updateRightSingularVectors(n, U_new, factorization->factorization->U[n]);
+      factorization->isvd->updateRightSingularVectors(n, U_new, factorization->factorization->U[n]);
 
       // Line 17 of StreamingTuckerUpdate algorithm
       // Save the new factor matrix
@@ -250,13 +249,13 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
 
     // Line 19 of StreamingTuckerUpdate algorithm
     // Add new row to ISVD factorization
-    iSVD->updateFactorsWithNewSlice(Y, delta);
+    factorization->isvd->updateFactorsWithNewSlice(Y, delta);
 
     // Lines 20-21 of StreamingTuckerUpdate algorithm
     // Retrieve updated left singular vectors from ISVD factorization
     Matrix<scalar_t> *U_new = nullptr;
     {
-      const Matrix<scalar_t> *U_isvd = iSVD->getLeftSingularVectors();
+      const Matrix<scalar_t> *U_isvd = factorization->isvd->getLeftSingularVectors();
       const int &nrows = U_isvd->nrows();
       const int &ncols = U_isvd->ncols();
       const int &nelem = nrows * ncols;
