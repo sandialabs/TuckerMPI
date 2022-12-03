@@ -74,7 +74,8 @@ template <class scalar_t>
 static void truncatedSvd(const Matrix<scalar_t> *A, scalar_t absolute_tolerance,
                          scalar_t relative_tolerance, Matrix<scalar_t> **U,
                          Vector<scalar_t> **s, Matrix<scalar_t> **V,
-                         scalar_t &squared_frobenius_error) {
+                         scalar_t &squared_frobenius_norm_data,
+                         scalar_t &squared_frobenius_norm_error) {
   // matrix sizes
   const int m = A->nrows();
   const int n = A->ncols();
@@ -87,27 +88,27 @@ static void truncatedSvd(const Matrix<scalar_t> *A, scalar_t absolute_tolerance,
   svd(A, &U_thin, &s_thin, &V_thin);
 
   // determine truncation rank
-  scalar_t squared_frobenius_norm = static_cast<scalar_t>(0);
+  squared_frobenius_norm_data = static_cast<scalar_t>(0);
   for (int i = 0; i < k; ++i) {
-    squared_frobenius_norm += (*s_thin)[i] * (*s_thin)[i];
+    squared_frobenius_norm_data += (*s_thin)[i] * (*s_thin)[i];
   }
 
-  const scalar_t squared_frobenius_max_error =
+  const scalar_t max_squared_frobenius_norm_error =
       absolute_tolerance * absolute_tolerance +
-      relative_tolerance * relative_tolerance * squared_frobenius_norm;
+      relative_tolerance * relative_tolerance * squared_frobenius_norm_data;
 
   int r = k;
-  squared_frobenius_error = static_cast<scalar_t>(0);
+  squared_frobenius_norm_error = static_cast<scalar_t>(0);
   while (r > 1) {
-    const scalar_t squared_frobenius_new_error =
-        squared_frobenius_error + (*s_thin)[r - 1] * (*s_thin)[r - 1];
+    const scalar_t new_squared_frobenius_norm_error =
+        squared_frobenius_norm_error + (*s_thin)[r - 1] * (*s_thin)[r - 1];
 
-    if (squared_frobenius_new_error > squared_frobenius_max_error) {
+    if (new_squared_frobenius_norm_error > max_squared_frobenius_norm_error) {
       break;
     }
 
-    squared_frobenius_error = squared_frobenius_new_error;
     --r;
+    squared_frobenius_norm_error = new_squared_frobenius_norm_error;
   }
 
   // allocate memory for SVD factors and copy
@@ -343,9 +344,16 @@ void ISVD<scalar_t>::initializeFactors(const TuckerTensor<scalar_t> *X) {
     }
   }
 
-  // TODO - Fix
-  squared_frobenius_norm_data_ = G->norm2();
+  squared_frobenius_norm_data_ = static_cast<scalar_t>(0);
   squared_frobenius_norm_error_ = static_cast<scalar_t>(0);
+  for (int i = 0; i < I_d; ++i) {
+    const scalar_t temp = std::pow(s[d][i], 2);
+
+    squared_frobenius_norm_data_ += temp;
+    if (i >= R_d) {
+      squared_frobenius_norm_error_ += temp;
+    }
+  }
 }
 
 template <class scalar_t>
@@ -474,8 +482,10 @@ void ISVD<scalar_t>::addSingleRowNaive(const scalar_t *c, scalar_t tolerance) {
   Matrix<scalar_t> *U2 = nullptr;
   Vector<scalar_t> *s2 = nullptr;
   Matrix<scalar_t> *V2 = nullptr;
+  scalar_t new_squared_frobenius_norm_data;
   scalar_t new_squared_frobenius_norm_error;
   truncatedSvd(S1, tolerance * c_norm, SCALAR_ZERO, &U2, &s2, &V2,
+               new_squared_frobenius_norm_data,
                new_squared_frobenius_norm_error);
 
   // memory allocation for update
