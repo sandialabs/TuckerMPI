@@ -272,7 +272,8 @@ int main(int argc, char* argv[])
         }
       }
     }
-    std::cout << "Error bound: " << eb << ", " << std::sqrt(eb) << " / " << xnorm << std::endl;
+    eb = std::sqrt(eb);
+    std::cout << "Error bound: absolute = " << eb << ", relative = " << eb / xnorm << std::endl;
 
     writeTimer.start();
     if(boolWriteSTHOSVD) {
