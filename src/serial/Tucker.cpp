@@ -1694,6 +1694,107 @@ void padToSquare(Matrix<scalar_t>*& R)
   Tucker::MemoryManager::safe_delete(R);
   R = squareR;
 }
+template <class scalar_t>
+Tensor<scalar_t> *padTensorAlongMode(const Tensor<scalar_t>* X, int n, int p) {
+  const std::string method_signature = "padTensorAlongMode(const Tensor<scalar_t> *X, int n, int p)";
+
+  if (X == nullptr) {
+    std::ostringstream str;
+    str << method_signature << ": pointer to tensor X cannot be null";
+    throw std::invalid_argument(str.str());
+  }
+
+  const int d = X->N();
+
+  if (n < 0 || n >= d) {
+    std::ostringstream str;
+    str << method_signature << ": mode index n is out of range for dimensionality of tensor X";
+    throw std::invalid_argument(str.str());
+  }
+
+  if (p <= 0) {
+    std::ostringstream str;
+    str << method_signature << ": number of additional zero slices p must be positive";
+    throw std::invalid_argument(str.str());
+  }
+
+  const int nrow1 = X->size().prod(0, n);
+  const int nrow2 = X->size().prod(0, n - 1) * p;
+  const int nrow = nrow1 + nrow2;
+  const int ncol = X->size().prod(n + 1, d - 1);
+
+  Tensor<scalar_t> *X_new;
+  {
+    SizeArray size(d);
+    for (int k = 0; k < d; ++k) {
+        size[k] = (n == k) ? X->size(k) + p : X->size(k);
+    }
+    X_new = MemoryManager::safe_new<Tensor<scalar_t>>(size);
+  }
+  for (int j = 0; j < ncol; ++j) {
+    const scalar_t zero = 0;
+    const int incr0 = 0;
+    const int incr1 = 1;
+
+    copy(&nrow1, X->data() + j * nrow1, &incr1, X_new->data() + j * nrow, &incr1);
+    copy(&nrow2, &zero, &incr0, X_new->data() + j * nrow + nrow1, &incr1);
+  }
+
+  return X_new;
+}
+
+template <class scalar_t>
+Tensor<scalar_t> *concatenateTensorsAlongMode(const Tensor<scalar_t>* X, const Tensor<scalar_t>* Y, int n) {
+  const std::string method_signature = "concatenateTensorsAlongMode(const Tensor<scalar_t>* X, const Tensor<scalar_t>* Y, int n)";
+
+  if (X == nullptr || Y == nullptr) {
+    std::ostringstream str;
+    str << method_signature << ": pointers to tensors X and Y cannot be null";
+    throw std::invalid_argument(str.str());
+  }
+
+  const int d = X->N();
+  if (Y->N() != d) {
+    std::ostringstream str;
+    str << method_signature << ": tensors X and Y must have the same dimensionality";
+    throw std::invalid_argument(str.str());
+  }
+
+  if (n < 0 || n >= d) {
+    std::ostringstream str;
+    str << method_signature << ": mode index n is out of range for dimensionality of tensors X and Y";
+    throw std::invalid_argument(str.str());
+  }
+
+  SizeArray size(d);
+  for (int k = 0; k < d; ++k) {
+    if (k != n) {
+      if (X->size(k) != Y->size(k)) {
+        std::ostringstream str;
+        str << method_signature << ": tensors X and Y must have the same modes sizes except along mode n";
+        throw std::invalid_argument(str.str());
+      }
+      size[k] = X->size(k);
+    } else {
+      size[k] = X->size(k) + Y->size(k);
+    }
+  }
+
+  Tensor<scalar_t> *Z = MemoryManager::safe_new<Tensor<scalar_t>>(size);
+
+  const int nrowx = X->size().prod(0, n);
+  const int nrowy = Y->size().prod(0, n);
+  const int nrowz = nrowx + nrowy;
+  const int ncolz = X->size().prod(n + 1, d - 1);
+
+  for (int j = 0; j < ncolz; ++j) {
+    const int incr = 1;
+    copy(&nrowx, X->data() + j * nrowx, &incr, Z->data() + j * nrowz, &incr);
+    copy(&nrowy, Y->data() + j * nrowy, &incr, Z->data() + j * nrowz + nrowx, &incr);
+  }
+
+  return Z;
+}
 
 // Explicit instantiations to build static library for both single and double precision
 template Matrix<float>* computeGram(const Tensor<float>* Y, const int n);
@@ -1731,6 +1832,8 @@ template void computeLQ(const Tensor<float>*, const int, Matrix<float>*);
 template void computeSVD(Matrix<float>*, float*, Matrix<float>*);
 template void computeSVD(Matrix<float>*, float*&, Matrix<float>*&, const float);
 template void computeSVD(Matrix<float>*, float*&, Matrix<float>*&, const int);
+template Tensor<float> *padTensorAlongMode(const Tensor<float>*, int, int);
+template Tensor<float> *concatenateTensorsAlongMode(const Tensor<float> *, const Tensor<float> *, int);
 
 template Matrix<double>* computeGram(const Tensor<double>* Y, const int n);
 template void computeGram(const Tensor<double>*, const int, double*, const int);
@@ -1767,5 +1870,7 @@ template void computeLQ(const Tensor<double>*, const int, Matrix<double>*);
 template void computeSVD(Matrix<double>*, double*, Matrix<double>*);
 template void computeSVD(Matrix<double>*, double*&, Matrix<double>*&, const double);
 template void computeSVD(Matrix<double>*, double*&, Matrix<double>*&, const int);
+template Tensor<double> *padTensorAlongMode(const Tensor<double>*, int, int);
+template Tensor<double> *concatenateTensorsAlongMode(const Tensor<double> *, const Tensor<double> *, int);
 
 } // end namespace Tucker

@@ -486,6 +486,27 @@ void premultByDiag(const Vector<scalar_t>* diag, Matrix<scalar_t>* mat);
 template <class scalar_t>
 void padToSquare(Matrix<scalar_t>*& R);
 
+/**
+ * \brief Pad a tensor along a mode with zeros
+ *
+ * \param[in,out] X pointer to tensor
+ * \param[in] n mode index
+ * \param[in] p number of addtional slices to insert along mode
+ */
+template <class scalar_t>
+Tensor<scalar_t> *padTensorAlongMode(const Tensor<scalar_t>* X, int n, int p);
+
+/**
+ * \brief Concatenate two tensors along a mode
+ *
+ * \param[in] X pointer to first tensor
+ * \param[in] Y pointer to second tensor
+ * \param[in] n mode index
+ * \param[in,out] Z pointer to result tensor
+ */
+template <class scalar_t>
+Tensor<scalar_t> *concatenateTensorsAlongMode(const Tensor<scalar_t>* X, const Tensor<scalar_t>* Y, int n);
+
 } // end of namespace Tucker
 
 
