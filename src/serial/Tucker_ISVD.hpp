@@ -169,14 +169,12 @@ public:
   void initializeFactors(const TuckerTensor<scalar_t> *X);
 
   /**
-   * @brief Update right singular vectors corresponding to Tuker core updates
+   * @brief Pad right singular vectors with zeros along specified mode
    *
    * @param[in] k Tensor mode
-   * @param[in] U_new New basis vectors for tensor mode
-   * @param[in] U_old Old basis vectors for tensor mode
+   * @param[in] p Number of zero slices to add
    */
-  void updateRightSingularVectors(int k, const Matrix<scalar_t> *U_new,
-                                  const Matrix<scalar_t> *U_old);
+  void padRightSingularVectorsAlongMode(int k, int p);
 
   /**
    * @brief Update factorization given new data

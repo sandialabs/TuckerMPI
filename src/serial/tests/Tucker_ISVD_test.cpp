@@ -169,9 +169,6 @@ bool testUpdateRightSingularVectors() {
   Tucker::ISVD<scalar_t> isvd;
   isvd.initializeFactors(U, s, A);
 
-  // TODO: write better test
-  isvd.updateRightSingularVectors(0, U, U);
-
   Tucker::MemoryManager::safe_delete(A);
   Tucker::MemoryManager::safe_delete(G);
   Tucker::MemoryManager::safe_delete_array(s, n);
