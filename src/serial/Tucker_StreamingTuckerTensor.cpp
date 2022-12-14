@@ -181,14 +181,72 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
   // Construct and initialize ISVD object
   factorization->isvd->initializeFactors(factorization->factorization);
 
+  // Track norm of data tensor
   int ndims = X->N();
-  scalar_t tensorNorm = X->norm2();
-  scalar_t thresh = epsilon*epsilon*tensorNorm/X->N();
-  Tucker::SizeArray* slice_dims = MemoryManager::safe_new<SizeArray>((ndims-1));
+  factorization->Xnorm2 = X->norm2();
 
-  // Compute the initial Gram matrices for all non-streaming modes
+  // Compute errors
+  for (int n = 0; n < ndims - 1; ++n) {
+    factorization->squared_errors[n] = 0;
+    for (int i = factorization->factorization->G->size(n); i < factorization->factorization->U[n]->nrows(); ++i) {
+      if (factorization->factorization->eigenvalues && factorization->factorization->eigenvalues[n]) {
+        factorization->squared_errors[n] += std::abs(factorization->factorization->eigenvalues[n][i]);
+      } else if (factorization->factorization->singularValues && factorization->factorization->singularValues[n]) {
+        factorization->squared_errors[n] += std::pow(factorization->factorization->singularValues[n][i], 2);
+      } else {
+        // TODO - encountered null eigenvalues and null singular values - throw exception?
+      }
+    }
+  }
+  factorization->squared_errors[ndims - 1] = std::pow(factorization->isvd->getErrorNorm(), 2);
+
+  // open status file
+  std::ofstream log_stream("stats_stream.txt");
+  log_stream << std::scientific;
+
+  // print status header
+  {
+    for (int n = 0; n < ndims; ++n) {
+      std::ostringstream str;
+      str << "N[" << n << "]";
+      log_stream << std::setw(6) << str.str() << " " << std::flush;
+    }
+    log_stream << std::setw(12) << "datanorm" << " " << std::flush;
+    for (int n = 0; n < ndims; ++n) {
+      std::ostringstream str;
+      str << "R[" << n << "]";
+      log_stream << std::setw(6) << str.str() << " " << std::flush;
+    }
+    for (int n = 0; n < ndims; ++n) {
+      std::ostringstream str;
+      str << "abserr[" << n << "]";
+      log_stream << std::setw(12) << str.str() << " " << std::flush;
+    }
+    log_stream << std::setw(12) << "abserr" << " " << std::flush;
+    log_stream << std::setw(12) << "relerr" << std::endl;
+  }
+
+  // print status after initial ST-HOSVD
+  {
+    for (int n = 0; n < ndims; ++n) {
+      log_stream << std::setw(6) << factorization->factorization->U[n]->nrows() << " " << std::flush;
+    }
+    log_stream << std::setw(12) << std::setprecision(6) << std::sqrt(factorization->Xnorm2) << " " << std::flush;
+    for (int n = 0; n < ndims; ++n) {
+      log_stream << std::setw(6) << factorization->factorization->U[n]->ncols() << " " << std::flush;
+    }
+    scalar_t Enorm2 = 0;
+    for (int n = 0; n < ndims; ++n) {
+      Enorm2 += factorization->squared_errors[n];
+      log_stream << std::setw(12) << std::setprecision(6) << std::sqrt(factorization->squared_errors[n]) << " " << std::flush;
+    }
+    log_stream << std::setw(12) << std::setprecision(6) << std::sqrt(Enorm2) << " " << std::flush;
+    log_stream << std::setw(12) << std::setprecision(6) << std::sqrt(Enorm2 / factorization->Xnorm2) << std::endl;
+  }
+
+  // Compute the slice dimensions corresponding to non-streaming modes
+  Tucker::SizeArray* slice_dims = MemoryManager::safe_new<SizeArray>((ndims-1));
   for(int n=0; n<ndims-1; n++) {
-    factorization->Gram[n] = computeGram(X,n);
     (*slice_dims)[n] = X->size(n); 
   }
 
@@ -199,59 +257,138 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
   
   while(inStream >> snapshot_file) {
     // Create an object for the Tensor slice
-    Tucker::Tensor<scalar_t>* Y = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*slice_dims);
-
     std::cout<< "Reading snapshot " << snapshot_file << std::endl;
+    Tucker::Tensor<scalar_t>* Y = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*slice_dims);
     importTensorBinary(Y,snapshot_file.c_str());
 
-    // Line 1 of StreamingTuckerUpdate algorithm
-    // Set the threshold for Gram SVDs
-    const scalar_t delta = epsilon*std::sqrt(Y->norm2()/ndims);
-
-    // Line 2 of StreamingTuckerUpdate algorithm
-    // Set the threshold for ISVD
-    thresh += delta * delta;
+    // Line 15 of streaming STHOSVD update algorithm
+    // compute truncation parameter
+    factorization->Xnorm2 += Y->norm2();
 
     // Loop over non-streaming modes
     for(int n=0; n<ndims-1; n++) {
-      // Line 4 of StreamingTuckerUpdate algorithm
-      // Update Gram of non-streaming modes
-      updateStreamingGram(factorization->Gram[n], Y, n);
+      // Line 2 of streaming STHOSVD update
+      // compute projection of new slice onto existing basis
+      Tensor<scalar_t> *D;
+      {
+        // D = Y x_n U[n].T
+        const bool isTransposed = true;
+        D = ttm(Y, n, factorization->factorization->U[n], isTransposed);
+      }
 
-      // Lines 5-13 of StreamingTuckerUpdate algorithm
-      // Update bases (factor matrices)
-      // This function is overloaded, implemented above (line ~70)
-      Matrix<scalar_t> *U_new;
-      computeEigenpairs(factorization->Gram[n], factorization->factorization->eigenvalues[n],
-          U_new, factorization->factorization->U[n], thresh, flipSign);
+      // Line 3 of streaming STHOSVD update
+      // compute orthogonal complement of new slice w.r.t. existing basis
+      Tensor<scalar_t> *E;
+      {
+        // E = D x_n U[n]
+        const bool isTransposed = false;
+        E = ttm(D, n, factorization->factorization->U[n], isTransposed);
+      }
+      {
+        // E = -E
+        const int nelm = E->getNumElements();
+        const scalar_t alpha = -1;
+        const int incr = 1;
+        scal(&nelm, &alpha, E->data(), &incr);
+      }
+      {
+        // E = Y + E
+        const int nelm = E->getNumElements();
+        const scalar_t alpha = 1;
+        const int incr = 1;
+        axpy(&nelm, &alpha, Y->data(), &incr, E->data(), &incr);
+      }
 
-      // Line 14 of StreamingTuckerUpdate algorithm
-      // Accumulate ttm products into existing core
-      Tensor<scalar_t>* temp = updateCore(factorization->factorization->G, factorization->factorization->U[n], U_new, n);
-      MemoryManager::safe_delete<Tensor<scalar_t>>(factorization->factorization->G);
-      factorization->factorization->G = temp;
+      const scalar_t Ynorm2 = Y->norm2();
+      const scalar_t thresh = epsilon * epsilon * Ynorm2 / ndims;
 
-      // Line 15 of StreamingTuckerUpdate algorithm
-      // Accumulate ttm products into new slice
-      Tensor<scalar_t>* temp2 = ttm(Y,n,U_new,true);
-      MemoryManager::safe_delete<Tensor<scalar_t>>(Y);
-      Y = temp2;
+      if (E->norm2() <= thresh) {
+        factorization->squared_errors[n] += E->norm2();
+        MemoryManager::safe_delete(E);
 
-      // Line 16 of StreamingTuckerUpdate algorithm
-      // Update right singular vectors of ISVD factorization
-      factorization->isvd->updateRightSingularVectors(n, U_new, factorization->factorization->U[n]);
+        std::swap(Y, D);
+        MemoryManager::safe_delete(D);
+      } else {
+        // Line 4 of streaming STHOSVD update
+        // compute Gram of orthogonal complement of new slice
+        Matrix<scalar_t> *G = computeGram(E, n);
 
-      // Line 17 of StreamingTuckerUpdate algorithm
-      // Save the new factor matrix
-      MemoryManager::safe_delete(factorization->factorization->U[n]);
-      factorization->factorization->U[n] = U_new;
+        // Lines 5-8 of streaming STHOSVD update
+        // compute truncated eigendecomposition of Gram
+        scalar_t *eigenvalues;
+        Matrix<scalar_t> *V;
+        computeEigenpairs(G, eigenvalues, V, thresh);
+
+        const int R_new = V->ncols();
+        for (int i = R_new; i < V->nrows(); ++i) {
+          factorization->squared_errors[n] += std::abs(eigenvalues[i]);
+        }
+
+        MemoryManager::safe_delete(G);
+        MemoryManager::safe_delete_array(eigenvalues, V->nrows());
+
+        // Line 9 of streaming STHOSVD update
+        // project orthgonal complement to new basis
+        Tensor<scalar_t> *K;
+        {
+          // K = E x_n V.T
+          const bool isTransposed = true;
+          K = ttm(E, n, V, isTransposed);
+        }
+        MemoryManager::safe_delete(E);
+
+        // Line 10 of streaming STHOSVD update
+        // pad core with zeros
+        Tensor<scalar_t> *G_new = padTensorAlongMode(factorization->factorization->G, n, R_new);
+        std::swap(factorization->factorization->G, G_new);
+        MemoryManager::safe_delete(G_new);
+
+        // Line 11 of streaming STHOSVD update
+        // pad ISVD right singular vectors with zeros
+        factorization->isvd->padRightSingularVectorsAlongMode(n, R_new);
+
+        // Line 12 of streaming STHOSVD algorithm
+        // prepare slice for next mode
+        Tensor<scalar_t> *Y_new = concatenateTensorsAlongMode(D, K, n);
+        std::swap(Y, Y_new);
+        MemoryManager::safe_delete(D);
+        MemoryManager::safe_delete(K);
+        MemoryManager::safe_delete(Y_new);
+
+        // Line 13 of streaming STHOSVD algorithm
+        // update basis
+        Matrix<scalar_t> *U_new;
+        {
+          const Matrix<scalar_t> *U = factorization->factorization->U[n];
+          const int N = U->nrows();
+          const int R = U->ncols();
+          U_new = MemoryManager::safe_new<Matrix<scalar_t>>(N, R + R_new);
+          {
+            const int nelm = N * R;
+            const int incr = 1;
+            copy(&nelm, U->data(), &incr, U_new->data(), &incr);
+          }
+          {
+            const int nelm = N * R_new;
+            const int incr = 1;
+            copy(&nelm, V->data(), &incr, U_new->data() + N * R, &incr);
+          }
+        }
+        MemoryManager::safe_delete(V);
+
+        std::swap(factorization->factorization->U[n], U_new);
+        MemoryManager::safe_delete(U_new);
+      }
     }
 
-    // Line 19 of StreamingTuckerUpdate algorithm
+    // Line 16 of streaming STHOSVD update algorithm
     // Add new row to ISVD factorization
+    const scalar_t delta = epsilon / std::sqrt(ndims);
     factorization->isvd->updateFactorsWithNewSlice(Y, delta);
 
-    // Lines 20-21 of StreamingTuckerUpdate algorithm
+    factorization->squared_errors[ndims - 1] = std::pow(factorization->isvd->getErrorNorm(), 2);
+
+    // Lines 17 of streaming STHOSVD update algorithm
     // Retrieve updated left singular vectors from ISVD factorization
     Matrix<scalar_t> *U_new = nullptr;
     {
@@ -298,6 +435,24 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
 
     // Free memory
     MemoryManager::safe_delete<Tucker::Tensor<scalar_t>>(Y);
+
+    // print status after streaming ST-HOSVD update
+    {
+      for (int n = 0; n < ndims; ++n) {
+        log_stream << std::setw(6) << factorization->factorization->U[n]->nrows() << " " << std::flush;
+      }
+      log_stream << std::setw(12) << std::setprecision(6) << std::sqrt(factorization->Xnorm2) << " " << std::flush;
+      for (int n = 0; n < ndims; ++n) {
+        log_stream << std::setw(6) << factorization->factorization->U[n]->ncols() << " " << std::flush;
+      }
+      scalar_t Enorm2 = 0;
+      for (int n = 0; n < ndims; ++n) {
+        Enorm2 += factorization->squared_errors[n];
+        log_stream << std::setw(12) << std::setprecision(6) << std::sqrt(factorization->squared_errors[n]) << " " << std::flush;
+      }
+      log_stream << std::setw(12) << std::setprecision(6) << std::sqrt(Enorm2) << " " << std::flush;
+      log_stream << std::setw(12) << std::setprecision(6) << std::sqrt(Enorm2 / factorization->Xnorm2) << std::endl;
+    }
   }
 
   // Close the file containing snapshot filenames

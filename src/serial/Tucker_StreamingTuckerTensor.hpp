@@ -87,6 +87,8 @@ public:
     N = X->N;
     Gram = MemoryManager::safe_new_array<Matrix<scalar_t>*>(N-1);
     isvd = MemoryManager::safe_new<ISVD<scalar_t>>();
+    squared_errors = MemoryManager::safe_new_array<scalar_t>(N);
+    Xnorm2 = 0;
   }
 
   /** \brief Destructor
@@ -102,6 +104,7 @@ public:
     }
     MemoryManager::safe_delete_array(Gram,N-1);
     MemoryManager::safe_delete(isvd);
+    MemoryManager::safe_delete_array(squared_errors, N);
   }
 
   // The TuckerTensor factorization
@@ -120,6 +123,14 @@ public:
   /** \brief Pointer to ISVD factorization
    */
   ISVD<scalar_t> *isvd;
+
+  /** \brief Norm of full data tensor
+   */
+  scalar_t Xnorm2;
+
+  /** \brief Array of modal errors
+   */
+  scalar_t *squared_errors;
 
   //! The number of dimensions
   int N;
