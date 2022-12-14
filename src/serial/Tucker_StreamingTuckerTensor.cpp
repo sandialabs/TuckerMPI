@@ -256,14 +256,24 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
   std::string snapshot_file;
   
   while(inStream >> snapshot_file) {
-    // Create an object for the Tensor slice
+    // Read the new tensor slice
     std::cout<< "Reading snapshot " << snapshot_file << std::endl;
     Tucker::Tensor<scalar_t>* Y = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*slice_dims);
     importTensorBinary(Y,snapshot_file.c_str());
 
-    // Line 15 of streaming STHOSVD update algorithm
-    // compute truncation parameter
-    factorization->Xnorm2 += Y->norm2();
+    // compute/update data norms
+    const scalar_t Ynorm2 = Y->norm2();
+    factorization->Xnorm2 += Ynorm2;
+
+    // Compute allowed error tolerance based off current error
+    scalar_t tolerance = 0;
+    {
+      for (int n = 0; n < ndims; ++n) {
+        tolerance += factorization->squared_errors[n];
+      }
+
+      tolerance = epsilon * epsilon * factorization->Xnorm2 - tolerance;
+    }
 
     // Loop over non-streaming modes
     for(int n=0; n<ndims-1; n++) {
@@ -299,11 +309,12 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
         axpy(&nelm, &alpha, Y->data(), &incr, E->data(), &incr);
       }
 
-      const scalar_t Ynorm2 = Y->norm2();
-      const scalar_t thresh = epsilon * epsilon * Ynorm2 / ndims;
+      const scalar_t thresh = tolerance / (ndims - n);
+      const scalar_t Enorm2 = E->norm2();
 
-      if (E->norm2() <= thresh) {
-        factorization->squared_errors[n] += E->norm2();
+      if (Enorm2 <= thresh) {
+        factorization->squared_errors[n] += Enorm2;
+        tolerance -= Enorm2;
         MemoryManager::safe_delete(E);
 
         std::swap(Y, D);
@@ -322,6 +333,7 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
         const int R_new = V->ncols();
         for (int i = R_new; i < V->nrows(); ++i) {
           factorization->squared_errors[n] += std::abs(eigenvalues[i]);
+          tolerance -= std::abs(eigenvalues[i]);
         }
 
         MemoryManager::safe_delete(G);
@@ -339,9 +351,11 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
 
         // Line 10 of streaming STHOSVD update
         // pad core with zeros
-        Tensor<scalar_t> *G_new = padTensorAlongMode(factorization->factorization->G, n, R_new);
-        std::swap(factorization->factorization->G, G_new);
-        MemoryManager::safe_delete(G_new);
+        {
+          Tensor<scalar_t> *core = padTensorAlongMode(factorization->factorization->G, n, R_new);
+          std::swap(factorization->factorization->G, core);
+          MemoryManager::safe_delete(core);
+        }
 
         // Line 11 of streaming STHOSVD update
         // pad ISVD right singular vectors with zeros
@@ -383,7 +397,7 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
 
     // Line 16 of streaming STHOSVD update algorithm
     // Add new row to ISVD factorization
-    const scalar_t delta = epsilon / std::sqrt(ndims);
+    const scalar_t delta = std::sqrt(tolerance / Y->norm2());
     factorization->isvd->updateFactorsWithNewSlice(Y, delta);
 
     factorization->squared_errors[ndims - 1] = std::pow(factorization->isvd->getErrorNorm(), 2);
