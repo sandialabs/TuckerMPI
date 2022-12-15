@@ -419,12 +419,32 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
     // Split U_new into two submatrices
     // Use first submatrix to update core
     {
-      const int nrows = U_new->nrows();
-      Tucker::Matrix<scalar_t> *U_sub = U_new->getSubmatrix(0, nrows - 2);
-      Tensor<scalar_t>* temp3 = updateCore(factorization->factorization->G, factorization->factorization->U[ndims - 1], U_sub, ndims - 1);
-      MemoryManager::safe_delete(U_sub);
-      MemoryManager::safe_delete<Tensor<scalar_t>>(factorization->factorization->G);
-      factorization->factorization->G = temp3;
+      const int m_new = U_new->nrows();
+      const int r_new = U_new->ncols();
+
+      const int m_old = m_new - 1;
+      const int r_old = factorization->factorization->U[ndims - 1]->ncols();
+
+      Matrix<scalar_t> *M = MemoryManager::safe_new<Matrix<scalar_t>>(r_new, r_old);
+      {
+        const char transa = 'T';
+        const char transb = 'N';
+        const scalar_t alpha = 1;
+        const scalar_t beta = 0;
+        gemm(&transa, &transb,
+             &r_new, &r_old, &m_old,
+             &alpha,
+             U_new->data(), &m_new,
+             factorization->factorization->U[ndims - 1]->data(), &m_old,
+             &beta,
+             M->data(), &r_new);
+      }
+
+      Tensor<scalar_t> *temp3 = ttm(factorization->factorization->G, ndims - 1, M);
+      std::swap(factorization->factorization->G, temp3);
+
+      MemoryManager::safe_delete(M);
+      MemoryManager::safe_delete(temp3);
     }
 
     // Lines 23-24 of StreamingTuckerUpdate algorithm
