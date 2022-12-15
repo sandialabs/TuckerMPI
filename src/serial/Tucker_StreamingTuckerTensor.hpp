@@ -142,17 +142,6 @@ private:
 
 };
 
-// Explicit instantiations to build static library for both single and double precision
-template class StreamingTuckerTensor<float>;
-template class StreamingTuckerTensor<double>;
-
-template <class scalar_t>
-void updateStreamingGram(Matrix<scalar_t>* Gram, const Tensor<scalar_t>* Y, const int n=-1);
-
-template <class scalar_t>
-Tensor<scalar_t>* updateCore(Tensor<scalar_t>* G, const Matrix<scalar_t>* U_old,
-    const Matrix<scalar_t>* U_new, const int dim=-1);
-
 template <class scalar_t>
 const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar_t>* X, const TuckerTensor<scalar_t>* initial_factorization,
     const char* filename, const scalar_t epsilon, bool useQR=false, bool flipSign=false);

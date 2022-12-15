@@ -56,121 +56,6 @@
 namespace Tucker {
 
 template <class scalar_t>
-void updateStreamingGram(Matrix<scalar_t>* Gram, const Tensor<scalar_t>* Y, const int n)
-{
-
-  Matrix<scalar_t>* gram_to_add = computeGram(Y,n);
-  size_t nnz = gram_to_add->getNumElements();
-  for(int i=0; i<nnz; i++) {
-    *(Gram->data()+i) += *(gram_to_add->data()+i);
-  }
-  MemoryManager::safe_delete<Matrix<scalar_t>>(gram_to_add);
-}
-
-template<class scalar_t>
-void computeEigenpairs(const Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign)
-{
-  if(G == 0) {
-    throw std::runtime_error("Tucker::computeEigenpairs(const Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign): G is a null pointer");
-  }
-  if(G->getNumElements() == 0) {
-    throw std::runtime_error("Tucker::computeEigenpairs(const Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign): G has no entries");
-  }
-  if (old_eigenvectors == 0) {
-    throw std::runtime_error("Tucker::computeEigenpairs(const Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign): old_eigenvectors is a null pointer");
-  }
-  if(thresh < 0) {
-    std::ostringstream oss;
-    oss << "Tucker::computeEigenpairs(const Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const Matrix<scalar_t>* old_eigenvectors, const scalar_t thresh, const bool flipSign): thresh = " << thresh << " < 0";
-    throw std::runtime_error(oss.str());
-  }
-
-  // The Gram matrix is overwritten inside computeEigenpairs
-  // Make a copy of it, retain it for later use
-  int nrows = G->nrows();
-  Matrix<scalar_t>* G_copy =
-      MemoryManager::safe_new<Matrix<scalar_t>>(nrows, nrows);
-  {
-    const int& nelem = nrows * nrows;
-    const int& ONE = 1;
-    copy(&nelem, G->data(), &ONE, G_copy->data(), &ONE);
-  }
-
-  computeEigenpairs(G_copy, eigenvalues, flipSign);
-
-  // Compute projection of new eigenvectors along old eigenvectors
-  int nproj = old_eigenvectors->ncols();
-  Vector<scalar_t> *projection = MemoryManager::safe_new<Vector<scalar_t>>(nproj);
-  Vector<scalar_t> *projectionNorms = MemoryManager::safe_new<Vector<scalar_t>>(nrows);
-  for (int i = 0; i < nrows; ++i) {
-    const int ONE = 1;
-    const char &trans = 'T';
-    const scalar_t &alpha = 1;
-    const scalar_t &beta = 0;
-    gemv(&trans, &nrows, &nproj, &alpha, old_eigenvectors->data(), &nrows, G_copy->data() + i * nrows, &ONE, &beta, projection->data(), &ONE);
-    (*projectionNorms)[i] = nrm2(&nproj, projection->data(), &ONE);
-  }
-  MemoryManager::safe_delete(projection);
-
-  // Compute number of things to copy
-  int numEvecs=nrows;
-  scalar_t sum = 0;
-  for(int i=nrows-1; i>=0; i--) {
-    // TODO discuss the truncation criteria
-    if ((*projectionNorms)[i] > std::sqrt(std::numeric_limits<scalar_t>::epsilon())) {
-      break;
-    }
-
-    sum += std::abs(eigenvalues[i]);
-    if(sum > thresh) {
-      break;
-    }
-    numEvecs--;
-  }
-  MemoryManager::safe_delete(projectionNorms);
-
-  // Allocate memory for eigenvectors
-  int numRows = G->nrows();
-  eigenvectors = MemoryManager::safe_new<Matrix<scalar_t>>(numRows,numEvecs);
-
-  // Copy appropriate eigenvectors
-  int nToCopy = numRows*numEvecs;
-  const int ONE = 1;
-  Tucker::copy(&nToCopy, G_copy->data(), &ONE, eigenvectors->data(), &ONE);
-  MemoryManager::safe_delete(G_copy);
-}
-
-template <class scalar_t>
-Tensor<scalar_t>* updateCore(Tensor<scalar_t>* G, const Matrix<scalar_t>* U_old, 
-    const Matrix<scalar_t>* U_new, const int dim)
-{
-
-  // First the matrix multiplication U_new^T * U_old
-  // Do sanity check of dimensions
-  assert( U_new->nrows() == U_old->nrows() );
-
-  int m = U_new->ncols();
-  int n = U_old->ncols();
-  int k = U_new->nrows();
-  Matrix<scalar_t>* S = MemoryManager::safe_new<Matrix<scalar_t>>(m,n);
-
-  char transa = 'T';
-  char transb = 'N';
-  int lda = k;
-  int ldb = k;
-  int ldc = m; 
-  scalar_t alpha = 1.0;
-  scalar_t beta = 0.0;
-  gemm(&transa, &transb, &m, &n, &k, &alpha, U_new->data(),
-        &lda, U_old->data(), &ldb, &beta, S->data(), &ldc);
-
-  Tensor<scalar_t>* ttm_result = ttm(G,dim,S,false);
-
-  MemoryManager::safe_delete<Matrix<scalar_t>>(S);
-  return ttm_result;
-}
-
-template <class scalar_t>
 const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar_t>* X, const TuckerTensor<scalar_t>* initial_factorization,
     const char* filename, const scalar_t epsilon, bool useQR, bool flipSign)
 {
@@ -500,13 +385,14 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
   return factorization;
 }
 
-template void updateStreamingGram(Matrix<float>*, const Tensor<float>*, const int);
-template Tensor<float>* updateCore(Tensor<float>*, const Matrix<float>*, const Matrix<float>*, const int);
+// Explicit instantiations
+
+template class StreamingTuckerTensor<float>;
+template class StreamingTuckerTensor<double>;
+
 template const struct StreamingTuckerTensor<float>* StreamingHOSVD(const Tensor<float>*, const TuckerTensor<float>*, 
              const char* filename, const float, bool, bool);
 
-template void updateStreamingGram(Matrix<double>*, const Tensor<double>*, const int);
-template Tensor<double>* updateCore(Tensor<double>*, const Matrix<double>*, const Matrix<double>*, const int);
 template const struct StreamingTuckerTensor<double>* StreamingHOSVD(const Tensor<double>*, const TuckerTensor<double>*,
              const char* filename, const double, bool, bool);
 
