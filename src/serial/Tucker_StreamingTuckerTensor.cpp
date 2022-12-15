@@ -56,7 +56,7 @@
 namespace Tucker {
 
 template <class scalar_t>
-const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar_t>* X, const TuckerTensor<scalar_t>* initial_factorization,
+const struct StreamingTuckerTensor<scalar_t>* StreamingSTHOSVD(const Tensor<scalar_t>* X, const TuckerTensor<scalar_t>* initial_factorization,
     const char* filename, const scalar_t epsilon, bool useQR, bool flipSign)
 {
 
@@ -390,10 +390,10 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
 template class StreamingTuckerTensor<float>;
 template class StreamingTuckerTensor<double>;
 
-template const struct StreamingTuckerTensor<float>* StreamingHOSVD(const Tensor<float>*, const TuckerTensor<float>*, 
+template const struct StreamingTuckerTensor<float>* StreamingSTHOSVD(const Tensor<float>*, const TuckerTensor<float>*, 
              const char* filename, const float, bool, bool);
 
-template const struct StreamingTuckerTensor<double>* StreamingHOSVD(const Tensor<double>*, const TuckerTensor<double>*,
+template const struct StreamingTuckerTensor<double>* StreamingSTHOSVD(const Tensor<double>*, const TuckerTensor<double>*,
              const char* filename, const double, bool, bool);
 
 } // end namespace Tucker

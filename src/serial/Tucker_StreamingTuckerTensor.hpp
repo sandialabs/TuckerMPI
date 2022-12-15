@@ -143,7 +143,7 @@ private:
 };
 
 template <class scalar_t>
-const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar_t>* X, const TuckerTensor<scalar_t>* initial_factorization,
+const struct StreamingTuckerTensor<scalar_t>* StreamingSTHOSVD(const Tensor<scalar_t>* X, const TuckerTensor<scalar_t>* initial_factorization,
     const char* filename, const scalar_t epsilon, bool useQR=false, bool flipSign=false);
 
 } // end namespace Tucker

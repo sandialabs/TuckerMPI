@@ -182,9 +182,7 @@ int main(int argc, char* argv[])
     // Perform Streaming HOSVD //
     /////////////////////////////
 
-    const Tucker::StreamingTuckerTensor<scalar_t>* solution;
-
-    solution = Tucker::StreamingHOSVD(X, initial_solution, streaming_fns_file.c_str(), tol, useLQ);
+    const Tucker::StreamingTuckerTensor<scalar_t>* solution = Tucker::StreamingSTHOSVD(X, initial_solution, streaming_fns_file.c_str(), tol, useLQ);
 
     /////////////////////////
     // Compute Error Bound //
@@ -203,7 +201,7 @@ int main(int argc, char* argv[])
     enorm = std::sqrt(enorm);
     std::cout << "Error bound: absolute = " << enorm << ", relative = " << enorm / xnorm << std::endl;
 
-    std::cout << "Local tensor size after StreamingHOSVD iterations:" << std::flush;
+    std::cout << "Local tensor size after StreamingSTHOSVD iterations:" << std::flush;
     for (int i = 0; i < nd; ++i) {
       std::cout << " " << solution->factorization->G->size(i) << std::flush;
     }
