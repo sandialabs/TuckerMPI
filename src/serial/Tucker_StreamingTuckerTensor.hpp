@@ -43,6 +43,7 @@
 #ifndef STREAMINGTUCKERTENSOR_HPP_
 #define STREAMINGTUCKERTENSOR_HPP_
 
+#include "Tucker_Timer.hpp"
 #include "Tucker_TuckerTensor.hpp"
 #include "Tucker_ISVD.hpp"
 
@@ -143,8 +144,13 @@ private:
 };
 
 template <class scalar_t>
-const struct StreamingTuckerTensor<scalar_t>* StreamingSTHOSVD(const Tensor<scalar_t>* X, const TuckerTensor<scalar_t>* initial_factorization,
-    const char* filename, const scalar_t epsilon, bool useQR=false, bool flipSign=false);
+const struct StreamingTuckerTensor<scalar_t>* StreamingSTHOSVD(const Tensor<scalar_t>* X,
+                                                               const TuckerTensor<scalar_t>* initial_factorization,
+                                                               const char* filename,
+                                                               const scalar_t epsilon,
+                                                               Timer &readTimer,
+                                                               bool useQR=false,
+                                                               bool flipSign=false);
 
 } // end namespace Tucker
 

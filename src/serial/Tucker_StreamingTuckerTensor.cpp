@@ -56,8 +56,13 @@
 namespace Tucker {
 
 template <class scalar_t>
-const struct StreamingTuckerTensor<scalar_t>* StreamingSTHOSVD(const Tensor<scalar_t>* X, const TuckerTensor<scalar_t>* initial_factorization,
-    const char* filename, const scalar_t epsilon, bool useQR, bool flipSign)
+const struct StreamingTuckerTensor<scalar_t>* StreamingSTHOSVD(const Tensor<scalar_t>* X,
+                                                               const TuckerTensor<scalar_t>* initial_factorization,
+                                                               const char* filename,
+                                                               const scalar_t epsilon,
+                                                               Timer &readTimer,
+                                                               bool useQR,
+                                                               bool flipSign)
 {
 
   // Create a struct to store the factorization
@@ -143,8 +148,10 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingSTHOSVD(const Tensor<scal
   while(inStream >> snapshot_file) {
     // Read the new tensor slice
     std::cout<< "Reading snapshot " << snapshot_file << std::endl;
+    readTimer.start();
     Tucker::Tensor<scalar_t>* Y = Tucker::MemoryManager::safe_new<Tucker::Tensor<scalar_t>>(*slice_dims);
     importTensorBinary(Y,snapshot_file.c_str());
+    readTimer.stop();
 
     // compute/update data norms
     const scalar_t Ynorm2 = Y->norm2();
@@ -390,10 +397,20 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingSTHOSVD(const Tensor<scal
 template class StreamingTuckerTensor<float>;
 template class StreamingTuckerTensor<double>;
 
-template const struct StreamingTuckerTensor<float>* StreamingSTHOSVD(const Tensor<float>*, const TuckerTensor<float>*, 
-             const char* filename, const float, bool, bool);
+template const struct StreamingTuckerTensor<float>* StreamingSTHOSVD(const Tensor<float>*,
+                                                                     const TuckerTensor<float>*, 
+                                                                     const char* filename,
+                                                                     const float,
+                                                                     Timer &,
+                                                                     bool,
+                                                                     bool);
 
-template const struct StreamingTuckerTensor<double>* StreamingSTHOSVD(const Tensor<double>*, const TuckerTensor<double>*,
-             const char* filename, const double, bool, bool);
+template const struct StreamingTuckerTensor<double>* StreamingSTHOSVD(const Tensor<double>*,
+                                                                      const TuckerTensor<double>*,
+                                                                      const char* filename,
+                                                                      const double,
+                                                                      Timer &,
+                                                                      bool,
+                                                                      bool);
 
 } // end namespace Tucker

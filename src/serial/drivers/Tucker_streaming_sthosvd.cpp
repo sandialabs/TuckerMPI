@@ -161,7 +161,7 @@ int main(int argc, char* argv[])
   /////////////////////////////
   // Perform Initial STHOSVD //
   /////////////////////////////
-  Tucker::Timer sthosvdTimer, writeTimer;
+  Tucker::Timer sthosvdTimer, streamingSthosvdTimer, streamingReadTimer, writeTimer;
   if(boolSTHOSVD) {
     const Tucker::TuckerTensor<scalar_t>* initial_solution;
 
@@ -181,8 +181,10 @@ int main(int argc, char* argv[])
     /////////////////////////////
     // Perform Streaming HOSVD //
     /////////////////////////////
-
-    const Tucker::StreamingTuckerTensor<scalar_t>* solution = Tucker::StreamingSTHOSVD(X, initial_solution, streaming_fns_file.c_str(), tol, useLQ);
+    streamingSthosvdTimer.start();
+    const Tucker::StreamingTuckerTensor<scalar_t>* solution =
+      Tucker::StreamingSTHOSVD(X, initial_solution, streaming_fns_file.c_str(), tol, streamingReadTimer, useLQ);
+    streamingSthosvdTimer.stop();
 
     /////////////////////////
     // Compute Error Bound //
@@ -259,8 +261,10 @@ int main(int argc, char* argv[])
   Tucker::MemoryManager::printMaxMemUsage();
 
   totalTimer.stop();
-  std::cout << "Read time: " << readTimer.duration() << std::endl;
-  std::cout << "STHOSVD time: " << sthosvdTimer.duration() << std::endl;
+  std::cout << "Initial read time: " << readTimer.duration() << std::endl;
+  std::cout << "Initial STHOSVD time: " << sthosvdTimer.duration() << std::endl;
+  std::cout << "Streaming read time: " << streamingReadTimer.duration() << std::endl;
+  std::cout << "Streaming STHOSVD time: " << streamingSthosvdTimer.duration() - streamingReadTimer.duration() << std::endl;
   std::cout << "Write time: " << writeTimer.duration() << std::endl;
   std::cout << "Total time: " << totalTimer.duration() << std::endl;
 
