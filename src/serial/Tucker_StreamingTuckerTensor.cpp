@@ -265,7 +265,7 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
     const scalar_t Ynorm2 = Y->norm2();
     factorization->Xnorm2 += Ynorm2;
 
-    // Compute allowed error tolerance based off current error
+    // compute total allowed error based off current error
     scalar_t tolerance = 0;
     {
       for (int n = 0; n < ndims; ++n) {
@@ -274,6 +274,9 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
 
       tolerance = epsilon * epsilon * factorization->Xnorm2 - tolerance;
     }
+
+    // compute allowed error for non-streaming modes
+    const scalar_t thresh = tolerance / ndims;
 
     // Loop over non-streaming modes
     for(int n=0; n<ndims-1; n++) {
@@ -309,7 +312,6 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingHOSVD(const Tensor<scalar
         axpy(&nelm, &alpha, Y->data(), &incr, E->data(), &incr);
       }
 
-      const scalar_t thresh = tolerance / (ndims - n);
       const scalar_t Enorm2 = E->norm2();
 
       if (Enorm2 <= thresh) {
