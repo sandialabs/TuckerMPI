@@ -72,7 +72,7 @@ static void svd(const Matrix<scalar_t> *A, Matrix<scalar_t> **U,
 
 template <class scalar_t>
 static void truncatedSvd(const Matrix<scalar_t> *A, scalar_t absolute_tolerance,
-                         scalar_t relative_tolerance, Matrix<scalar_t> **U,
+                         scalar_t relative_tolerance, int r_min, Matrix<scalar_t> **U,
                          Vector<scalar_t> **s, Matrix<scalar_t> **V,
                          scalar_t &squared_frobenius_norm_data,
                          scalar_t &squared_frobenius_norm_error) {
@@ -99,7 +99,7 @@ static void truncatedSvd(const Matrix<scalar_t> *A, scalar_t absolute_tolerance,
 
   int r = k;
   squared_frobenius_norm_error = static_cast<scalar_t>(0);
-  while (r > 1) {
+  while (r > r_min) {
     const scalar_t new_squared_frobenius_norm_error =
         squared_frobenius_norm_error + (*s_thin)[r - 1] * (*s_thin)[r - 1];
 
@@ -461,7 +461,7 @@ void ISVD<scalar_t>::addSingleRowNaive(const scalar_t *c, scalar_t tolerance) {
   Matrix<scalar_t> *V2 = nullptr;
   scalar_t new_squared_frobenius_norm_data;
   scalar_t new_squared_frobenius_norm_error;
-  truncatedSvd(S1, tolerance * c_norm, SCALAR_ZERO, &U2, &s2, &V2,
+  truncatedSvd(S1, tolerance * c_norm, SCALAR_ZERO, r, &U2, &s2, &V2,
                new_squared_frobenius_norm_data,
                new_squared_frobenius_norm_error);
 
