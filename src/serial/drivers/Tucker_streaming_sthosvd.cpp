@@ -230,7 +230,7 @@ int main(int argc, char* argv[])
       of.open(sizeFilename);
       assert(of.is_open());
       for(int mode=0; mode<nd; mode++) {
-        of << (*I_dims)[mode] << std::endl;
+        of << solution->factorization->U[mode]->size(0) << std::endl;
       }
       of.close();
 
