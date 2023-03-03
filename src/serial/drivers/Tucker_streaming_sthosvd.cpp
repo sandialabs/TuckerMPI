@@ -52,6 +52,7 @@ int main(int argc, char* argv[])
   std::string sv_fn                     = Tucker::stringParse<std::string>(fileAsString, "SV file prefix", "sv");
   std::string in_fns_file               = Tucker::stringParse<std::string>(fileAsString, "Initial input file list", "raw.txt");
   std::string streaming_fns_file        = Tucker::stringParse<std::string>(fileAsString, "Streaming input file list", "stream_files.txt");
+  std::string streaming_stats_file      = Tucker::stringParse<std::string>(fileAsString, "Streaming statistics output file", "stream_stats.txt");
 
   int nd = I_dims->size();
 
@@ -183,7 +184,7 @@ int main(int argc, char* argv[])
     /////////////////////////////
     streamingSthosvdTimer.start();
     const Tucker::StreamingTuckerTensor<scalar_t>* solution =
-      Tucker::StreamingSTHOSVD(X, initial_solution, streaming_fns_file.c_str(), tol, streamingReadTimer, useLQ);
+      Tucker::StreamingSTHOSVD(X, initial_solution, streaming_fns_file.c_str(), tol, streamingReadTimer, streaming_stats_file, useLQ);
     streamingSthosvdTimer.stop();
 
     /////////////////////////

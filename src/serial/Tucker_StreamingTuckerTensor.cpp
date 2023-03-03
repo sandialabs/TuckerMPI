@@ -61,6 +61,7 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingSTHOSVD(const Tensor<scal
                                                                const char* filename,
                                                                const scalar_t epsilon,
                                                                Timer &readTimer,
+                                                               const std::string &streaming_stats_file,
                                                                bool useQR,
                                                                bool flipSign)
 {
@@ -91,7 +92,7 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingSTHOSVD(const Tensor<scal
   factorization->squared_errors[ndims - 1] = std::pow(factorization->isvd->getErrorNorm(), 2);
 
   // open status file
-  std::ofstream log_stream("stats_stream.txt");
+  std::ofstream log_stream(streaming_stats_file);
   log_stream << std::scientific;
 
   // print status header
@@ -402,6 +403,7 @@ template const struct StreamingTuckerTensor<float>* StreamingSTHOSVD(const Tenso
                                                                      const char* filename,
                                                                      const float,
                                                                      Timer &,
+                                                                     const std::string &,
                                                                      bool,
                                                                      bool);
 
@@ -410,6 +412,7 @@ template const struct StreamingTuckerTensor<double>* StreamingSTHOSVD(const Tens
                                                                       const char* filename,
                                                                       const double,
                                                                       Timer &,
+                                                                      const std::string &,
                                                                       bool,
                                                                       bool);
 

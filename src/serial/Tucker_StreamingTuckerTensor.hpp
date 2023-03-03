@@ -149,6 +149,7 @@ const struct StreamingTuckerTensor<scalar_t>* StreamingSTHOSVD(const Tensor<scal
                                                                const char* filename,
                                                                const scalar_t epsilon,
                                                                Timer &readTimer,
+                                                               const std::string &streaming_stats_file,
                                                                bool useQR=false,
                                                                bool flipSign=false);
 
