@@ -35,45 +35,49 @@ int main(int argc, char* argv[])
 
     // Get the name of the input file
     const std::string paramfn = Tucker::parseString(argc, (const char**)argv, "--parameter-file", "paramfile.txt");
-    
+
     // Parse parameter file
     const std::vector<std::string> fileAsString = Tucker::getFileAsStrings(paramfn);
-    const InputArgs args  = parse_input_file<scalar_t>(fileAsString);
+    InputArgs args = parse_input_file<scalar_t>(fileAsString);
 
-    // 
+    // Check options
     int checkArgs = check_args(args);
+    if (rank == 0) { std::cout << "Argument checking: passed\n"; }
 
     // Print options
-    // print_args(args);
+    if (rank == 0) { print_args(args); }
 
-    // assert(boolAuto || R_dims->size() == nd);
+    assert(args.boolAuto || args.R_dims->size() == args.nd);
 
     // Check array sizes
-
+    // chech_array_sizes(args);
     // !!!![code]!!!!
 
     // Set up processor grid
-
     if (rank == 0) { std::cout << "Creating process grid" << std::endl; }
 
     // Set up distribution object
-    
     TuckerMPI::Distribution* dist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*args.I_dims, *args.proc_grid_dims);
-
+    
     // Read full tensor data
-    //Tucker::Timer readTimer;
-    //readTimer.start();
+    // Tucker::Timer readTimer;
+    // readTimer.start();
     // TuckerMPI::Tensor<scalar_t> X(dist);
     // TuckerMPI::readTensorBinary(in_fns_file,X);
-    //readTimer.stop();
+    // readTimer.stop();
 
     // !!!![lot of code]!!!!
 
     // Free memory
-
-    // !!!![code]!!!!
-
+    Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(args.I_dims);
+    if(args.R_dims) Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(args.R_dims);
+    Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(args.proc_grid_dims);
+    
+    if(rank == 0) {
+      Tucker::MemoryManager::printMaxMemUsage();
+    }
+    
   }
   
   // Finalize Kokkos
@@ -86,7 +90,7 @@ int main(int argc, char* argv[])
 
 
 #if 0
-  assert(boolAuto || R_dims->size() == nd);
+  
 
   ///////////////////////
   // Check array sizes //
@@ -160,17 +164,11 @@ int main(int argc, char* argv[])
 
   // bunch of stuff missing
 
-  //
-  // Free memory
-  //
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(I_dims);
-  if(R_dims) Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(R_dims);
-  Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(proc_grid_dims);
 
-  if(rank == 0) {
-    Tucker::MemoryManager::printMaxMemUsage();
-  }
 
+  // Finalize MPI
+  MPI_Finalize();
+  
   // Finalize MPI
   MPI_Finalize();
 }

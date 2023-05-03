@@ -1,4 +1,3 @@
-
 #ifndef TUCKER_MPIKOKKOS_HELP_HPP
 #define TUCKER_MPIKOKKOS_HELP_HPP
 
@@ -15,120 +14,117 @@ struct InputArgs
   bool boolPrintSV                      ;
   bool boolReconstruct                  ;
   bool useButterflyTSQR                 ;
-
+  
   ScalarType tol                        ;
   ScalarType stdThresh                  ;
 
   Tucker::SizeArray* I_dims             ;
-  Tucker::SizeArray* R_dims = 0;
-  // if(!boolAuto)  R_dims                 ;
+  Tucker::SizeArray* R_dims             ;
   Tucker::SizeArray* proc_grid_dims     ;
   Tucker::SizeArray* modeOrder          ;
 
   std::string scaling_type              ;
-  // std::string sthosvd_dir               ;
-  // std::string sthosvd_fn                ;
-  // std::string sv_dir                    ;
-  // std::string sv_fn                     ;
-  // std::string in_fns_file               ;
-  // std::string pre_fns_file              ;
-  // std::string reconstruct_report_file   ;
-  // std::string stats_file                ;
-  // std::string timing_file               ;
-  int nd = I_dims->size()               ;
-  // int scale_mode                        ;
+  std::string sthosvd_dir               ;
+  std::string sthosvd_fn                ;
+  std::string sv_dir                    ;
+  std::string sv_fn                     ;
+  std::string in_fns_file               ;
+  std::string pre_fns_file              ;
+  std::string reconstruct_report_file   ;
+  std::string stats_file                ;
+  std::string timing_file               ;
+  int nd                                ;
+  int scale_mode                        ;
 };
 
+/**
+ * Print options
+ */
 template<class ScalarType>
 void print_args(const InputArgs<ScalarType> & args)
 {
-#if 0  
-  //
-  // Print options
-  //
-  if (rank == 0 && boolPrintOptions) {
+  if (args.boolPrintOptions) {
     std::cout << "The global dimensions of the tensor to be scaled or compressed\n";
-    std::cout << "- Global dims = " << *I_dims << std::endl << std::endl;
-
+    std::cout << "- Global dims = " << *args.I_dims << std::endl << std::endl;
+    
     std::cout << "The global dimensions of the processor grid\n";
-    std::cout << "- Grid dims = " << *proc_grid_dims << std::endl << std::endl;
-
+    std::cout << "- Grid dims = " << *args.proc_grid_dims << std::endl << std::endl;
+    
     std::cout << "Mode order for decomposition\n";
-    std::cout << "- Decompose mode order " << *modeOrder << std::endl << std::endl;
-
+    std::cout << "- Decompose mode order = " << *args.modeOrder << std::endl << std::endl;
+    
     std::cout << "If true, automatically determine rank; otherwise, use the user-defined ranks\n";
-    std::cout << "- Automatic rank determination = " << (boolAuto ? "true" : "false") << std::endl << std::endl;
+    std::cout << "- Automatic rank determination = " << (args.boolAuto ? "true" : "false") << std::endl << std::endl;
 
     std::cout << "Used for automatic rank determination; the desired error rate\n";
-    std::cout << "- SV Threshold = " << tol << std::endl << std::endl;
+    std::cout << "- SV Threshold = " << args.tol << std::endl << std::endl;
 
-    if(!boolAuto) {
+    if(!args.boolAuto) {
       std::cout << "Global dimensions of the desired core tensor\n";
       std::cout << "Not used if \"Automatic rank determination\" is enabled\n";
-      std::cout << "- Ranks = " << *R_dims << std::endl << std::endl;
+      std::cout << "- Ranks = " << *args.R_dims << std::endl << std::endl;
     }
 
     std::cout << "List of filenames of raw data to be read\n";
-    std::cout << "- Input file list = " << in_fns_file << std::endl << std::endl;
+    std::cout << "- Input file list = " << args.in_fns_file << std::endl << std::endl;
 
     std::cout << "How to scale the tensor\n";
-    std::cout << "- Scaling type = " << scaling_type << std::endl << std::endl;
+    std::cout << "- Scaling type = " << args.scaling_type << std::endl << std::endl;
 
     std::cout << "Which mode's hyperslices will be scaled\n";
-    std::cout << "- Scale mode = " << scale_mode << std::endl << std::endl;
+    std::cout << "- Scale mode = " << args.scale_mode << std::endl << std::endl;
 
     std::cout << "Threshold for standard deviation before we simply set it to 1\n";
     std::cout << "Used in StandardCentering scaling\n";
-    std::cout << "- STD Threshold = " << stdThresh << std::endl << std::endl;
+    std::cout << "- STD Threshold = " << args.stdThresh << std::endl << std::endl;
 
     std::cout << "If true, perform ST-HOSVD\n";
-    std::cout << "- Perform STHOSVD = " << (boolSTHOSVD ? "true" : "false") << std::endl << std::endl;
+    std::cout << "- Perform STHOSVD = " << (args.boolSTHOSVD ? "true" : "false") << std::endl << std::endl;
 
     std::cout << "If true, use the old Gram algorithm; otherwise use the new one\n";
-    std::cout << "- Use old Gram = " << (boolUseOldGram ? "true" : "false") << std::endl << std::endl;
+    std::cout << "- Use old Gram = " << (args.boolUseOldGram ? "true" : "false") << std::endl << std::endl;
 
     std::cout << "Location of a report of the reconstruction errors \n";
-    std::cout << "- Reconstruction report file = " << reconstruct_report_file << std::endl << std::endl;
+    std::cout << "- Reconstruction report file = " << args.reconstruct_report_file << std::endl << std::endl;
 
     std::cout << "Location of statistics file containing min, max, mean, and std of each hyperslice\n";
-    std::cout << "- Stats file = " << stats_file << std::endl << std::endl;
+    std::cout << "- Stats file = " << args.stats_file << std::endl << std::endl;
 
     std::cout << "If true, write the preprocessed data to a file\n";
-    std::cout << "- Write preprocessed data = " << (boolWritePreprocessed ? "true" : "false") << std::endl << std::endl;
+    std::cout << "- Write preprocessed data = " << (args.boolWritePreprocessed ? "true" : "false") << std::endl << std::endl;
 
     std::cout << "File containing a list of filenames to output the scaled data into\n";
-    std::cout << "- Preprocessed output file list = " << pre_fns_file << std::endl << std::endl;
+    std::cout << "- Preprocessed output file list = " << args.pre_fns_file << std::endl << std::endl;
 
     std::cout << "If true, record the result of ST-HOSVD (the core tensor and all factors\n";
-    std::cout << "- Write STHOSVD result = " << (boolWriteSTHOSVD ? "true" : "false") << std::endl << std::endl;
+    std::cout << "- Write STHOSVD result = " << (args.boolWriteSTHOSVD ? "true" : "false") << std::endl << std::endl;
 
     std::cout << "Directory location of ST-HOSVD output files\n";
-    if(boolWriteSTHOSVD) std::cout << "NOTE: Please ensure that this directory actually exists!\n";
-    std::cout << "- STHOSVD directory = " << sthosvd_dir << std::endl << std::endl;
+    if(args.boolWriteSTHOSVD) std::cout << "NOTE: Please ensure that this directory actually exists!\n";
+    std::cout << "- STHOSVD directory = " << args.sthosvd_dir << std::endl << std::endl;
 
     std::cout << "Base name of ST-HOSVD output files\n";
-    std::cout << "- STHOSVD file prefix = " << sthosvd_fn << std::endl << std::endl;
+    std::cout << "- STHOSVD file prefix = " << args.sthosvd_fn << std::endl << std::endl;
 
     std::cout << "Directory to place singular value files into\n";
-    if(boolWriteSTHOSVD) std::cout << "NOTE: Please ensure that this directory actually exists!\n";
-    std::cout << "- SV directory = " << sv_dir << std::endl << std::endl;
+    if(args.boolWriteSTHOSVD) std::cout << "NOTE: Please ensure that this directory actually exists!\n";
+    std::cout << "- SV directory = " << args.sv_dir << std::endl << std::endl;
 
     std::cout << "Base name for writing the singular value files\n";
-    std::cout << "- SV file prefix = " << sv_fn << std::endl << std::endl;
+    std::cout << "- SV file prefix = " << args.sv_fn << std::endl << std::endl;
 
     std::cout << "Name of the CSV file holding the timing results\n";
-    std::cout << "- Timing file = " << timing_file << std::endl << std::endl;
+    std::cout << "- Timing file = " << args.timing_file << std::endl << std::endl;
 
     std::cout << "If true, reconstruct an approximation of the original tensor after ST-HOSVD\n";
-    if(boolReconstruct) std::cout << "WARNING: This may require a great deal of memory\n";
-    std::cout << "- Reconstruct tensor = " << (boolReconstruct ? "true" : "false") << std::endl << std::endl;
+    if(args.boolReconstruct) std::cout << "WARNING: This may require a great deal of memory\n";
+    std::cout << "- Reconstruct tensor = " << (args.boolReconstruct ? "true" : "false") << std::endl << std::endl;
 
     std::cout << "If true, print the parameters\n";
-    std::cout << "- Print options = " << (boolPrintOptions ? "true" : "false") << std::endl << std::endl;
-
+    std::cout << "- Print options = " << (args.boolPrintOptions ? "true" : "false") << std::endl << std::endl;
+    
     std::cout << std::endl;
-  }
-#endif  
+  } 
 }
 
 template<class ScalarType>
@@ -136,39 +132,42 @@ InputArgs<ScalarType> parse_input_file(const std::vector<std::string> & fileAsSt
 {
   InputArgs<ScalarType> args;
   
-  args.boolAuto                            = Tucker::stringParse<bool>(fileAsString, "Automatic rank determination", false);
-  // bool boolSTHOSVD                      = Tucker::stringParse<bool>(fileAsString, "Perform STHOSVD", false);
-  // bool boolWriteSTHOSVD                 = Tucker::stringParse<bool>(fileAsString, "Write core tensor and factor matrices", false);
-  // bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
-  // bool boolWritePreprocessed            = Tucker::stringParse<bool>(fileAsString, "Write preprocessed data", false);
-  // bool boolUseOldGram                   = Tucker::stringParse<bool>(fileAsString, "Use old Gram", false);
-  // bool boolUseLQ                        = Tucker::stringParse<bool>(fileAsString, "Compute SVD via LQ", false);
-  // bool boolPrintSV                      = Tucker::stringParse<bool>(fileAsString, "Print factor matrices", false);
-  // bool boolReconstruct                  = Tucker::stringParse<bool>(fileAsString, "Reconstruct tensor", false);
-  // bool useButterflyTSQR                 = Tucker::stringParse<bool>(fileAsString, "Use butterfly TSQR", false);
+  args.boolAuto                     = Tucker::stringParse<bool>(fileAsString, "Automatic rank determination", false);
+  args.boolSTHOSVD                  = Tucker::stringParse<bool>(fileAsString, "Perform STHOSVD", false);
+  args.boolWriteSTHOSVD             = Tucker::stringParse<bool>(fileAsString, "Write core tensor and factor matrices", false);
+  args.boolPrintOptions             = Tucker::stringParse<bool>(fileAsString, "Print options", false);
+  args.boolWritePreprocessed        = Tucker::stringParse<bool>(fileAsString, "Write preprocessed data", false);
+  args.boolUseOldGram               = Tucker::stringParse<bool>(fileAsString, "Use old Gram", false);
+  args.boolUseLQ                    = Tucker::stringParse<bool>(fileAsString, "Compute SVD via LQ", false);
+  args.boolPrintSV                  = Tucker::stringParse<bool>(fileAsString, "Print factor matrices", false);
+  args.boolReconstruct              = Tucker::stringParse<bool>(fileAsString, "Reconstruct tensor", false);
+  args.useButterflyTSQR             = Tucker::stringParse<bool>(fileAsString, "Use butterfly TSQR", false);
+  
+  args.tol                          = Tucker::stringParse<ScalarType>(fileAsString, "SV Threshold", 1e-6);
+  args.stdThresh                    = Tucker::stringParse<ScalarType>(fileAsString, "STD Threshold", 1e-9);
 
-  // ScalarType tol                          = Tucker::stringParse<ScalarType>(fileAsString, "SV Threshold", 1e-6);
-  // ScalarType stdThresh                    = Tucker::stringParse<ScalarType>(fileAsString, "STD Threshold", 1e-9);
+  args.I_dims                       = Tucker::stringParseSizeArray(fileAsString, "Global dims");
+  if (!args.boolAuto) {
+    args.R_dims                     = Tucker::stringParseSizeArray(fileAsString, "Ranks");
+  } else {
+    args.R_dims                     = 0;
+  }
+  args.proc_grid_dims               = Tucker::stringParseSizeArray(fileAsString, "Grid dims");
+  args.modeOrder                    = Tucker::stringParseSizeArray(fileAsString, "Decompose mode order");
 
-  // Tucker::SizeArray* I_dims             = Tucker::stringParseSizeArray(fileAsString, "Global dims");
-  // Tucker::SizeArray* R_dims = 0;
-  // if(!boolAuto)  R_dims                 = Tucker::stringParseSizeArray(fileAsString, "Ranks");
-  args.proc_grid_dims     = Tucker::stringParseSizeArray(fileAsString, "Grid dims");
-  // Tucker::SizeArray* modeOrder          = Tucker::stringParseSizeArray(fileAsString, "Decompose mode order");
+  args.scaling_type                 = Tucker::stringParse<std::string>(fileAsString, "Scaling type", "None");
+  args.sthosvd_dir                  = Tucker::stringParse<std::string>(fileAsString, "STHOSVD directory", "compressed");
+  args.sthosvd_fn                   = Tucker::stringParse<std::string>(fileAsString, "STHOSVD file prefix", "sthosvd");
+  args.sv_dir                       = Tucker::stringParse<std::string>(fileAsString, "SV directory", ".");
+  args.sv_fn                        = Tucker::stringParse<std::string>(fileAsString, "SV file prefix", "sv");
+  args.in_fns_file                  = Tucker::stringParse<std::string>(fileAsString, "Input file list", "raw.txt");
+  args.pre_fns_file                 = Tucker::stringParse<std::string>(fileAsString, "Preprocessed output file list", "pre.txt");
+  args.reconstruct_report_file      = Tucker::stringParse<std::string>(fileAsString, "Reconstruction report file", "reconstruction.txt");
+  args.stats_file                   = Tucker::stringParse<std::string>(fileAsString, "Stats file", "stats.txt");
+  args.timing_file                  = Tucker::stringParse<std::string>(fileAsString, "Timing file", "runtime.csv");
 
-  // std::string scaling_type              = Tucker::stringParse<std::string>(fileAsString, "Scaling type", "None");
-  // std::string sthosvd_dir               = Tucker::stringParse<std::string>(fileAsString, "STHOSVD directory", "compressed");
-  // std::string sthosvd_fn                = Tucker::stringParse<std::string>(fileAsString, "STHOSVD file prefix", "sthosvd");
-  // std::string sv_dir                    = Tucker::stringParse<std::string>(fileAsString, "SV directory", ".");
-  // std::string sv_fn                     = Tucker::stringParse<std::string>(fileAsString, "SV file prefix", "sv");
-  // std::string in_fns_file               = Tucker::stringParse<std::string>(fileAsString, "Input file list", "raw.txt");
-  // std::string pre_fns_file              = Tucker::stringParse<std::string>(fileAsString, "Preprocessed output file list", "pre.txt");
-  // std::string reconstruct_report_file   = Tucker::stringParse<std::string>(fileAsString, "Reconstruction report file", "reconstruction.txt");
-  // std::string stats_file                = Tucker::stringParse<std::string>(fileAsString, "Stats file", "stats.txt");
-  // std::string timing_file               = Tucker::stringParse<std::string>(fileAsString, "Timing file", "runtime.csv");
-
-  // int nd = I_dims->size();
-  // int scale_mode                        = Tucker::stringParse<int>(fileAsString, "Scale mode", nd-1);
+  args.nd = args.I_dims->size();
+  args.scale_mode                   = Tucker::stringParse<int>(fileAsString, "Scale mode", args.nd-1);
   
   return args;
 }
@@ -176,9 +175,9 @@ InputArgs<ScalarType> parse_input_file(const std::vector<std::string> & fileAsSt
 /**
  * Assert that we either have automatic rank determination
  * or the user has supplied their own ranks
-*/
+ */
 template<class ScalarType>
-int check_args(InputArgs<ScalarType> args)
+int check_args(InputArgs<ScalarType> & args)
 {
 
   if(!args.boolAuto && !args.R_dims) {
@@ -196,13 +195,12 @@ int check_args(InputArgs<ScalarType> args)
     args.modeOrder = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(args.nd);
     for(int i=0; i<args.nd; i++){
       args.modeOrder->data()[i] = i;
-      std::cout <<"modeOrder[" <<i<<"]: " << args.modeOrder->data()[i];
+      // std::cout <<"modeOrder[" <<i<<"]: " << args.modeOrder->data()[i] << " ";
     }
-    std::cout << std::endl;
+    // std::cout << std::endl;
   }
 
   return EXIT_SUCCESS;
 }
-
 
 #endif // End of TUCKER_MPIKOKKOS_HELP_HPP
