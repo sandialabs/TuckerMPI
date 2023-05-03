@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
     // [[code]]
 
     // Perform STHOSVD
-    if(boolSTHOSVD) {
+    if(args.boolSTHOSVD) {
 
       // [[code]]
     
