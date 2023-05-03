@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 
     // Check options
     int checkArgs = check_args(args);
-    if (rank == 0) { std::cout << "Argument checking: passed\n"; }
+    if (rank == 0) { std::cout << "Argument checking: passed" << std::endl; }
 
     // Print options
     if (rank == 0) { print_args(args); }
@@ -50,8 +50,8 @@ int main(int argc, char* argv[])
     assert(args.boolAuto || args.R_dims->size() == args.nd);
 
     // Check array sizes
-    // chech_array_sizes(args);
-    // !!!![code]!!!!
+    chech_array_sizes(args, rank, nprocs);
+    if (rank == 0) { std::cout << "Array sizes checking: passed" << std::endl; }
 
     // Set up processor grid
     if (rank == 0) { std::cout << "Creating process grid" << std::endl; }
@@ -61,13 +61,27 @@ int main(int argc, char* argv[])
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*args.I_dims, *args.proc_grid_dims);
     
     // Read full tensor data
+
     // Tucker::Timer readTimer;
     // readTimer.start();
     // TuckerMPI::Tensor<scalar_t> X(dist);
     // TuckerMPI::readTensorBinary(in_fns_file,X);
     // readTimer.stop();
+    // ...
+    // [[code]]
 
-    // !!!![lot of code]!!!!
+    // Compute statistics
+    // [[code]]
+
+    // Perform preprocessing
+    // [[code]]
+
+    // Perform STHOSVD
+    if(boolSTHOSVD) {
+
+      // [[code]]
+    
+    } // end if(boolSTHOSVD)
 
     // Free memory
     Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(args.I_dims);
@@ -92,51 +106,7 @@ int main(int argc, char* argv[])
 #if 0
   
 
-  ///////////////////////
-  // Check array sizes //
-  ///////////////////////
-
-  // Does |grid| == nprocs?
-  if ((int)proc_grid_dims->prod() != nprocs){
-    if (rank==0) {
-      std::cerr << "Processor grid dimensions do not multiply to nprocs" << std::endl;
-      std::cout << "Processor grid dimensions: " << *proc_grid_dims << std::endl;
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD, 1);
-  }
-
-  if (nd != proc_grid_dims->size()) {
-    if (rank == 0) {
-      std::cerr << "Error: The size of global dimension array (" << nd;
-      std::cerr << ") must be equal to the size of the processor grid ("
-          << proc_grid_dims->size() << ")" << std::endl;
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD, 1);
-  }
-
-  if (!boolAuto && R_dims->size() != 0 && R_dims->size() != nd) {
-    if (rank == 0) {
-      std::cerr << "Error: The size of the ranks array (" << R_dims->size();
-      std::cerr << ") must be 0 or equal to the size of the processor grid (" << nd << ")" << std::endl;
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD, 1);
-  }
-
-  ///////////////////////////
-  // Set up processor grid //
-  ///////////////////////////
-  if (rank == 0) {
-    std::cout << "Creating process grid" << std::endl;
-  }
-  ////////////////////////////////
-  // Set up distribution object //
-  ////////////////////////////////
-  TuckerMPI::Distribution* dist =
-      Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*I_dims, *proc_grid_dims);
-
+  
   ///////////////////////////
   // Read full tensor data //
   ///////////////////////////
@@ -164,12 +134,5 @@ int main(int argc, char* argv[])
 
   // bunch of stuff missing
 
-
-
-  // Finalize MPI
-  MPI_Finalize();
-  
-  // Finalize MPI
-  MPI_Finalize();
 }
 #endif
