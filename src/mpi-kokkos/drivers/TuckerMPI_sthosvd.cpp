@@ -1,4 +1,3 @@
-
 // #include "TuckerMPI.hpp"
 // #include "Tucker.hpp"
 // #include "TuckerMPI_IO_Util.hpp"
@@ -21,36 +20,66 @@ int main(int argc, char* argv[])
   #else
     using scalar_t = double;
   #endif  // specify precision
-    
-  // Get the name of the input file
-  const std::string paramfn = Tucker::parseString(argc, (const char**)argv, "--parameter-file", "paramfile.txt");
-  const std::vector<std::string> fileAsString = Tucker::getFileAsStrings(paramfn);
-  const InputArgs args  = parse_input_file<scalar_t>(fileAsString);
-  // check_args(args);
   
   // Initialize MPI
   MPI_Init(&argc, &argv);
+
+  // Initialize Kokkos
   Kokkos::initialize();
   {
     // Get the rank of this MPI process
+    // Only rank 0 will print to stdout
     int rank, nprocs;
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
 
-    ///////////////////////////
-    // Set up processor grid //
+    // Get the name of the input file
+    const std::string paramfn = Tucker::parseString(argc, (const char**)argv, "--parameter-file", "paramfile.txt");
+    
+    // Parse parameter file
+    const std::vector<std::string> fileAsString = Tucker::getFileAsStrings(paramfn);
+    const InputArgs args  = parse_input_file<scalar_t>(fileAsString);
+
+    // 
+    int checkArgs = check_args(args);
+
+    // Print options
+    // print_args(args);
+
+    // assert(boolAuto || R_dims->size() == nd);
+
+    // Check array sizes
+
+    // !!!![code]!!!!
+
+    // Set up processor grid
+
     if (rank == 0) { std::cout << "Creating process grid" << std::endl; }
+
+    // Set up distribution object
+    
     TuckerMPI::Distribution* dist =
       Tucker::MemoryManager::safe_new<TuckerMPI::Distribution>(*args.I_dims, *args.proc_grid_dims);
 
-    ///////////////////////////
-    // Read full tensor data //
-    ///////////////////////////
+    // Read full tensor data
+    //Tucker::Timer readTimer;
+    //readTimer.start();
     // TuckerMPI::Tensor<scalar_t> X(dist);
     // TuckerMPI::readTensorBinary(in_fns_file,X);
+    //readTimer.stop();
+
+    // !!!![lot of code]!!!!
+
+    // Free memory
+
+    // !!!![code]!!!!
+
   }
   
+  // Finalize Kokkos
   Kokkos::finalize();
+
+  // Finalize MPI
   MPI_Finalize();
   return 0;
 }

@@ -16,16 +16,16 @@ struct InputArgs
   bool boolReconstruct                  ;
   bool useButterflyTSQR                 ;
 
-  ScalarType tol                          ;
-  ScalarType stdThresh                    ;
+  ScalarType tol                        ;
+  ScalarType stdThresh                  ;
 
   Tucker::SizeArray* I_dims             ;
-  // Tucker::SizeArray* R_dims = 0;
+  Tucker::SizeArray* R_dims = 0;
   // if(!boolAuto)  R_dims                 ;
   Tucker::SizeArray* proc_grid_dims     ;
-  // Tucker::SizeArray* modeOrder          ;
+  Tucker::SizeArray* modeOrder          ;
 
-  // std::string scaling_type              ;
+  std::string scaling_type              ;
   // std::string sthosvd_dir               ;
   // std::string sthosvd_fn                ;
   // std::string sv_dir                    ;
@@ -35,7 +35,7 @@ struct InputArgs
   // std::string reconstruct_report_file   ;
   // std::string stats_file                ;
   // std::string timing_file               ;
-  // int nd = I_dims->size();
+  int nd = I_dims->size()               ;
   // int scale_mode                        ;
 };
 
@@ -136,7 +136,7 @@ InputArgs<ScalarType> parse_input_file(const std::vector<std::string> & fileAsSt
 {
   InputArgs<ScalarType> args;
   
-  // bool boolAuto                         = Tucker::stringParse<bool>(fileAsString, "Automatic rank determination", false);
+  args.boolAuto                            = Tucker::stringParse<bool>(fileAsString, "Automatic rank determination", false);
   // bool boolSTHOSVD                      = Tucker::stringParse<bool>(fileAsString, "Perform STHOSVD", false);
   // bool boolWriteSTHOSVD                 = Tucker::stringParse<bool>(fileAsString, "Write core tensor and factor matrices", false);
   // bool boolPrintOptions                 = Tucker::stringParse<bool>(fileAsString, "Print options", false);
@@ -153,7 +153,7 @@ InputArgs<ScalarType> parse_input_file(const std::vector<std::string> & fileAsSt
   // Tucker::SizeArray* I_dims             = Tucker::stringParseSizeArray(fileAsString, "Global dims");
   // Tucker::SizeArray* R_dims = 0;
   // if(!boolAuto)  R_dims                 = Tucker::stringParseSizeArray(fileAsString, "Ranks");
-  // Tucker::SizeArray* proc_grid_dims     = Tucker::stringParseSizeArray(fileAsString, "Grid dims");
+  args.proc_grid_dims     = Tucker::stringParseSizeArray(fileAsString, "Grid dims");
   // Tucker::SizeArray* modeOrder          = Tucker::stringParseSizeArray(fileAsString, "Decompose mode order");
 
   // std::string scaling_type              = Tucker::stringParse<std::string>(fileAsString, "Scaling type", "None");
@@ -173,34 +173,36 @@ InputArgs<ScalarType> parse_input_file(const std::vector<std::string> & fileAsSt
   return args;
 }
 
-void check_args()
+/**
+ * Assert that we either have automatic rank determination
+ * or the user has supplied their own ranks
+*/
+template<class ScalarType>
+int check_args(InputArgs<ScalarType> args)
 {
-#if 0  
-  // Assert that we either have automatic rank determination or the user
-  // has supplied their own ranks
-  //
-  if(!boolAuto && !R_dims) {
+
+  if(!args.boolAuto && !args.R_dims) {
     std::cerr << "ERROR: Please either enable Automatic rank determination, "
               << "or provide the desired core tensor size via the Ranks parameter\n";
     return EXIT_FAILURE;
   }
 
-  if(tol >= 1) {
+  if(args.tol >= 1) {
     std::cerr << "ERROR: The reconstruction error tolerance should be smaller than 1. \n";
     return EXIT_FAILURE;
   }
 
-  if(!modeOrder){
-    modeOrder = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(nd);
-    for(int i=0; i<nd; i++){
-      modeOrder->data()[i] = i;
-      std::cout <<"modeOrder[" <<i<<"]: " << modeOrder->data()[i];
+  if(!args.modeOrder){
+    args.modeOrder = Tucker::MemoryManager::safe_new<Tucker::SizeArray>(args.nd);
+    for(int i=0; i<args.nd; i++){
+      args.modeOrder->data()[i] = i;
+      std::cout <<"modeOrder[" <<i<<"]: " << args.modeOrder->data()[i];
     }
     std::cout << std::endl;
   }
-#endif
+
+  return EXIT_SUCCESS;
 }
 
 
-#endif
-
+#endif // End of TUCKER_MPIKOKKOS_HELP_HPP
