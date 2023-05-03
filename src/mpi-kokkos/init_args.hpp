@@ -122,8 +122,6 @@ void print_args(const InputArgs<ScalarType> & args)
 
     std::cout << "If true, print the parameters\n";
     std::cout << "- Print options = " << (args.boolPrintOptions ? "true" : "false") << std::endl << std::endl;
-    
-    std::cout << std::endl;
   } 
 }
 
@@ -201,6 +199,39 @@ int check_args(InputArgs<ScalarType> & args)
   }
 
   return EXIT_SUCCESS;
+}
+
+template<class ScalarType>
+void chech_array_sizes(const InputArgs<ScalarType> args, const int rank, const int nprocs)
+{
+  // Does |grid| == nprocs?
+  if ((int)args.proc_grid_dims->prod() != nprocs){
+    if (rank==0) {
+      std::cerr << "Processor grid dimensions do not multiply to nprocs" << std::endl;
+      std::cout << "Processor grid dimensions: " << *args.proc_grid_dims << std::endl;
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
+
+  if (args.nd != args.proc_grid_dims->size()) {
+    if (rank == 0) {
+      std::cerr << "Error: The size of global dimension array (" << args.nd;
+      std::cerr << ") must be equal to the size of the processor grid ("
+          << args.proc_grid_dims->size() << ")" << std::endl;
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
+
+  if (!args.boolAuto && args.R_dims->size() != 0 && args.R_dims->size() != args.nd) {
+    if (rank == 0) {
+      std::cerr << "Error: The size of the ranks array (" << args.R_dims->size();
+      std::cerr << ") must be 0 or equal to the size of the processor grid (" << args.nd << ")" << std::endl;
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
 }
 
 #endif // End of TUCKER_MPIKOKKOS_HELP_HPP
