@@ -38,7 +38,9 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
 
   const int nrows = Y->size(n);
 
-  auto Y_rawPtr = Y->data().data();
+  auto Y_v = Y->data();
+  auto Y_v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), Y_v);
+  auto Y_rawPtr = Y_v_h.data();
 
   // // n = 0 is a special case
   // // Y_0 is stored column major

@@ -173,9 +173,11 @@ template<class ScalarType, class MemorySpace>
 auto computeGram(Tensor<ScalarType, MemorySpace> * Y, const int n)
 {
   const int nrows = Y->size(n);
-  Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> S("S", nrows, nrows);
-  computeGramHost(Y, n, S.data(), nrows);
-  return S;
+  Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> S_d("S", nrows, nrows);
+  auto S_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), S_d);
+  computeGramHost(Y, n, S_h.data(), nrows);
+  Kokkos::deep_copy(S_d, S_h);
+  return S_d;
 }
 
 template<class ScalarType, class ... Props>
@@ -294,38 +296,48 @@ auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
     std::cout << " \n ";
     std::cout << "\tAutoST-HOSVD::Gram(" << n << ") \n";
     auto S = computeGram(Y, n);
-
-    for (int i=0; i<S.extent(0); ++i){
-      for (int j=0; j<S.extent(1); ++j){
-	std::cout << S(i,j) << "  ";
+    auto S_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), S);
+    for (int i=0; i<S_h.extent(0); ++i){
+      for (int j=0; j<S_h.extent(1); ++j){
+	std::cout << S_h(i,j) << "  ";
       }
       std::cout << " \n ";
     }
 
     std::cout << " \n ";
     std::cout << "\tAutoST-HOSVD::Starting Evecs(" << n << ")...\n";
-    auto eigenvalues = computeEigenvalues(S, flipSign);
-    for (int i=0; i<S.extent(0); ++i){ std::cout << eigenvalues(i) << "  "; }
+    auto eigvals = computeEigenvalues(S, flipSign);
+    // need to copy back to S_h because of the reordering
+    Kokkos::deep_copy(S_h, S);
+    auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
+    for (int i=0; i<S.extent(0); ++i){ std::cout << eigvals_h(i) << "  "; }
     std::cout << " \n ";
-    const int numEvecs = findEigvalsCountToKeep(eigenvalues, thresh);
+    const int numEvecs = findEigvalsCountToKeep(eigvals, thresh);
+    Kokkos::fence();
+
 
     std::cout << " \n ";
     using eigvec_view_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace>;
     eigvec_view_t eigVecs("eigVecs", Y->size(n), numEvecs);
-    int nToCopy = Y->size(n)*numEvecs;
+    auto eigVecs_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigVecs);
+    const int nToCopy = Y->size(n)*numEvecs;
     const int ONE = 1;
-    Tucker::copy(&nToCopy, S.data(), &ONE, eigVecs.data(), &ONE);
-    for (int i=0; i<eigVecs.extent(0); ++i){
-      for (int j=0; j<eigVecs.extent(1); ++j){
-	std::cout << eigVecs(i,j) << "  ";
+    Tucker::copy(&nToCopy, S_h.data(), &ONE, eigVecs_h.data(), &ONE);
+    for (int i=0; i<eigVecs_h.extent(0); ++i){
+      for (int j=0; j<eigVecs_h.extent(1); ++j){
+	std::cout << eigVecs_h(i,j) << "  ";
       }
       std::cout << " \n ";
     }
+    Kokkos::deep_copy(eigVecs, eigVecs_h);
+    Kokkos::fence();
+
 
     std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
     std::cout << " \n ";
     temp = ttm(Y, n, eigVecs, true);
     temp.print();
+    Kokkos::fence();
 
     Y = &temp;
     size_t nnz = Y->getNumElements();

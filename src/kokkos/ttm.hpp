@@ -37,8 +37,13 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
     Unrows = Y.size(n);
   }
 
-  auto X_ptr = X->data().data();
-  auto Y_ptr = Y.data().data();
+  auto X_view_d = X->data();
+  auto X_view_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), X_view_d);
+  auto X_ptr_h = X_view_h.data();
+
+  auto Y_view_d = Y.data();
+  auto Y_view_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), Y_view_d);
+  auto Y_ptr_h = Y_view_h.data();
 
   // n = 0 is a special case
   // Y_0 is stored column major
@@ -80,7 +85,7 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
       transa = 'N';
     }
     Tucker::gemm(&transa, &transb, &m, &blas_n, &k, &alpha, Uptr,
-		 &lda, X_ptr, &ldb, &beta, Y_ptr, &ldc);
+		 &lda, X_ptr_h, &ldb, &beta, Y_ptr_h, &ldc);
 
   }
   else
@@ -124,10 +129,13 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
         k = Uncols;
       }
       Tucker::gemm(&transa, &transb, &m, &blas_n, &k, &alpha,
-		   X_ptr+i*k*m, &lda, Uptr, &ldb, &beta,
-		   Y_ptr+i*m*blas_n, &ldc);
+		   X_ptr_h+i*k*m, &lda, Uptr, &ldb, &beta,
+		   Y_ptr_h+i*m*blas_n, &ldc);
     }
   }
+
+  Kokkos::deep_copy(X_view_d, X_view_h);
+  Kokkos::deep_copy(Y_view_d, Y_view_h);
 }
 
 
@@ -148,8 +156,12 @@ void ttm(const Tensor<ScalarType, MemorySpace>* const X,
     assert(U.extent(1) == X->size(n));
     assert(U.extent(0) == Y.size(n));
   }
-  ttm_impl(X, n, U.data(), U.extent(0), Y, Utransp);
+
+  auto U_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), U);
+  ttm_impl(X, n, U_h.data(), U.extent(0), Y, Utransp);
+  Kokkos::deep_copy(U, U_h);
 }
+
 
 template <class ScalarType, class MemorySpace>
 auto ttm(const Tensor<ScalarType, MemorySpace>* X,
@@ -175,9 +187,7 @@ auto ttm(const Tensor<ScalarType, MemorySpace>* X,
     }
   }
   Tensor<ScalarType, MemorySpace> Y(I);
-
   ttm(X, n, U, Y, Utransp);
-
   return Y;
 }
 
