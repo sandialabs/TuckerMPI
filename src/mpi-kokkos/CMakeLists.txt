@@ -1,4 +1,7 @@
 
+SET(CMAKE_CXX_STANDARD 17)
+SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 #INCLUDE_DIRECTORIES(../serial ${MPI_CXX_INCLUDE_PATH})
 #FILE(GLOB SOURCES "*.cpp")
 #ADD_LIBRARY(mpi_tucker SHARED ${SOURCES})
@@ -8,7 +11,7 @@
 # ADD_SUBDIRECTORY(converter)
 
 set(SOURCES)
-LIST(APPEND SOURCES 
+LIST(APPEND SOURCES
   Tucker_IO_Util.cpp
   Tucker_MemManager.cpp
   Tucker_SizeArray.cpp
@@ -23,4 +26,3 @@ find_package(KokkosKernels REQUIRED HINTS ${KOKKOSKERNELS_PFX})
 include_directories(${MPI_CXX_INCLUDE_PATH} ${CMAKE_CURRENT_SOURCE_DIR})
 add_executable(mainExe ${CMAKE_CURRENT_SOURCE_DIR}/drivers/TuckerMPI_sthosvd.cpp)
 target_link_libraries(mainExe mpi_kokkos_tucker Kokkos::kokkos Kokkos::kokkoskernels ${MPI_CXX_LIBRARIES})
-
