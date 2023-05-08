@@ -55,7 +55,10 @@ public:
   }
 
   size_t getNumElements() const{ return I_.prod(); }
-  ScalarType norm2() const{ return ::KokkosBlas::nrm2(data_); }
+  ScalarType norm2() const{
+    const auto v = ::KokkosBlas::nrm2(data_);
+    return v*v;
+  }
 
   const view_type data() const{ return data_; }
 
@@ -146,7 +149,6 @@ public:
     // eigenvalues = MemoryManager::safe_new_array<ScalarType*>(N);
     // singularValues = MemoryManager::safe_new_array<ScalarType*>(N);
     // G = 0;
-
     // for(int i=0; i<N; i++) {
     //   singularValues[i] = 0;
     //   eigenvalues[i] = 0;
@@ -158,15 +160,29 @@ public:
     return Kokkos::subview(U, n, Kokkos::ALL, Kokkos::ALL);
   }
 
+  void pushBack(Kokkos::View<ScalarType*, MemorySpace> ein){
+    eigenvalues.emplace_back(ein);
+  }
+
+  void pushBack(Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> ein){
+    singularvectors.emplace_back(ein);
+  }
+
+  auto eigValsAt(int i) const{ return eigenvalues[i]; }
+  auto eigVecsAt(int i) const{ return singularvectors[i]; }
+
+  int numDims() const{ return N; }
+
+  auto const & getG() const{ return G; }
+
+  auto & getG(){ return G; }
+
 private:
   int N;
   Tensor<ScalarType, MemorySpace> G;
   Kokkos::View<ScalarType***, Kokkos::LayoutLeft, MemorySpace> U;
-  // ScalarType** eigenvalues;
-  // ScalarType** singularValues;
-
-// private:
-//   TuckerTensor(const TuckerTensor<ScalarType, MemorySpace>& tt);
+  std::vector< Kokkos::View<ScalarType*, MemorySpace> > eigenvalues;
+  std::vector< Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> > singularvectors;
 };
 
 template<class ScalarType, class MemorySpace>
@@ -307,14 +323,14 @@ auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
     std::cout << " \n ";
     std::cout << "\tAutoST-HOSVD::Starting Evecs(" << n << ")...\n";
     auto eigvals = computeEigenvalues(S, flipSign);
+    factorization.pushBack(eigvals);
+
     // need to copy back to S_h because of the reordering
     Kokkos::deep_copy(S_h, S);
     auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
     for (int i=0; i<S.extent(0); ++i){ std::cout << eigvals_h(i) << "  "; }
     std::cout << " \n ";
     const int numEvecs = findEigvalsCountToKeep(eigvals, thresh);
-    Kokkos::fence();
-
 
     std::cout << " \n ";
     using eigvec_view_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace>;
@@ -330,8 +346,7 @@ auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
       std::cout << " \n ";
     }
     Kokkos::deep_copy(eigVecs, eigVecs_h);
-    Kokkos::fence();
-
+    factorization.pushBack(eigVecs);
 
     std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
     std::cout << " \n ";
@@ -345,9 +360,58 @@ auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
 	      << n << ": " << Y->size() << ", or ";
   }
 
-  // factorization->G = const_cast<Tensor<ScalarType>*>(Y);
-  // factorization->total_timer_.stop();
+  factorization.getG() = *Y;
   return factorization;
+}
+
+
+template <class ScalarType, class MemorySpace>
+void printEigenvalues(const TuckerTensor<ScalarType, MemorySpace> & factorization,
+		      const std::string& filePrefix,
+		      bool useLQ)
+{
+  const int nmodes = factorization.numDims();
+
+  for(int mode=0; mode<nmodes; mode++) {
+    std::ostringstream ss;
+    ss << filePrefix << mode << ".txt";
+    std::ofstream ofs(ss.str());
+    // Determine the number of eigenvalues for this mode
+    auto eigVals_view = factorization.eigValsAt(mode);
+    auto eigVals_view_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{},
+							      eigVals_view);
+    const int nevals = eigVals_view.extent(0);
+
+    // if(useLQ){
+    //   for(int i=0; i<nevals; i++) {
+    //     ofs << std::setprecision(16)
+    // 	    << std::pow(factorization->singularValues[mode][i], 2)
+    // 	    << std::endl;
+    //   }
+    // }
+    // else{
+      for(int i=0; i<nevals; i++) {
+        ofs << std::setprecision(16)
+	    << eigVals_view_h(i)
+	    << std::endl;
+      }
+   //}
+    ofs.close();
+  }
+}
+
+template <class scalar_t, class mem_space>
+void exportTensorBinary(const Tensor<scalar_t, mem_space> & Y, const char* filename)
+{
+  const std::streamoff MAX_OFFSET = std::numeric_limits<std::streamoff>::max();
+  size_t numEntries = Y.getNumElements();
+  // Open file
+  std::ofstream ofs;
+  ofs.open(filename, std::ios::out | std::ios::binary);
+  assert(ofs.is_open());
+  const scalar_t* data = Y.data().data();
+  ofs.write((char*)data,numEntries*sizeof(scalar_t));
+  ofs.close();
 }
 
 // ------------------------------
@@ -397,12 +461,7 @@ int main(int argc, char* argv[])
     //
     using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
     TuckerKokkos::Tensor<scalar_t, memory_space> X(*I_dims);
-    //X.rand(-15.56, 22.13);
     TuckerKokkos::readTensorBinary(X, args.in_fns_file.c_str());
-    // auto v = X.data();
-    // for (int i=0; i<v.extent(0); ++i){
-    //   std::cout << v(i) << " \n";
-    // }
 
     //
     // compute
@@ -411,9 +470,23 @@ int main(int argc, char* argv[])
     // FIXME: Perform preprocessing is missing
     if(args.boolSTHOSVD) {
       auto f = TuckerKokkos::STHOSVD(X, args.tol, args.boolUseLQ);
+
+      // Write the eigenvalues to files
+      std::string filePrefix = args.sv_dir + "/" + args.sv_fn + "_mode_";
+      TuckerKokkos::printEigenvalues(f, filePrefix, false);
+
+      printf("\n");
+      const double xnorm = std::sqrt(X.norm2());
+      const double gnorm = std::sqrt(f.getG().norm2());
+      std::cout << "Norm of input tensor: " << std::setprecision(7) << xnorm << std::endl;
+      std::cout << "Norm of core tensor: " << std::setprecision(7) << gnorm << std::endl;
+
+      std::string coreFilename = args.sthosvd_dir + "/" + args.sthosvd_fn + "_core.mpi";
+      std::cout << "Writing core tensor to " << coreFilename << std::endl;
+      TuckerKokkos::exportTensorBinary(f.getG(), coreFilename.c_str());
     }
 
-    // // Free memory
+    // Free memory
     Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(I_dims);
     if(R_dims) Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(R_dims);
     //Tucker::MemoryManager::printMaxMemUsage();
