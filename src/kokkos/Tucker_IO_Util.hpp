@@ -45,7 +45,6 @@
 #include <vector>
 #include <iostream>
 #include <limits>
-#include "Tucker_MemManager.hpp"
 #include "Tucker_SizeArray.hpp"
 
 namespace Tucker {
@@ -129,7 +128,7 @@ T stringParse(const std::vector<std::string>& lines,
  *
  * \note User is responsible for deallocating the SizeArray
  */
-SizeArray* stringParseSizeArray(const std::vector<std::string>& lines,
+SizeArray stringParseSizeArray(const std::vector<std::string>& lines,
     const std::string& keyword);
 
 // /** \brief Print the eigenvalues to files

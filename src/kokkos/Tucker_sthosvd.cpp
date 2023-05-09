@@ -212,10 +212,10 @@ auto computeEigenvalues(Kokkos::View<ScalarType**, Props...> G,
   char jobz = 'V';
   char uplo = 'U';
   int lwork = 8*nrows;
-  ScalarType* work = Tucker::MemoryManager::safe_new_array<ScalarType>(lwork);
+  std::vector<ScalarType> work(lwork);
   int info;
   Tucker::syev(&jobz, &uplo, &nrows, G_h.data(), &nrows,
-	       eigenvalues_h.data(), work, &lwork, &info);
+	       eigenvalues_h.data(), work.data(), &lwork, &info);
 
   // Check the error code
   if(info != 0){
@@ -257,8 +257,6 @@ auto computeEigenvalues(Kokkos::View<ScalarType**, Props...> G,
       }
     }
   }
-
-  Tucker::MemoryManager::safe_delete_array<ScalarType>(work,lwork);
 
   Kokkos::deep_copy(G, G_h);
   Kokkos::deep_copy(eigenvalues_d, eigenvalues_h);
@@ -443,24 +441,24 @@ int main(int argc, char* argv[])
     chech_array_sizes(args);
     std::cout << "Array sizes checking: passed" << std::endl;
 
-    Tucker::SizeArray* I_dims = Tucker::stringParseSizeArray(fileAsString, "Global dims");
-    args.nd = I_dims->size();
+    Tucker::SizeArray I_dims = Tucker::stringParseSizeArray(fileAsString, "Global dims");
+    args.nd = I_dims.size();
     std::cout << "The global dimensions of the tensor to be scaled or compressed\n";
-    std::cout << "- Global dims = " << *I_dims << std::endl << std::endl;
+    std::cout << "- Global dims = " << I_dims << std::endl << std::endl;
 
-    Tucker::SizeArray* R_dims = nullptr;
+    Tucker::SizeArray R_dims;
     if (!args.boolAuto) {
       R_dims = Tucker::stringParseSizeArray(fileAsString, "Ranks");
       std::cout << "Global dimensions of the desired core tensor\n";
       std::cout << "Not used if \"Automatic rank determination\" is enabled\n";
-      std::cout << "- Ranks = " << *R_dims << std::endl << std::endl;
+      std::cout << "- Ranks = " << R_dims << std::endl << std::endl;
     }
 
     //
     // reading data
     //
     using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
-    TuckerKokkos::Tensor<scalar_t, memory_space> X(*I_dims);
+    TuckerKokkos::Tensor<scalar_t, memory_space> X(I_dims);
     TuckerKokkos::readTensorBinary(X, args.in_fns_file.c_str());
 
     //
@@ -485,11 +483,6 @@ int main(int argc, char* argv[])
       std::cout << "Writing core tensor to " << coreFilename << std::endl;
       TuckerKokkos::exportTensorBinary(f.getG(), coreFilename.c_str());
     }
-
-    // Free memory
-    Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(I_dims);
-    if(R_dims) Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(R_dims);
-    //Tucker::MemoryManager::printMaxMemUsage();
   }
 
   Kokkos::finalize();
