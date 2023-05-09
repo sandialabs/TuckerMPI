@@ -88,7 +88,7 @@ std::vector<std::string> getFileAsStrings(const std::string& paramfn) {
   return fileLines;
 }
 
-SizeArray* stringParseSizeArray(const std::vector<std::string>& lines,
+SizeArray stringParseSizeArray(const std::vector<std::string>& lines,
     const std::string& keyword) {
   std::vector<int> tmp; // Placeholder for values in IndxArray
   int value;
@@ -113,9 +113,9 @@ SizeArray* stringParseSizeArray(const std::vector<std::string>& lines,
     return NULL;
 
   // Copy tmp vector into the IndxArray
-  SizeArray* arr = new SizeArray((int)tmp.size());
+  SizeArray arr((int)tmp.size());
   for (int i = 0; i < (int)tmp.size(); i++) {
-    (*arr)[i] = tmp[i];
+    arr[i] = tmp[i];
   }
 
   return arr; // Returns empty array if nothing is ever pushed onto tmp vector
