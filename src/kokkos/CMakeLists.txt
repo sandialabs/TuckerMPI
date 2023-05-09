@@ -7,7 +7,6 @@ LIST(APPEND SOURCES
   Tucker_BlasWrapper.cpp
   Tucker_SizeArray.cpp
   Tucker_IO_Util.cpp
-  Tucker_MemManager.cpp
   )
 ADD_LIBRARY(kokkos_tucker SHARED ${SOURCES})
 TARGET_LINK_LIBRARIES(kokkos_tucker ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})

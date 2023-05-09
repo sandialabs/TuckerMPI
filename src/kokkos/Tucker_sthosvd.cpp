@@ -212,7 +212,7 @@ auto computeEigenvalues(Kokkos::View<ScalarType**, Props...> G,
   char jobz = 'V';
   char uplo = 'U';
   int lwork = 8*nrows;
-  ScalarType* work = Tucker::MemoryManager::safe_new_array<ScalarType>(lwork);
+  ScalarType* work = new ScalarType[lwork];
   int info;
   Tucker::syev(&jobz, &uplo, &nrows, G_h.data(), &nrows,
 	       eigenvalues_h.data(), work, &lwork, &info);
@@ -258,7 +258,7 @@ auto computeEigenvalues(Kokkos::View<ScalarType**, Props...> G,
     }
   }
 
-  Tucker::MemoryManager::safe_delete_array<ScalarType>(work,lwork);
+  delete [] work;
 
   Kokkos::deep_copy(G, G_h);
   Kokkos::deep_copy(eigenvalues_d, eigenvalues_h);
@@ -487,9 +487,8 @@ int main(int argc, char* argv[])
     }
 
     // Free memory
-    Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(I_dims);
-    if(R_dims) Tucker::MemoryManager::safe_delete<Tucker::SizeArray>(R_dims);
-    //Tucker::MemoryManager::printMaxMemUsage();
+    delete I_dims;
+    if(R_dims) delete R_dims;
   }
 
   Kokkos::finalize();

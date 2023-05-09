@@ -45,7 +45,6 @@
 #include <vector>
 #include <iostream>
 #include <limits>
-#include "Tucker_MemManager.hpp"
 #include "Tucker_SizeArray.hpp"
 
 namespace Tucker {
