@@ -6,9 +6,8 @@
 #include <string.h>
 #include <iostream>
 #include <vector>
-//#include "Tucker_MemManager.hpp"
 
-namespace Tucker {
+namespace TuckerKokkos {
 
 class SizeArray
 {

@@ -5,9 +5,6 @@
 
 namespace TuckerKokkos{
 
-template<class ScalarType, class MemorySpace> class Tensor;
-
-
 template <class ScalarType, class MemorySpace>
 void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
 	      const int n,
@@ -177,7 +174,7 @@ auto ttm(const Tensor<ScalarType, MemorySpace>* X,
     nrows = U.extent(0);
 
   // Allocate space for the new tensor
-  Tucker::SizeArray I(X->N());
+  TuckerKokkos::SizeArray I(X->N());
   for(int i=0; i<I.size(); i++) {
     if(i != n) {
       I[i] = X->size(i);

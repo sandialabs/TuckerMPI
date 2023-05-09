@@ -90,26 +90,26 @@ InputArgs<ScalarType> parse_input_file(const std::vector<std::string> & fileAsSt
 {
   InputArgs<ScalarType> args;
 
-  args.boolAuto                     = Tucker::stringParse<bool>(fileAsString, "Automatic rank determination", false);
-  args.boolSTHOSVD                  = Tucker::stringParse<bool>(fileAsString, "Perform STHOSVD", false);
-  args.boolWriteSTHOSVD             = Tucker::stringParse<bool>(fileAsString, "Write core tensor and factor matrices", false);
-  args.boolPrintOptions             = Tucker::stringParse<bool>(fileAsString, "Print options", false);
-  args.boolWritePreprocessed        = Tucker::stringParse<bool>(fileAsString, "Write preprocessed data", false);
-  args.boolUseLQ                    = Tucker::stringParse<bool>(fileAsString, "Compute SVD via LQ", false);
+  args.boolAuto                     = TuckerKokkos::stringParse<bool>(fileAsString, "Automatic rank determination", false);
+  args.boolSTHOSVD                  = TuckerKokkos::stringParse<bool>(fileAsString, "Perform STHOSVD", false);
+  args.boolWriteSTHOSVD             = TuckerKokkos::stringParse<bool>(fileAsString, "Write core tensor and factor matrices", false);
+  args.boolPrintOptions             = TuckerKokkos::stringParse<bool>(fileAsString, "Print options", false);
+  args.boolWritePreprocessed        = TuckerKokkos::stringParse<bool>(fileAsString, "Write preprocessed data", false);
+  args.boolUseLQ                    = TuckerKokkos::stringParse<bool>(fileAsString, "Compute SVD via LQ", false);
 
-  args.tol                          = Tucker::stringParse<ScalarType>(fileAsString, "SV Threshold", 1e-6);
-  args.stdThresh                    = Tucker::stringParse<ScalarType>(fileAsString, "STD Threshold", 1e-9);
+  args.tol                          = TuckerKokkos::stringParse<ScalarType>(fileAsString, "SV Threshold", 1e-6);
+  args.stdThresh                    = TuckerKokkos::stringParse<ScalarType>(fileAsString, "STD Threshold", 1e-9);
 
-  args.scaling_type                 = Tucker::stringParse<std::string>(fileAsString, "Scaling type", "None");
-  args.sthosvd_dir                  = Tucker::stringParse<std::string>(fileAsString, "STHOSVD directory", "compressed");
-  args.sthosvd_fn                   = Tucker::stringParse<std::string>(fileAsString, "STHOSVD file prefix", "sthosvd");
-  args.sv_dir                       = Tucker::stringParse<std::string>(fileAsString, "SV directory", ".");
-  args.sv_fn                        = Tucker::stringParse<std::string>(fileAsString, "SV file prefix", "sv");
-  args.in_fns_file                  = Tucker::stringParse<std::string>(fileAsString, "Input file list", "raw.txt");
-  args.pre_fns_file                 = Tucker::stringParse<std::string>(fileAsString, "Preprocessed output file list", "pre.txt");
-  args.stats_file                   = Tucker::stringParse<std::string>(fileAsString, "Stats file", "stats.txt");
+  args.scaling_type                 = TuckerKokkos::stringParse<std::string>(fileAsString, "Scaling type", "None");
+  args.sthosvd_dir                  = TuckerKokkos::stringParse<std::string>(fileAsString, "STHOSVD directory", "compressed");
+  args.sthosvd_fn                   = TuckerKokkos::stringParse<std::string>(fileAsString, "STHOSVD file prefix", "sthosvd");
+  args.sv_dir                       = TuckerKokkos::stringParse<std::string>(fileAsString, "SV directory", ".");
+  args.sv_fn                        = TuckerKokkos::stringParse<std::string>(fileAsString, "SV file prefix", "sv");
+  args.in_fns_file                  = TuckerKokkos::stringParse<std::string>(fileAsString, "Input file list", "raw.txt");
+  args.pre_fns_file                 = TuckerKokkos::stringParse<std::string>(fileAsString, "Preprocessed output file list", "pre.txt");
+  args.stats_file                   = TuckerKokkos::stringParse<std::string>(fileAsString, "Stats file", "stats.txt");
 
-  args.scale_mode                   = Tucker::stringParse<int>(fileAsString, "Scale mode", args.nd-1);
+  args.scale_mode                   = TuckerKokkos::stringParse<int>(fileAsString, "Scale mode", args.nd-1);
 
   return args;
 }

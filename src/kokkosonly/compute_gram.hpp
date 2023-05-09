@@ -2,6 +2,7 @@
 #define TUCKERKOKKOS_COMP_GRAM_HPP_
 
 #include "Tucker_BlasWrapper.hpp"
+#include "Tucker_Tensor.hpp"
 
 namespace TuckerKokkos{
 

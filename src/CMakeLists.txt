@@ -1,25 +1,65 @@
-PROJECT(Tucker)
-INCLUDE(CTest)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.14)
+PROJECT(Tucker C CXX)
 
-CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
+#=====================================================================
+# guard against in-source builds
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+  message(FATAL_ERROR "In-source builds are not allowed.
+    Please make a new directory (called a build directory) and run CMake from there.
+    You may need to remove CMakeCache.txt.")
+endif()
 
-# SET(BLA_VENDOR Intel10_64lp_seq)
-FIND_PACKAGE(BLAS REQUIRED)
-FIND_PACKAGE(LAPACK REQUIRED)
-FIND_PACKAGE(MPI)
+#=====================================================================
+# check build type
+if (NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release")
+endif()
 
-SET(EXECUTABLE_OUTPUT_PATH bin)
+# convert cmake build type to lower string
+string(TOLOWER "${CMAKE_BUILD_TYPE}" cmake_build_type_tolower)
+if( NOT cmake_build_type_tolower STREQUAL "debug"
+    AND NOT cmake_build_type_tolower STREQUAL "release")
+  message(FATAL_ERROR "Unknown build type \"${CMAKE_BUILD_TYPE}\".
+    Allowed values are Debug, Release (case-insensitive).")
+endif()
 
-ENABLE_TESTING()
+#=====================================================================
 
-ADD_SUBDIRECTORY(serial)
+option(TUCKER_ENABLE_KOKKOSONLY OFF)
+IF(TUCKER_ENABLE_KOKKOSONLY)
+  SET(CMAKE_CXX_STANDARD 17)
+  SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
 
-option(TUCKER_ENABLE_KOKKOS OFF)
-IF(TUCKER_ENABLE_KOKKOS)
-  ADD_SUBDIRECTORY(kokkos)
-ENDIF()
+  include(CheckCXXCompilerFlag)
+  check_cxx_compiler_flag("-std=c++17" COMPILER_SUPPORT_TARGET_CPP17)
+  if(NOT COMPILER_SUPPORT_TARGET_CPP17)
+    message(FATAL_ERROR
+      "C++ compiler does not support -std=c++17. This is required for building kokkos-only.")
+  endif()
+  MESSAGE(STATUS "Setting CMAKE_CXX_STANDARD=17")
 
-IF(MPI_CXX_FOUND)
-  ADD_SUBDIRECTORY(mpi)
-  ADD_SUBDIRECTORY(mpi-kokkos)
+  enable_testing()
+  ADD_SUBDIRECTORY(kokkosonly)
+
+ELSE()
+  SET(CMAKE_CXX_STANDARD 11)
+  SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++0x")
+
+  # SET(BLA_VENDOR Intel10_64lp_seq)
+  FIND_PACKAGE(BLAS REQUIRED)
+  FIND_PACKAGE(LAPACK REQUIRED)
+  FIND_PACKAGE(MPI)
+
+  SET(EXECUTABLE_OUTPUT_PATH bin)
+
+  INCLUDE(CTest)
+  ENABLE_TESTING()
+
+  ADD_SUBDIRECTORY(serial)
+  IF(MPI_CXX_FOUND)
+    ADD_SUBDIRECTORY(mpi)
+  ENDIF()
+
 ENDIF()

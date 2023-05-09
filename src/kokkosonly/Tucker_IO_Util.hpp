@@ -46,8 +46,10 @@
 #include <iostream>
 #include <limits>
 #include "Tucker_SizeArray.hpp"
+#include "Tucker_Tensor.hpp"
+#include "Tucker_TuckerTensor.hpp"
 
-namespace Tucker {
+namespace TuckerKokkos{
 
 /** \brief Parses a single potential argument
  *
@@ -86,7 +88,8 @@ std::vector<std::string> getFileAsStrings(const std::string& paramfn);
  */
 template<typename T>
 T stringParse(const std::vector<std::string>& lines,
-    const std::string& keyword, const T& default_value)
+	      const std::string& keyword,
+	      const T& default_value)
 {
   T value = default_value;
   for (auto line : lines) {
@@ -129,22 +132,102 @@ T stringParse(const std::vector<std::string>& lines,
  * \note User is responsible for deallocating the SizeArray
  */
 SizeArray stringParseSizeArray(const std::vector<std::string>& lines,
-    const std::string& keyword);
+				       const std::string& keyword);
 
-// /** \brief Print the eigenvalues to files
-//  *
-//  * \param[in] factorization TuckerTensor object, containing the core
-//  * tensor, array of factors, and all eigenvalues obtained during ST-HOSVD
-//  * \param[in] filePrefix Prefix of the filenames; each mode will
-//  * be represented in its own file.
-//  * \param[in] useLQ, if this parameter is true then print the square of the
-//  * singular values of the L to get the eigenvalues.
-//  */
-// template <class scalar_t>
-// void printEigenvalues(const TuckerTensor<scalar_t>* factorization,
-//     const std::string& filePrefix, bool useLQ);
+template <class ScalarType, class MemorySpace>
+void importTensorBinary(Tensor<ScalarType, MemorySpace> & X,
+			const char* filename)
+{
+  // Get the maximum file size we can read
+  const std::streamoff MAX_OFFSET = std::numeric_limits<std::streamoff>::max();
+  std::ifstream ifs;
+  ifs.open(filename, std::ios::in | std::ios::binary);
+  assert(ifs.is_open());
 
+  std::streampos begin, end, size;
+  begin = ifs.tellg();
+  ifs.seekg(0, std::ios::end);
+  end = ifs.tellg();
+  size = end - begin;
+  //std::cout << "Reading " << size << " bytes...\n";
+  size_t numEntries = X.getNumElements();
+  assert(size == numEntries*sizeof(ScalarType));
+
+  // Read the file
+  auto view1d_d = X.data();
+  auto view1d_h = Kokkos::create_mirror(view1d_d);
+  ScalarType* data = view1d_h.data();
+  ifs.seekg(0, std::ios::beg);
+  ifs.read((char*)data,size);
+
+  Kokkos::deep_copy(view1d_d, view1d_h);
+  ifs.close();
 }
 
+template <class ScalarType, class MemorySpace>
+void readTensorBinary(Tensor<ScalarType, MemorySpace> & Y,
+		      const char* filename)
+{
+  std::ifstream inStream(filename);
+  std::string temp;
+  int nfiles = 0;
+  while(inStream >> temp) { nfiles++; }
+  inStream.close();
+  if(nfiles != 1) {
+    throw std::runtime_error("readTensorBinary hardwired for one file only for now");
+  }
+  importTensorBinary(Y, temp.c_str());
+}
+
+template <class ScalarType, class MemorySpace>
+void printEigenvalues(const TuckerTensor<ScalarType, MemorySpace> & factorization,
+		      const std::string& filePrefix,
+		      bool useLQ)
+{
+  const int nmodes = factorization.numDims();
+
+  for(int mode=0; mode<nmodes; mode++) {
+    std::ostringstream ss;
+    ss << filePrefix << mode << ".txt";
+    std::ofstream ofs(ss.str());
+    // Determine the number of eigenvalues for this mode
+    auto eigVals_view = factorization.eigValsAt(mode);
+    auto eigVals_view_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{},
+							      eigVals_view);
+    const int nevals = eigVals_view.extent(0);
+
+    // if(useLQ){
+    //   for(int i=0; i<nevals; i++) {
+    //     ofs << std::setprecision(16)
+    // 	    << std::pow(factorization->singularValues[mode][i], 2)
+    // 	    << std::endl;
+    //   }
+    // }
+    // else{
+      for(int i=0; i<nevals; i++) {
+        ofs << std::setprecision(16)
+	    << eigVals_view_h(i)
+	    << std::endl;
+      }
+   //}
+    ofs.close();
+  }
+}
+
+template <class scalar_t, class mem_space>
+void exportTensorBinary(const Tensor<scalar_t, mem_space> & Y, const char* filename)
+{
+  const std::streamoff MAX_OFFSET = std::numeric_limits<std::streamoff>::max();
+  size_t numEntries = Y.getNumElements();
+  // Open file
+  std::ofstream ofs;
+  ofs.open(filename, std::ios::out | std::ios::binary);
+  assert(ofs.is_open());
+  const scalar_t* data = Y.data().data();
+  ofs.write((char*)data,numEntries*sizeof(scalar_t));
+  ofs.close();
+}
+
+}// end namespace TuckerKokkos
 
 #endif /* TUCKER_IO_UTIL_HPP_ */

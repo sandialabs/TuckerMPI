@@ -44,11 +44,12 @@
 #include<iomanip>
 #include<cmath>
 
-namespace Tucker
+namespace TuckerKokkos
 {
 
 std::string parseString(const int argc, const char* argv[],
-    const std::string& cl_arg, const std::string& default_value)
+			const std::string& cl_arg,
+			const std::string& default_value)
 {
   using std::string;
 
@@ -88,8 +89,9 @@ std::vector<std::string> getFileAsStrings(const std::string& paramfn) {
   return fileLines;
 }
 
-SizeArray* stringParseSizeArray(const std::vector<std::string>& lines,
-    const std::string& keyword) {
+SizeArray stringParseSizeArray(const std::vector<std::string>& lines,
+			       const std::string& keyword)
+{
   std::vector<int> tmp; // Placeholder for values in IndxArray
   int value;
 
@@ -109,52 +111,17 @@ SizeArray* stringParseSizeArray(const std::vector<std::string>& lines,
 
   assert(tmp.size() <= std::numeric_limits<int>::max());
 
-  if(tmp.size() == 0)
-    return NULL;
+  if(tmp.size() == 0){
+    return {};
+  }
 
   // Copy tmp vector into the IndxArray
-  SizeArray* arr = MemoryManager::safe_new<SizeArray>((int)tmp.size());
+  SizeArray arr((int)tmp.size());
   for (int i = 0; i < (int)tmp.size(); i++) {
-    (*arr)[i] = tmp[i];
+    arr[i] = tmp[i];
   }
 
   return arr; // Returns empty array if nothing is ever pushed onto tmp vector
 }
-
-// template <class scalar_t>
-// void printEigenvalues(const TuckerTensor<scalar_t>* factorization,
-//     const std::string& filePrefix, bool useLQ)
-// {
-//   // For each mode...
-//   int nmodes = factorization->N;
-//   for(int mode=0; mode<nmodes; mode++) {
-//     // Create the filename by appending the mode #
-//     std::ostringstream ss;
-//     ss << filePrefix << mode << ".txt";
-
-//     // Open the file
-//     std::ofstream ofs(ss.str());
-
-//     // Determine the number of eigenvalues for this mode
-//     int nevals = factorization->U[mode]->nrows();
-//     if(useLQ){
-//       for(int i=0; i<nevals; i++) {
-//         ofs << std::setprecision(16) << std::pow(factorization->singularValues[mode][i], 2) << std::endl;
-//       }
-//     }
-//     else{
-//       for(int i=0; i<nevals; i++) {
-//         ofs << std::setprecision(16) << factorization->eigenvalues[mode][i] << std::endl;
-//       }
-//     }
-
-//     ofs.close();
-//   }
-// }
-
-// // Explicit instantiations to build static library for both single and double precision
-// template void printEigenvalues(const TuckerTensor<float>*, const std::string&, bool);
-
-// template void printEigenvalues(const TuckerTensor<double>*, const std::string&, bool);
 
 }
