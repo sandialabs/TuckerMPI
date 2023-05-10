@@ -3,6 +3,7 @@
 #include "Tucker_IO_Util.hpp"
 #include "init_args.hpp"
 #include "Tucker.hpp"
+#include <variant>
 
 int main(int argc, char* argv[])
 {
@@ -30,17 +31,21 @@ int main(int argc, char* argv[])
     chech_array_sizes(args);
     std::cout << "Array sizes checking: passed" << std::endl;
 
-    TuckerKokkos::SizeArray I_dims = TuckerKokkos::stringParseSizeArray(fileAsString, "Global dims");
+    const auto I_dims = TuckerKokkos::stringParseSizeArray(fileAsString, "Global dims");
     args.nd = I_dims.size();
     std::cout << "The global dimensions of the tensor to be scaled or compressed\n";
     std::cout << "- Global dims = " << I_dims << std::endl << std::endl;
 
-    TuckerKokkos::SizeArray R_dims;
+    std::variant<TuckerKokkos::SizeArray, scalar_t> coreTensorRankInfo;
     if (!args.boolAuto) {
-      R_dims = TuckerKokkos::stringParseSizeArray(fileAsString, "Ranks");
-      std::cout << "Global dimensions of the desired core tensor\n";
-      std::cout << "Not used if \"Automatic rank determination\" is enabled\n";
+      auto R_dims = TuckerKokkos::stringParseSizeArray(fileAsString, "Ranks");
+      coreTensorRankInfo = R_dims;
+      std::cout << "Global dimensions of the core tensor is fixed:\n";
       std::cout << "- Ranks = " << R_dims << std::endl << std::endl;
+    }
+    else{
+      std::cout << "Automatic rank determination of core tensor is enabled\n";
+      coreTensorRankInfo = args.tol;
     }
 
     //
@@ -55,8 +60,9 @@ int main(int argc, char* argv[])
     //
     // FIXME: Compute statistics is missing
     // FIXME: Perform preprocessing is missing
-    if(args.boolSTHOSVD) {
-      auto f = TuckerKokkos::STHOSVD(X, args.tol, args.boolUseLQ);
+    if(args.boolSTHOSVD)
+    {
+      auto f = TuckerKokkos::STHOSVD(X, coreTensorRankInfo, args.boolUseLQ);
 
       // Write the eigenvalues to files
       std::string filePrefix = args.sv_dir + "/" + args.sv_fn + "_mode_";

@@ -5,6 +5,7 @@
 #include "Tucker_Tensor.hpp"
 #include "compute_gram.hpp"
 #include "ttm.hpp"
+#include <variant>
 
 namespace TuckerKokkos{
 
@@ -86,17 +87,20 @@ auto computeEigenvalues(Kokkos::View<ScalarType**, Props...> G,
   return eigenvalues_d;
 }
 
-template <class ScalarType, class MemorySpace>
-int findEigvalsCountToKeep(Kokkos::View<ScalarType*, MemorySpace> eigvals,
-			   const ScalarType thresh)
+template <class ScalarType, class ...Props>
+int countEigValsUsingThreshold(Kokkos::View<ScalarType*, Props...> eigvals,
+			       const ScalarType thresh)
 {
-  auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
+  using eigvals_view_type = Kokkos::View<ScalarType*, Props...>;
+  using mem_space = typename eigvals_view_type::memory_space;
+  static_assert(Kokkos::SpaceAccessibility<Kokkos::HostSpace, mem_space>::accessible,
+		"countEigValsUsingThreshold: view must be accessible on host");
 
-  int nrows = eigvals_h.extent(0);
+  int nrows = eigvals.extent(0);
   int numEvecs=nrows;
   ScalarType sum = 0;
   for(int i=nrows-1; i>=0; i--) {
-    sum += std::abs(eigvals_h[i]);
+    sum += std::abs(eigvals[i]);
     if(sum > thresh) {
       break;
     }
@@ -107,22 +111,39 @@ int findEigvalsCountToKeep(Kokkos::View<ScalarType*, MemorySpace> eigvals,
 
 template <class ScalarType, class MemorySpace>
 auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
-	     const ScalarType epsilon,
+	     const std::variant<SizeArray, ScalarType> & coreTensorRankInfo,
 	     bool useQR = false,
 	     bool flipSign = false)
 {
   const int ndims = X.N();
 
+  // decide truncation mechanism
+  auto truncator = [&](int n, auto eigenValues) -> int
+  {
+    auto autoRank = std::holds_alternative<ScalarType>(coreTensorRankInfo);
+    if (autoRank){
+      const ScalarType epsilon    = std::get<ScalarType>(coreTensorRankInfo);
+      const ScalarType tensorNorm = X.norm2();
+      const ScalarType threshold  = epsilon*epsilon*tensorNorm/ndims;
+      std::cout << "\tAutoST-HOSVD::Tensor Norm: "
+		<< std::sqrt(tensorNorm)
+		<< "...\n";
+      std::cout << "\tAutoST-HOSVD::Relative Threshold: "
+		<< threshold
+		<< "...\n";
+      auto eigVals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),
+							   eigenValues);
+      return countEigValsUsingThreshold(eigVals_h, threshold);
+    }
+    else{
+      (void) eigenValues; // unused
+      const auto & R_dims = std::get<SizeArray>(coreTensorRankInfo);
+      return R_dims[n];
+    }
+  };
+
   using factor_type = TuckerKokkos::TuckerTensor<ScalarType, MemorySpace>;
   factor_type factorization(ndims);
-
-  // Compute the threshold
-  const ScalarType tensorNorm = X.norm2();
-  const ScalarType thresh = epsilon*epsilon*tensorNorm/ndims;
-  std::cout << "\tAutoST-HOSVD::Tensor Norm: "
-	    << std::sqrt(tensorNorm) << "...\n";
-  std::cout << "\tAutoST-HOSVD::Relative Threshold: "
-	    << thresh << "...\n";
 
   Tensor<ScalarType, MemorySpace> * Y = &X;
   Tensor<ScalarType, MemorySpace> temp;
@@ -151,7 +172,7 @@ auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
     auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
     for (int i=0; i<S.extent(0); ++i){ std::cout << eigvals_h(i) << "  "; }
     std::cout << " \n ";
-    const int numEvecs = findEigvalsCountToKeep(eigvals, thresh);
+    const int numEvecs = truncator(n, eigvals);
 
     std::cout << " \n ";
     using eigvec_view_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace>;
