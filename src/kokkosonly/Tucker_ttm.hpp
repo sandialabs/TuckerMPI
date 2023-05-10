@@ -18,8 +18,7 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
 	      bool Utransp)
 {
   // Check that the input is valid
-  //assert(Uptr != 0);
-  //assert(Y != 0);
+  assert(Y != 0);
   assert(n >= 0 && n < X->N());
   for(int i=0; i<X->N(); i++) {
     if(i != n) {
@@ -27,9 +26,11 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
     }
   }
 
+  // View B
   auto X_view_d = X->data();
   auto X_ptr_d = X_view_d.data();
 
+  // View C
   auto Y_view_d = Y.data();
   auto Y_ptr_d = Y_view_d.data();
 
@@ -41,8 +42,6 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
     // Technically, we could divide the total number of entries by n,
     // but that seems like a bad decision
     size_t ncols = X->size().prod(1,X->N()-1);
-
-    
 
     if(ncols > std::numeric_limits<int>::max()) {
       std::ostringstream oss;
@@ -59,6 +58,8 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
     // op( B ) a k by n matrix and C an m by n matrix.
     char transa;
     const char transb = 'N';
+    int m = Y.size(n);
+    int k = X->size(n);
     const ScalarType alpha = ScalarType(1);
     const ScalarType beta = ScalarType(0);
 
@@ -68,16 +69,10 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
       transa = 'N';
     }
 
-    int M = 2;
-    int N = 4;
-
-    Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> B(X_ptr_d, N, 16);
-    // 1d view, unchange on exit
-    Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> C(Y_ptr_d, 2, 16);
-    // 1d view, overwritten by the M by N matrix ( alpha*op( A )*op( B ) + beta*C ).
+    Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> B(X_ptr_d, k, ncols);
+    Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> C(Y_ptr_d, m, ncols);
     
-    KokkosBlas::gemm(&transa,&transb,alpha,A,B,beta,C); // need 2d view with 1d
-
+    KokkosBlas::gemm(&transa,&transb,alpha,A,B,beta,C);
   }
   else
   {
@@ -277,7 +272,8 @@ void ttm(const Tensor<ScalarType, MemorySpace>* const X,
   }
 
   auto U_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), U);
-  ttm_impl(X, n, U_h.data(), U.extent(0), Y, Utransp);
+  //ttm_impl(X, n, U_h.data(), U.extent(0), Y, Utransp);
+  ttm_kokkosblas_impl(X, n, U_h, U.extent(0), Y, Utransp);
   Kokkos::deep_copy(U, U_h);
 }
 
