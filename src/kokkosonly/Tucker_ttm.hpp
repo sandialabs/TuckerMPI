@@ -26,6 +26,17 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
     }
   }
 
+  // Obtain the number of rows and columns of A
+  int Unrows, Uncols;
+  if(Utransp) {
+    Unrows = X->size(n);
+    Uncols = Y.size(n);
+  }
+  else {
+    Uncols = X->size(n);
+    Unrows = Y.size(n);
+  }
+
   // View B
   auto X_view_d = X->data();
   auto X_ptr_d = X_view_d.data();
@@ -59,6 +70,7 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
     char transa;
     const char transb = 'N';
     int m = Y.size(n);
+    int blas_n = (int)ncols;
     int k = X->size(n);
     const ScalarType alpha = ScalarType(1);
     const ScalarType beta = ScalarType(0);
@@ -69,9 +81,8 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
       transa = 'N';
     }
 
-    Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> B(X_ptr_d, k, ncols);
-    Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> C(Y_ptr_d, m, ncols);
-    
+    Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> B(X_ptr_d, k, blas_n);
+    Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> C(Y_ptr_d, m, blas_n);
     KokkosBlas::gemm(&transa,&transb,alpha,A,B,beta,C);
   }
   else
@@ -101,22 +112,23 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
       char transb;
       int m = (int)ncols;
       int blas_n = Y.size(n);
+      int k;
       int lda = (int)ncols;
       int ldb = strideU;
       int ldc = (int)ncols;
-      ScalarType alpha = 1;
-      ScalarType beta = 0;
+      const ScalarType alpha = ScalarType(1);
+      const ScalarType beta = ScalarType(0);
       if(Utransp) {
         transb = 'N';
+        k = Unrows;
       } else {
         transb = 'T';
+        k = Uncols;
       }
-      /*
-      Tucker::gemm(&transa, &transb, &m, &blas_n, &k, &alpha,
-		   X_ptr_h+i*k*m, &lda, Uptr, &ldb, &beta,
-		   Y_ptr_h+i*m*blas_n, &ldc);
-      */
-      // TODO HERE
+
+      Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> B(X_ptr_d+i*k*m, lda, k);
+      Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> C(Y_ptr_d+i*m*blas_n, ldc, blas_n);
+      KokkosBlas::gemm(&transa,&transb,alpha,B,A,beta,C);
     }
   }
 
