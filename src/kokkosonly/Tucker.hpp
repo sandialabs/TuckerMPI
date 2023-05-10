@@ -9,6 +9,16 @@
 
 namespace TuckerKokkos{
 
+struct CoreRankUserDefined{
+  SizeArray value;
+};
+
+template<class ScalarType>
+struct CoreRankViaThreshold{
+  ScalarType value;
+};
+
+
 template<class ScalarType, class MemorySpace>
 auto computeGram(Tensor<ScalarType, MemorySpace> * Y, const int n)
 {
@@ -109,9 +119,9 @@ int countEigValsUsingThreshold(Kokkos::View<ScalarType*, Props...> eigvals,
   return numEvecs;
 }
 
-template <class ScalarType, class MemorySpace>
+template <class ScalarType, class MemorySpace, class ...Variants>
 auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
-	     const std::variant<SizeArray, ScalarType> & coreTensorRankInfo,
+	     const std::variant<Variants...> & coreTensorRankInfo,
 	     bool useQR = false,
 	     bool flipSign = false)
 {
@@ -120,9 +130,10 @@ auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
   // decide truncation mechanism
   auto truncator = [&](int n, auto eigenValues) -> int
   {
-    auto autoRank = std::holds_alternative<ScalarType>(coreTensorRankInfo);
-    if (autoRank){
-      const ScalarType epsilon    = std::get<ScalarType>(coreTensorRankInfo);
+    auto autoRank = std::holds_alternative<CoreRankViaThreshold<ScalarType>>(coreTensorRankInfo);
+    if (autoRank)
+    {
+      const ScalarType epsilon = std::get<CoreRankViaThreshold<ScalarType>>(coreTensorRankInfo).value;
       const ScalarType tensorNorm = X.norm2();
       const ScalarType threshold  = epsilon*epsilon*tensorNorm/ndims;
       std::cout << "\tAutoST-HOSVD::Tensor Norm: "
@@ -137,7 +148,7 @@ auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
     }
     else{
       (void) eigenValues; // unused
-      const auto & R_dims = std::get<SizeArray>(coreTensorRankInfo);
+      const auto & R_dims = std::get<CoreRankUserDefined>(coreTensorRankInfo).value;
       return R_dims[n];
     }
   };

@@ -36,16 +36,19 @@ int main(int argc, char* argv[])
     std::cout << "The global dimensions of the tensor to be scaled or compressed\n";
     std::cout << "- Global dims = " << I_dims << std::endl << std::endl;
 
-    std::variant<TuckerKokkos::SizeArray, scalar_t> coreTensorRankInfo;
+    using core_tensor_rank_finding_strategies = std::variant<
+      TuckerKokkos::CoreRankUserDefined,
+      TuckerKokkos::CoreRankViaThreshold<scalar_t>>;
+    core_tensor_rank_finding_strategies coreTensorRankStrategy;
     if (!args.boolAuto) {
       auto R_dims = TuckerKokkos::stringParseSizeArray(fileAsString, "Ranks");
-      coreTensorRankInfo = R_dims;
+      coreTensorRankStrategy = TuckerKokkos::CoreRankUserDefined{R_dims};
       std::cout << "Global dimensions of the core tensor is fixed:\n";
       std::cout << "- Ranks = " << R_dims << std::endl << std::endl;
     }
     else{
       std::cout << "Automatic rank determination of core tensor is enabled\n";
-      coreTensorRankInfo = args.tol;
+      coreTensorRankStrategy = TuckerKokkos::CoreRankViaThreshold<scalar_t>{args.tol};
     }
 
     //
@@ -62,7 +65,7 @@ int main(int argc, char* argv[])
     // FIXME: Perform preprocessing is missing
     if(args.boolSTHOSVD)
     {
-      auto f = TuckerKokkos::STHOSVD(X, coreTensorRankInfo, args.boolUseLQ);
+      auto f = TuckerKokkos::STHOSVD(X, coreTensorRankStrategy, args.boolUseLQ);
 
       // Write the eigenvalues to files
       std::string filePrefix = args.sv_dir + "/" + args.sv_fn + "_mode_";
