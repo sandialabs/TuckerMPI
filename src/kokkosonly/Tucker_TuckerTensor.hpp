@@ -9,24 +9,28 @@ template<class ScalarType, class MemorySpace>
 class TuckerTensor
 {
 public:
-  TuckerTensor(const int ndims) : N(ndims){
+  TuckerTensor(const int ndims)
+    : N(ndims), eigenvalues(ndims), singularvectors(ndims)
+  {
     assert(ndims > 0);
   }
 
-  auto getFactorMatrix(int n){
-    return Kokkos::subview(U, n, Kokkos::ALL, Kokkos::ALL);
+  Kokkos::View<ScalarType*, MemorySpace> eigValsAt(int n) const {
+    return eigenvalues[n];
   }
 
-  void pushBack(Kokkos::View<ScalarType*, MemorySpace> ein){
-    eigenvalues.emplace_back(ein);
+  Kokkos::View<ScalarType*, MemorySpace> eigValsAt(int n) {
+    return eigenvalues[n];
   }
 
-  void pushBack(Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> ein){
-    singularvectors.emplace_back(ein);
+  Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> eigVecsAt(int n){
+    return singularvectors[n];
   }
 
-  auto eigValsAt(int i) const{ return eigenvalues[i]; }
-  auto eigVecsAt(int i) const{ return singularvectors[i]; }
+  Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> eigVecsAt(int n) const{
+    return singularvectors[n];
+  }
+
   int numDims() const{ return N; }
   auto const & getG() const{ return G; }
   auto & getG(){ return G; }
@@ -34,7 +38,6 @@ public:
 private:
   int N;
   Tensor<ScalarType, MemorySpace> G;
-  Kokkos::View<ScalarType***, Kokkos::LayoutLeft, MemorySpace> U;
   std::vector< Kokkos::View<ScalarType*, MemorySpace> > eigenvalues;
   std::vector< Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> > singularvectors;
 };

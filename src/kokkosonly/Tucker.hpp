@@ -165,7 +165,7 @@ auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
     std::cout << " \n ";
     std::cout << "\tAutoST-HOSVD::Starting Evecs(" << n << ")...\n";
     auto eigvals = computeEigenvalues(S, flipSign);
-    factorization.pushBack(eigvals);
+    factorization.eigValsAt(n) = eigvals;
 
     // need to copy back to S_h because of the reordering
     Kokkos::deep_copy(S_h, S);
@@ -188,7 +188,7 @@ auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
       std::cout << " \n ";
     }
     Kokkos::deep_copy(eigVecs, eigVecs_h);
-    factorization.pushBack(eigVecs);
+    factorization.eigVecsAt(n) = eigVecs;
 
     std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
     std::cout << " \n ";
