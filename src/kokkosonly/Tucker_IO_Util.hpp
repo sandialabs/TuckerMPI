@@ -45,6 +45,7 @@
 #include <vector>
 #include <iostream>
 #include <limits>
+#include <fstream>
 #include "Tucker_SizeArray.hpp"
 #include "Tucker_Tensor.hpp"
 #include "Tucker_TuckerTensor.hpp"
@@ -226,6 +227,56 @@ void exportTensorBinary(const Tensor<scalar_t, mem_space> & Y, const char* filen
   const scalar_t* data = Y.data().data();
   ofs.write((char*)data,numEntries*sizeof(scalar_t));
   ofs.close();
+}
+
+template <class ScalarType, class mem_space>
+Tensor<ScalarType, mem_space> importTensor(const char* filename)
+{
+  // Open file
+  std::ifstream ifs;
+  ifs.open(filename);
+  if (ifs.is_open()) {
+    std::cout<< "file open, it's working!\n";
+  }else{
+    std::cout<< "fail to open file...\n";
+  }
+  assert(ifs.is_open());
+
+  // Read the type of object
+  // If the type is not "tensor", that's bad
+  std::string tensorStr;
+
+  ifs >> tensorStr;
+  std::cout << "tensorStr: " << tensorStr << "\n";
+  assert(tensorStr == "tensor" || tensorStr == "matrix");
+
+  // Read the number of dimensions
+  int ndims;
+  ifs >> ndims;
+  std::cout << "ndims: " << ndims << "\n";
+
+  // Create a SizeArray of that length
+  SizeArray sz(ndims);
+
+  // Read the dimensions
+  for(int i=0; i<ndims; i++) {
+    ifs >> sz[i];
+    //std::cout << "sz[i]: " << sz[i] << "\n";
+  }
+
+  // Create a tensor using that SizeArray
+  Tensor<ScalarType, mem_space> t(sz);
+  // std::cout << "print: \n";
+  // t.print();
+
+  // Read the entries of the tensor
+  // TODO
+  
+  // Close the file
+  ifs.close();
+
+  // Return the tensor
+  return t;
 }
 
 }// end namespace TuckerKokkos
