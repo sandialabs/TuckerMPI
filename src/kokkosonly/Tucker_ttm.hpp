@@ -284,7 +284,6 @@ void ttm(const Tensor<ScalarType, MemorySpace>* const X,
   }
 
   auto U_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), U);
-  //ttm_impl(X, n, U_h.data(), U.extent(0), Y, Utransp);
   ttm_kokkosblas_impl(X, n, U_h, U.extent(0), Y, Utransp);
   Kokkos::deep_copy(U, U_h);
 }

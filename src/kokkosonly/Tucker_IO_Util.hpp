@@ -45,7 +45,6 @@
 #include <vector>
 #include <iostream>
 #include <limits>
-#include <fstream>
 #include "Tucker_SizeArray.hpp"
 #include "Tucker_Tensor.hpp"
 #include "Tucker_TuckerTensor.hpp"
