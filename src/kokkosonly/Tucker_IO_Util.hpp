@@ -229,56 +229,6 @@ void exportTensorBinary(const Tensor<scalar_t, mem_space> & Y, const char* filen
   ofs.close();
 }
 
-template <class ScalarType, class mem_space>
-Tensor<ScalarType, mem_space> importTensor(const char* filename)
-{
-  // Open file
-  std::ifstream ifs;
-  ifs.open(filename);
-  if (ifs.is_open()) {
-    std::cout<< "file open, it's working!\n";
-  }else{
-    std::cout<< "fail to open file...\n";
-  }
-  assert(ifs.is_open());
-
-  // Read the type of object
-  // If the type is not "tensor", that's bad
-  std::string tensorStr;
-
-  ifs >> tensorStr;
-  std::cout << "tensorStr: " << tensorStr << "\n";
-  assert(tensorStr == "tensor" || tensorStr == "matrix");
-
-  // Read the number of dimensions
-  int ndims;
-  ifs >> ndims;
-  std::cout << "ndims: " << ndims << "\n";
-
-  // Create a SizeArray of that length
-  SizeArray sz(ndims);
-
-  // Read the dimensions
-  for(int i=0; i<ndims; i++) {
-    ifs >> sz[i];
-    //std::cout << "sz[i]: " << sz[i] << "\n";
-  }
-
-  // Create a tensor using that SizeArray
-  Tensor<ScalarType, mem_space> t(sz);
-  // std::cout << "print: \n";
-  // t.print();
-
-  // Read the entries of the tensor
-  // TODO
-  
-  // Close the file
-  ifs.close();
-
-  // Return the tensor
-  return t;
-}
-
 }// end namespace TuckerKokkos
 
 #endif /* TUCKER_IO_UTIL_HPP_ */
