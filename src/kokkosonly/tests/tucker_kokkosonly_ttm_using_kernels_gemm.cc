@@ -4,7 +4,7 @@
 #include "Tucker_Tensor.hpp"
 #include "ttm.hpp"
 
-typedef double scalar_t;
+using scalar_t = double;
 using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 using matrix = Kokkos::View<scalar_t**, Kokkos::LayoutLeft, memory_space>;
 
