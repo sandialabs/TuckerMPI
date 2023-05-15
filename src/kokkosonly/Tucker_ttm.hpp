@@ -75,11 +75,7 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
     const ScalarType alpha = ScalarType(1);
     const ScalarType beta = ScalarType(0);
 
-    if(Utransp) {
-      transa = 'T';
-    } else {
-      transa = 'N';
-    }
+    transa = Utransp ? 'T' : 'N';
 
     Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> B(X_ptr_d, k, blas_n);
     Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> C(Y_ptr_d, m, blas_n);
@@ -112,19 +108,13 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
       char transb;
       int m = (int)ncols;
       int blas_n = Y.size(n);
-      int k;
       int lda = (int)ncols;
       int ldb = strideU;
       int ldc = (int)ncols;
       const ScalarType alpha = ScalarType(1);
       const ScalarType beta = ScalarType(0);
-      if(Utransp) {
-        transb = 'N';
-        k = Unrows;
-      } else {
-        transb = 'T';
-        k = Uncols;
-      }
+      int k = Utransp ? Unrows : Uncols;
+      transb = Utransp ? 'N' : 'T';
 
       Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> B(X_ptr_d+i*k*m, lda, k);
       Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> C(Y_ptr_d+i*m*blas_n, ldc, blas_n);
