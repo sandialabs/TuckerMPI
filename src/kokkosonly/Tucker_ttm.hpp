@@ -18,10 +18,13 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
 	      bool Utransp)
 {
   // Check that the input is valid
+  // Assert if tensor Y not null
   assert(Y != 0);
+  // Assert if n (mode) has a valid value
   assert(n >= 0 && n < X->N());
   for(int i=0; i<X->N(); i++) {
     if(i != n) {
+      // Assert if each slices of Tensor X and Y have the same size
       assert(X->size(i) == Y.size(i));
     }
   }
