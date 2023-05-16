@@ -25,12 +25,14 @@ class Tensor_2d_XxY_order : public ::testing::Test {
         auto view1d_h = Kokkos::create_mirror(view1d_d);
         // Fill the tensor with data (0, 1, 2, etc)
         int values = 0;
-        for(int i=0; i<X.size().prod(); i++) {
+        for(int i=0; i<X.getNumElements(); i++) {
             view1d_h(values) = values;
             values = values + 1;
         }
         Kokkos::deep_copy(view1d_d, view1d_h);
     }
+
+    // function create tensor who return a tensor with the size that I want !
 
     /**
      * @brief Create a matrix for testing object
