@@ -3,10 +3,9 @@
 #include "Tucker_Tensor.hpp"
 #include "ttm.hpp"
 
-#include "Tensor_2x3x5_random.hpp"
+#include "Tensor_3d_2x3x5_random.hpp"
 
-
-TEST_F(Tensor_2x3x5_random, ttm_mat7x2) {
+TEST_F(Tensor_3d_2x3x5_random, ttm_mat7x2) {
 
     // Matrix 7x2
     matrix mat7x2("mat7x2", 7, 2);
@@ -61,7 +60,7 @@ TEST_F(Tensor_2x3x5_random, ttm_mat7x2) {
     }
 }
 
-TEST_F(Tensor_2x3x5_random, ttm_mat2x7) {
+TEST_F(Tensor_3d_2x3x5_random, ttm_mat2x7) {
 
     // Matrix 2x7
     matrix mat2x7("mat2x7", 2, 7);
@@ -119,7 +118,7 @@ TEST_F(Tensor_2x3x5_random, ttm_mat2x7) {
     }
 }
 
-TEST_F(Tensor_2x3x5_random, ttm_mat7x3) {
+TEST_F(Tensor_3d_2x3x5_random, ttm_mat7x3) {
     
     // Matrix 7x3
     matrix mat7x3("mat7x3", 7, 3);

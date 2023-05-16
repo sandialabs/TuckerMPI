@@ -7,7 +7,7 @@ using scalar_t = double;
 using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 using matrix = Kokkos::View<scalar_t**, Kokkos::LayoutLeft, memory_space>;
 
-class Tensor_2x3x5_random : public ::testing::Test {    
+class Tensor_3d_2x3x5_random : public ::testing::Test {    
     protected:
 
     void SetUp() override {
