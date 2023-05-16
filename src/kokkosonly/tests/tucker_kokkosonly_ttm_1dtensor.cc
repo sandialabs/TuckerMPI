@@ -39,13 +39,18 @@ class TestTensor2D : public ::testing::Test {
         auto view1d_h = Kokkos::create_mirror(view1d_d);
         // Step 2
         int values = 0;
+        
+        // TODO
+        // for(int i=0; i<dims.at(0)*dims.at(1))
+        
+        /*
         for(int i=0; i<n; i++) {
             for(int j=0; j<dims.at(i); j++) {
                 // Values will be 0, 1, 2, etc
                 view1d_h(values) = values;
                 values = values + 1;
             }
-        }
+        }*/
         Kokkos::deep_copy(view1d_d, view1d_h);
     }
 
@@ -90,38 +95,51 @@ class TestTensor2D : public ::testing::Test {
     // PARAMS 
     int n = 2;              // n-d tensor
     std::vector<int> dims = // with X values for each n dimensions 
-        { 10, 15 }; 
-    int nRowsMatrix = 4;    // num rows max test matrix
-    int nColsMatrix = 5;    // num cols max test matrix
+        { 5, 7 }; 
+    int nRowsMatrix = 4;  // num rows max test matrix
+    //int nColsMatrix = 5;    // num cols max test matrix
     // PARAMS
 
     TuckerKokkos::SizeArray size;
     TuckerKokkos::Tensor<scalar_t, memory_space> X;
-    scalar_t* data;
+    scalar_t* ttm_data;
 };
 
 // TENSOR 2D
 TEST_F(TestTensor2D, Matrice_TODO) {
     // Step 1 & 2: Done with Test Fixtures
     for (int nRows=1; nRows<nRowsMatrix; ++nRows) { 
-        for (int nCols=1; nCols<nColsMatrix; ++nCols) {
+        int nCols = 5; // = dims.at(0)
+        //for (int nCols=1; nCols<nColsMatrix; ++nCols) {
             // Step 3 & 4
             matrix mat = create_matrix_for_testing(nRows, nCols);
-            // 5. TODO
-            std::cout << "X.N(): " << X.N() << std::endl;
-            std::cout << "?: " << X.size().prod(1,X.N()-1) << std::endl;
-            //TuckerKokkos::Tensor<scalar_t, memory_space> result =
-                //TuckerKokkos::ttm(&X, 0, mat, false);
-            // 6. TODO
-            //ttm_data = result.data().data();
+            // Step 5
+            TuckerKokkos::Tensor<scalar_t, memory_space> result =
+                TuckerKokkos::ttm(&X, 0, mat, false);
+            // Step 6
+            ttm_data = result.data().data();
             // 7. TODO
-            std::vector<scalar_t> trueData = compute_true_data(X, mat);
-            // Final step 
+            // std::vector<scalar_t> trueData = compute_true_data(X, mat);
+            // Final step
+            std::cout << "A (matrice ~ mat)" << std::endl;
+            /*for(int i=0; i<mat.size(); i++) {
+                std::cout << "mat("<< i <<") = " << mat(i) << std::endl;
+            }*/
+            std::cout << "B (tensor ~ X) " << std::endl;
+            X.print();
+            std::cout << "C (result):" << std::endl;
+            result.print();
+            // std::cout << "matrice " << nCols << "x" << nRows << std::endl;
+            /*for(int i=0; i<result.data().size(); i++) {
+                // std::cout << "i: "<< i <<"; ttm_data:" << ttm_data[i] << std::endl;
+                //std::cout << " " << std::endl;
+                // std::cout << "" << std::endl;
+            }*/
             /*for(int i=0; i<trueData.size(); i++) {
                 ASSERT_EQ(ttm_data[i], trueData[i]);
             }*/
             ASSERT_EQ(2, 2);
-        }
+        //}
     }
     ASSERT_EQ(4, 3);
 }
