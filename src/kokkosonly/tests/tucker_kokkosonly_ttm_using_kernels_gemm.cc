@@ -19,15 +19,14 @@ class TestTTM : public ::testing::Test {
         X = TuckerKokkos::Tensor<scalar_t, memory_space>(size);
         auto view1d_d = X.data();
         auto view1d_h = Kokkos::create_mirror(view1d_d);
-        data = view1d_h.data();
-        data[0] = 2;    data[1] = 3;    data[2] = 5;    data[3] = 7;
-        data[4] = 11;   data[5] = 13;   data[6] = 17;   data[7] = 19;
-        data[8] = 23;   data[9] = 29;   data[10] = 31;  data[11] = 37;
-        data[12] = 41;  data[13] = 43;  data[14] = 47;  data[15] = 53;
-        data[16] = 59;  data[17] = 61;  data[18] = 67;  data[19] = 71;
-        data[20] = 73;  data[21] = 79;  data[22] = 83;  data[23] = 97;
-        data[24] = 101; data[25] = 103; data[26] = 107; data[27] = 109;
-        data[28] = 113; data[29] = 127;
+        view1d_h(0) = 2;    view1d_h(1) = 3;    view1d_h(2) = 5;    view1d_h(3) = 7;
+        view1d_h(4) = 11;   view1d_h(5) = 13;   view1d_h(6) = 17;   view1d_h(7) = 19;
+        view1d_h(8) = 23;   view1d_h(9) = 29;   view1d_h(10) = 31;  view1d_h(11) = 37;
+        view1d_h(12) = 41;  view1d_h(13) = 43;  view1d_h(14) = 47;  view1d_h(15) = 53;
+        view1d_h(16) = 59;  view1d_h(17) = 61;  view1d_h(18) = 67;  view1d_h(19) = 71;
+        view1d_h(20) = 73;  view1d_h(21) = 79;  view1d_h(22) = 83;  view1d_h(23) = 97;
+        view1d_h(24) = 101; view1d_h(25) = 103; view1d_h(26) = 107; view1d_h(27) = 109;
+        view1d_h(28) = 113; view1d_h(29) = 127;
         Kokkos::deep_copy(view1d_d, view1d_h);
     }
 
