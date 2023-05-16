@@ -35,6 +35,4 @@ class Tensor_2x3x5_random : public ::testing::Test {
     std::array<int, 3> dims = {2,3,5};
     TuckerKokkos::SizeArray size;
     TuckerKokkos::Tensor<scalar_t, memory_space> X;
-    scalar_t* data;
-    std::array<scalar_t, 105> trueData;
 };

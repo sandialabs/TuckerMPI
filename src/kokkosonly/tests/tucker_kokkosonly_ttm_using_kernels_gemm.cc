@@ -24,9 +24,10 @@ TEST_F(Tensor_2x3x5_random, ttm_mat7x2) {
     // TTM
     TuckerKokkos::Tensor<scalar_t, memory_space> result =
         TuckerKokkos::ttm(&X, 0, mat7x2, false);
-    data = result.data().data();
+    scalar_t* data = result.data().data();
 
     // Few true data 
+    std::array<scalar_t, 105> trueData;
     trueData[0] = 763; trueData[1] = 793; trueData[2] = 815; trueData[3] = 841;
     trueData[4] = 875; trueData[5] = 893; trueData[6] = 917; trueData[7] = 1824;
     trueData[8] = 1896; trueData[9] = 1948; trueData[10] = 2012; trueData[11] = 2092;
@@ -72,9 +73,10 @@ TEST_F(Tensor_2x3x5_random, ttm_mat2x7) {
     // TTM
     TuckerKokkos::Tensor<scalar_t, memory_space> result =
         TuckerKokkos::ttm(&X, 0, mat2x7, true);
-    data = result.data().data();
+    scalar_t* data = result.data().data();
 
     // Few true data 
+    std::array<scalar_t, 105> trueData;
     trueData[0] = 673; trueData[1] = 725; trueData[2] = 773;
     trueData[3] = 827; trueData[4] = 883; trueData[5] = 935;
     trueData[6] = 977; trueData[7] = 1614; trueData[8] = 1738;
@@ -134,9 +136,10 @@ TEST_F(Tensor_2x3x5_random, ttm_mat7x3) {
     // TTM
     TuckerKokkos::Tensor<scalar_t, memory_space> result =
         TuckerKokkos::ttm(&X, 1, mat7x3, false);
-    data = result.data().data();
+    scalar_t* data = result.data().data();
 
     // Few true data
+    std::array<scalar_t, 105> trueData;
     trueData[0] = 3286; trueData[1] = 4149; trueData[2] = 3460;
     trueData[3] = 4365; trueData[4] = 3626; trueData[5] = 4569;
     trueData[6] = 3700; trueData[7] = 4665; trueData[8] = 3776;
