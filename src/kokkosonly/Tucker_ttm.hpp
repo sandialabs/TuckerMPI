@@ -50,6 +50,20 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
 
   // n = 0 is a special case
   // Y_0 is stored column major
+  
+  /** Column-major order (Fortran):
+   * 
+   *  A = | a11 a12 a13 |
+   *      | a21 a22 a23 |
+   * 
+   *  address | access  | values
+   *    0     | A(0,0)  |   a11
+   *    1     | A(1,0)  |   a21
+   *    2     | A(0,1)  |   a12
+   *    3     | A(1,1)  |   a22
+   *    4     | A(0,2)  |   a13
+   *    5     | A(1,2)  |   a23
+   */
   if(n == 0)
   {
     // Compute number of columns of Y_n
@@ -70,18 +84,30 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
     // C := alpha*op( A )*op( B ) + beta*C
     // A, B and C are matrices, with op( A ) an m by k matrix,
     // op( B ) a k by n matrix and C an m by n matrix.
-    char transa;
+
+    /** Computes dense matrix-matrix multiply
+     * call KokkosBlas::gemm(modeA, modeB, alpha, A, B, beta, C);
+     * C = beta*C + alpha*op(A)*op(B)
+     */
+    //
+    char transa = Utransp ? 'T' : 'N';
+    //
     const char transb = 'N';
+    //
     int m = Y.size(n);
+    //
     int blas_n = (int)ncols;
+    //
     int k = X->size(n);
+    //
     const ScalarType alpha = ScalarType(1);
+    //
     const ScalarType beta = ScalarType(0);
-
-    transa = Utransp ? 'T' : 'N';
-
+    //
     Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> B(X_ptr_d, k, blas_n);
+    // View C must have a LayoutLeft = column-major order
     Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> C(Y_ptr_d, m, blas_n);
+    //
     KokkosBlas::gemm(&transa,&transb,alpha,A,B,beta,C);
   }
   else
