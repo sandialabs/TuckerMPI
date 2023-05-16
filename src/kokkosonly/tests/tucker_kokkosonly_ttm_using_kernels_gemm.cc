@@ -46,11 +46,14 @@ TEST_F(TestTTM, ttm_mat7x2) {
     // Matrix 7x2
     matrix mat7x2("mat7x2", 7, 2);
     auto view2d_h = Kokkos::create_mirror(mat7x2);
-    data = view2d_h.data();
-    data[0] = 131;  data[1] = 137; data[2] = 139;  data[3] = 149;
-    data[4] = 151;  data[5] = 157; data[6] = 163;  data[7] = 167;
-    data[8] = 173;  data[9] = 179; data[10] = 181; data[11] = 191;
-    data[12] = 193; data[13] = 197;
+    // LayoutLeft, Column-major
+    view2d_h(0, 0) = 131;   view2d_h(0, 1) = 167;
+    view2d_h(1, 0) = 137;   view2d_h(1, 1) = 173;
+    view2d_h(2, 0) = 139;   view2d_h(2, 1) = 179;
+    view2d_h(3, 0) = 149;   view2d_h(3, 1) = 181;
+    view2d_h(4, 0) = 151;   view2d_h(4, 1) = 191;
+    view2d_h(5, 0) = 157;   view2d_h(5, 1) = 193;
+    view2d_h(6, 0) = 163;   view2d_h(6, 1) = 197;
     Kokkos::deep_copy(mat7x2, view2d_h);
 
     // TTM
@@ -97,11 +100,8 @@ TEST_F(TestTTM, ttm_mat2x7) {
     // Matrix 2x7
     matrix mat2x7("mat2x7", 2, 7);
     auto view2d_h = Kokkos::create_mirror(mat2x7);
-    data = view2d_h.data();
-    data[0] = 131; data[1] = 137; data[2] = 139; data[3] = 149;
-    data[4] = 151; data[5] = 157; data[6] = 163; data[7] = 167;
-    data[8] = 173; data[9] = 179; data[10] = 181; data[11] = 191;
-    data[12] = 193; data[13] = 197;
+    view2d_h(0,0)=131;  view2d_h(0,1)=139;  view2d_h(0,2)=151;  view2d_h(0,3)=163;  view2d_h(0,4)=173;  view2d_h(0,5)=181;  view2d_h(0,6)=193;
+    view2d_h(1,0)=137;  view2d_h(1,1)=149;  view2d_h(1,2)=157;  view2d_h(1,3)=167;  view2d_h(1,4)=179;  view2d_h(1,5)=191;  view2d_h(1,6)=197;
     Kokkos::deep_copy(mat2x7, view2d_h);
 
     // TTM
@@ -157,13 +157,13 @@ TEST_F(TestTTM, ttm_mat7x3) {
     // Matrix 7x3
     matrix mat7x3("mat7x3", 7, 3);
     auto view2d_h = Kokkos::create_mirror(mat7x3);
-    data = view2d_h.data();
-    data[0] = 131; data[1] = 137; data[2] = 139; data[3] = 149;
-    data[4] = 151; data[5] = 157; data[6] = 163; data[7] = 167;
-    data[8] = 173; data[9] = 179; data[10] = 181; data[11] = 191;
-    data[12] = 193; data[13] = 197; data[14] = 199; data[15] = 211;
-    data[16] = 223; data[17] = 227; data[18] = 229; data[19] = 233;
-    data[20] = 239;
+    view2d_h(0, 0) = 131;  view2d_h(0, 1) = 167;  view2d_h(0, 2) = 199;
+    view2d_h(1, 0) = 137;  view2d_h(1, 1) = 173;  view2d_h(1, 2) = 211;
+    view2d_h(2, 0) = 139;  view2d_h(2, 1) = 179;  view2d_h(2, 2) = 223;
+    view2d_h(3, 0) = 149;  view2d_h(3, 1) = 181;  view2d_h(3, 2) = 227;
+    view2d_h(4, 0) = 151;  view2d_h(4, 1) = 191;  view2d_h(4, 2) = 229;
+    view2d_h(5, 0) = 157;  view2d_h(5, 1) = 193;  view2d_h(5, 2) = 233;
+    view2d_h(6, 0) = 163;  view2d_h(6, 1) = 197;  view2d_h(6, 2) = 239;
     Kokkos::deep_copy(mat7x3, view2d_h);
 
     // TTM
