@@ -12,14 +12,13 @@ template <class ScalarType, class MemorySpace>
 void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
         const int n,
         const Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> A,
-	      const int strideU,
 	      Tensor<ScalarType, MemorySpace> & Y,
 	      bool Utransp)
 {
   // Check that the input is valid
   // Assert if tensor Y not null
   assert(Y != 0);
-  // Assert if n (mode) has a valid value
+  // Assert if n (Mode) has a valid value
   assert(n >= 0 && n < X->N());
   for(int i=0; i<X->N(); i++) {
     if(i != n) {
@@ -48,8 +47,6 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
   auto Y_ptr_d = Y_view_d.data();
 
   // n = 0 is a special case
-  // Y_0 is stored column major
-  
   /** Column-major order (Fortran):
    * 
    *  A = | a11 a12 a13 |
@@ -63,6 +60,7 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
    *    4     | A(0,2)  |   a13
    *    5     | A(1,2)  |   a23
    */
+  // Y_0 is stored column major
   if(n == 0)
   {
     // Compute number of columns of Y_n
@@ -78,35 +76,31 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
       throw std::runtime_error(oss.str());
     }
 
-    // Call matrix matrix multiply
-    // call gemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
-    // C := alpha*op( A )*op( B ) + beta*C
-    // A, B and C are matrices, with op( A ) an m by k matrix,
-    // op( B ) a k by n matrix and C an m by n matrix.
-
-    /** Computes dense matrix-matrix multiply
+    /** Compute dense matrix-matrix multiply
      * call KokkosBlas::gemm(modeA, modeB, alpha, A, B, beta, C);
      * C = beta*C + alpha*op(A)*op(B)
+     * 
+     * A, B and C are 2-D Kokkos::View
+     * 
+     * A and B are input
+     * C is output
+     * 
+     * A is m by k
+     * B is k by blas_n
+     * C is m by blas_n
+     * Keep in mind: dimensions are set for a given Mode n
      */
-    //
-    char transa = Utransp ? 'T' : 'N';
-    //
-    const char transb = 'N';
-    //
-    int m = Y.size(n);
-    //
-    int blas_n = (int)ncols;
-    //
-    int k = X->size(n);
-    //
-    const ScalarType alpha = ScalarType(1);
-    //
-    const ScalarType beta = ScalarType(0);
-    //
+    char transa = Utransp ? 'T' : 'N';      // "T" for Transpose
+    const char transb = 'N';                // "N" for Non-tranpose
+    int m = Y.size(n);                      // 1st dim of A and C
+    int blas_n = (int)ncols;                // 2nd dim of B and C
+    int k = X->size(n);                     // 1st dim of B
+    const ScalarType alpha = ScalarType(1); // input coef. of op(A)*op(B)
+    const ScalarType beta = ScalarType(0);  // input coef. of C
+ 
     Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> B(X_ptr_d, k, blas_n);
-    // View C must have a LayoutLeft = column-major order
+    // C must have a LayoutLeft (column-major order)
     Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> C(Y_ptr_d, m, blas_n);
-    //
     KokkosBlas::gemm(&transa,&transb,alpha,A,B,beta,C);
   }
   else
@@ -127,25 +121,31 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
 
     // For each matrix...
     for(size_t i=0; i<nmats; i++) {
-      // Call matrix matrix multiply
-      // call dgemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
-      // C := alpha*op( A )*op( B ) + beta*C
-      // A, B and C are matrices, with op( A ) an m by k matrix,
-      // op( B ) a k by n matrix and C an m by n matrix.
-      char transa = 'N';
-      char transb;
-      int m = (int)ncols;
-      int blas_n = Y.size(n);
-      int lda = (int)ncols;
-      int ldb = strideU;
-      int ldc = (int)ncols;
-      const ScalarType alpha = ScalarType(1);
-      const ScalarType beta = ScalarType(0);
-      int k = Utransp ? Unrows : Uncols;
-      transb = Utransp ? 'N' : 'T';
+      /** Compute dense matrix-matrix multiply
+       * call KokkosBlas::gemm(modeA, modeB, alpha, B, A, beta, C);
+       * C = beta*C + alpha*op(B)*op(A)
+       * 
+       * A, B and C are 2-D Kokkos::View
+       * 
+       * A and B are input
+       * C is output
+       * 
+       * B is m by k
+       * A is k by blas_n
+       * C is m by blas_n
+       * Warning: A and B are reversed
+       */
+      char transa = 'N';                      // "N" for Non-tranpose
+      char transb = Utransp ? 'N' : 'T';      // "T" for Transpose
+      int m = (int)ncols;                     // 1st dim of B and C
+      int blas_n = Y.size(n);                 // 2nd dim of A and C
+      int k = Utransp ? Unrows : Uncols;      // 2nd dim of B
+      const ScalarType alpha = ScalarType(1); // input coef. of op(A)*op(B)
+      const ScalarType beta = ScalarType(0);  // input coef. of C
 
-      Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> B(X_ptr_d+i*k*m, lda, k);
-      Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> C(Y_ptr_d+i*m*blas_n, ldc, blas_n);
+      Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> B(X_ptr_d+i*k*m, m, k);
+      Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> C(Y_ptr_d+i*m*blas_n, m, blas_n);
+      // Warning: call gemm(modeA, modeB, alpha, B, A, beta, C);
       KokkosBlas::gemm(&transa,&transb,alpha,B,A,beta,C);
     }
   }
@@ -302,7 +302,7 @@ void ttm(const Tensor<ScalarType, MemorySpace>* const X,
   }
 
   auto U_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), U);
-  ttm_kokkosblas_impl(X, n, U_h, U.extent(0), Y, Utransp);
+  ttm_kokkosblas_impl(X, n, U_h, Y, Utransp);
   Kokkos::deep_copy(U, U_h);
 }
 
