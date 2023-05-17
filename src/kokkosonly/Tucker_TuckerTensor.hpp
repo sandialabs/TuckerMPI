@@ -19,7 +19,7 @@ public:
     return eigenvalues[n];
   }
 
-  Kokkos::View<ScalarType*, MemorySpace> eigValsAt(int n) {
+  Kokkos::View<ScalarType*, MemorySpace> & eigValsAt(int n) {
     return eigenvalues[n];
   }
 
