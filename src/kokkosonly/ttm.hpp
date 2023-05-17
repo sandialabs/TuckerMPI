@@ -121,7 +121,7 @@ void ttm_kokkosblas_impl_modeNonZero(const Tensor<ScalarType, MemorySpace>* cons
      * C is output
      * 
      * B is m by k
-     * A is k by blas_n
+     * A is k by Uncols
      * C is m by blas_n
      * Warning: A and B are reversed
      */
