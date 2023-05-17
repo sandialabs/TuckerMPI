@@ -11,7 +11,8 @@ class Tensor_3d_2x3x5_random : public ::testing::Test {
     protected:
 
     void SetUp() override {
-        size = TuckerKokkos::SizeArray(n);
+        std::array<int, 3> dims = {2,3,5};
+        TuckerKokkos::SizeArray size(3);
         size[0] = dims.at(0);
         size[1] = dims.at(1);
         size[2] = dims.at(2);
@@ -28,11 +29,6 @@ class Tensor_3d_2x3x5_random : public ::testing::Test {
         view1d_h(28) = 113; view1d_h(29) = 127;
         Kokkos::deep_copy(view1d_d, view1d_h);
     }
-
-    // void TearDown() override {}
-
-    int n = 3;
-    std::array<int, 3> dims = {2,3,5};
-    TuckerKokkos::SizeArray size;
+    
     TuckerKokkos::Tensor<scalar_t, memory_space> X;
 };
