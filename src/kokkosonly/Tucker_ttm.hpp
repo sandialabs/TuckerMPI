@@ -61,11 +61,10 @@ void ttm_kokkosblas_impl_modeZero(const Tensor<ScalarType, MemorySpace>* const X
   int k = X->size(n);                     // 1st dim of B
   const ScalarType alpha = ScalarType(1); // input coef. of op(A)*op(B)
   const ScalarType beta = ScalarType(0);  // input coef. of C
-
   auto X_ptr_d = X->data().data();        // View B
-  Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> B(X_ptr_d, k, blas_n);
-  
   auto Y_ptr_d = Y.data().data();         // View C
+
+  Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> B(X_ptr_d, k, blas_n);
   // C must have a LayoutLeft (column-major order)
   Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> C(Y_ptr_d, m, blas_n);
 
@@ -132,7 +131,7 @@ void ttm_kokkosblas_impl_modeNonZero(const Tensor<ScalarType, MemorySpace>* cons
     int m = (int)ncols;                     // 1st dim of B and C
     int blas_n = Y.size(n);                 // 2nd dim of A and C
     int k = Utransp ? Unrows : Uncols;      // 2nd dim of B
-    const ScalarType alpha = ScalarType(1); // input coef. of op(A)*op(B)
+    const ScalarType alpha = ScalarType(1); // input coef. of op(B)*op(A)
     const ScalarType beta = ScalarType(0);  // input coef. of C
 
     Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged>> B(X_ptr_d+i*k*m, m, k);
