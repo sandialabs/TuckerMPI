@@ -6,21 +6,28 @@
 using scalar_t = double;
 using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 using matrix = Kokkos::View<scalar_t**, Kokkos::LayoutLeft, memory_space>;
+using tensor = TuckerKokkos::Tensor<scalar_t, memory_space>;
 
-class Tensor_2d_XxY_order : public ::testing::Test {
+class InitTensorAndMatrixForTesting : public ::testing::Test {
     protected:
 
+    void SetUp() override { }
+
     /**
-     * @brief Set the Up object. Create a tensor and its values
+     * @brief Create a tensor for testing object
      * 
+     * @param n n-d tensor
+     * @param dims with X values for each n dimensions 
+     * @return tensor 
      */
-    void SetUp() override {
+    tensor create_tensor_for_testing(int n, std::vector<int> dims) {
+        TuckerKokkos::SizeArray size;
         size = TuckerKokkos::SizeArray(n);
         for(int i=0; i < n ; i++) {
             size[i] = dims.at(i);
         }
         // Create the tensor
-        X = TuckerKokkos::Tensor<scalar_t, memory_space>(size);
+        tensor X(size);
         auto view1d_d = X.data();
         auto view1d_h = Kokkos::create_mirror(view1d_d);
         // Fill the tensor with data (0, 1, 2, etc)
@@ -30,9 +37,8 @@ class Tensor_2d_XxY_order : public ::testing::Test {
             values = values + 1;
         }
         Kokkos::deep_copy(view1d_d, view1d_h);
+        return X;
     }
-
-    // function create tensor who return a tensor with the size that I want !
 
     /**
      * @brief Create a matrix for testing object
@@ -64,21 +70,25 @@ class Tensor_2d_XxY_order : public ::testing::Test {
      * @param matrice 
      * @return std::vector<scalar_t> 
      */
-    std::vector<scalar_t> compute_true_data(TuckerKokkos::Tensor<scalar_t, memory_space> tensor, matrix matrice) {
-        
-        // TODO
-        
-        return {10, 11, 12};
+    std::vector<scalar_t> compute_true_data(tensor tens, matrix B, int mode) {
+        // std::vector<scalar_t> final_result;
+        if(mode == 0){
+            // slice tensor on right mode to get a matrix
+            // matrix A = tensor.slice(0);
+            // do calcul matrix-matrix product
+            /*for(i = 0; i < A.rows; ++i) {
+                for(j = 0; j < B.colums; ++j) {
+                    for(k = 0; k < A.colums; ++k) {
+                        final_result[i][j] += A[i][k] * B[k][j];
+                    }
+                }
+            }*/
+            // return result
+            // return final_result;
+            return { 30, 80 };
+        }else{
+            std::cout << "TODO" << std::endl;
+            return { 0 };
+        }
     }
-    
-    // PARAMS 
-    int n = 2;              // n-d tensor
-    std::vector<int> dims = // with X values for each n dimensions 
-        { 5, 7 }; 
-    int nRowsMatrix = 4;  // num rows max test matrix
-    //int nColsMatrix = 5;    // num cols max test matrix
-    // PARAMS
-
-    TuckerKokkos::SizeArray size;
-    TuckerKokkos::Tensor<scalar_t, memory_space> X;
 };
