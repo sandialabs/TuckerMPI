@@ -129,7 +129,7 @@ void ttm_kokkosblas_impl_modeNonZero(const Tensor<ScalarType, MemorySpace>* cons
     char transa = 'N';                      // "N" for Non-tranpose
     char transb = Utransp ? 'N' : 'T';      // "T" for Transpose
     int m = (int)ncols;                     // 1st dim of B and C
-    int blas_n = Y.size(n);                 // 2nd dim of A and C
+    int blas_n = Y.size(n);                 // 2nd dim of C
     int k = Utransp ? Unrows : Uncols;      // 2nd dim of B
     const ScalarType alpha = ScalarType(1); // input coef. of op(B)*op(A)
     const ScalarType beta = ScalarType(0);  // input coef. of C
