@@ -52,11 +52,11 @@ public:
 #if 0
   int rank() const{ return sizeArrayInfo_.size(); }
 
-  const SizeArray& size() const{ return sizeArrayInfo_;}
+  const SizeArray& sizeArray() const{ return sizeArrayInfo_;}
 
   int extent(int mode) const { return sizeArrayInfo_[n]; }
 
-  size_t totalNumElements() const{ return sizeArrayInfo_.prod(); };
+  size_t size() const{ return sizeArrayInfo_.prod(); };
 
   auto norm2Squared() const{
     const auto v = ::KokkosBlas::nrm2(data_);
