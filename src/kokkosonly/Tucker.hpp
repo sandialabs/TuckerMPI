@@ -19,11 +19,14 @@ struct CoreRankViaThreshold{
 };
 
 
-template<class ScalarType, class MemorySpace>
-auto computeGram(Tensor<ScalarType, MemorySpace> * Y, const int n)
+template<class ScalarType, class ...Props>
+auto computeGram(Tensor<ScalarType, Props...> * Y, const int n)
 {
+  using tensor_type = TuckerKokkos::Tensor<ScalarType, Props...>;
+  using memory_space = typename tensor_type::traits::memory_space;
+
   const int nrows = Y->size(n);
-  Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> S_d("S", nrows, nrows);
+  Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space> S_d("S", nrows, nrows);
   auto S_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), S_d);
   computeGramHost(Y, n, S_h.data(), nrows);
   Kokkos::deep_copy(S_d, S_h);
@@ -119,12 +122,18 @@ int countEigValsUsingThreshold(Kokkos::View<ScalarType*, Props...> eigvals,
   return numEvecs;
 }
 
-template <class ScalarType, class MemorySpace, class ...Variants>
-auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
+template <class ScalarType, class ...Props, class ...Variants>
+auto STHOSVD(Tensor<ScalarType, Props...> & X,
 	     const std::variant<Variants...> & coreTensorRankInfo,
 	     bool useQR = false,
 	     bool flipSign = false)
 {
+  using tensor_type  = Tensor<ScalarType, Props...>;
+  using memory_space = typename tensor_type::traits::memory_space;
+  using factor_type  = TuckerTensor<ScalarType, memory_space>;
+
+  using eigvec_view_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space>;
+
   const int ndims = X.N();
 
   // decide truncation mechanism
@@ -153,11 +162,11 @@ auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
     }
   };
 
-  using factor_type = TuckerKokkos::TuckerTensor<ScalarType, MemorySpace>;
-  factor_type factorization(ndims);
 
-  Tensor<ScalarType, MemorySpace> * Y = &X;
-  Tensor<ScalarType, MemorySpace> temp;
+  factor_type factorization(ndims);
+  tensor_type * Y = &X;
+  tensor_type temp;
+
   for (int n=0; n<ndims; n++)
   {
     std::cout << "\tAutoST-HOSVD::Starting Gram(" << n << ")...\n";
@@ -186,7 +195,6 @@ auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
     const int numEvecs = truncator(n, eigvals);
 
     std::cout << " \n ";
-    using eigvec_view_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace>;
     eigvec_view_t eigVecs("eigVecs", Y->size(n), numEvecs);
     auto eigVecs_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigVecs);
     const int nToCopy = Y->size(n)*numEvecs;
@@ -214,6 +222,7 @@ auto STHOSVD(Tensor<ScalarType, MemorySpace> & X,
   }
 
   factorization.getG() = *Y;
+
   return factorization;
 }
 

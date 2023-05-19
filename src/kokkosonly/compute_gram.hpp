@@ -6,7 +6,7 @@
 
 namespace TuckerKokkos{
 
-template<class ScalarType, class MemorySpace> class Tensor;
+template<class ScalarType, class ...Props> class Tensor;
 
 template<class ScalarType, class MemorySpace>
 void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,

@@ -26,5 +26,5 @@ macro(add_utest_kokkos TESTNAME TESTSRCS)
   add_test(NAME ${testNameFinal} COMMAND ${testNameFinal})
 endmacro()
 
-set(TEST1 tucker_kokkosonly_tensor)
+set(TEST1 tensor)
 add_utest_kokkos(${TEST1} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST1}.cc)

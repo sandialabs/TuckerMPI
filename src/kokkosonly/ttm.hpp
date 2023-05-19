@@ -160,10 +160,10 @@ void ttm(const Tensor<ScalarType, MemorySpace>* const X,
 }
 
 
-template <class ScalarType, class MemorySpace>
-auto ttm(const Tensor<ScalarType, MemorySpace>* X,
+template <class ScalarType, class ...Props, class ...Props2>
+auto ttm(const Tensor<ScalarType, Props...>* X,
 	 const int n,
-	 Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> U,
+	 Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Props2...> U,
 	 bool Utransp)
 {
   // Compute the number of rows for the resulting "matrix"
@@ -183,7 +183,8 @@ auto ttm(const Tensor<ScalarType, MemorySpace>* X,
       I[i] = nrows;
     }
   }
-  Tensor<ScalarType, MemorySpace> Y(I);
+
+  Tensor<ScalarType, Props...> Y(I);
   ttm(X, n, U, Y, Utransp);
   return Y;
 }

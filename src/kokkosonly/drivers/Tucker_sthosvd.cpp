@@ -15,6 +15,7 @@ int main(int argc, char* argv[])
 
   Kokkos::initialize();
   {
+    using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
     //
     // parsing
@@ -54,7 +55,6 @@ int main(int argc, char* argv[])
     //
     // reading data
     //
-    using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
     TuckerKokkos::Tensor<scalar_t, memory_space> X(I_dims);
     TuckerKokkos::readTensorBinary(X, args.in_fns_file.c_str());
 
