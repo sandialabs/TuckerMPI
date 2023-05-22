@@ -212,7 +212,7 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
     std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
     std::cout << " \n ";
     temp = ttm(Y, n, eigVecs, true);
-    temp.print();
+    temp.writeToStream(std::cout);
     Kokkos::fence();
 
     Y = &temp;

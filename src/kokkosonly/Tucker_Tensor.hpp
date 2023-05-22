@@ -64,7 +64,7 @@ public:
   }
 
   view_type data() const{ return data_; }
-
+#endif
   void writeToStream(std::ostream & stream,
 		     int precision = 2) const
   {
@@ -79,7 +79,7 @@ public:
 	     << v_h(i) << std::endl;
     }
   }
-#endif
+
   void fillRandom(ScalarType a, ScalarType b){
     Kokkos::Random_XorShift64_Pool<> pool(4543423);
     Kokkos::fill_random(data_, pool, a, b);
@@ -112,21 +112,6 @@ public:
 
   const view_type data() const{
     return data_;
-  }
-
-  void print(int precision = 2) const{
-    auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), data_);
-
-    // If this tensor doesn't have any entries, there's nothing to print
-    size_t numElements = getNumElements();
-    if(numElements == 0){
-      return;
-    }
-    const ScalarType* dataPtr = v_h.data();
-    for(size_t i=0; i<numElements; i++) {
-      std::cout << "data[" << i << "] = "
-		<< std::setprecision(precision) << dataPtr[i] << std::endl;
-    }
   }
 
   void initialize(){
