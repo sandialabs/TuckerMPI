@@ -46,17 +46,13 @@ public:
     data_ = view_type("tensorData", numEntries);
   }
 
-  //====================================
-  // new methods (mostly just renaming)
-  //====================================
-
   int rank() const{ return sizeArrayInfo_.size(); }
 
-  const SizeArray& sizeArray() const{ return sizeArrayInfo_;}
+  const SizeArray& sizeArray() const{ return sizeArrayInfo_; }
 
   int extent(int mode) const { return sizeArrayInfo_[mode]; }
 
-  size_t size() const{ return sizeArrayInfo_.prod(); };
+  size_t size() const{ return sizeArrayInfo_.prod(); }
 
   auto norm2Squared() const{
     const auto v = ::KokkosBlas::nrm2(data_);
@@ -83,16 +79,6 @@ public:
   void fillRandom(ScalarType a, ScalarType b){
     Kokkos::Random_XorShift64_Pool<> pool(4543423);
     Kokkos::fill_random(data_, pool, a, b);
-  }
-
-
-
-  //====================================
-  // methods with old names
-  //====================================
-
-  void initialize(){
-    throw std::runtime_error("Tensor::initialize missing impl");
   }
 
 private:
