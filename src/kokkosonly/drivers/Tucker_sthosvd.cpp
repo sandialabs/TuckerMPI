@@ -72,8 +72,8 @@ int main(int argc, char* argv[])
       TuckerKokkos::printEigenvalues(f, filePrefix, false);
 
       printf("\n");
-      const double xnorm = std::sqrt(X.norm2());
-      const double gnorm = std::sqrt(f.getG().norm2());
+      const double xnorm = std::sqrt(X.norm2Squared());
+      const double gnorm = std::sqrt(f.getG().norm2Squared());
       std::cout << "Norm of input tensor: " << std::setprecision(7) << xnorm << std::endl;
       std::cout << "Norm of core tensor: " << std::setprecision(7) << gnorm << std::endl;
 

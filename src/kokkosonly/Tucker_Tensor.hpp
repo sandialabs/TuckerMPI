@@ -57,12 +57,12 @@ public:
   int extent(int mode) const { return sizeArrayInfo_[n]; }
 
   size_t size() const{ return sizeArrayInfo_.prod(); };
-
+#endif
   auto norm2Squared() const{
     const auto v = ::KokkosBlas::nrm2(data_);
     return v*v;
   }
-#endif
+
   view_type data() const{ return data_; }
 
   void writeToStream(std::ostream & stream,
@@ -103,11 +103,6 @@ public:
 
   size_t getNumElements() const{
     return sizeArrayInfo_.prod();
-  }
-
-  ScalarType norm2() const{
-    const auto v = ::KokkosBlas::nrm2(data_);
-    return v*v;
   }
 
   void initialize(){
