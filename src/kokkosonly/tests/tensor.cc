@@ -110,7 +110,7 @@ TEST(tuckerkokkos, tensor_N)
   using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
   SizeArray sa(3);
   Tensor<scalar_t, memory_space> x(sa);
-  ASSERT_EQ(x.N(), 3);
+  ASSERT_EQ(x.rank(), 3);
 }
 
 TEST(tuckerkokkos, tensor_size)

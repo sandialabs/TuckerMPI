@@ -134,7 +134,7 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
 
   using eigvec_view_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space>;
 
-  const int ndims = X.N();
+  const int ndims = X.rank();
 
   // decide truncation mechanism
   auto truncator = [&](int n, auto eigenValues) -> int

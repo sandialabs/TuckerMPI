@@ -49,9 +49,9 @@ public:
   //====================================
   // new methods (mostly just renaming)
   //====================================
-#if 0
-  int rank() const{ return sizeArrayInfo_.size(); }
 
+  int rank() const{ return sizeArrayInfo_.size(); }
+#if 0
   const SizeArray& sizeArray() const{ return sizeArrayInfo_;}
 
   int extent(int mode) const { return sizeArrayInfo_[n]; }
@@ -90,19 +90,16 @@ public:
   //====================================
   // methods with old names
   //====================================
-  int N() const{
-    return sizeArrayInfo_.size();
-  }
 
   const SizeArray& size() const{
     return sizeArrayInfo_;
   }
 
   int size(const int n) const{
-    if(n < 0 || n >= N()) {
+    if(n < 0 || n >= rank()) {
       std::ostringstream oss;
       oss << "Tucker::Tensor::size(const int n): n = "
-	  << n << " is not in the range [0," << N() << ")";
+	  << n << " is not in the range [0," << rank() << ")";
       throw std::out_of_range(oss.str());
     }
     return sizeArrayInfo_[n];

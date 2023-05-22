@@ -16,8 +16,8 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
   // Check that the input is valid
   assert(Uptr != 0);
   //assert(Y != 0);
-  assert(n >= 0 && n < X->N());
-  for(int i=0; i<X->N(); i++) {
+  assert(n >= 0 && n < X->rank());
+  for(int i=0; i<X->rank(); i++) {
     if(i != n) {
       assert(X->size(i) == Y.size(i));
     }
@@ -50,7 +50,7 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
     // Compute number of columns of Y_n
     // Technically, we could divide the total number of entries by n,
     // but that seems like a bad decision
-    size_t ncols = X->size().prod(1,X->N()-1);
+    size_t ncols = X->size().prod(1,X->rank()-1);
 
     if(ncols > std::numeric_limits<int>::max()) {
       std::ostringstream oss;
@@ -91,7 +91,7 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
     size_t ncols = X->size().prod(0,n-1);
 
     // Count the number of matrices
-    size_t nmats = X->size().prod(n+1,X->N()-1,1);
+    size_t nmats = X->size().prod(n+1,X->rank()-1,1);
 
     if(ncols > std::numeric_limits<int>::max()) {
       std::ostringstream oss;
@@ -174,7 +174,7 @@ auto ttm(const Tensor<ScalarType, Props...>* X,
     nrows = U.extent(0);
 
   // Allocate space for the new tensor
-  TuckerKokkos::SizeArray I(X->N());
+  TuckerKokkos::SizeArray I(X->rank());
   for(int i=0; i<I.size(); i++) {
     if(i != n) {
       I[i] = X->size(i);

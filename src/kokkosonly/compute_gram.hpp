@@ -29,11 +29,11 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
         << "const int stride): stride = " << stride << " < 1";
     throw std::runtime_error(oss.str());
   }
-  if(n < 0 || n >= Y->N()) {
+  if(n < 0 || n >= Y->rank()) {
     std::ostringstream oss;
     oss << "Tucker::computeGram(const Tensor<ScalarType>* Y, const int n, ScalarType* gram, "
         << "const int stride): n = " << n << " is not in the range [0,"
-        << Y->N() << ")";
+        << Y->rank() << ")";
     throw std::runtime_error(oss.str());
   }
 
@@ -52,7 +52,7 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
     // Technically, we could divide the total number of entries by n,
     // but that seems like a bad decision
     int ncols =1;
-    for(int i=0; i<Y->N(); i++) {
+    for(int i=0; i<Y->rank(); i++) {
       if(i != n) {
         ncols *= Y->size(i);
       }
@@ -80,7 +80,7 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
     }
 
     // Count the number of matrices
-    for(int i=n+1; i<Y->N(); i++) {
+    for(int i=n+1; i<Y->rank(); i++) {
       nmats *= Y->size(i);
     }
 
