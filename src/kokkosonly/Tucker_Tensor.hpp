@@ -62,9 +62,9 @@ public:
     const auto v = ::KokkosBlas::nrm2(data_);
     return v*v;
   }
-
-  view_type data() const{ return data_; }
 #endif
+  view_type data() const{ return data_; }
+
   void writeToStream(std::ostream & stream,
 		     int precision = 2) const
   {
@@ -108,10 +108,6 @@ public:
   ScalarType norm2() const{
     const auto v = ::KokkosBlas::nrm2(data_);
     return v*v;
-  }
-
-  const view_type data() const{
-    return data_;
   }
 
   void initialize(){
