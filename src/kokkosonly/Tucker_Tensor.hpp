@@ -55,9 +55,9 @@ public:
   const SizeArray& sizeArray() const{ return sizeArrayInfo_;}
 #if 0
   int extent(int mode) const { return sizeArrayInfo_[n]; }
-
-  size_t size() const{ return sizeArrayInfo_.prod(); };
 #endif
+  size_t size() const{ return sizeArrayInfo_.prod(); };
+
   auto norm2Squared() const{
     const auto v = ::KokkosBlas::nrm2(data_);
     return v*v;
@@ -70,7 +70,7 @@ public:
   {
     auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), data_);
 
-    const size_t numElements = getNumElements();
+    const size_t numElements = size();
     if(numElements == 0){ return; }
 
     for(size_t i=0; i<numElements; i++) {
@@ -99,10 +99,6 @@ public:
       throw std::out_of_range(oss.str());
     }
     return sizeArrayInfo_[n];
-  }
-
-  size_t getNumElements() const{
-    return sizeArrayInfo_.prod();
   }
 
   void initialize(){

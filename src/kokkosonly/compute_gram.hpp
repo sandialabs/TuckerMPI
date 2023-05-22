@@ -20,8 +20,8 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
   if(gram == 0) {
     throw std::runtime_error("Tucker::computeGram(const Tensor<ScalarType>* Y, const int n, ScalarType* gram, const int stride): gram is a null pointer");
   }
-  if(Y->getNumElements() == 0) {
-    throw std::runtime_error("Tucker::computeGram(const Tensor<ScalarType>* Y, const int n, ScalarType* gram, const int stride): Y->getNumElements() == 0");
+  if(Y->size() == 0) {
+    throw std::runtime_error("Tucker::computeGram(const Tensor<ScalarType>* Y, const int n, ScalarType* gram, const int stride): Y->size() == 0");
   }
   if(stride < 1) {
     std::ostringstream oss;

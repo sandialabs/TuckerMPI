@@ -216,7 +216,7 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
     Kokkos::fence();
 
     Y = &temp;
-    size_t nnz = Y->getNumElements();
+    size_t nnz = Y->size();
     std::cout << "Local tensor size after STHOSVD iteration "
 	      << n << ": " << Y->sizeArray() << ", or ";
   }
