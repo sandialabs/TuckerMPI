@@ -71,7 +71,7 @@ TEST(tuckerkokkos, tensor_copy_constructor_shallow_copy)
   sa[1] = 1;
   sa[2] = 5;
   Tensor<scalar_t> x(sa);
-  x.rand(1., 5.);
+  x.fillRandom(1., 5.);
   auto x_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), x.data());
 
   // shallow copy constructor, y should have same data as x
@@ -90,7 +90,7 @@ TEST(tuckerkokkos, tensor_copy_assign_shallow_copy)
   SizeArray sa(3);
   sa[0] = 2; sa[1] = 1; sa[2] = 5;
   Tensor<scalar_t> x(sa);
-  x.rand(1., 5.);
+  x.fillRandom(1., 5.);
   auto x_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), x.data());
 
   // shallow copy constructor, y should have same data as x

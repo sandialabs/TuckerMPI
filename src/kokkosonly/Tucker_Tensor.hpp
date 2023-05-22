@@ -79,12 +79,12 @@ public:
 	     << v_h(i) << std::endl;
     }
   }
-
+#endif
   void fillRandom(ScalarType a, ScalarType b){
     Kokkos::Random_XorShift64_Pool<> pool(4543423);
     Kokkos::fill_random(data_, pool, a, b);
   }
-#endif
+
 
 
   //====================================
@@ -131,11 +131,6 @@ public:
 
   void initialize(){
     throw std::runtime_error("Tensor::initialize missing impl");
-  }
-
-  void rand(ScalarType a, ScalarType b){
-    Kokkos::Random_XorShift64_Pool<> pool(4543423);
-    Kokkos::fill_random(data_, pool, a, b);
   }
 
 private:
