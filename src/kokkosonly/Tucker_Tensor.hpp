@@ -51,9 +51,9 @@ public:
   //====================================
 
   int rank() const{ return sizeArrayInfo_.size(); }
-#if 0
-  const SizeArray& sizeArray() const{ return sizeArrayInfo_;}
 
+  const SizeArray& sizeArray() const{ return sizeArrayInfo_;}
+#if 0
   int extent(int mode) const { return sizeArrayInfo_[n]; }
 
   size_t size() const{ return sizeArrayInfo_.prod(); };
@@ -90,10 +90,6 @@ public:
   //====================================
   // methods with old names
   //====================================
-
-  const SizeArray& size() const{
-    return sizeArrayInfo_;
-  }
 
   int size(const int n) const{
     if(n < 0 || n >= rank()) {

@@ -218,7 +218,7 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
     Y = &temp;
     size_t nnz = Y->getNumElements();
     std::cout << "Local tensor size after STHOSVD iteration "
-	      << n << ": " << Y->size() << ", or ";
+	      << n << ": " << Y->sizeArray() << ", or ";
   }
 
   factorization.getG() = *Y;

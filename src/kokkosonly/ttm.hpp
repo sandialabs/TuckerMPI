@@ -50,7 +50,7 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
     // Compute number of columns of Y_n
     // Technically, we could divide the total number of entries by n,
     // but that seems like a bad decision
-    size_t ncols = X->size().prod(1,X->rank()-1);
+    size_t ncols = X->sizeArray().prod(1,X->rank()-1);
 
     if(ncols > std::numeric_limits<int>::max()) {
       std::ostringstream oss;
@@ -88,10 +88,10 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
   else
   {
     // Count the number of columns
-    size_t ncols = X->size().prod(0,n-1);
+    size_t ncols = X->sizeArray().prod(0,n-1);
 
     // Count the number of matrices
-    size_t nmats = X->size().prod(n+1,X->rank()-1,1);
+    size_t nmats = X->sizeArray().prod(n+1,X->rank()-1,1);
 
     if(ncols > std::numeric_limits<int>::max()) {
       std::ostringstream oss;
