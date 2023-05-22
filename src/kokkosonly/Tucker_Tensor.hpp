@@ -53,9 +53,9 @@ public:
   int rank() const{ return sizeArrayInfo_.size(); }
 
   const SizeArray& sizeArray() const{ return sizeArrayInfo_;}
-#if 0
-  int extent(int mode) const { return sizeArrayInfo_[n]; }
-#endif
+
+  int extent(int mode) const { return sizeArrayInfo_[mode]; }
+
   size_t size() const{ return sizeArrayInfo_.prod(); };
 
   auto norm2Squared() const{
@@ -90,16 +90,6 @@ public:
   //====================================
   // methods with old names
   //====================================
-
-  int size(const int n) const{
-    if(n < 0 || n >= rank()) {
-      std::ostringstream oss;
-      oss << "Tucker::Tensor::size(const int n): n = "
-	  << n << " is not in the range [0," << rank() << ")";
-      throw std::out_of_range(oss.str());
-    }
-    return sizeArrayInfo_[n];
-  }
 
   void initialize(){
     throw std::runtime_error("Tensor::initialize missing impl");

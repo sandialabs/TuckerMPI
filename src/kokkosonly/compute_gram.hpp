@@ -37,7 +37,7 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
     throw std::runtime_error(oss.str());
   }
 
-  const int nrows = Y->size(n);
+  const int nrows = Y->extent(n);
 
   auto Y_v = Y->data();
   auto Y_v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), Y_v);
@@ -54,7 +54,7 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
     int ncols =1;
     for(int i=0; i<Y->rank(); i++) {
       if(i != n) {
-        ncols *= Y->size(i);
+        ncols *= Y->extent(i);
       }
     }
 
@@ -76,12 +76,12 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
 
     // Count the number of columns
     for(int i=0; i<n; i++) {
-      ncols *= Y->size(i);
+      ncols *= Y->extent(i);
     }
 
     // Count the number of matrices
     for(int i=n+1; i<Y->rank(); i++) {
-      nmats *= Y->size(i);
+      nmats *= Y->extent(i);
     }
 
     // For each matrix...

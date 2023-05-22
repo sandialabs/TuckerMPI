@@ -19,19 +19,19 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
   assert(n >= 0 && n < X->rank());
   for(int i=0; i<X->rank(); i++) {
     if(i != n) {
-      assert(X->size(i) == Y.size(i));
+      assert(X->extent(i) == Y.extent(i));
     }
   }
 
   // Obtain the number of rows and columns of U
   int Unrows, Uncols;
   if(Utransp) {
-    Unrows = X->size(n);
-    Uncols = Y.size(n);
+    Unrows = X->extent(n);
+    Uncols = Y.extent(n);
   }
   else {
-    Uncols = X->size(n);
-    Unrows = Y.size(n);
+    Uncols = X->extent(n);
+    Unrows = Y.extent(n);
   }
 
   auto X_view_d = X->data();
@@ -67,9 +67,9 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
     // op( B ) a k by n matrix and C an m by n matrix.
     char transa;
     char transb = 'N';
-    int m = Y.size(n);
+    int m = Y.extent(n);
     int blas_n = (int)ncols;
-    int k = X->size(n);
+    int k = X->extent(n);
     int lda = strideU;
     int ldb = k;
     int ldc = m;
@@ -111,7 +111,7 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
       char transa = 'N';
       char transb;
       int m = (int)ncols;
-      int blas_n = Y.size(n);
+      int blas_n = Y.extent(n);
       int k;
       int lda = (int)ncols;
       int ldb = strideU;
@@ -146,12 +146,12 @@ void ttm(const Tensor<ScalarType, MemorySpace>* const X,
   // Check that the input is valid
   //assert(U != 0);
   if(Utransp) {
-    assert(U.extent(0) == X->size(n));
-    assert(U.extent(1) == Y.size(n));
+    assert(U.extent(0) == X->extent(n));
+    assert(U.extent(1) == Y.extent(n));
   }
   else {
-    assert(U.extent(1) == X->size(n));
-    assert(U.extent(0) == Y.size(n));
+    assert(U.extent(1) == X->extent(n));
+    assert(U.extent(0) == Y.extent(n));
   }
 
   auto U_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), U);
@@ -177,7 +177,7 @@ auto ttm(const Tensor<ScalarType, Props...>* X,
   TuckerKokkos::SizeArray I(X->rank());
   for(int i=0; i<I.size(); i++) {
     if(i != n) {
-      I[i] = X->size(i);
+      I[i] = X->extent(i);
     }
     else {
       I[i] = nrows;

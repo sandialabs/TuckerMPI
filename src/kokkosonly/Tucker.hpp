@@ -25,7 +25,7 @@ auto computeGram(Tensor<ScalarType, Props...> * Y, const int n)
   using tensor_type = TuckerKokkos::Tensor<ScalarType, Props...>;
   using memory_space = typename tensor_type::traits::memory_space;
 
-  const int nrows = Y->size(n);
+  const int nrows = Y->extent(n);
   Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space> S_d("S", nrows, nrows);
   auto S_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), S_d);
   computeGramHost(Y, n, S_h.data(), nrows);
@@ -195,9 +195,9 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
     const int numEvecs = truncator(n, eigvals);
 
     std::cout << " \n ";
-    eigvec_view_t eigVecs("eigVecs", Y->size(n), numEvecs);
+    eigvec_view_t eigVecs("eigVecs", Y->extent(n), numEvecs);
     auto eigVecs_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigVecs);
-    const int nToCopy = Y->size(n)*numEvecs;
+    const int nToCopy = Y->extent(n)*numEvecs;
     const int ONE = 1;
     Tucker::copy(&nToCopy, S_h.data(), &ONE, eigVecs_h.data(), &ONE);
     for (int i=0; i<eigVecs_h.extent(0); ++i){

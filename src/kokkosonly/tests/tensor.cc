@@ -121,7 +121,7 @@ TEST(tuckerkokkos, tensor_size)
   SizeArray sa(3);
   sa[0] = 5; sa[1] = 7; sa[2] = 9;
   Tensor<scalar_t, memory_space> x(sa);
-  ASSERT_EQ(x.size(0), 5);
-  ASSERT_EQ(x.size(1), 7);
-  ASSERT_EQ(x.size(2), 9);
+  ASSERT_EQ(x.extent(0), 5);
+  ASSERT_EQ(x.extent(1), 7);
+  ASSERT_EQ(x.extent(2), 9);
 }
