@@ -54,7 +54,7 @@ public:
 
   size_t size() const{ return sizeArrayInfo_.prod(); }
 
-  auto norm2Squared() const{
+  auto frobeniusNormSquared() const{
     const auto v = ::KokkosBlas::nrm2(data_);
     return v*v;
   }

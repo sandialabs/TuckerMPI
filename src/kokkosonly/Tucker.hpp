@@ -143,7 +143,7 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
     if (autoRank)
     {
       const ScalarType epsilon = std::get<CoreRankViaThreshold<ScalarType>>(coreTensorRankInfo).value;
-      const ScalarType tensorNorm = X.norm2Squared();
+      const ScalarType tensorNorm = X.frobeniusNormSquared();
       const ScalarType threshold  = epsilon*epsilon*tensorNorm/ndims;
       std::cout << "\tAutoST-HOSVD::Tensor Norm: "
 		<< std::sqrt(tensorNorm)
