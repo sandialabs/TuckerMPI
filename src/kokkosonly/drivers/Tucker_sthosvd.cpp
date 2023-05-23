@@ -72,8 +72,8 @@ int main(int argc, char* argv[])
       TuckerKokkos::printEigenvalues(f, filePrefix, false);
 
       printf("\n");
-      const double xnorm = std::sqrt(X.frobeniusNormSquared());
-      const double gnorm = std::sqrt(f.getG().frobeniusNormSquared());
+      const auto xnorm = std::sqrt(X.frobeniusNormSquared());
+      const auto gnorm = std::sqrt(f.getG().frobeniusNormSquared());
       std::cout << "Norm of input tensor: " << std::setprecision(7) << xnorm << std::endl;
       std::cout << "Norm of core tensor: " << std::setprecision(7) << gnorm << std::endl;
 
