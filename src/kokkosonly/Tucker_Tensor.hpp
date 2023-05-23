@@ -46,11 +46,11 @@ public:
     data_ = view_type("tensorData", numEntries);
   }
 
-  int rank() const{ return sizeArrayInfo_.size(); }
+  std::size_t rank() const{ return sizeArrayInfo_.size(); }
 
   const SizeArray& sizeArray() const{ return sizeArrayInfo_; }
 
-  int extent(int mode) const { return sizeArrayInfo_[mode]; }
+  std::size_t extent(int mode) const { return sizeArrayInfo_[mode]; }
 
   size_t size() const{ return sizeArrayInfo_.prod(); }
 
