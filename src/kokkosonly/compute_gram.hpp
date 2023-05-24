@@ -10,7 +10,7 @@ template<class ScalarType, class ...Props> class Tensor;
 
 template<class ScalarType, class MemorySpace>
 void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
-		     const int n,
+		     const std::size_t n,
 		     ScalarType* gram,
 		     const int stride)
 {
@@ -20,8 +20,8 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
   if(gram == 0) {
     throw std::runtime_error("Tucker::computeGram(const Tensor<ScalarType>* Y, const int n, ScalarType* gram, const int stride): gram is a null pointer");
   }
-  if(Y->getNumElements() == 0) {
-    throw std::runtime_error("Tucker::computeGram(const Tensor<ScalarType>* Y, const int n, ScalarType* gram, const int stride): Y->getNumElements() == 0");
+  if(Y->size() == 0) {
+    throw std::runtime_error("Tucker::computeGram(const Tensor<ScalarType>* Y, const int n, ScalarType* gram, const int stride): Y->size() == 0");
   }
   if(stride < 1) {
     std::ostringstream oss;
@@ -29,15 +29,15 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
         << "const int stride): stride = " << stride << " < 1";
     throw std::runtime_error(oss.str());
   }
-  if(n < 0 || n >= Y->N()) {
+  if(n < 0 || n >= Y->rank()) {
     std::ostringstream oss;
     oss << "Tucker::computeGram(const Tensor<ScalarType>* Y, const int n, ScalarType* gram, "
         << "const int stride): n = " << n << " is not in the range [0,"
-        << Y->N() << ")";
+        << Y->rank() << ")";
     throw std::runtime_error(oss.str());
   }
 
-  const int nrows = Y->size(n);
+  const int nrows = (int)Y->extent(n);
 
   auto Y_v = Y->data();
   auto Y_v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), Y_v);
@@ -51,10 +51,10 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
     // Compute number of columns of Y_n
     // Technically, we could divide the total number of entries by n,
     // but that seems like a bad decision
-    int ncols =1;
-    for(int i=0; i<Y->N(); i++) {
-      if(i != n) {
-        ncols *= Y->size(i);
+    int ncols = 1;
+    for(int i=0; i<(int)Y->rank(); i++) {
+      if((std::size_t)i != n) {
+        ncols *= (int)Y->extent(i);
       }
     }
 
@@ -75,13 +75,13 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
     int nmats = 1;
 
     // Count the number of columns
-    for(int i=0; i<n; i++) {
-      ncols *= Y->size(i);
+    for(std::size_t i=0; i<n; i++) {
+      ncols *= (int)Y->extent(i);
     }
 
     // Count the number of matrices
-    for(int i=n+1; i<Y->N(); i++) {
-      nmats *= Y->size(i);
+    for(int i=n+1; i<(int)Y->rank(); i++) {
+      nmats *= (int)Y->extent(i);
     }
 
     // For each matrix...

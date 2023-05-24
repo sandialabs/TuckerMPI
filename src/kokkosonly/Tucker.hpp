@@ -19,13 +19,13 @@ struct CoreRankViaThreshold{
 };
 
 
-template<class ScalarType, class ...Props>
-auto computeGram(Tensor<ScalarType, Props...> * Y, const int n)
+template<class ScalarType, class ...Properties>
+auto computeGram(Tensor<ScalarType, Properties...> * Y, const std::size_t n)
 {
-  using tensor_type = TuckerKokkos::Tensor<ScalarType, Props...>;
+  using tensor_type = TuckerKokkos::Tensor<ScalarType, Properties...>;
   using memory_space = typename tensor_type::traits::memory_space;
 
-  const int nrows = Y->size(n);
+  const std::size_t nrows = Y->extent(n);
   Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space> S_d("S", nrows, nrows);
   auto S_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), S_d);
   computeGramHost(Y, n, S_h.data(), nrows);
@@ -33,22 +33,22 @@ auto computeGram(Tensor<ScalarType, Props...> * Y, const int n)
   return S_d;
 }
 
-template<class ScalarType, class ... Props>
-auto computeEigenvalues(Kokkos::View<ScalarType**, Props...> G,
+template<class ScalarType, class ... Properties>
+auto computeEigenvalues(Kokkos::View<ScalarType**, Properties...> G,
 			const bool flipSign)
 {
-  using view_type = Kokkos::View<ScalarType**, Props...>;
+  using view_type = Kokkos::View<ScalarType**, Properties...>;
   using mem_space = typename view_type::memory_space;
   static_assert(std::is_same_v< typename view_type::array_layout, Kokkos::LayoutLeft>);
 
-  const int nrows = G.extent(0);
+  const int nrows = (int) G.extent(0);
   auto G_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), G);
   Kokkos::View<ScalarType*, mem_space> eigenvalues_d("EIG", nrows);
   auto eigenvalues_h = Kokkos::create_mirror_view(eigenvalues_d);
 
   char jobz = 'V';
   char uplo = 'U';
-  int lwork = 8*nrows;
+  int lwork = (int) 8*nrows;
   std::vector<ScalarType> work(lwork);
   int info;
   Tucker::syev(&jobz, &uplo, &nrows, G_h.data(), &nrows,
@@ -90,7 +90,7 @@ auto computeEigenvalues(Kokkos::View<ScalarType**, Props...> G,
 
       if(Gptr[c*nrows+maxIndex] < 0) {
         const ScalarType NEGONE = -1;
-	Tucker::scal(&nrows, &NEGONE, Gptr+c*nrows, &ONE);
+	      Tucker::scal(&nrows, &NEGONE, Gptr+c*nrows, &ONE);
       }
     }
   }
@@ -100,19 +100,19 @@ auto computeEigenvalues(Kokkos::View<ScalarType**, Props...> G,
   return eigenvalues_d;
 }
 
-template <class ScalarType, class ...Props>
-int countEigValsUsingThreshold(Kokkos::View<ScalarType*, Props...> eigvals,
+template <class ScalarType, class ...Properties>
+std::size_t countEigValsUsingThreshold(Kokkos::View<ScalarType*, Properties...> eigvals,
 			       const ScalarType thresh)
 {
-  using eigvals_view_type = Kokkos::View<ScalarType*, Props...>;
+  using eigvals_view_type = Kokkos::View<ScalarType*, Properties...>;
   using mem_space = typename eigvals_view_type::memory_space;
   static_assert(Kokkos::SpaceAccessibility<Kokkos::HostSpace, mem_space>::accessible,
 		"countEigValsUsingThreshold: view must be accessible on host");
 
-  int nrows = eigvals.extent(0);
-  int numEvecs=nrows;
+  std::size_t nrows = eigvals.extent(0);
+  std::size_t numEvecs = nrows;
   ScalarType sum = 0;
-  for(int i=nrows-1; i>=0; i--) {
+  for(std::size_t i=nrows-1; i>=0; i--) {
     sum += std::abs(eigvals[i]);
     if(sum > thresh) {
       break;
@@ -122,29 +122,28 @@ int countEigValsUsingThreshold(Kokkos::View<ScalarType*, Props...> eigvals,
   return numEvecs;
 }
 
-template <class ScalarType, class ...Props, class ...Variants>
-auto STHOSVD(Tensor<ScalarType, Props...> & X,
+template <class ScalarType, class ...Properties, class ...Variants>
+auto STHOSVD(Tensor<ScalarType, Properties...> & X,
 	     const std::variant<Variants...> & coreTensorRankInfo,
 	     bool useQR = false,
 	     bool flipSign = false)
 {
-  using tensor_type  = Tensor<ScalarType, Props...>;
+  using tensor_type  = Tensor<ScalarType, Properties...>;
   using memory_space = typename tensor_type::traits::memory_space;
   using factor_type  = TuckerTensor<ScalarType, memory_space>;
-
   using eigvec_view_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space>;
 
-  const int ndims = X.N();
+  const auto rank = X.rank();
 
   // decide truncation mechanism
-  auto truncator = [&](int n, auto eigenValues) -> int
+  auto truncator = [&](std::size_t n, auto eigenValues) -> std::size_t
   {
     auto autoRank = std::holds_alternative<CoreRankViaThreshold<ScalarType>>(coreTensorRankInfo);
     if (autoRank)
     {
       const ScalarType epsilon = std::get<CoreRankViaThreshold<ScalarType>>(coreTensorRankInfo).value;
-      const ScalarType tensorNorm = X.norm2();
-      const ScalarType threshold  = epsilon*epsilon*tensorNorm/ndims;
+      const ScalarType tensorNorm = X.frobeniusNormSquared();
+      const ScalarType threshold  = epsilon*epsilon*tensorNorm/rank;
       std::cout << "\tAutoST-HOSVD::Tensor Norm: "
 		<< std::sqrt(tensorNorm)
 		<< "...\n";
@@ -163,11 +162,10 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
   };
 
 
-  factor_type factorization(ndims);
+  factor_type factorization(rank);
   tensor_type * Y = &X;
   tensor_type temp;
-
-  for (int n=0; n<ndims; n++)
+  for (std::size_t n=0; n<rank; n++)
   {
     std::cout << "\tAutoST-HOSVD::Starting Gram(" << n << ")...\n";
 
@@ -175,9 +173,9 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
     std::cout << "\tAutoST-HOSVD::Gram(" << n << ") \n";
     auto S = computeGram(Y, n);
     auto S_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), S);
-    for (int i=0; i<S_h.extent(0); ++i){
-      for (int j=0; j<S_h.extent(1); ++j){
-	std::cout << S_h(i,j) << "  ";
+    for (std::size_t i=0; i<S_h.extent(0); ++i){
+      for (std::size_t j=0; j<S_h.extent(1); ++j){
+	      std::cout << S_h(i,j) << "  ";
       }
       std::cout << " \n ";
     }
@@ -190,19 +188,19 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
     // need to copy back to S_h because of the reordering
     Kokkos::deep_copy(S_h, S);
     auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
-    for (int i=0; i<S.extent(0); ++i){ std::cout << eigvals_h(i) << "  "; }
+    for (std::size_t i=0; i<S.extent(0); ++i){ std::cout << eigvals_h(i) << "  "; }
     std::cout << " \n ";
-    const int numEvecs = truncator(n, eigvals);
+    const std::size_t numEvecs = truncator(n, eigvals);
 
     std::cout << " \n ";
-    eigvec_view_t eigVecs("eigVecs", Y->size(n), numEvecs);
+    eigvec_view_t eigVecs("eigVecs", Y->extent(n), numEvecs);
     auto eigVecs_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigVecs);
-    const int nToCopy = Y->size(n)*numEvecs;
+    const int nToCopy = Y->extent(n)*numEvecs;
     const int ONE = 1;
     Tucker::copy(&nToCopy, S_h.data(), &ONE, eigVecs_h.data(), &ONE);
-    for (int i=0; i<eigVecs_h.extent(0); ++i){
-      for (int j=0; j<eigVecs_h.extent(1); ++j){
-	std::cout << eigVecs_h(i,j) << "  ";
+    for (std::size_t i=0; i<eigVecs_h.extent(0); ++i){
+      for (std::size_t j=0; j<eigVecs_h.extent(1); ++j){
+	      std::cout << eigVecs_h(i,j) << "  ";
       }
       std::cout << " \n ";
     }
@@ -212,13 +210,12 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
     std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
     std::cout << " \n ";
     temp = ttm(Y, n, eigVecs, true);
-    temp.print();
+    temp.writeToStream(std::cout);
     Kokkos::fence();
 
     Y = &temp;
-    size_t nnz = Y->getNumElements();
     std::cout << "Local tensor size after STHOSVD iteration "
-	      << n << ": " << Y->size() << ", or ";
+	      << n << ": " << Y->sizeArray() << ", or ";
   }
 
   factorization.getG() = *Y;
