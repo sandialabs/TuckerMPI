@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
     const std::vector<std::string> fileAsString = TuckerKokkos::getFileAsStrings(paramfn);
     InputArgs args = parse_input_file<scalar_t>(fileAsString);
     int checkArgs = check_args(args);
-    std::cout << "Argument checking: passed" << std::endl;
+    std::cout << "Argument checking: " << checkArgs << std::endl;
     print_args(args);
 
     chech_array_sizes(args);

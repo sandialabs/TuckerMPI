@@ -7,31 +7,31 @@ namespace TuckerKokkos{
 
 template <class ScalarType, class MemorySpace>
 void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
-	      const int n,
+	      const std::size_t n,
 	      const ScalarType* const Uptr,
-	      const int strideU,
+	      const std::size_t strideU,
 	      Tensor<ScalarType, MemorySpace> & Y,
 	      bool Utransp)
 {
   // Check that the input is valid
   assert(Uptr != 0);
   //assert(Y != 0);
-  assert(n >= 0 && n < (int)X->rank());
-  for(int i=0; i<(int)X->rank(); i++) {
+  assert(n >= 0 && n < X->rank());
+  for(std::size_t i=0; i<X->rank(); i++) {
     if(i != n) {
       assert(X->extent(i) == Y.extent(i));
     }
   }
 
   // Obtain the number of rows and columns of U
-  int Unrows, Uncols;
+  std::size_t Unrows, Uncols;
   if(Utransp) {
-    Unrows = (int)X->extent(n);
-    Uncols = (int)Y.extent(n);
+    Unrows = X->extent(n);
+    Uncols = Y.extent(n);
   }
   else {
-    Uncols =  (int)X->extent(n);
-    Unrows =  (int)Y.extent(n);
+    Uncols = X->extent(n);
+    Unrows = Y.extent(n);
   }
 
   auto X_view_d = X->data();
@@ -52,11 +52,11 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
     // but that seems like a bad decision
     size_t ncols = X->sizeArray().prod(1,X->rank()-1);
 
-    if(ncols > std::numeric_limits<int>::max()) {
+    if(ncols > std::numeric_limits<std::size_t>::max()) {
       std::ostringstream oss;
       oss << "Error in Tucker::ttm: " << ncols
-          << " is larger than std::numeric_limits<int>::max() ("
-          << std::numeric_limits<int>::max() << ")";
+          << " is larger than std::numeric_limits<std::size_t>::max() ("
+          << std::numeric_limits<std::size_t>::max() << ")";
       throw std::runtime_error(oss.str());
     }
 
@@ -93,11 +93,11 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
     // Count the number of matrices
     size_t nmats = X->sizeArray().prod(n+1,X->rank()-1,1);
 
-    if(ncols > std::numeric_limits<int>::max()) {
+    if(ncols > std::numeric_limits<std::size_t>::max()) {
       std::ostringstream oss;
       oss << "Error in Tucker::ttm: " << ncols
-          << " is larger than std::numeric_limits<int>::max() ("
-          << std::numeric_limits<int>::max() << ")";
+          << " is larger than std::numeric_limits<std::size_t>::max() ("
+          << std::numeric_limits<std::size_t>::max() << ")";
       throw std::runtime_error(oss.str());
     }
 
@@ -138,7 +138,7 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
 
 template <class ScalarType, class MemorySpace>
 void ttm(const Tensor<ScalarType, MemorySpace>* const X,
-	 const int n,
+	 const std::size_t n,
 	 Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> U,
 	 Tensor<ScalarType, MemorySpace> & Y,
 	 bool Utransp)
@@ -162,12 +162,12 @@ void ttm(const Tensor<ScalarType, MemorySpace>* const X,
 
 template <class ScalarType, class ...Props, class ...Props2>
 auto ttm(const Tensor<ScalarType, Props...>* X,
-	 const int n,
+	 const std::size_t n,
 	 Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Props2...> U,
 	 bool Utransp)
 {
   // Compute the number of rows for the resulting "matrix"
-  int nrows;
+  std::size_t nrows;
   if(Utransp)
     nrows = U.extent(1);
   else
@@ -175,9 +175,9 @@ auto ttm(const Tensor<ScalarType, Props...>* X,
 
   // Allocate space for the new tensor
   TuckerKokkos::SizeArray I(X->rank());
-  for(int i=0; i<I.size(); i++) {
+  for(std::size_t i=0; i< (std::size_t)I.size(); i++) {
     if(i != n) {
-      I[i] =  (int)X->extent(i);
+      I[i] = X->extent(i);
     }
     else {
       I[i] = nrows;

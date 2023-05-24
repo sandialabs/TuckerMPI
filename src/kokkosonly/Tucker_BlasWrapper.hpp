@@ -57,10 +57,10 @@ extern "C" void sgemm_(const char*, const char*, const int*,
     const int*, const int*, const float*, const float*, const int*,
     const float*, const int*, const float*, float*, const int*);
 
-extern "C" void dgelq_(const int*, const int*, const double*, const int*, 
+extern "C" void dgelq_(const int*, const int*, const double*, const int*,
     const double*, const int*, const double*, const int*, const int*);
 
-extern "C" void sgelq_(const int*, const int*, const float*, const int*, 
+extern "C" void sgelq_(const int*, const int*, const float*, const int*,
     const float*, const int*, const float*, const int*, const int*);
 
 extern "C" void dgeqr_(const int*, const int*, const double*, const int*,
@@ -70,37 +70,37 @@ extern "C" void sgeqr_(const int*, const int*, const float*, const int*,
     const float*, const int*, const float*, const int*, const int*);
 
 extern "C" void dtpqrt_(const int*, const int*, const int*, const int*,
-    const double*, const int*, const double*, const int*, 
+    const double*, const int*, const double*, const int*,
     const double*, const int*, const double*, const int*);
 
 extern "C" void stpqrt_(const int*, const int*, const int*, const int*,
-    const float*, const int*, const float*, const int*, 
+    const float*, const int*, const float*, const int*,
     const float*, const int*, const float*, const int*);
 
 extern "C" void dgesvd_(const char*, const char*, const int*, const int*,
-    const double*, const int*, const double*, const double*, const int*, 
+    const double*, const int*, const double*, const double*, const int*,
     const double*, const int*, const double*, const int*, const int*);
 
 extern "C" void sgesvd_(const char*, const char*, const int*, const int*,
-    const float*, const int*, const float*, const float*, const int*, 
+    const float*, const int*, const float*, const float*, const int*,
     const float*, const int*, const float*, const int*, const int*);
 
-extern "C" void dgeqrf_(const int*, const int*, const double*, const int*, 
+extern "C" void dgeqrf_(const int*, const int*, const double*, const int*,
     const double*, const double*, const int*, const int*);
 
-extern "C" void sgeqrf_(const int*, const int*, const float*, const int*, 
+extern "C" void sgeqrf_(const int*, const int*, const float*, const int*,
     const float*, const float*, const int*, const int*);
 
-extern "C" void dgeqrt_(const int*, const int*, const int*, const double*, 
+extern "C" void dgeqrt_(const int*, const int*, const int*, const double*,
     const int*, const double*, const int*, const double*, const int*);
 
-extern "C" void sgeqrt_(const int*, const int*, const int* nb, const float*, 
+extern "C" void sgeqrt_(const int*, const int*, const int* nb, const float*,
     const int*, const float*, const int*, const float*, const int*);
 
-extern "C" void dgelqf_(const int*, const int*, const double*, const int*, 
+extern "C" void dgelqf_(const int*, const int*, const double*, const int*,
     const double*, const double*, const int*, const int*);
 
-extern "C" void sgelqf_(const int*, const int*, const float*, const int*, 
+extern "C" void sgelqf_(const int*, const int*, const float*, const int*,
     const float*, const float*, const int*, const int*);
 
 extern "C" void dgelqt_(const int*, const int*, const int*, const double*, const int*,
@@ -163,38 +163,38 @@ void geqr(const int* m, const int* n, const float* a, const int* lda,
     const float* t, const int* tsize, const float* work, const int* lwork, const int* info);
 
 void tpqrt(const int* m, const int* n, const int* l, const int* nb,
-    const double* a, const int* lda, const double* b, const int* ldb, 
+    const double* a, const int* lda, const double* b, const int* ldb,
     const double* t, const int* ldt, const double* work, const int* info);
 
 void tpqrt(const int* m, const int* n, const int* l, const int* nb,
-    const float* a, const int* lda, const float* b, const int* ldb, 
+    const float* a, const int* lda, const float* b, const int* ldb,
     const float* t, const int* ldt, const float* work, const int* info);
 
 void gesvd(const char* jobu, const char* jobvt, const int* m, const int* n,
-    const double* a, const int* lda, const double* s, const double* u, const int* ldu, 
+    const double* a, const int* lda, const double* s, const double* u, const int* ldu,
     const double* vt, const int* ldvt, const double* work, const int* lwork, const int* info);
 
 void gesvd(const char* jobu, const char* jobvt, const int* m, const int* n,
-    const float* a, const int* lda, const float* s, const float* u, const int* ldu, 
+    const float* a, const int* lda, const float* s, const float* u, const int* ldu,
     const float* vt, const int* ldvt, const float* work, const int* lwork, const int* info);
 
-void geqrf(const int* m, const int* n, const double* a, const int* lda, 
+void geqrf(const int* m, const int* n, const double* a, const int* lda,
     const double* tau, const double* work, const int* lwork, const int* info);
 
-void geqrf(const int* m, const int* n, const float* a, const int* lda, 
+void geqrf(const int* m, const int* n, const float* a, const int* lda,
     const float* tau, const float* work, const int* lwork, const int* info);
 
-void geqrt(const int* m, const int* n, const int* nb, const double* a, 
+void geqrt(const int* m, const int* n, const int* nb, const double* a,
     const int* lda, const double* t, const int* ldt, const double* work, const int* info);
 
-void geqrt(const int* m, const int* n, const int* nb, const float* a, 
+void geqrt(const int* m, const int* n, const int* nb, const float* a,
     const int* lda, const float* t, const int* ldt, const float* work, const int* info);
 
-void gelqf(const int* m, const int* n, const double* a, const int* lda, 
+void gelqf(const int* m, const int* n, const double* a, const int* lda,
     const double* tau, const double* work, const int* lwork, const int* info);
 
-void gelqf(const int* m, const int* n, const float* a, const int* lda, 
-    const float* tau, const float* work, const int* lwork, const int* info);    
+void gelqf(const int* m, const int* n, const float* a, const int* lda,
+    const float* tau, const float* work, const int* lwork, const int* info);
 
 void gelqt(const int* m, const int* n, const int* mb, const double* a, const int* lda,
     const double* t, const int* ldt, const double* work, const int* info);

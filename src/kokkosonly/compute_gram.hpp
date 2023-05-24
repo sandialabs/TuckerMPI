@@ -10,7 +10,7 @@ template<class ScalarType, class ...Props> class Tensor;
 
 template<class ScalarType, class MemorySpace>
 void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
-		     const int n,
+		     const std::size_t n,
 		     ScalarType* gram,
 		     const int stride)
 {
@@ -53,7 +53,7 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
     // but that seems like a bad decision
     int ncols = 1;
     for(int i=0; i<(int)Y->rank(); i++) {
-      if(i != n) {
+      if((std::size_t)i != n) {
         ncols *= (int)Y->extent(i);
       }
     }
@@ -75,7 +75,7 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
     int nmats = 1;
 
     // Count the number of columns
-    for(int i=0; i<n; i++) {
+    for(std::size_t i=0; i<n; i++) {
       ncols *= (int)Y->extent(i);
     }
 
