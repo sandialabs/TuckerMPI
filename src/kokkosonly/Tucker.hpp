@@ -19,10 +19,10 @@ struct CoreRankViaThreshold{
 };
 
 
-template<class ScalarType, class ...Props>
-auto computeGram(Tensor<ScalarType, Props...> * Y, const int n)
+template<class ScalarType, class ...Properties>
+auto computeGram(Tensor<ScalarType, Properties...> * Y, const int n)
 {
-  using tensor_type = TuckerKokkos::Tensor<ScalarType, Props...>;
+  using tensor_type = TuckerKokkos::Tensor<ScalarType, Properties...>;
   using memory_space = typename tensor_type::traits::memory_space;
 
   const int nrows = (int)Y->extent(n);
@@ -33,11 +33,11 @@ auto computeGram(Tensor<ScalarType, Props...> * Y, const int n)
   return S_d;
 }
 
-template<class ScalarType, class ... Props>
-auto computeEigenvalues(Kokkos::View<ScalarType**, Props...> G,
+template<class ScalarType, class ... Properties>
+auto computeEigenvalues(Kokkos::View<ScalarType**, Properties...> G,
 			const bool flipSign)
 {
-  using view_type = Kokkos::View<ScalarType**, Props...>;
+  using view_type = Kokkos::View<ScalarType**, Properties...>;
   using mem_space = typename view_type::memory_space;
   static_assert(std::is_same_v< typename view_type::array_layout, Kokkos::LayoutLeft>);
 
@@ -100,11 +100,11 @@ auto computeEigenvalues(Kokkos::View<ScalarType**, Props...> G,
   return eigenvalues_d;
 }
 
-template <class ScalarType, class ...Props>
-int countEigValsUsingThreshold(Kokkos::View<ScalarType*, Props...> eigvals,
+template <class ScalarType, class ...Properties>
+int countEigValsUsingThreshold(Kokkos::View<ScalarType*, Properties...> eigvals,
 			       const ScalarType thresh)
 {
-  using eigvals_view_type = Kokkos::View<ScalarType*, Props...>;
+  using eigvals_view_type = Kokkos::View<ScalarType*, Properties...>;
   using mem_space = typename eigvals_view_type::memory_space;
   static_assert(Kokkos::SpaceAccessibility<Kokkos::HostSpace, mem_space>::accessible,
 		"countEigValsUsingThreshold: view must be accessible on host");
@@ -122,19 +122,18 @@ int countEigValsUsingThreshold(Kokkos::View<ScalarType*, Props...> eigvals,
   return numEvecs;
 }
 
-template <class ScalarType, class ...Props, class ...Variants>
-auto STHOSVD(Tensor<ScalarType, Props...> & X,
+template <class ScalarType, class ...Properties, class ...Variants>
+auto STHOSVD(Tensor<ScalarType, Properties...> & X,
 	     const std::variant<Variants...> & coreTensorRankInfo,
 	     bool useQR = false,
 	     bool flipSign = false)
 {
-  using tensor_type  = Tensor<ScalarType, Props...>;
+  using tensor_type  = Tensor<ScalarType, Properties...>;
   using memory_space = typename tensor_type::traits::memory_space;
   using factor_type  = TuckerTensor<ScalarType, memory_space>;
-
   using eigvec_view_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space>;
 
-  const int ndims = (int)X.rank();
+  const int rank = (int)X.rank();
 
   // decide truncation mechanism
   auto truncator = [&](int n, auto eigenValues) -> int
@@ -144,7 +143,7 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
     {
       const ScalarType epsilon = std::get<CoreRankViaThreshold<ScalarType>>(coreTensorRankInfo).value;
       const ScalarType tensorNorm = X.frobeniusNormSquared();
-      const ScalarType threshold  = epsilon*epsilon*tensorNorm/ndims;
+      const ScalarType threshold  = epsilon*epsilon*tensorNorm/rank;
       std::cout << "\tAutoST-HOSVD::Tensor Norm: "
 		<< std::sqrt(tensorNorm)
 		<< "...\n";
@@ -163,11 +162,10 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
   };
 
 
-  factor_type factorization(ndims);
+  factor_type factorization(rank);
   tensor_type * Y = &X;
   tensor_type temp;
-
-  for (int n=0; n<ndims; n++)
+  for (int n=0; n<rank; n++)
   {
     std::cout << "\tAutoST-HOSVD::Starting Gram(" << n << ")...\n";
 
@@ -216,7 +214,6 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
     Kokkos::fence();
 
     Y = &temp;
-    size_t nnz = Y->size();
     std::cout << "Local tensor size after STHOSVD iteration "
 	      << n << ": " << Y->sizeArray() << ", or ";
   }

@@ -11,7 +11,7 @@
 namespace TuckerKokkos{
 
 namespace impl{
-template<class Enable, class ScalarType, class ...Props>
+template<class Enable, class ScalarType, class ...Properties>
 struct TensorTraits;
 
 template<class ScalarType> struct TensorTraits<void, ScalarType>{
@@ -28,14 +28,14 @@ struct TensorTraits<
 };
 }//end namespace impl
 
-template<class ScalarType, class ...Props>
+template<class ScalarType, class ...Properties>
 class Tensor
 {
   static_assert(std::is_floating_point_v<ScalarType>, "");
-  using view_type = typename impl::TensorTraits<void, ScalarType, Props...>::view_type;
+  using view_type = typename impl::TensorTraits<void, ScalarType, Properties...>::view_type;
 
 public:
-  using traits = impl::TensorTraits<void, ScalarType, Props...>;
+  using traits = impl::TensorTraits<void, ScalarType, Properties...>;
 
   Tensor() = default;
   Tensor(const SizeArray & szIn)
