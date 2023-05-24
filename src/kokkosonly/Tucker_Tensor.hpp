@@ -50,7 +50,7 @@ public:
 
   const SizeArray& sizeArray() const{ return sizeArrayInfo_; }
 
-  std::size_t extent(int mode) const { return sizeArrayInfo_[mode]; }
+  std::size_t extent(std::size_t mode) const { return sizeArrayInfo_[mode]; }
 
   size_t size() const{ return sizeArrayInfo_.prod(); }
 
