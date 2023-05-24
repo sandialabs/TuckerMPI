@@ -16,8 +16,8 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
   // Check that the input is valid
   assert(Uptr != 0);
   //assert(Y != 0);
-  assert(n >= 0 && n < X->rank());
-  for(int i=0; i<X->rank(); i++) {
+  assert(n >= 0 && n < (int)X->rank());
+  for(int i=0; i<(int)X->rank(); i++) {
     if(i != n) {
       assert(X->extent(i) == Y.extent(i));
     }
@@ -26,12 +26,12 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
   // Obtain the number of rows and columns of U
   int Unrows, Uncols;
   if(Utransp) {
-    Unrows = X->extent(n);
-    Uncols = Y.extent(n);
+    Unrows = (int)X->extent(n);
+    Uncols = (int)Y.extent(n);
   }
   else {
-    Uncols = X->extent(n);
-    Unrows = Y.extent(n);
+    Uncols =  (int)X->extent(n);
+    Unrows =  (int)Y.extent(n);
   }
 
   auto X_view_d = X->data();
@@ -67,9 +67,9 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
     // op( B ) a k by n matrix and C an m by n matrix.
     char transa;
     char transb = 'N';
-    int m = Y.extent(n);
+    int m =  (int)Y.extent(n);
     int blas_n = (int)ncols;
-    int k = X->extent(n);
+    int k =  (int)X->extent(n);
     int lda = strideU;
     int ldb = k;
     int ldc = m;
@@ -111,7 +111,7 @@ void ttm_impl(const Tensor<ScalarType, MemorySpace>* const X,
       char transa = 'N';
       char transb;
       int m = (int)ncols;
-      int blas_n = Y.extent(n);
+      int blas_n = (int)Y.extent(n);
       int k;
       int lda = (int)ncols;
       int ldb = strideU;
@@ -177,7 +177,7 @@ auto ttm(const Tensor<ScalarType, Props...>* X,
   TuckerKokkos::SizeArray I(X->rank());
   for(int i=0; i<I.size(); i++) {
     if(i != n) {
-      I[i] = X->extent(i);
+      I[i] =  (int)X->extent(i);
     }
     else {
       I[i] = nrows;

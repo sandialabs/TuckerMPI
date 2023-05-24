@@ -25,7 +25,7 @@ auto computeGram(Tensor<ScalarType, Props...> * Y, const int n)
   using tensor_type = TuckerKokkos::Tensor<ScalarType, Props...>;
   using memory_space = typename tensor_type::traits::memory_space;
 
-  const int nrows = Y->extent(n);
+  const int nrows = (int)Y->extent(n);
   Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space> S_d("S", nrows, nrows);
   auto S_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), S_d);
   computeGramHost(Y, n, S_h.data(), nrows);
@@ -90,7 +90,7 @@ auto computeEigenvalues(Kokkos::View<ScalarType**, Props...> G,
 
       if(Gptr[c*nrows+maxIndex] < 0) {
         const ScalarType NEGONE = -1;
-	Tucker::scal(&nrows, &NEGONE, Gptr+c*nrows, &ONE);
+	      Tucker::scal(&nrows, &NEGONE, Gptr+c*nrows, &ONE);
       }
     }
   }
@@ -110,7 +110,7 @@ int countEigValsUsingThreshold(Kokkos::View<ScalarType*, Props...> eigvals,
 		"countEigValsUsingThreshold: view must be accessible on host");
 
   int nrows = eigvals.extent(0);
-  int numEvecs=nrows;
+  int numEvecs = nrows;
   ScalarType sum = 0;
   for(int i=nrows-1; i>=0; i--) {
     sum += std::abs(eigvals[i]);
@@ -134,7 +134,7 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
 
   using eigvec_view_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space>;
 
-  const int ndims = X.rank();
+  const int ndims = (int)X.rank();
 
   // decide truncation mechanism
   auto truncator = [&](int n, auto eigenValues) -> int
@@ -177,7 +177,7 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
     auto S_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), S);
     for (int i=0; i<S_h.extent(0); ++i){
       for (int j=0; j<S_h.extent(1); ++j){
-	std::cout << S_h(i,j) << "  ";
+	      std::cout << S_h(i,j) << "  ";
       }
       std::cout << " \n ";
     }
@@ -197,12 +197,12 @@ auto STHOSVD(Tensor<ScalarType, Props...> & X,
     std::cout << " \n ";
     eigvec_view_t eigVecs("eigVecs", Y->extent(n), numEvecs);
     auto eigVecs_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigVecs);
-    const int nToCopy = Y->extent(n)*numEvecs;
+    const int nToCopy = (int)Y->extent(n)*numEvecs;
     const int ONE = 1;
     Tucker::copy(&nToCopy, S_h.data(), &ONE, eigVecs_h.data(), &ONE);
     for (int i=0; i<eigVecs_h.extent(0); ++i){
       for (int j=0; j<eigVecs_h.extent(1); ++j){
-	std::cout << eigVecs_h(i,j) << "  ";
+	      std::cout << eigVecs_h(i,j) << "  ";
       }
       std::cout << " \n ";
     }
