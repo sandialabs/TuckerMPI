@@ -125,3 +125,23 @@ TEST(tuckerkokkos, tensor_size)
   ASSERT_EQ(x.extent(1), 7);
   ASSERT_EQ(x.extent(2), 9);
 }
+
+TEST(tuckerkokkos, tensor_frobeniusNormSquared)
+{
+  using namespace TuckerKokkos;
+  using scalar_t = double;
+  SizeArray sa(3);
+  sa[0] = 2; sa[1] = 3; sa[2] = 4;
+  // tensor
+  Tensor<scalar_t> x(sa);
+  x.fillRandom(1., 5.);
+  auto x_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), x.data());
+  // vector with same data
+  scalar_t x_h_extent = x_h.extent(0);
+  std::vector<scalar_t> v(x_h_extent);
+  for (std::size_t i=0; i<x_h_extent; ++i){ v[i] = x_h[i]; }
+  // do 2 norm of this vector
+  scalar_t norm = 0.;
+  for(std::size_t i=0; i<x_h_extent; ++i){ norm += v[i] * v[i]; }
+  EXPECT_NEAR(x.frobeniusNormSquared(), norm, 0.001);
+}
