@@ -6,7 +6,6 @@
 #include "Tucker_BoilerPlate_IO.hpp"
 #include "Tucker_sthosvd.hpp"
 #include <Kokkos_Core.hpp>
-#include "Tucker_IO_Util.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -28,7 +27,7 @@ int main(int argc, char* argv[])
 
     // reading data
     TuckerKokkos::Tensor<scalar_t, memory_space> X(inputs.sizeArrayOfDataTensor());
-    TuckerKokkos::readTensorBinary(X, inputs.in_fns_file.c_str());
+    TuckerKokkos::read_tensor_binary(X, inputs.in_fns_file.c_str());
 
     // truncator for core tensor
     auto coreTensorTruncator =
@@ -41,7 +40,7 @@ int main(int argc, char* argv[])
       auto f = TuckerKokkos::STHOSVD(X, coreTensorTruncator, inputs.boolUseLQ);
 
       std::string filePrefix = inputs.sv_dir + "/" + inputs.sv_fn + "_mode_";
-      TuckerKokkos::printEigenvalues(f, filePrefix, false);
+      TuckerKokkos::print_eigenvalues(f, filePrefix, false);
       printf("\n");
       const auto xnorm = std::sqrt(X.frobeniusNormSquared());
       const auto gnorm = std::sqrt(f.getG().frobeniusNormSquared());
@@ -49,7 +48,7 @@ int main(int argc, char* argv[])
       std::cout << "Norm of core tensor: " << std::setprecision(7) << gnorm << std::endl;
       std::string coreFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_core.mpi";
       std::cout << "Writing core tensor to " << coreFilename << std::endl;
-      TuckerKokkos::exportTensorBinary(f.getG(), coreFilename.c_str());
+      TuckerKokkos::export_tensor_binary(f.getG(), coreFilename.c_str());
     }
 
   } // local scope to ensure all Kokkos views are destructed appropriately
