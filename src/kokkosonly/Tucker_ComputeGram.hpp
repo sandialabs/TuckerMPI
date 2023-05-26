@@ -2,10 +2,9 @@
 #define TUCKERKOKKOS_COMP_GRAM_HPP_
 
 #include "Tucker_BlasWrapper.hpp"
+#include "Tucker_Tensor.hpp"
 
 namespace TuckerKokkos{
-
-template<class ScalarType, class ...Props> class Tensor;
 
 namespace impl{
 
