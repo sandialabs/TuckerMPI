@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "Tucker_Tensor.hpp"
-#include "ttm.hpp"
+#include "Tucker_ttm.hpp"
 
 #include "Tensor_3d_2x3x5_random.hpp"
 

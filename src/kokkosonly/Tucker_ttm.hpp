@@ -30,7 +30,7 @@ void ttm_kokkosblas_impl_modeZero(const Tensor<ScalarType, MemorySpace>* const X
   // Compute number of columns of Y_n
   // Technically, we could divide the total number of entries by n,
   // but that seems like a bad decision
-  size_t ncols = X->size().prod(1,X->N()-1);
+  size_t ncols = X->sizeArray().prod(1,X->rank()-1);
 
   if(ncols > std::numeric_limits<int>::max()) {
     std::ostringstream oss;
@@ -56,9 +56,9 @@ void ttm_kokkosblas_impl_modeZero(const Tensor<ScalarType, MemorySpace>* const X
    */
   char transa = Utransp ? 'T' : 'N';      // "T" for Transpose
   const char transb = 'N';                // "N" for Non-tranpose
-  int m = Y.size(n);                      // 1st dim of A and C
+  int m = Y.extent(n);                    // 1st dim of A and C
   int blas_n = (int)ncols;                // 2nd dim of B and C
-  int k = X->size(n);                     // 1st dim of B
+  int k = X->extent(n);                   // 1st dim of B
   const ScalarType alpha = ScalarType(1); // input coef. of op(A)*op(B)
   const ScalarType beta = ScalarType(0);  // input coef. of C
   auto X_ptr_d = X->data().data();        // View B
@@ -83,7 +83,7 @@ void ttm_kokkosblas_impl_modeNonZero(const Tensor<ScalarType, MemorySpace>* cons
 	      bool Utransp)
 {
   // Count the number of columns
-  size_t ncols = X->size().prod(0,n-1);
+  size_t ncols = X->sizeArray().prod(0,n-1);
 
   if(ncols > std::numeric_limits<int>::max()) {
     std::ostringstream oss;
@@ -94,16 +94,16 @@ void ttm_kokkosblas_impl_modeNonZero(const Tensor<ScalarType, MemorySpace>* cons
   }
 
   // Count the number of matrices
-  size_t nmats = X->size().prod(n+1,X->N()-1,1);
+  size_t nmats = X->sizeArray().prod(n+1,X->rank()-1,1);
 
   // Obtain the number of rows and columns of A
   int Unrows, Uncols;
   if(Utransp) {
-    Unrows = X->size(n);                    // 1st dim of A
-    Uncols = Y.size(n);                     // 2nd dim of A
+    Unrows = X->extent(n);                  // 1st dim of A
+    Uncols = Y.extent(n);                   // 2nd dim of A
   } else {
-    Uncols = X->size(n);                    // 2nd dim of A
-    Unrows = Y.size(n);                     // 1st dim of A
+    Uncols = X->extent(n);                  // 2nd dim of A
+    Unrows = Y.extent(n);                   // 1st dim of A
   }
 
   // Init. pointer to views
@@ -129,7 +129,7 @@ void ttm_kokkosblas_impl_modeNonZero(const Tensor<ScalarType, MemorySpace>* cons
     char transa = 'N';                      // "N" for Non-tranpose
     char transb = Utransp ? 'N' : 'T';      // "T" for Transpose
     int m = (int)ncols;                     // 1st dim of B and C
-    int blas_n = Y.size(n);                 // 2nd dim of C
+    int blas_n = Y.extent(n);               // 2nd dim of C
     int k = Utransp ? Unrows : Uncols;      // 2nd dim of B
     const ScalarType alpha = ScalarType(1); // input coef. of op(B)*op(A)
     const ScalarType beta = ScalarType(0);  // input coef. of C
@@ -153,7 +153,7 @@ void ttm_kokkosblas_impl(const Tensor<ScalarType, MemorySpace>* const X,
   assert(Y != 0);
   // Assert if n (Mode) has a valid value
   assert(n >= 0 && n < X->N());
-  for(int i=0; i<X->N(); i++) {
+  for(int i=0; i<X->rank(); i++) {
     if(i != n) {
       // Assert if each slices of Tensor X and Y have the same size
       assert(X->size(i) == Y.size(i));
