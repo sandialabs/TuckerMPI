@@ -2,14 +2,15 @@
 #define TUCKERKOKKOS_COMP_GRAM_HPP_
 
 #include "Tucker_BlasWrapper.hpp"
-#include "Tucker_Tensor.hpp"
 
 namespace TuckerKokkos{
 
 template<class ScalarType, class ...Props> class Tensor;
 
+namespace impl{
+
 template<class ScalarType, class MemorySpace>
-void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
+void compute_gram_host(const Tensor<ScalarType, MemorySpace> & Y,
 		     const std::size_t n,
 		     ScalarType* gram,
 		     const int stride)
@@ -20,8 +21,8 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
   if(gram == 0) {
     throw std::runtime_error("Tucker::computeGram(const Tensor<ScalarType>* Y, const int n, ScalarType* gram, const int stride): gram is a null pointer");
   }
-  if(Y->size() == 0) {
-    throw std::runtime_error("Tucker::computeGram(const Tensor<ScalarType>* Y, const int n, ScalarType* gram, const int stride): Y->size() == 0");
+  if(Y.size() == 0) {
+    throw std::runtime_error("Tucker::computeGram(const Tensor<ScalarType>* Y, const int n, ScalarType* gram, const int stride): Y.size() == 0");
   }
   if(stride < 1) {
     std::ostringstream oss;
@@ -29,17 +30,17 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
         << "const int stride): stride = " << stride << " < 1";
     throw std::runtime_error(oss.str());
   }
-  if(n < 0 || n >= Y->rank()) {
+  if(n < 0 || n >= Y.rank()) {
     std::ostringstream oss;
     oss << "Tucker::computeGram(const Tensor<ScalarType>* Y, const int n, ScalarType* gram, "
         << "const int stride): n = " << n << " is not in the range [0,"
-        << Y->rank() << ")";
+        << Y.rank() << ")";
     throw std::runtime_error(oss.str());
   }
 
-  const int nrows = (int)Y->extent(n);
+  const int nrows = (int)Y.extent(n);
 
-  auto Y_v = Y->data();
+  auto Y_v = Y.data();
   auto Y_v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), Y_v);
   auto Y_rawPtr = Y_v_h.data();
 
@@ -52,9 +53,9 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
     // Technically, we could divide the total number of entries by n,
     // but that seems like a bad decision
     int ncols = 1;
-    for(int i=0; i<(int)Y->rank(); i++) {
+    for(int i=0; i<(int)Y.rank(); i++) {
       if((std::size_t)i != n) {
-        ncols *= (int)Y->extent(i);
+        ncols *= (int)Y.extent(i);
       }
     }
 
@@ -76,12 +77,12 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
 
     // Count the number of columns
     for(std::size_t i=0; i<n; i++) {
-      ncols *= (int)Y->extent(i);
+      ncols *= (int)Y.extent(i);
     }
 
     // Count the number of matrices
-    for(int i=n+1; i<(int)Y->rank(); i++) {
-      nmats *= (int)Y->extent(i);
+    for(int i=n+1; i<(int)Y.rank(); i++) {
+      nmats *= (int)Y.extent(i);
     }
 
     // For each matrix...
@@ -104,6 +105,24 @@ void computeGramHost(const Tensor<ScalarType, MemorySpace>* Y,
     }
   }
 }
+
+} //end namespace impl
+
+
+template<class ScalarType, class ...Properties>
+auto compute_gram(Tensor<ScalarType, Properties...> & Y,
+		 const std::size_t n)
+{
+  using tensor_type = TuckerKokkos::Tensor<ScalarType, Properties...>;
+  using memory_space = typename tensor_type::traits::memory_space;
+  const std::size_t nrows = Y.extent(n);
+  Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space> S_d("S", nrows, nrows);
+  auto S_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), S_d);
+  impl::compute_gram_host(Y, n, S_h.data(), nrows);
+  Kokkos::deep_copy(S_d, S_h);
+  return S_d;
+}
+
 
 }
 #endif

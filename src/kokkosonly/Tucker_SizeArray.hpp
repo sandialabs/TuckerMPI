@@ -2,8 +2,6 @@
 #ifndef SIZEARRAY_HPP_
 #define SIZEARRAY_HPP_
 
-#include <cassert>
-#include <string.h>
 #include <iostream>
 #include <vector>
 
@@ -33,7 +31,8 @@ public:
     return prod(0, nsz_-1);
   }
 
-  size_t prod(const int low, const int high, const int defaultReturnVal = -1) const {
+  size_t prod(const int low, const int high, const int defaultReturnVal = -1) const
+  {
     if(low < 0 || high >= nsz_) {
       std::cerr << "ERROR: prod(" << low << "," << high
           << ") is invalid because indices must be in the range [0,"

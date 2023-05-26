@@ -2,6 +2,7 @@
 #define TTM_HPP_
 
 #include "Tucker_BlasWrapper.hpp"
+#include "Tucker_Tensor.hpp"
 
 namespace TuckerKokkos{
 
@@ -159,7 +160,6 @@ void ttm(const Tensor<ScalarType, MemorySpace>* const X,
   Kokkos::deep_copy(U, U_h);
 }
 
-
 template <class ScalarType, class ...Props, class ...Props2>
 auto ttm(const Tensor<ScalarType, Props...>* X,
 	 const std::size_t n,
@@ -188,7 +188,6 @@ auto ttm(const Tensor<ScalarType, Props...>* X,
   ttm(X, n, U, Y, Utransp);
   return Y;
 }
-
 
 }
 #endif
