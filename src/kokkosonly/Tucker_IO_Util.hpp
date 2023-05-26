@@ -150,7 +150,7 @@ void importTensorBinary(Tensor<ScalarType, MemorySpace> & X,
   end = ifs.tellg();
   size = end - begin;
   //std::cout << "Reading " << size << " bytes...\n";
-  size_t numEntries = X.getNumElements();
+  size_t numEntries = X.size();
   assert(size == numEntries*sizeof(ScalarType));
 
   // Read the file
@@ -218,7 +218,7 @@ template <class scalar_t, class mem_space>
 void exportTensorBinary(const Tensor<scalar_t, mem_space> & Y, const char* filename)
 {
   const std::streamoff MAX_OFFSET = std::numeric_limits<std::streamoff>::max();
-  size_t numEntries = Y.getNumElements();
+  size_t numEntries = Y.size();
   // Open file
   std::ofstream ofs;
   ofs.open(filename, std::ios::out | std::ios::binary);
