@@ -1,7 +1,7 @@
 #ifndef TUCKER_KOKKOSONLY_STHOSVD_HPP_
 #define TUCKER_KOKKOSONLY_STHOSVD_HPP_
 
-#include "Tucker_CoreTensorTruncationStrategies.hpp"
+#include "Tucker_CoreTensorTruncator.hpp"
 #include "Tucker_Tensor.hpp"
 #include "Tucker_TuckerTensor.hpp"
 #include "Tucker_ComputeGram.hpp"

@@ -1,7 +1,7 @@
 
 #include "Tucker_CmdLineParse.hpp"
 #include "Tucker_ParameterFileParser.hpp"
-#include "Tucker_CoreTensorTruncationStrategies.hpp"
+#include "Tucker_CoreTensorTruncator.hpp"
 #include "Tucker_Tensor.hpp"
 #include "Tucker_BoilerPlate_IO.hpp"
 #include "Tucker_sthosvd.hpp"
