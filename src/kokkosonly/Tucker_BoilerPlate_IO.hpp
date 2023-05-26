@@ -3,7 +3,9 @@
 #define TUCKER_BOILERPLATE_IO_UTIL_HPP_
 
 #include <Kokkos_Core.hpp>
+#include <Kokkos_StdAlgorithms.hpp>
 #include <fstream>
+#include <vector>
 
 namespace TuckerKokkos{
 
@@ -29,16 +31,16 @@ void fill_rank1_view_from_binary_file(Kokkos::View<DataType, Properties...> & v,
   ifs.seekg(0, std::ios::end);
   end = ifs.tellg();
   size = end - begin;
-  //std::cout << "Reading " << size << " bytes...\n";
   assert(size == v.extent(0)*sizeof(value_type));
 
-  // Read the file
-  // auto view1d_d = X.data();
-  // auto view1d_h = Kokkos::create_mirror(view1d_d);
-  value_type* data = v.data();
+  // we need to read into std::vector and then copy to view
+  // because this has to work for possibly non-contiguous views
+  std::vector<value_type> stdVec(v.extent(0));
   ifs.seekg(0, std::ios::beg);
-  ifs.read((char*)data, size);
+  ifs.read((char*)stdVec.data(), size);
   ifs.close();
+
+  std::copy(stdVec.cbegin(), stdVec.cend(), Kokkos::Experimental::begin(v));
 }
 
 
