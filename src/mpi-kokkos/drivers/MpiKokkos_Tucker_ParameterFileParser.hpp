@@ -1,8 +1,8 @@
 #ifndef MPIKOKKOS_TUCKER_PARAM_FILE_PARSER_HPP_
 #define MPIKOKKOS_TUCKER_PARAM_FILE_PARSER_HPP_
 
-#include "MpiKokkos_Tucker_SizeArray.hpp"
-#include "MpiKokkos_Tucker_ParameterFileParserUtils.hpp"
+#include "Tucker_SizeArray.hpp"
+#include "Tucker_ParameterFileParserUtils.hpp"
 #include <fstream>
 #include <iomanip>
 #include <vector>
@@ -37,7 +37,7 @@ private:
 public:
   InputParameters(const std::string & paramFile)
   {
-    const auto fileAsStrings = MpiKokkos_Tucker::read_file_as_strings(paramFile);
+    const auto fileAsStrings = TuckerKokkos::read_file_as_strings(paramFile);
     std::cout << fileAsStrings.size() << " " << fileAsStrings[0] << std::endl;
     parse(fileAsStrings);
   }
