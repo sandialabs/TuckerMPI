@@ -22,10 +22,10 @@ TEST_F(Tensor_3d_2x3x5_random, ttm_mat7x2) {
 
     // TTM
     TuckerKokkos::Tensor<scalar_t, memory_space> result =
-        TuckerKokkos::ttm(&X, 0, mat7x2, false);
+        TuckerKokkos::ttm(X, 0, mat7x2, false);
     scalar_t* data = result.data().data();
 
-    // Few true data 
+    // Few true data
     std::array<scalar_t, 105> trueData;
     trueData[0] = 763; trueData[1] = 793; trueData[2] = 815; trueData[3] = 841;
     trueData[4] = 875; trueData[5] = 893; trueData[6] = 917; trueData[7] = 1824;
@@ -71,10 +71,10 @@ TEST_F(Tensor_3d_2x3x5_random, ttm_mat2x7) {
 
     // TTM
     TuckerKokkos::Tensor<scalar_t, memory_space> result =
-        TuckerKokkos::ttm(&X, 0, mat2x7, true);
+        TuckerKokkos::ttm(X, 0, mat2x7, true);
     scalar_t* data = result.data().data();
 
-    // Few true data 
+    // Few true data
     std::array<scalar_t, 105> trueData;
     trueData[0] = 673; trueData[1] = 725; trueData[2] = 773;
     trueData[3] = 827; trueData[4] = 883; trueData[5] = 935;
@@ -119,7 +119,7 @@ TEST_F(Tensor_3d_2x3x5_random, ttm_mat2x7) {
 }
 
 TEST_F(Tensor_3d_2x3x5_random, ttm_mat7x3) {
-    
+
     // Matrix 7x3
     matrix mat7x3("mat7x3", 7, 3);
     auto view2d_h = Kokkos::create_mirror(mat7x3);
@@ -134,7 +134,7 @@ TEST_F(Tensor_3d_2x3x5_random, ttm_mat7x3) {
 
     // TTM
     TuckerKokkos::Tensor<scalar_t, memory_space> result =
-        TuckerKokkos::ttm(&X, 1, mat7x3, false);
+        TuckerKokkos::ttm(X, 1, mat7x3, false);
     scalar_t* data = result.data().data();
 
     // Few true data

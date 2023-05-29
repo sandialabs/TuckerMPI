@@ -16,16 +16,18 @@ template<class Enable, class ScalarType, class ...Properties>
 struct TensorTraits;
 
 template<class ScalarType> struct TensorTraits<void, ScalarType>{
+  using array_layout = Kokkos::LayoutLeft;
   using memory_space = typename Kokkos::DefaultExecutionSpace::memory_space;
-  using view_type = Kokkos::View<ScalarType*, memory_space>;
+  using view_type = Kokkos::View<ScalarType*, array_layout, memory_space>;
 };
 
 template<class ScalarType, class MemSpace>
 struct TensorTraits<
   std::enable_if_t< Kokkos::is_memory_space_v<MemSpace> >, ScalarType, MemSpace >
 {
+  using array_layout = Kokkos::LayoutLeft;
   using memory_space = MemSpace;
-  using view_type = Kokkos::View<ScalarType*, memory_space>;
+  using view_type = Kokkos::View<ScalarType*, array_layout, memory_space>;
 };
 }//end namespace impl
 
