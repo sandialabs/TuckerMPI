@@ -60,6 +60,7 @@ ELSE()
   ADD_SUBDIRECTORY(serial)
   IF(MPI_CXX_FOUND)
     ADD_SUBDIRECTORY(mpi)
+    ADD_SUBDIRECTORY(mpi-kokkos)
   ENDIF()
 
 ENDIF()
