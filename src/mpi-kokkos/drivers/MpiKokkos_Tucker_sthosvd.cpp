@@ -1,4 +1,5 @@
-#include <iostream>
+#include "MpiKokkos_Tucker_CmdLineParse.hpp"
+#include "MpiKokkos_Tucker_ParameterFileParser.hpp"
 #include <mpi.h>
 #include <Kokkos_Core.hpp>
 
@@ -10,27 +11,25 @@ int main(int argc, char* argv[])
     using scalar_t = double;
   #endif
 
-  // Initialize MPI
   MPI_Init(&argc, &argv);
   Kokkos::initialize(argc, argv);
   {
-
     // Get the rank of this MPI process
     // Only rank 0 will print to stdout
     int rank, nprocs;
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
 
-    //
-    if(rank == 0) { std::cout << "rank:" << rank << "; nprocs: " << nprocs << std::endl; }
+    // parse cmd line and param file
+    const auto paramfn = parse_cmdline_or(argc, (const char**)argv,
+					  "--parameter-file", "paramfile.txt");
+    const InputParameters<scalar_t> inputs(paramfn);
+    if(rank == 0) { inputs.describe(); }
 
-    std::cout << "Inside Kokkos" << std::endl;
 
   }
   Kokkos::finalize();
-  std::cout << "After Kokkos" << std::endl;
-  // Finalize MPI
   MPI_Finalize();
-  std::cout << "After MPI" << std::endl;
+  
   return 0;
 }
