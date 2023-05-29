@@ -12,6 +12,7 @@ TARGET_LINK_LIBRARIES(${MpiKokkosTuckerLib} ${ALL_TPLS_NEEDED})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${MPI_CXX_INCLUDE_PATH})
+# include_directories(../serial)
 
 # ADD_SUBDIRECTORY(tests)
 
