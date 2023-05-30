@@ -26,6 +26,8 @@ endif()
 #=====================================================================
 
 option(TUCKER_ENABLE_KOKKOSONLY OFF)
+option(TUCKER_ENABLE_MPIPLUSKOKKOS OFF)
+
 IF(TUCKER_ENABLE_KOKKOSONLY)
   SET(CMAKE_CXX_STANDARD 17)
   SET(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -41,6 +43,26 @@ IF(TUCKER_ENABLE_KOKKOSONLY)
 
   enable_testing()
   ADD_SUBDIRECTORY(kokkosonly)
+
+ELSEIF(TUCKER_ENABLE_MPIPLUSKOKKOS)
+  SET(CMAKE_CXX_STANDARD 17)
+  SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
+
+  include(CheckCXXCompilerFlag)
+  check_cxx_compiler_flag("-std=c++17" COMPILER_SUPPORT_TARGET_CPP17)
+  if(NOT COMPILER_SUPPORT_TARGET_CPP17)
+    message(FATAL_ERROR
+      "C++ compiler does not support -std=c++17. This is required for building kokkos-only.")
+  endif()
+  MESSAGE(STATUS "Setting CMAKE_CXX_STANDARD=17")
+
+  FIND_PACKAGE(MPI)
+
+  INCLUDE(CTest)
+  enable_testing()
+  ADD_SUBDIRECTORY(kokkosonly)
+  ADD_SUBDIRECTORY(mpi-kokkos)
 
 ELSE()
   SET(CMAKE_CXX_STANDARD 11)
@@ -60,7 +82,6 @@ ELSE()
   ADD_SUBDIRECTORY(serial)
   IF(MPI_CXX_FOUND)
     ADD_SUBDIRECTORY(mpi)
-    ADD_SUBDIRECTORY(mpi-kokkos)
   ENDIF()
 
 ENDIF()

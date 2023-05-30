@@ -1,5 +1,5 @@
 #include "MpiKokkos_Tucker_CmdLineParse.hpp"
-// #include "MpiKokkos_Tucker_ParameterFileParser.hpp"
+// #include "MpiKokkos_Tucker_ParameterFileParser.hpp" !TO IMPORT
 #include <mpi.h>
 #include <Kokkos_Core.hpp>
 
@@ -19,6 +19,8 @@ int main(int argc, char* argv[])
     int rank, nprocs;
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
+
+    std::cout << "it's working" << std::endl;
 
     // parse cmd line and param file
     /*
