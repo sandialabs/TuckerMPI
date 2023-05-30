@@ -1,6 +1,11 @@
 set(SHARED_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../kokkosshared)
 
-set(MpiKokkosTuckerLib mpi_kokkos_tucker)
+find_package(MPI)
+if(NOT ${MPI_FOUND})
+  message(FATAL_ERROR "mpi-kokkos requires MPI, library not found")
+endif()
+
+set(MpiKokkosTuckerLib mpikokkos_tucker)
 set(SOURCES)
 LIST(APPEND SOURCES
   ${SHARED_SRC}/Tucker_CmdLineParse.cpp
@@ -10,17 +15,19 @@ LIST(APPEND SOURCES
 ADD_LIBRARY(${MpiKokkosTuckerLib} SHARED ${SOURCES})
 
 find_package(KokkosKernels REQUIRED)
-set(ALL_TPLS_NEEDED
-  Kokkos::kokkos Kokkos::kokkoskernels)
+set(ALL_TPLS_NEEDED Kokkos::kokkos Kokkos::kokkoskernels ${MPI_CXX_LIBRARIES})
 TARGET_LINK_LIBRARIES(${MpiKokkosTuckerLib} ${ALL_TPLS_NEEDED})
 
 include_directories(${SHARED_SRC} ${CMAKE_CURRENT_SOURCE_DIR} ${MPI_CXX_INCLUDE_PATH})
 
-# tests
+# add tests
 
+#
+# create executable for sthosvd
+#
 set(STHOSVD_SOURCES)
 LIST(APPEND STHOSVD_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/drivers/MpiKokkos_Tucker_sthosvd.cpp
 )
-add_executable(mpikokkos_tucker ${STHOSVD_SOURCES})
-target_link_libraries(mpikokkos_tucker ${MpiKokkosTuckerLib} ${ALL_TPLS_NEEDED} ${MPI_CXX_LIBRARIES})
+add_executable(MpiKokkosTucker_sthosvd ${STHOSVD_SOURCES})
+target_link_libraries(MpiKokkosTucker_sthosvd ${MpiKokkosTuckerLib} ${ALL_TPLS_NEEDED})

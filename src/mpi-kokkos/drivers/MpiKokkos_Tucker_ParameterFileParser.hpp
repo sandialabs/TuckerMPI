@@ -22,11 +22,9 @@ struct InputParameters
   bool boolPrintSV;
   bool boolReconstruct;
   bool useButterflyTSQR;
-
   ScalarType tol;
   ScalarType stdThresh;
-
-  TuckerKokkos::SizeArray proc_grid_dims; 
+  TuckerKokkos::SizeArray proc_grid_dims;
   TuckerKokkos::SizeArray modeOrder;
 
   std::string scaling_type;
@@ -39,7 +37,6 @@ struct InputParameters
   std::string reconstruct_report_file;
   std::string stats_file;
   std::string timing_file;
-
   int scale_mode;
 
 private:
@@ -166,13 +163,10 @@ private:
     boolPrintSV             = string_parse<bool>(fileAsStrings, "Print factor matrices", false);
     boolReconstruct         = string_parse<bool>(fileAsStrings, "Reconstruct tensor", false);
     useButterflyTSQR        = string_parse<bool>(fileAsStrings, "Use butterfly TSQR", false);
-
     tol                     = string_parse<ScalarType>(fileAsStrings, "SV Threshold", 1e-6);
     stdThresh               = string_parse<ScalarType>(fileAsStrings, "STD Threshold", 1e-9);
-
     proc_grid_dims          = parse_size_array(fileAsStrings, "Grid dims");
     modeOrder               = parse_size_array(fileAsStrings, "Decompose mode order");
-
     scaling_type            = string_parse<std::string>(fileAsStrings, "Scaling type", "None");
     sthosvd_dir             = string_parse<std::string>(fileAsStrings, "STHOSVD directory", "compressed");
     sthosvd_fn              = string_parse<std::string>(fileAsStrings, "STHOSVD file prefix", "sthosvd");
@@ -187,11 +181,6 @@ private:
     scale_mode              = string_parse<int>(fileAsStrings, "Scale mode", nd-1);
   }
 
-  /**
-   * @brief
-   * Assert that we either have automatic rank determination or the user
-   * has supplied their own ranks
-   */
   int check_args(){
     if(!boolAuto && !coreTensorDims_) {
       std::cerr << "ERROR: Please either enable Automatic rank determination, "
