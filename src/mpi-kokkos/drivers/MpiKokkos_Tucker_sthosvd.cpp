@@ -21,15 +21,18 @@ int main(int argc, char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
 
-    std::cout << "it's working" << std::endl;
-
     // parse cmd line and param file
     const auto paramfn = parse_cmdline_or(argc, (const char**)argv,
 					  "--parameter-file", "paramfile.txt");
     const InputParameters<scalar_t> inputs(paramfn);
-    if(rank == 0) { inputs.describe(); }
+    //int result_inputs_check_args = inputs.check_args();
+    if(rank == 0) {
+      //std::cout << "Argument checking: " << result_inputs_check_args << std::endl;
+      inputs.describe(); 
+    }
     
-
+    // TO CONTINUE
+    // SEE mpi AND kokkosonly CODES
 
 
   }
