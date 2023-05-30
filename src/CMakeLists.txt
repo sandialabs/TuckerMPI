@@ -61,7 +61,6 @@ ELSEIF(TUCKER_ENABLE_MPIPLUSKOKKOS)
 
   INCLUDE(CTest)
   enable_testing()
-  ADD_SUBDIRECTORY(kokkosonly)
   ADD_SUBDIRECTORY(mpi-kokkos)
 
 ELSE()
