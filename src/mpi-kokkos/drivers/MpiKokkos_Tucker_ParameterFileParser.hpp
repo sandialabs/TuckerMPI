@@ -1,8 +1,8 @@
 #ifndef MPIKOKKOS_TUCKER_PARAM_FILE_PARSER_HPP_
 #define MPIKOKKOS_TUCKER_PARAM_FILE_PARSER_HPP_
 
-#include "Tucker_SizeArray.hpp"
-#include "Tucker_ParameterFileParserUtils.hpp"
+#include "MpiKokkos_Tucker_SizeArray.hpp"       //!REPLACE WITH KOKKOSONLY SOURCE
+#include "Tucker_ParameterFileParserUtils.hpp"  //!NEED TO CALL KOKKOSONLY SOURCE
 #include <fstream>
 #include <iomanip>
 #include <vector>
