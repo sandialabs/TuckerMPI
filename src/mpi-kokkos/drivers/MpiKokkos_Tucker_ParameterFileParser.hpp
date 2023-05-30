@@ -1,8 +1,8 @@
 #ifndef MPIKOKKOS_TUCKER_PARAM_FILE_PARSER_HPP_
 #define MPIKOKKOS_TUCKER_PARAM_FILE_PARSER_HPP_
 
-#include "MpiKokkos_Tucker_SizeArray.hpp"       //!REPLACE WITH KOKKOSONLY SOURCE
-#include "Tucker_ParameterFileParserUtils.hpp"  //!NEED TO CALL KOKKOSONLY SOURCE
+#include "Tucker_SizeArray.hpp"
+#include "Tucker_ParameterFileParserUtils.hpp"
 #include <fstream>
 #include <iomanip>
 #include <vector>
@@ -31,8 +31,8 @@ struct InputParameters
   int scale_mode;
 
 private:
-  MpiKokkos_Tucker::SizeArray dataTensorDims_;
-  std::optional<MpiKokkos_Tucker::SizeArray> coreTensorDims_;
+  TuckerKokkos::SizeArray dataTensorDims_;
+  std::optional<TuckerKokkos::SizeArray> coreTensorDims_;
 
 public:
   InputParameters(const std::string & paramFile)
@@ -106,7 +106,7 @@ public:
 private:
   void parse(const std::vector<std::string>& fileAsStrings)
   {
-    using namespace MpiKokkos_Tucker;
+    using namespace TuckerKokkos;
     dataTensorDims_ = parse_size_array(fileAsStrings, "Global dims");
     nd = dataTensorDims_.size();
 

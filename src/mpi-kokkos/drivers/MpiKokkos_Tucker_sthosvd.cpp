@@ -1,5 +1,6 @@
-#include "MpiKokkos_Tucker_CmdLineParse.hpp"
-// #include "MpiKokkos_Tucker_ParameterFileParser.hpp" !TO IMPORT
+#include "Tucker_CmdLineParse.hpp"
+#include "MpiKokkos_Tucker_ParameterFileParser.hpp"
+
 #include <mpi.h>
 #include <Kokkos_Core.hpp>
 
@@ -23,12 +24,13 @@ int main(int argc, char* argv[])
     std::cout << "it's working" << std::endl;
 
     // parse cmd line and param file
-    /*
     const auto paramfn = parse_cmdline_or(argc, (const char**)argv,
 					  "--parameter-file", "paramfile.txt");
     const InputParameters<scalar_t> inputs(paramfn);
     if(rank == 0) { inputs.describe(); }
-    */
+    
+
+
 
   }
   Kokkos::finalize();
