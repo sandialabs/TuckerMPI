@@ -1,11 +1,11 @@
 #ifndef TUCKER_TTM_USING_KOKKOS_KERNELS_HPP_
 #define TUCKER_TTM_USING_KOKKOS_KERNELS_HPP_
 
-#include "Tucker_Tensor.hpp"
+#include "TuckerOnNode_Tensor.hpp"
 #include <Kokkos_Core.hpp>
 #include <KokkosBlas3_gemm.hpp>
 
-namespace TuckerKokkos{
+namespace TuckerOnNode{
 namespace impl{
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
@@ -91,5 +91,5 @@ ttm_kker_mode_greater_than_zero(Tensor<ScalarType, TensorProperties...> B,
 }
 
 }//end namespace impl
-}//end namespace TuckerKokkos
+}//end namespace Tucker
 #endif

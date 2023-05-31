@@ -3,9 +3,12 @@
 
 #include <string>
 
+namespace Tucker{
+
 std::string parse_cmdline_or(const int argc,
 			     const char* argv[],
 			     const std::string& cl_arg,
 			     const std::string& default_value);
 
+}
 #endif

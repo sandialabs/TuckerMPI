@@ -1,14 +1,14 @@
 #ifndef TUCKER_KOKKOSONLY_STHOSVD_HPP_
 #define TUCKER_KOKKOSONLY_STHOSVD_HPP_
 
-#include "Tucker_CoreTensorTruncator.hpp"
-#include "Tucker_Tensor.hpp"
-#include "Tucker_TuckerTensor.hpp"
-#include "Tucker_ComputeGram.hpp"
-#include "Tucker_ttm.hpp"
+#include "TuckerOnNode_CoreTensorTruncator.hpp"
+#include "TuckerOnNode_Tensor.hpp"
+#include "TuckerOnNode_TuckerTensor.hpp"
+#include "TuckerOnNode_ComputeGram.hpp"
+#include "TuckerOnNode_ttm.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace TuckerKokkos{
+namespace TuckerOnNode{
 
 template<class ScalarType, class ... Properties>
 auto compute_eigenvalues(Kokkos::View<ScalarType**, Properties...> G,

@@ -1,11 +1,10 @@
 #ifndef CORE_TENSOR_TRUNCATOR_HPP_
 #define CORE_TENSOR_TRUNCATOR_HPP_
 
-#include "Tucker_Tensor.hpp"
+#include "TuckerOnNode_Tensor.hpp"
 #include <variant>
 
-namespace TuckerKokkos{
-
+namespace TuckerOnNode{
 namespace impl{
 
 template <class ScalarType, class ...Properties>
@@ -33,8 +32,8 @@ std::size_t count_eigvals_using_threshold(Kokkos::View<ScalarType*, Properties..
 } //end namespace impl
 
 template <class ScalarType, class ...Properties>
-auto create_core_tensor_truncator(Tensor<ScalarType, Properties...> & dataTensor,
-				  const std::optional<SizeArray> & fixedCoreTensorRanks,
+auto create_core_tensor_truncator(TuckerOnNode::Tensor<ScalarType, Properties...> & dataTensor,
+				  const std::optional<Tucker::SizeArray> & fixedCoreTensorRanks,
 				  ScalarType tol)
 {
   return [=](std::size_t mode, auto eigenValues) -> std::size_t
@@ -62,6 +61,6 @@ auto create_core_tensor_truncator(Tensor<ScalarType, Properties...> & dataTensor
   };
 }
 
-}//end namespace TuckerKokkos
+}//end namespace Tucker
 
 #endif

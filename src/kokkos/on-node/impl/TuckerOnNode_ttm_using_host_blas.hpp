@@ -2,10 +2,10 @@
 #define TTM_IMPL_USING_HOST_BLAS_HPP_
 
 #include "Tucker_BlasWrapper.hpp"
-#include "Tucker_Tensor.hpp"
+#include "TuckerOnNode_Tensor.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace TuckerKokkos{
+namespace TuckerOnNode{
 namespace impl{
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
@@ -144,5 +144,5 @@ ttm_hostblas(Tensor<ScalarType, TensorProperties...> X,
 }
 
 } //end namespace impl
-} //endm namespace TuckerKokkos
+} //endm namespace Tucker
 #endif

@@ -2,10 +2,9 @@
 #define TUCKERKOKKOS_COMP_GRAM_HPP_
 
 #include "Tucker_BlasWrapper.hpp"
-#include "Tucker_Tensor.hpp"
+#include "TuckerOnNode_Tensor.hpp"
 
-namespace TuckerKokkos{
-
+namespace TuckerOnNode{
 namespace impl{
 
 template<class ScalarType, class MemorySpace>
@@ -112,7 +111,7 @@ template<class ScalarType, class ...Properties>
 auto compute_gram(Tensor<ScalarType, Properties...> & Y,
 		 const std::size_t n)
 {
-  using tensor_type = TuckerKokkos::Tensor<ScalarType, Properties...>;
+  using tensor_type = Tensor<ScalarType, Properties...>;
   using memory_space = typename tensor_type::traits::memory_space;
   const std::size_t nrows = Y.extent(n);
   Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space> S_d("S", nrows, nrows);

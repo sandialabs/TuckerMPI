@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "Tucker_Tensor.hpp"
-#include "Tucker_ttm.hpp"
+#include "TuckerOnNode_Tensor.hpp"
+#include "TuckerOnNode_ttm.hpp"
 
 #include "Tensor_3d_2x3x5_random.hpp"
 
@@ -21,8 +21,7 @@ TEST_F(Tensor_3d_2x3x5_random, ttm_mat7x2) {
     Kokkos::deep_copy(mat7x2, view2d_h);
 
     // TTM
-    TuckerKokkos::Tensor<scalar_t, memory_space> result =
-        TuckerKokkos::ttm(X, 0, mat7x2, false);
+    TuckerOnNode::Tensor<scalar_t, memory_space> result = TuckerOnNode::ttm(X, 0, mat7x2, false);
     scalar_t* data = result.data().data();
 
     // Few true data
@@ -70,8 +69,8 @@ TEST_F(Tensor_3d_2x3x5_random, ttm_mat2x7) {
     Kokkos::deep_copy(mat2x7, view2d_h);
 
     // TTM
-    TuckerKokkos::Tensor<scalar_t, memory_space> result =
-        TuckerKokkos::ttm(X, 0, mat2x7, true);
+    TuckerOnNode::Tensor<scalar_t, memory_space> result =
+        TuckerOnNode::ttm(X, 0, mat2x7, true);
     scalar_t* data = result.data().data();
 
     // Few true data
@@ -133,8 +132,8 @@ TEST_F(Tensor_3d_2x3x5_random, ttm_mat7x3) {
     Kokkos::deep_copy(mat7x3, view2d_h);
 
     // TTM
-    TuckerKokkos::Tensor<scalar_t, memory_space> result =
-        TuckerKokkos::ttm(X, 1, mat7x3, false);
+    TuckerOnNode::Tensor<scalar_t, memory_space> result =
+        TuckerOnNode::ttm(X, 1, mat7x3, false);
     scalar_t* data = result.data().data();
 
     // Few true data

@@ -1,6 +1,8 @@
 
 #include "Tucker_CmdLineParse.hpp"
 
+namespace Tucker{
+
 std::string parse_cmdline_or(const int argc,
 			     const char* argv[],
 			     const std::string& cl_arg,
@@ -22,4 +24,6 @@ std::string parse_cmdline_or(const int argc,
   }
   // return default value if not specified on command line
   return default_value;
+}
+
 }

@@ -5,7 +5,7 @@
 #include <fstream>
 #include <vector>
 
-namespace TuckerKokkos{
+namespace Tucker{
 
 /** \brief Parses a single option
  *

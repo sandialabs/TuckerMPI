@@ -3,7 +3,7 @@
 #include <limits>
 #include <cassert>
 
-namespace TuckerKokkos{
+namespace Tucker{
 
 SizeArray parse_size_array(const std::vector<std::string>& fileAsStrings,
 			 const std::string& keyword)
@@ -55,4 +55,4 @@ std::vector<std::string> read_file_as_strings(const std::string& fileToRead)
   return fileLines;
 }
 
-}
+}// end namespace Tucker

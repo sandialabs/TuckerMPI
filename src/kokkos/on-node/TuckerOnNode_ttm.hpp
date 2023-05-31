@@ -1,10 +1,10 @@
 #ifndef TTM_TOPLEVEL_HPP_
 #define TTM_TOPLEVEL_HPP_
 
-#include "./impl/Tucker_ttm_using_host_blas.hpp"
-#include "./impl/Tucker_ttm_using_kokkos_kernels.hpp"
+#include "./impl/TuckerOnNode_ttm_using_host_blas.hpp"
+#include "./impl/TuckerOnNode_ttm_using_kokkos_kernels.hpp"
 
-namespace TuckerKokkos{
+namespace TuckerOnNode{
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
 void ttm(Tensor<ScalarType, TensorProperties...> X,
@@ -40,7 +40,7 @@ auto ttm(Tensor<ScalarType, TensorProperties...> X,
 	 bool Utransp)
 {
   const std::size_t nrows = Utransp ? U.extent(1) : U.extent(0);
-  TuckerKokkos::SizeArray I(X.rank());
+  Tucker::SizeArray I(X.rank());
   for(std::size_t i=0; i< (std::size_t)I.size(); i++) {
     I[i] = (i != mode) ? X.extent(i) : nrows;
   }

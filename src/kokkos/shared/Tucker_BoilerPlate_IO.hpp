@@ -7,7 +7,7 @@
 #include <fstream>
 #include <vector>
 
-namespace TuckerKokkos{
+namespace Tucker{
 
 template <class DataType, class ...Properties>
 void fill_rank1_view_from_binary_file(Kokkos::View<DataType, Properties...> & v,
@@ -44,6 +44,6 @@ void fill_rank1_view_from_binary_file(Kokkos::View<DataType, Properties...> & v,
 }
 
 
-}// end namespace TuckerKokkos
+}// end namespace Tucker
 
 #endif /* TUCKER_IO_UTIL_HPP_ */

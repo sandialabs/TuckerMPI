@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Tucker_Tensor.hpp"
+#include "TuckerOnNode_Tensor.hpp"
 #include "Tucker_SizeArray.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -12,11 +12,11 @@ class Tensor_3d_2x3x5_random : public ::testing::Test {
 
     void SetUp() override {
         std::array<int, 3> dims = {2,3,5};
-        TuckerKokkos::SizeArray size(3);
+        Tucker::SizeArray size(3);
         size[0] = dims.at(0);
         size[1] = dims.at(1);
         size[2] = dims.at(2);
-        X = TuckerKokkos::Tensor<scalar_t, memory_space>(size);
+        X = TuckerOnNode::Tensor<scalar_t, memory_space>(size);
         auto view1d_d = X.data();
         auto view1d_h = Kokkos::create_mirror(view1d_d);
         view1d_h(0) = 2;    view1d_h(1) = 3;    view1d_h(2) = 5;    view1d_h(3) = 7;
@@ -30,5 +30,5 @@ class Tensor_3d_2x3x5_random : public ::testing::Test {
         Kokkos::deep_copy(view1d_d, view1d_h);
     }
     
-    TuckerKokkos::Tensor<scalar_t, memory_space> X;
+  TuckerOnNode::Tensor<scalar_t, memory_space> X;
 };

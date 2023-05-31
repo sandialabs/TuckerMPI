@@ -1,4 +1,5 @@
-set(SHARED_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../kokkosshared)
+set(SHARED_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../shared)
+set(ONNODE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../on-node)
 
 find_package(MPI)
 if(NOT ${MPI_FOUND})
@@ -18,7 +19,7 @@ find_package(KokkosKernels REQUIRED)
 set(ALL_TPLS_NEEDED Kokkos::kokkos Kokkos::kokkoskernels ${MPI_CXX_LIBRARIES})
 TARGET_LINK_LIBRARIES(${MpiKokkosTuckerLib} ${ALL_TPLS_NEEDED})
 
-include_directories(${SHARED_SRC} ${CMAKE_CURRENT_SOURCE_DIR} ${MPI_CXX_INCLUDE_PATH})
+include_directories(${SHARED_SRC} ${ONNODE_SRC} ${CMAKE_CURRENT_SOURCE_DIR} ${MPI_CXX_INCLUDE_PATH})
 
 # add tests
 
@@ -27,7 +28,7 @@ include_directories(${SHARED_SRC} ${CMAKE_CURRENT_SOURCE_DIR} ${MPI_CXX_INCLUDE_
 #
 set(STHOSVD_SOURCES)
 LIST(APPEND STHOSVD_SOURCES
-  ${CMAKE_CURRENT_SOURCE_DIR}/drivers/MpiKokkos_Tucker_sthosvd.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drivers/TuckerMpi_sthosvd.cpp
 )
 add_executable(MpiKokkosTucker_sthosvd ${STHOSVD_SOURCES})
 target_link_libraries(MpiKokkosTucker_sthosvd ${MpiKokkosTuckerLib} ${ALL_TPLS_NEEDED})

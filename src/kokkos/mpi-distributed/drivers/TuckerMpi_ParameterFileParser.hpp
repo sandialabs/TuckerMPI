@@ -8,6 +8,8 @@
 #include <vector>
 #include <optional>
 
+namespace TuckerMpiDistributed{
+
 template<class ScalarType>
 struct InputParameters
 {
@@ -24,8 +26,8 @@ struct InputParameters
   bool useButterflyTSQR;
   ScalarType tol;
   ScalarType stdThresh;
-  TuckerKokkos::SizeArray proc_grid_dims;
-  TuckerKokkos::SizeArray modeOrder;
+  Tucker::SizeArray proc_grid_dims;
+  Tucker::SizeArray modeOrder;
 
   std::string scaling_type;
   std::string sthosvd_dir;
@@ -40,13 +42,13 @@ struct InputParameters
   int scale_mode;
 
 private:
-  TuckerKokkos::SizeArray dataTensorDims_;
-  std::optional<TuckerKokkos::SizeArray> coreTensorDims_;
+  Tucker::SizeArray dataTensorDims_;
+  std::optional<Tucker::SizeArray> coreTensorDims_;
 
 public:
   InputParameters(const std::string & paramFile)
   {
-    const auto fileAsStrings = TuckerKokkos::read_file_as_strings(paramFile);
+    const auto fileAsStrings = Tucker::read_file_as_strings(paramFile);
     std::cout << fileAsStrings.size() << " " << fileAsStrings[0] << std::endl;
     parse(fileAsStrings);
   }
@@ -143,7 +145,7 @@ public:
 private:
   void parse(const std::vector<std::string>& fileAsStrings)
   {
-    using namespace TuckerKokkos;
+    using namespace Tucker;
     dataTensorDims_ = parse_size_array(fileAsStrings, "Global dims");
     nd = dataTensorDims_.size();
 
@@ -194,7 +196,7 @@ private:
     }
 
     if(!modeOrder.data()){
-      modeOrder = TuckerKokkos::SizeArray(nd);
+      modeOrder = Tucker::SizeArray(nd);
       for(int i=0; i<nd; i++){
         modeOrder.data()[i] = i;
         std::cout <<"modeOrder[" <<i<<"]: " << modeOrder.data()[i];
@@ -206,4 +208,5 @@ private:
   }
 };
 
+}
 #endif

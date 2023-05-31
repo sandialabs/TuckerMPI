@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
-#include "Tucker_Tensor.hpp"
+#include "TuckerOnNode_Tensor.hpp"
 #include "Tucker_SizeArray.hpp"
 #include <Kokkos_Core.hpp>
 
 TEST(tuckerkokkos, tensor_traits)
 {
-  using namespace TuckerKokkos;
+  using namespace TuckerOnNode;
 
   {
     using scalar_t = double;
@@ -37,9 +37,9 @@ TEST(tuckerkokkos, tensor_traits)
 
 TEST(tuckerkokkos, tensor_constructor)
 {
-  using namespace TuckerKokkos;
+  using namespace TuckerOnNode;
   using scalar_t = double;
-  SizeArray sa(3);
+  Tucker::SizeArray sa(3);
   sa[0] = 2;
   sa[1] = 1;
   sa[2] = 5;
@@ -49,9 +49,9 @@ TEST(tuckerkokkos, tensor_constructor)
 
 TEST(tuckerkokkos, tensor_constructor_view_zeros)
 {
-  using namespace TuckerKokkos;
+  using namespace TuckerOnNode;
   using scalar_t = double;
-  SizeArray sa(3);
+  Tucker::SizeArray sa(3);
   sa[0] = 2;
   sa[1] = 1;
   sa[2] = 5;
@@ -64,9 +64,9 @@ TEST(tuckerkokkos, tensor_constructor_view_zeros)
 
 TEST(tuckerkokkos, tensor_copy_constructor_shallow_copy)
 {
-  using namespace TuckerKokkos;
+  using namespace TuckerOnNode;
   using scalar_t = double;
-  SizeArray sa(3);
+  Tucker::SizeArray sa(3);
   sa[0] = 2;
   sa[1] = 1;
   sa[2] = 5;
@@ -85,9 +85,9 @@ TEST(tuckerkokkos, tensor_copy_constructor_shallow_copy)
 
 TEST(tuckerkokkos, tensor_copy_assign_shallow_copy)
 {
-  using namespace TuckerKokkos;
+  using namespace TuckerOnNode;
   using scalar_t = double;
-  SizeArray sa(3);
+  Tucker::SizeArray sa(3);
   sa[0] = 2; sa[1] = 1; sa[2] = 5;
   Tensor<scalar_t> x(sa);
   x.fillRandom(1., 5.);
@@ -105,20 +105,20 @@ TEST(tuckerkokkos, tensor_copy_assign_shallow_copy)
 
 TEST(tuckerkokkos, tensor_N)
 {
-  using namespace TuckerKokkos;
+  using namespace TuckerOnNode;
   using scalar_t = double;
   using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
-  SizeArray sa(3);
+  Tucker::SizeArray sa(3);
   Tensor<scalar_t, memory_space> x(sa);
   ASSERT_EQ(x.rank(), 3);
 }
 
 TEST(tuckerkokkos, tensor_size)
 {
-  using namespace TuckerKokkos;
+  using namespace TuckerOnNode;
   using scalar_t = double;
   using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
-  SizeArray sa(3);
+  Tucker::SizeArray sa(3);
   sa[0] = 5; sa[1] = 7; sa[2] = 9;
   Tensor<scalar_t, memory_space> x(sa);
   ASSERT_EQ(x.extent(0), 5);
@@ -128,9 +128,9 @@ TEST(tuckerkokkos, tensor_size)
 
 TEST(tuckerkokkos, tensor_frobeniusNormSquared)
 {
-  using namespace TuckerKokkos;
+  using namespace TuckerOnNode;
   using scalar_t = double;
-  SizeArray sa(3);
+  Tucker::SizeArray sa(3);
   sa[0] = 2; sa[1] = 3; sa[2] = 4;
   // tensor
   Tensor<scalar_t> x(sa);

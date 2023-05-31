@@ -1,4 +1,4 @@
-set(SHARED_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../kokkosshared)
+set(SHARED_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../shared)
 
 set(KokkosOnlyTuckerLib kokkosonly_tucker)
 set(SOURCES)
@@ -26,7 +26,7 @@ add_subdirectory(tests)
 #
 set(STHOSVD_SOURCES)
 LIST(APPEND STHOSVD_SOURCES
-  ${CMAKE_CURRENT_SOURCE_DIR}/drivers/Tucker_sthosvd.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drivers/TuckerOnNode_sthosvd.cpp
 )
 add_executable(Tucker_sthosvd ${STHOSVD_SOURCES})
 target_link_libraries(Tucker_sthosvd ${KokkosOnlyTuckerLib} ${ALL_TPLS_NEEDED})

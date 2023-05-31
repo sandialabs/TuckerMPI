@@ -9,7 +9,7 @@
 #include <fstream>
 #include <iomanip>
 
-namespace TuckerKokkos{
+namespace TuckerOnNode{
 
 namespace impl{
 template<class Enable, class ScalarType, class ...Properties>
@@ -42,7 +42,7 @@ public:
   using traits = impl::TensorTraits<void, ScalarType, Properties...>;
 
   Tensor() = default;
-  Tensor(const SizeArray & szIn)
+  Tensor(const Tucker::SizeArray & szIn)
     : sizeArrayInfo_(szIn)
   {
     // Compute the total number of entries in this tensor
@@ -52,7 +52,7 @@ public:
 
   std::size_t rank() const{ return sizeArrayInfo_.size(); }
 
-  const SizeArray& sizeArray() const{ return sizeArrayInfo_; }
+  const Tucker::SizeArray& sizeArray() const{ return sizeArrayInfo_; }
 
   std::size_t extent(std::size_t mode) const { return sizeArrayInfo_[mode]; }
 
@@ -87,7 +87,7 @@ public:
 
 private:
   view_type data_;
-  SizeArray sizeArrayInfo_;
+  Tucker::SizeArray sizeArrayInfo_;
 };
 
 template <class ScalarType, class MemorySpace>
@@ -96,7 +96,7 @@ void import_tensor_binary(Tensor<ScalarType, MemorySpace> & X,
 {
   auto view1d_d = X.data();
   auto view1d_h = Kokkos::create_mirror(view1d_d);
-  fill_rank1_view_from_binary_file(view1d_h, filename);
+  Tucker::fill_rank1_view_from_binary_file(view1d_h, filename);
   Kokkos::deep_copy(view1d_d, view1d_h);
 }
 
@@ -130,5 +130,5 @@ void export_tensor_binary(const Tensor<scalar_t, mem_space> & Y,
   ofs.close();
 }
 
-}
+} // end namespace Tucker
 #endif

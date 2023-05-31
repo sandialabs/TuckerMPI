@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 
-namespace TuckerKokkos {
+namespace Tucker{
 
 class SizeArray
 {
@@ -77,6 +77,6 @@ private:
   std::vector<int> sz_;
 };
 
-} // end of namespace
+} // end of namespace Tucker
 
 #endif /* SIZEARRAY_HPP_ */

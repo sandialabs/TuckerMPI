@@ -1,10 +1,10 @@
 #ifndef TUCKER_KOKKOSONLY_TUCKERTENSOR_HPP_
 #define TUCKER_KOKKOSONLY_TUCKERTENSOR_HPP_
 
-#include "Tucker_Tensor.hpp"
+#include "TuckerOnNode_Tensor.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace TuckerKokkos{
+namespace TuckerOnNode{
 
 template<class ScalarType, class MemorySpace>
 class TuckerTensor
@@ -38,7 +38,7 @@ public:
 
 private:
   int N;
-  Tensor<ScalarType, MemorySpace> G;
+  TuckerOnNode::Tensor<ScalarType, MemorySpace> G;
   std::vector< Kokkos::View<ScalarType*, MemorySpace> > eigenvalues;
   std::vector< Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> > singularvectors;
 };
