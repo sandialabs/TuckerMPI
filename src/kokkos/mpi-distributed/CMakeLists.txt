@@ -12,6 +12,7 @@ LIST(APPEND SOURCES
   ${SHARED_SRC}/Tucker_CmdLineParse.cpp
   ${SHARED_SRC}/Tucker_ParameterFileParserUtils.cpp
   ${SHARED_SRC}/Tucker_SizeArray.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/TuckerMpi_Map.cpp
 )
 ADD_LIBRARY(${MpiKokkosTuckerLib} SHARED ${SOURCES})
 
