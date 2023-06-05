@@ -70,14 +70,14 @@ const MPI_Comm& ProcessorGrid::getComm(bool squeezed) const
   return cartComm_;
 }
 
-void ProcessorGrid::getCoordinates(int* coords) const
+void ProcessorGrid::getCoordinates(std::vector<int> & coords) const
 {
   int globalRank;
   MPI_Comm_rank(cartComm_, &globalRank);
   getCoordinates(coords, globalRank);
 }
 
-void ProcessorGrid::getCoordinates(int* coords, int globalRank) const
+void ProcessorGrid::getCoordinates(std::vector<int> & coords, int globalRank) const
 {
   int ndims = size_.size();
   MPI_Cart_coords(cartComm_, globalRank, ndims, coords);
@@ -99,7 +99,7 @@ const MPI_Comm& ProcessorGrid::getColComm(const int d, bool squeezed) const
   return colcomms_[d];
 }
 
-int ProcessorGrid::getRank(const int* coords) const
+int ProcessorGrid::getRank(const std::vector<int> & coords) const
 {
   int rank;
   MPI_Cart_rank(cartComm_,(int*)coords,&rank);
