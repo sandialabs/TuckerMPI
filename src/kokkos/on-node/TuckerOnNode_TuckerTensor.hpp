@@ -6,60 +6,110 @@
 
 namespace TuckerOnNode{
 
-template<class ScalarType, class MemorySpace>
+namespace impl{
+template<class Enable, class ...Args>
+struct TuckerTensorTraits;
+
+template<class ScalarType, class ...Props>
+struct TuckerTensorTraits<void, Tensor<ScalarType, Props...> >
+{
+  using core_tensor_type          = Tensor<ScalarType, Props...>;
+  using value_type                = typename core_tensor_type::traits::view_type::value_type;
+  using memory_space              = typename core_tensor_type::traits::memory_space;
+  using eigenvalues_store_view_t  = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
+  using eigenvectors_store_view_t = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
+};
+
+struct PerModeSliceInfo{
+  std::size_t eigvalsStartIndex        = {};
+  std::size_t eigvalsEndIndexExclusive = {};
+  std::size_t eigvecsStartIndex        = {};
+  std::size_t eigvecsEndIndexExclusive = {};
+  std::size_t eigvecsExtent0           = {};
+  std::size_t eigvecsExtent1	       = {};
+};
+}//end namespace impl
+
+template<class ...Args>
 class TuckerTensor
 {
+  // the slicing info is stored on the host, most likely we do not need it on device
+  // based on similar arguments as to SizeArray for the Tensor class
+  using slicing_info_view_t = Kokkos::View<impl::PerModeSliceInfo*, Kokkos::HostSpace>;
+
 public:
-  TuckerTensor(const int ndims)
-    : N(ndims), eigenvalues(ndims), singularvectors(ndims)
+  using traits = impl::TuckerTensorTraits<void, Args...>;
+
+  TuckerTensor() = default;
+
+  template<class EigvalsViewType, class EigvecsViewType>
+  TuckerTensor(typename traits::core_tensor_type coreTensor,
+	       EigvalsViewType eigvals,
+	       EigvecsViewType eigvecs,
+	       slicing_info_view_t slicingInfo)
+    : rank_(slicingInfo.extent(0)),
+      coreTensor_(coreTensor),
+      eigenvalues_("eigenvalues", eigvals.extent(0)),
+      eigenvectors_("eigenvectors", eigvecs.extent(0)),
+      perModeSlicingInfo_(slicingInfo)
   {
-    assert(ndims > 0);
+    namespace KEX = Kokkos::Experimental;
+    using exespace = typename EigvalsViewType::execution_space;
+    KEX::copy(exespace(), eigvals, eigenvalues_);
+    KEX::copy(exespace(), eigvecs, eigenvectors_);
   }
 
-  Kokkos::View<ScalarType*, MemorySpace> eigValsAt(int n) const {
-    return eigenvalues[n];
+  int rank() const{ return rank_; }
+
+  typename traits::core_tensor_type coreTensor(){ return coreTensor_; }
+
+  auto eigenvalues(int mode){
+    const auto & sliceInfo = perModeSlicingInfo_(mode);
+    const std::size_t a = sliceInfo.eigvalsStartIndex;
+    const std::size_t b = sliceInfo.eigvalsEndIndexExclusive;
+    return Kokkos::subview(eigenvalues_, std::pair{a, b});
   }
 
-  Kokkos::View<ScalarType*, MemorySpace> & eigValsAt(int n) {
-    return eigenvalues[n];
-  }
+  auto eigenvectors(int mode)
+  {
+    //FIXME: adapt this to support striding
+    if (!eigenvectors_.span_is_contiguous()){
+      throw std::runtime_error("eigenvectors: currently, span must be contiguous");
+    }
 
-  Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> eigVecsAt(int n){
-    return singularvectors[n];
-  }
+    using eigenvectors_layout = typename traits::eigenvectors_store_view_t::array_layout;
+    using umv_type = Kokkos::View<typename traits::value_type**, eigenvectors_layout,
+				  Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
-  Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> eigVecsAt(int n) const{
-    return singularvectors[n];
+    const auto & sliceInfo = perModeSlicingInfo_(mode);
+    auto ptr = eigenvectors_.data() + sliceInfo.eigvecsStartIndex;
+    umv_type eigVecs(ptr, sliceInfo.eigvecsExtent0, sliceInfo.eigvecsExtent1);
+    return eigVecs;
   }
-
-  int numDims() const{ return N; }
-  auto const & getG() const{ return G; }
-  auto & getG(){ return G; }
 
 private:
-  int N;
-  TuckerOnNode::Tensor<ScalarType, MemorySpace> G;
-  std::vector< Kokkos::View<ScalarType*, MemorySpace> > eigenvalues;
-  std::vector< Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> > singularvectors;
+  int rank_ = {};
+  typename traits::core_tensor_type coreTensor_ = {};
+  typename traits::eigenvalues_store_view_t eigenvalues_ = {};
+  typename traits::eigenvectors_store_view_t eigenvectors_ = {};
+  slicing_info_view_t perModeSlicingInfo_ = {};
 };
 
 
-template <class ScalarType, class MemorySpace>
-void print_eigenvalues(const TuckerTensor<ScalarType, MemorySpace> & factorization,
+template <class ScalarType, class ...Props>
+void print_eigenvalues(TuckerTensor<ScalarType, Props...> factorization,
 		       const std::string& filePrefix,
 		       bool useLQ)
 {
-  const int nmodes = factorization.numDims();
+  const int nmodes = factorization.rank();
 
   for(int mode=0; mode<nmodes; mode++) {
     std::ostringstream ss;
     ss << filePrefix << mode << ".txt";
     std::ofstream ofs(ss.str());
     // Determine the number of eigenvalues for this mode
-    auto eigVals_view = factorization.eigValsAt(mode);
-    auto eigVals_view_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{},
-                    eigVals_view);
-    const int nevals = eigVals_view.extent(0);
+    auto eigvals = factorization.eigenvalues(mode);
+    const int nevals = eigvals.extent(0);
 
     // if(useLQ){
     //   for(int i=0; i<nevals; i++) {
@@ -71,7 +121,7 @@ void print_eigenvalues(const TuckerTensor<ScalarType, MemorySpace> & factorizati
     // else{
       for(int i=0; i<nevals; i++) {
         ofs << std::setprecision(16)
-      << eigVals_view_h(i)
+      << eigvals(i)
       << std::endl;
       }
    //}

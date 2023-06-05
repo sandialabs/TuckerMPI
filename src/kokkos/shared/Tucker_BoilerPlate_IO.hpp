@@ -6,6 +6,7 @@
 #include <Kokkos_StdAlgorithms.hpp>
 #include <fstream>
 #include <vector>
+#include <iomanip>
 
 namespace Tucker{
 
@@ -43,6 +44,33 @@ void fill_rank1_view_from_binary_file(Kokkos::View<DataType, Properties...> & v,
   std::copy(stdVec.cbegin(), stdVec.cend(), Kokkos::Experimental::begin(v));
 }
 
+template <class DataType, class ...Properties>
+void write_view_to_stream(std::ostream & out,
+			  Kokkos::View<DataType, Properties...> v,
+			  int precision = 8)
+{
+  using view_type = Kokkos::View<DataType, Properties...>;
+  static_assert(view_type::rank <= 2);
+  static_assert(std::is_same_v<typename view_type::array_layout, Kokkos::LayoutRight> ||
+		std::is_same_v<typename view_type::array_layout, Kokkos::LayoutLeft>);
+
+  out << "\n";
+  auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), v);
+  if constexpr(view_type::rank == 1){
+    for (std::size_t i=0; i<v_h.extent(0); ++i){
+      out << std::setprecision(precision) << v_h(i) << "\n";
+    }
+  }
+  else if constexpr(view_type::rank == 2){
+    for (std::size_t i=0; i<v_h.extent(0); ++i){
+      for (std::size_t j=0; j<v_h.extent(1); ++j){
+	out << std::setprecision(precision) << v_h(i,j) << "  ";
+      }
+      out << " \n ";
+    }
+  }
+  out << "\n";
+}
 
 }// end namespace Tucker
 
