@@ -1,5 +1,4 @@
 #include "TuckerMpi_ProcessorGrid.hpp"
-#include "Tucker_Util.hpp"
 
 namespace TuckerMpiDistributed {
 
@@ -8,8 +7,8 @@ ProcessorGrid::ProcessorGrid(const Tucker::SizeArray& sz,
         size_(sz.size()),
         squeezed_(false),
         cartComm_squeezed_(MPI_COMM_NULL),
-        rowcomms_squeezed_(0),
-        colcomms_squeezed_(0)
+        rowcomms_squeezed_(),
+        colcomms_squeezed_()
 
 {
   int ndims = sz.size();
@@ -33,23 +32,23 @@ ProcessorGrid::ProcessorGrid(const Tucker::SizeArray& sz,
   }
 
   // Create a virtual topology MPI communicator
-  int* periods = std::vector<int>(ndims);
+  std::vector<int> periods(ndims);
   for(int i=0; i<ndims; i++) periods[i] = 1;
   int reorder = 0;
-  MPI_Cart_create(comm, ndims, (int*)sz.data(), periods,
+  MPI_Cart_create(comm, ndims, (int*)sz.data(), periods.data(),
       reorder, &cartComm_);
 
   // Allocate memory for subcommunicators
-  rowcomms_ = std::vector<MPI_Comm>(ndims);
-  colcomms_ = std::vector<MPI_Comm>(ndims);
+  std::vector<MPI_Comm> rowcomms_(ndims);
+  std::vector<MPI_Comm> colcomms_(ndims);
 
   // Get the subcommunicators
-  int* remainDims = std::vector<int>(ndims);
+  std::vector<int> remainDims(ndims);
   for(int i=0; i<ndims; i++) remainDims[i] = 0;
   for(int i=0; i<ndims; i++)
   {
     remainDims[i] = 1;
-    MPI_Cart_sub(cartComm_, remainDims, &(colcomms_[i]));
+    MPI_Cart_sub(cartComm_, remainDims.data(), &(colcomms_[i]));
     remainDims[i] = 0;
   }
 
@@ -57,7 +56,7 @@ ProcessorGrid::ProcessorGrid(const Tucker::SizeArray& sz,
   for(int i=0; i<ndims; i++)
   {
     remainDims[i] = 0;
-    MPI_Cart_sub(cartComm_, remainDims, &(rowcomms_[i]));
+    MPI_Cart_sub(cartComm_, remainDims.data(), &(rowcomms_[i]));
     remainDims[i] = 1;
   }
 }
@@ -80,7 +79,7 @@ void ProcessorGrid::getCoordinates(std::vector<int> & coords) const
 void ProcessorGrid::getCoordinates(std::vector<int> & coords, int globalRank) const
 {
   int ndims = size_.size();
-  MPI_Cart_coords(cartComm_, globalRank, ndims, coords);
+  MPI_Cart_coords(cartComm_, globalRank, ndims, coords.data());
 }
 
 const MPI_Comm& ProcessorGrid::getRowComm(const int d, bool squeezed) const
@@ -102,7 +101,7 @@ const MPI_Comm& ProcessorGrid::getColComm(const int d, bool squeezed) const
 int ProcessorGrid::getRank(const std::vector<int> & coords) const
 {
   int rank;
-  MPI_Cart_rank(cartComm_,(int*)coords,&rank);
+  MPI_Cart_rank(cartComm_, coords.data(), &rank);
   return rank;
 }
 
@@ -138,23 +137,23 @@ void ProcessorGrid::squeeze(const Tucker::SizeArray& sz, const MPI_Comm& comm)
   }
 
   // Create a virtual topology MPI communicator
-  int* periods = std::vector<int>(ndims);
+  std::vector<int> periods(ndims);
   for(int i=0; i<ndims; i++) periods[i] = 1;
   int reorder = 0;
-  MPI_Cart_create(comm, ndims, (int*)sz.data(), periods,
+  MPI_Cart_create(comm, ndims, (int*)sz.data(), periods.data(),
       reorder, &cartComm_squeezed_);
 
   // Allocate memory for subcommunicators
-  rowcomms_squeezed_ = std::vector<MPI_Comm>(ndims);
-  colcomms_squeezed_ = std::vector<MPI_Comm>(ndims);
+  std::vector<MPI_Comm> rowcomms_squeezed_(ndims);
+  std::vector<MPI_Comm> colcomms_squeezed_(ndims);
 
   // Get the subcommunicators
-  int* remainDims = std::vector<int>(ndims);
+  std::vector<int> remainDims(ndims);
   for(int i=0; i<ndims; i++) remainDims[i] = 0;
   for(int i=0; i<ndims; i++)
   {
     remainDims[i] = 1;
-    MPI_Cart_sub(cartComm_squeezed_, remainDims, &(colcomms_squeezed_[i]));
+    MPI_Cart_sub(cartComm_squeezed_, remainDims.data(), &(colcomms_squeezed_[i]));
     remainDims[i] = 0;
   }
 
@@ -162,12 +161,12 @@ void ProcessorGrid::squeeze(const Tucker::SizeArray& sz, const MPI_Comm& comm)
   for(int i=0; i<ndims; i++)
   {
     remainDims[i] = 0;
-    MPI_Cart_sub(cartComm_squeezed_, remainDims, &(rowcomms_squeezed_[i]));
+    MPI_Cart_sub(cartComm_squeezed_, remainDims.data(), &(rowcomms_squeezed_[i]));
     remainDims[i] = 1;
   }
 }
 
-const Tucker::SizeArray getSizeArray() const
+const Tucker::SizeArray ProcessorGrid::getSizeArray() const
 {
   return size_;
 }
