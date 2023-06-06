@@ -115,7 +115,8 @@ ProcessorGrid::~ProcessorGrid()
       MPI_Comm_free(colcomms_+i);
     }
   }
-  // old delete MemoryManager things
+  Tucker::MemoryManager::safe_delete_array<MPI_Comm>(rowcomms_,ndims);
+  Tucker::MemoryManager::safe_delete_array<MPI_Comm>(colcomms_,ndims);
   if(squeezed_) {
     if(!finalized) {
       MPI_Comm_free(&cartComm_squeezed_);
@@ -124,7 +125,8 @@ ProcessorGrid::~ProcessorGrid()
         MPI_Comm_free(colcomms_squeezed_+i);
       }
     }
-    // old delete MemoryManager things
+    Tucker::MemoryManager::safe_delete_array<MPI_Comm>(rowcomms_squeezed_,ndims);
+    Tucker::MemoryManager::safe_delete_array<MPI_Comm>(colcomms_squeezed_,ndims);
   }
 }
 
