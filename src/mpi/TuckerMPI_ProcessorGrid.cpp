@@ -211,7 +211,7 @@ void ProcessorGrid::squeeze(const Tucker::SizeArray& sz, const MPI_Comm& comm)
   }
 
   // Create a virtual topology MPI communicator
-  int* periods = std::vector<int>(ndims);
+  int* periods = Tucker::MemoryManager::safe_new_array<int>(ndims);
   for(int i=0; i<ndims; i++) periods[i] = 1;
   int reorder = 0;
   MPI_Cart_create(comm, ndims, (int*)sz.data(), periods,
@@ -219,8 +219,8 @@ void ProcessorGrid::squeeze(const Tucker::SizeArray& sz, const MPI_Comm& comm)
   Tucker::MemoryManager::safe_delete_array<int>(periods,ndims);
 
   // Allocate memory for subcommunicators
-  rowcomms_squeezed_ = std::vector<MPI_Comm>(ndims);
-  colcomms_squeezed_ = std::vector<MPI_Comm>(ndims);
+  rowcomms_squeezed_ = Tucker::MemoryManager::safe_new_array<MPI_Comm>(ndims);
+  colcomms_squeezed_ = Tucker::MemoryManager::safe_new_array<MPI_Comm>(ndims);
 
   // Get the subcommunicators
   int* remainDims = Tucker::MemoryManager::safe_new_array<int>(ndims);
