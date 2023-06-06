@@ -22,6 +22,7 @@ TARGET_LINK_LIBRARIES(${MpiKokkosTuckerLib} ${ALL_TPLS_NEEDED})
 include_directories(${SHARED_SRC} ${ONNODE_SRC} ${CMAKE_CURRENT_SOURCE_DIR} ${MPI_CXX_INCLUDE_PATH})
 
 # add tests
+add_subdirectory(tests)
 
 #
 # create executable for sthosvd
