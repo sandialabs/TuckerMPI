@@ -14,7 +14,7 @@ public:
     const Tucker::SizeArray& procs);
   const Tucker::SizeArray& getLocalDims() const;          //! Returns the dimensions of the locally owned portion of the N-dimensional grid  
   const Tucker::SizeArray& getGlobalDims() const;         //! Returns the dimensions of the N-dimensional grid
-  const ProcessorGrid getProcessorGrid() const;           //! Returns the processor grid
+  const ProcessorGrid & getProcessorGrid() const;         //! Returns the processor grid
   const Map* getMap(int dimension, bool squeezed) const;  //! Returns the map of a given dimension
   const MPI_Comm& getComm(bool squeezed) const;
   bool ownNothing() const;
@@ -27,8 +27,8 @@ private:
   Tucker::SizeArray globalDims_;                    //! The global Cartesian grid size
   ProcessorGrid grid_;                              //! Maps MPI processes to a grid
   //! The maps describing the parallel distribution in each dimension
-  std::vector<Map*> maps_;
-  std::vector<Map*> maps_squeezed_;
+  std::vector<Map> maps_;
+  std::vector<Map> maps_squeezed_;
   bool ownNothing_;
   bool squeezed_;
 };
