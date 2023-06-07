@@ -39,8 +39,8 @@ ProcessorGrid::ProcessorGrid(const Tucker::SizeArray& sz,
       reorder, &cartComm_);
 
   // Allocate memory for subcommunicators
-  std::vector<MPI_Comm> rowcomms_(ndims);
-  std::vector<MPI_Comm> colcomms_(ndims);
+  rowcomms_ = std::vector<MPI_Comm>(ndims);
+  colcomms_ = std::vector<MPI_Comm>(ndims);
 
   // Get the subcommunicators
   std::vector<int> remainDims(ndims);
