@@ -19,7 +19,7 @@ Map::Map(int globalNumEntries, const MPI_Comm& comm) :
 	// assert(globalNumEntries > nprocs);
 
   // Determine the number of entries owned by each process
-  numElementsPerProc_(nprocs);
+  numElementsPerProc_ = Tucker::SizeArray(nprocs);
 
   for(int rank=0; rank<nprocs; rank++) {
     numElementsPerProc_[rank] = globalNumEntries/nprocs;
@@ -28,7 +28,7 @@ Map::Map(int globalNumEntries, const MPI_Comm& comm) :
   }
 
   // Determine the row offsets for each process
-  offsets_(nprocs+1);
+  offsets_ = Tucker::SizeArray(nprocs+1);
 
   offsets_[0] = 0;
   for(int rank=1; rank<=nprocs; rank++) {
