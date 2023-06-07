@@ -1,6 +1,7 @@
 #include <algorithm>
 #include "TuckerMpi_Distribution.hpp"
 #include "mpi.h"
+#include <cassert>
 #include <limits>
 
 namespace TuckerMpiDistributed {
@@ -18,7 +19,7 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
   for(int i=0; i<ndims; i++) {
     globalDims_[i] = dims[i];
   }
-  grid_ = TuckerMpi::ProcessorGrid(procs,MPI_COMM_WORLD);
+  grid_ = TuckerMpiDistributed::ProcessorGrid(procs, MPI_COMM_WORLD);
   // Create the maps
   createMaps();
 
@@ -32,7 +33,7 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
 
   if(squeezed_) {
     // Create a map for each dimension
-    maps_squeezed_ = std::vector<Map*>(ndims);
+    maps_squeezed_ = std::vector<Map>(ndims);
     for(int d=0; d<ndims; d++) {
       const MPI_Comm& comm = grid_.getColComm(d,false);
       maps_squeezed_[d] = TuckerMpiDistributed::Map(globalDims_[d], comm);
@@ -75,7 +76,7 @@ const Tucker::SizeArray& Distribution::getGlobalDims() const
   return globalDims_;
 }
 
-const ProcessorGrid & Distribution::getProcessorGrid() const
+const ProcessorGrid& Distribution::getProcessorGrid() const
 {
   return grid_;
 }
@@ -83,9 +84,9 @@ const ProcessorGrid & Distribution::getProcessorGrid() const
 const Map* Distribution::getMap(int dimension, bool squeezed) const
 {
   if(squeezed && squeezed_) {
-    return maps_squeezed_[dimension];
+    return &maps_squeezed_[dimension];
   }
-  return maps_[dimension];
+  return &maps_[dimension];
 }
 
 const MPI_Comm& Distribution::getComm(bool squeezed) const
@@ -137,7 +138,7 @@ void Distribution::findAndEliminateEmptyProcs(MPI_Comm& newcomm)
             coords[j] = (i/divnum) % grid_.getNumProcs(j,false);
             divnum *= grid_.getNumProcs(j,false);
           }
-          emptyProcs.push_back(grid_.getRank(coords.data()));
+          emptyProcs.push_back(grid_.getRank(coords));
         }
       }
     }
