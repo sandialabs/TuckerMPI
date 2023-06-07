@@ -10,11 +10,11 @@ class ProcessorGrid {
 public:
   ProcessorGrid(const Tucker::SizeArray& sz, const MPI_Comm& comm);
   const MPI_Comm& getComm(bool squeezed) const;                 //! Returns the MPI communicator
-  const MPI_Comm& getRowComm(const int d, bool squeezed) const; //! Returns the row communicator for dimension d
-  const MPI_Comm& getColComm(const int d, bool squeezed) const; //! Returns the row communicator for dimension d
+  const MPI_Comm& getRowComm(int d, bool squeezed) const; //! Returns the row communicator for dimension d
+  const MPI_Comm& getColComm(int d, bool squeezed) const; //! Returns the row communicator for dimension d
   int getNumProcs(int d, bool squeezed) const;                  //! Gets the number of MPI processors in a given dimension
   void squeeze(const Tucker::SizeArray& sz, const MPI_Comm& comm);
-  const Tucker::SizeArray getSizeArray() const;
+  const Tucker::SizeArray & getSizeArray() const;
 
   // Just for debugging >>
   int getRank(const std::vector<int> & coords) const;   //! Returns the rank of the MPI process at a given coordinate

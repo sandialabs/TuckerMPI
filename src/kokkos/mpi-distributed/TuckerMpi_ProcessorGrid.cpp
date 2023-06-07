@@ -82,7 +82,7 @@ void ProcessorGrid::getCoordinates(std::vector<int> & coords, int globalRank) co
   MPI_Cart_coords(cartComm_, globalRank, ndims, coords.data());
 }
 
-const MPI_Comm& ProcessorGrid::getRowComm(const int d, bool squeezed) const
+const MPI_Comm& ProcessorGrid::getRowComm(int d, bool squeezed) const
 {
   if(squeezed && squeezed_) {
     return rowcomms_squeezed_[d];
@@ -90,7 +90,7 @@ const MPI_Comm& ProcessorGrid::getRowComm(const int d, bool squeezed) const
   return rowcomms_[d];
 }
 
-const MPI_Comm& ProcessorGrid::getColComm(const int d, bool squeezed) const
+const MPI_Comm& ProcessorGrid::getColComm(int d, bool squeezed) const
 {
   if(squeezed && squeezed_) {
     return colcomms_squeezed_[d];
@@ -166,7 +166,7 @@ void ProcessorGrid::squeeze(const Tucker::SizeArray& sz, const MPI_Comm& comm)
   }
 }
 
-const Tucker::SizeArray ProcessorGrid::getSizeArray() const
+const Tucker::SizeArray & ProcessorGrid::getSizeArray() const
 {
   return size_;
 }
