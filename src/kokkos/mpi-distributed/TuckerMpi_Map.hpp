@@ -9,6 +9,7 @@ namespace TuckerMpiDistributed {
 class Map {
 
 public:
+  Map() = default;
   Map(int globalNumEntries, const MPI_Comm& comm);
   int getLocalIndex(int globalIndex) const;
   int getGlobalIndex(int localIndex) const;
