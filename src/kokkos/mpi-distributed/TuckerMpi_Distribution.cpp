@@ -24,7 +24,7 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
 
   // Copy local dimensions to localDims_
   for(int d=0; d<ndims; d++) {
-    localDims_[d] = maps_[d]->getLocalNumEntries();
+    localDims_[d] = maps_[d].getLocalNumEntries();
   }
 
   MPI_Comm comm;
@@ -34,19 +34,19 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
     // Create a map for each dimension
     maps_squeezed_ = std::vector<Map*>(ndims);
     for(int d=0; d<ndims; d++) {
-      const MPI_Comm& comm = grid_->getColComm(d,false);
+      const MPI_Comm& comm = grid_.getColComm(d,false);
       maps_squeezed_[d] = TuckerMpiDistributed::Map(globalDims_[d], comm);
     }
 
     // Remove the empty processes from the map communicators
     for(int i=0; i<ndims; i++) {
-      maps_squeezed_[i]->removeEmptyProcs();
+      maps_squeezed_[i].removeEmptyProcs();
     }
 
     // Determine whether I own nothing
     ownNothing_ = false;
     for(int i=0; i<ndims; i++) {
-      if(maps_[i]->getLocalNumEntries() == 0) {
+      if(maps_[i].getLocalNumEntries() == 0) {
         ownNothing_ = true;
         break;
       }
@@ -75,7 +75,7 @@ const Tucker::SizeArray& Distribution::getGlobalDims() const
   return globalDims_;
 }
 
-const ProcessorGrid Distribution::getProcessorGrid() const
+const ProcessorGrid & Distribution::getProcessorGrid() const
 {
   return grid_;
 }
@@ -103,10 +103,10 @@ void Distribution::createMaps()
   int ndims = globalDims_.size();
 
   // Create a map for each dimension
-  maps_ = std::vector<Map*>(ndims);
+  maps_ = std::vector<Map>(ndims);
   for(int d=0; d<ndims; d++) {
-    const MPI_Comm& comm = grid_->getColComm(d,false);
-    maps_[d] = TuckerMpiDistributed::Map(globalDims_[d],comm);
+    const MPI_Comm& comm = grid_.getColComm(d,false);
+    maps_[d] = TuckerMpiDistributed::Map(globalDims_[d], comm);
   }
 }
 
@@ -117,16 +117,16 @@ void Distribution::findAndEliminateEmptyProcs(MPI_Comm& newcomm)
   // Determine which processes GET NOTHING
   std::vector<int> emptyProcs;
   for(int d=0; d<ndims; d++) {
-    const MPI_Comm& comm = grid_->getColComm(d,false);
+    const MPI_Comm& comm = grid_.getColComm(d,false);
     int nprocs;
     MPI_Comm_size(comm,&nprocs);
     for(int rank=0; rank<nprocs; rank++) {
       // This part of the map is empty
-      if(maps_[d]->getNumEntries(rank) == 0) {
+      if(maps_[d].getNumEntries(rank) == 0) {
         int nprocsToAdd = 1;
         for(int i=0; i<ndims; i++) {
           if(i == d) continue;
-          nprocsToAdd *= grid_->getNumProcs(i,false);
+          nprocsToAdd *= grid_.getNumProcs(i,false);
         }
         std::vector<int> coords(ndims);
         coords[d] = rank;
@@ -134,10 +134,10 @@ void Distribution::findAndEliminateEmptyProcs(MPI_Comm& newcomm)
           int divnum = 1;
           for(int j=ndims-1; j>=0; j--) {
             if(j == d) continue;
-            coords[j] = (i/divnum) % grid_->getNumProcs(j,false);
-            divnum *= grid_->getNumProcs(j,false);
+            coords[j] = (i/divnum) % grid_.getNumProcs(j,false);
+            divnum *= grid_.getNumProcs(j,false);
           }
-          emptyProcs.push_back(grid_->getRank(coords.data()));
+          emptyProcs.push_back(grid_.getRank(coords.data()));
         }
       }
     }
