@@ -1,5 +1,5 @@
-#ifndef MPIKOKOS_TUCKER_DISTRIBUTION_HPP_
-#define MPIKOKOS_TUCKER_DISTRIBUTION_HPP_
+#ifndef MPIKOKKOS_TUCKER_DISTRIBUTION_HPP_
+#define MPIKOKKOS_TUCKER_DISTRIBUTION_HPP_
 
 #include <memory>
 #include "TuckerMpi_Map.hpp"
@@ -9,12 +9,12 @@ namespace TuckerMpiDistributed {
 
 //! Describes the distribution of a Cartesian grid over a set of MPI processes
 class Distribution {
+
 public:
-  Distribution(const Tucker::SizeArray& dims,
-    const Tucker::SizeArray& procs);
+  Distribution(const Tucker::SizeArray& dims, const Tucker::SizeArray& procs);
   const Tucker::SizeArray& getLocalDims() const;          //! Returns the dimensions of the locally owned portion of the N-dimensional grid  
   const Tucker::SizeArray& getGlobalDims() const;         //! Returns the dimensions of the N-dimensional grid
-  const ProcessorGrid & getProcessorGrid() const;         //! Returns the processor grid
+  const ProcessorGrid& getProcessorGrid() const;          //! Returns the processor grid
   const Map* getMap(int dimension, bool squeezed) const;  //! Returns the map of a given dimension
   const MPI_Comm& getComm(bool squeezed) const;
   bool ownNothing() const;
@@ -34,4 +34,4 @@ private:
 };
 
 } /* namespace TuckerMpiDistributed */
-#endif /* MPIKOKOS_TUCKER_DISTRIBUTION_HPP_ */
+#endif /* MPIKOKKOS_TUCKER_DISTRIBUTION_HPP_ */
