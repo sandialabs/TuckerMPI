@@ -8,6 +8,7 @@ namespace TuckerMpiDistributed {
 
 class ProcessorGrid {
 public:
+  ProcessorGrid() = default;
   ProcessorGrid(const Tucker::SizeArray& sz, const MPI_Comm& comm);
   const MPI_Comm& getComm(bool squeezed) const;                 //! Returns the MPI communicator
   const MPI_Comm& getRowComm(int d, bool squeezed) const; //! Returns the row communicator for dimension d
