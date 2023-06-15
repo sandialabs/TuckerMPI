@@ -14,19 +14,19 @@ template<class ScalarType, class ...Props>
 struct TuckerTensorTraits<void, Tensor<ScalarType, Props...> >
 {
   using core_tensor_type          = Tensor<ScalarType, Props...>;
-  using value_type                = typename core_tensor_type::traits::view_type::value_type;
+  using value_type                = typename core_tensor_type::traits::data_view_type::value_type;
   using memory_space              = typename core_tensor_type::traits::memory_space;
   using eigenvalues_store_view_t  = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
   using eigenvectors_store_view_t = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
 };
 
 struct PerModeSliceInfo{
-  std::size_t eigvalsStartIndex        = {};
-  std::size_t eigvalsEndIndexExclusive = {};
-  std::size_t eigvecsStartIndex        = {};
-  std::size_t eigvecsEndIndexExclusive = {};
-  std::size_t eigvecsExtent0           = {};
-  std::size_t eigvecsExtent1	       = {};
+  std::size_t eigvalsStartIndex        = 0;
+  std::size_t eigvalsEndIndexExclusive = 0;
+  std::size_t eigvecsStartIndex        = 0;
+  std::size_t eigvecsEndIndexExclusive = 0;
+  std::size_t eigvecsExtent0           = 0;
+  std::size_t eigvecsExtent1	       = 0;
 };
 }//end namespace impl
 
@@ -40,7 +40,13 @@ class TuckerTensor
 public:
   using traits = impl::TuckerTensorTraits<void, Args...>;
 
-  TuckerTensor() = default;
+  TuckerTensor()
+    : rank_(-1),
+      coreTensor_{},
+      eigenvalues_("eigenvalues", 0),
+      eigenvectors_("eigenvectors", 0),
+      perModeSlicingInfo_("info", 0)
+  {}
 
   template<class EigvalsViewType, class EigvecsViewType>
   TuckerTensor(typename traits::core_tensor_type coreTensor,
@@ -64,6 +70,10 @@ public:
   typename traits::core_tensor_type coreTensor(){ return coreTensor_; }
 
   auto eigenvalues(int mode){
+    if (rank_ == -1){
+      return Kokkos::subview(eigenvalues_, std::pair{0, 0});
+    }
+
     const auto & sliceInfo = perModeSlicingInfo_(mode);
     const std::size_t a = sliceInfo.eigvalsStartIndex;
     const std::size_t b = sliceInfo.eigvalsEndIndexExclusive;
@@ -81,10 +91,13 @@ public:
     using umv_type = Kokkos::View<typename traits::value_type**, eigenvectors_layout,
 				  Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
+    if (rank_ == -1){
+      return umv_type(eigenvectors_.data(), 0, 0);
+    }
+
     const auto & sliceInfo = perModeSlicingInfo_(mode);
     auto ptr = eigenvectors_.data() + sliceInfo.eigvecsStartIndex;
-    umv_type eigVecs(ptr, sliceInfo.eigvecsExtent0, sliceInfo.eigvecsExtent1);
-    return eigVecs;
+    return umv_type(ptr, sliceInfo.eigvecsExtent0, sliceInfo.eigvecsExtent1);
   }
 
 private:
@@ -94,7 +107,6 @@ private:
   typename traits::eigenvectors_store_view_t eigenvectors_ = {};
   slicing_info_view_t perModeSlicingInfo_ = {};
 };
-
 
 template <class ScalarType, class ...Props>
 void print_eigenvalues(TuckerTensor<ScalarType, Props...> factorization,

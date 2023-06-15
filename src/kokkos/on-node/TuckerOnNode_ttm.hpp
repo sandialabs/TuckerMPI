@@ -34,13 +34,13 @@ void ttm(Tensor<ScalarType, TensorProperties...> X,
 }
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
-auto ttm(Tensor<ScalarType, TensorProperties...> X,
+auto ttm(const Tensor<ScalarType, TensorProperties...> & X,
 	 std::size_t mode,
 	 Kokkos::View<ScalarType**, ViewProperties...> U,
 	 bool Utransp)
 {
   const std::size_t nrows = Utransp ? U.extent(1) : U.extent(0);
-  Tucker::SizeArray I(X.rank());
+  std::vector<int> I(X.rank());
   for(std::size_t i=0; i< (std::size_t)I.size(); i++) {
     I[i] = (i != mode) ? X.extent(i) : nrows;
   }

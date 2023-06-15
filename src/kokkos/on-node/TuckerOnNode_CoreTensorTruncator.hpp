@@ -32,8 +32,8 @@ std::size_t count_eigvals_using_threshold(Kokkos::View<ScalarType*, Properties..
 } //end namespace impl
 
 template <class ScalarType, class ...Properties>
-auto create_core_tensor_truncator(TuckerOnNode::Tensor<ScalarType, Properties...> & dataTensor,
-				  const std::optional<Tucker::SizeArray> & fixedCoreTensorRanks,
+auto create_core_tensor_truncator(TuckerOnNode::Tensor<ScalarType, Properties...> dataTensor,
+				  const std::optional<std::vector<int>> & fixedCoreTensorRanks,
 				  ScalarType tol)
 {
   return [=](std::size_t mode, auto eigenValues) -> std::size_t

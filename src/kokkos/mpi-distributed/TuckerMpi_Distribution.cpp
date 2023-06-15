@@ -6,8 +6,8 @@
 
 namespace TuckerMpiDistributed {
 
-Distribution::Distribution(const Tucker::SizeArray& dims,
-    const Tucker::SizeArray& procs) :
+Distribution::Distribution(const std::vector<int>& dims,
+    const std::vector<int>& procs) :
         localDims_(dims.size()),
         globalDims_(dims.size()),
         maps_squeezed_(),
@@ -66,12 +66,12 @@ Distribution::Distribution(const Tucker::SizeArray& dims,
   }
 }
 
-const Tucker::SizeArray& Distribution::getLocalDims() const
+const std::vector<int>& Distribution::getLocalDims() const
 {
   return localDims_;
 }
 
-const Tucker::SizeArray& Distribution::getGlobalDims() const
+const std::vector<int>& Distribution::getGlobalDims() const
 {
   return globalDims_;
 }
@@ -175,7 +175,7 @@ void Distribution::updateProcessorGrid(const MPI_Comm& newcomm)
   int ndims = globalDims_.size();
 
   // Count the new number of processes in each dimension
-  Tucker::SizeArray newProcs(ndims);
+  std::vector<int> newProcs(ndims);
   for(int i=0; i<ndims; i++) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);

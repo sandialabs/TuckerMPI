@@ -2,7 +2,7 @@
 #define MPIKOKKOS_TUCKER_MAP_HPP_
 
 #include "mpi.h"
-#include "Tucker_SizeArray.hpp"
+#include <vector>
 
 namespace TuckerMpiDistributed {
 
@@ -25,9 +25,9 @@ private:
   //! MPI communicator
   MPI_Comm comm_;
   //! Number of elements owned by each process
-  Tucker::SizeArray numElementsPerProc_;
+  std::vector<int> numElementsPerProc_;
   //! Offset/displacement array
-  Tucker::SizeArray offsets_;
+  std::vector<int> offsets_;
   //! First index owned by this MPI process
   int indexBegin_;
   //! Last index owned by this MPI process

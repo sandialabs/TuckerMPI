@@ -1,7 +1,7 @@
 #ifndef TUCKER_KOKKOSONLY_PARAM_FILE_PARSER_UTILS_HPP_
 #define TUCKER_KOKKOSONLY_PARAM_FILE_PARSER_UTILS_HPP_
 
-#include "Tucker_SizeArray.hpp"
+#include <iostream>
 #include <fstream>
 #include <vector>
 
@@ -50,10 +50,27 @@ T string_parse(const std::vector<std::string>& lines,
   return value;
 }
 
-SizeArray parse_size_array(const std::vector<std::string>& fileAsStrings,
-			 const std::string& keyword);
-
 std::vector<std::string> read_file_as_strings(const std::string& fileToRead);
+
+template<class T>
+std::vector<T> parse_multivalued_field(const std::vector<std::string>& fileAsStrings, const std::string& keyword)
+{
+  std::vector<T> result;
+  T value;
+  for (auto line : fileAsStrings) {
+    // If the keyword is in the string then use that value
+    if (line.find(keyword) != std::string::npos) {
+      // Find the equal sign
+      std::size_t equalPos = line.find("=");
+      std::stringstream valueStream(line.substr(equalPos+1));
+
+      // The value should be one "word", extract it from the string
+      while(valueStream >> value) { result.push_back(value); }
+    }
+  }
+
+  return result;
+}
 
 }
 #endif

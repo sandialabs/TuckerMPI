@@ -7,7 +7,6 @@ LIST(APPEND SOURCES
   ${SHARED_SRC}/Tucker_BoilerPlate_IO.cpp
   ${SHARED_SRC}/Tucker_CmdLineParse.cpp
   ${SHARED_SRC}/Tucker_ParameterFileParserUtils.cpp
-  ${SHARED_SRC}/Tucker_SizeArray.cpp
 )
 ADD_LIBRARY(${KokkosOnlyTuckerLib} SHARED ${SOURCES})
 

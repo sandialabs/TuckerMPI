@@ -4,6 +4,7 @@
 #include "TuckerOnNode_ParameterFileParser.hpp"
 #include "TuckerOnNode_CoreTensorTruncator.hpp"
 #include "TuckerOnNode_Tensor.hpp"
+#include "TuckerOnNode_Tensor_IO.hpp"
 #include "TuckerOnNode_sthosvd.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -26,12 +27,12 @@ int main(int argc, char* argv[])
     inputs.describe();
 
     // reading data
-    TuckerOnNode::Tensor<scalar_t, memory_space> X(inputs.sizeArrayOfDataTensor());
+    TuckerOnNode::Tensor<scalar_t, memory_space> X(inputs.dimensionsOfDataTensor());
     TuckerOnNode::read_tensor_binary(X, inputs.in_fns_file.c_str());
 
     // truncator for core tensor
     auto coreTensorTruncator =
-      TuckerOnNode::create_core_tensor_truncator(X, inputs.sizeArrayOfCoreTensor(), inputs.tol);
+      TuckerOnNode::create_core_tensor_truncator(X, inputs.dimensionsOfCoreTensor(), inputs.tol);
 
     // compute
     // FIXME: Compute statistics is missing

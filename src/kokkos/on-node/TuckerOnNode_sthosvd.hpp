@@ -147,7 +147,7 @@ void appendEigenvectorsAndUpdateSliceInfo(
 } //end namespace impl
 
 template <class ScalarType, class ...Properties, class TruncatorType>
-auto STHOSVD(Tensor<ScalarType, Properties...> & X,
+auto STHOSVD(const Tensor<ScalarType, Properties...> & X,
 	     TruncatorType && truncator,
 	     bool useQR    = false,
 	     bool flipSign = false)
@@ -186,11 +186,15 @@ auto STHOSVD(Tensor<ScalarType, Properties...> & X,
 
     std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
     tensor_type temp = ttm(Y, n, currEigVecs, true);
-    temp.writeToStream(std::cout);
+    output_tensor_to_stream(temp, std::cout);
 
     Y = temp;
-    std::cout << "Local tensor size after STHOSVD iteration "
-	      << n << ": " << Y.sizeArray() << "\n";
+    std::cout << "Local tensor size after STHOSVD iteration " << n << ": ";
+    const auto sizeInfo = Y.dimensions();
+    for (int i=0; i<sizeInfo.extent(0); ++i){
+      std::cout << sizeInfo(i) << " ";
+    }
+    std::cout << "\n";
    }
 
   return tucker_tensor_type(Y, eigvals, eigvecs, perModeSlicingInfo);

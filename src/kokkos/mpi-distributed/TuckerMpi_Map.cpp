@@ -19,7 +19,7 @@ Map::Map(int globalNumEntries, const MPI_Comm& comm) :
 	// assert(globalNumEntries > nprocs);
 
   // Determine the number of entries owned by each process
-  numElementsPerProc_ = Tucker::SizeArray(nprocs);
+  numElementsPerProc_ = std::vector<int>(nprocs);
 
   for(int rank=0; rank<nprocs; rank++) {
     numElementsPerProc_[rank] = globalNumEntries/nprocs;
@@ -28,7 +28,7 @@ Map::Map(int globalNumEntries, const MPI_Comm& comm) :
   }
 
   // Determine the row offsets for each process
-  offsets_ = Tucker::SizeArray(nprocs+1);
+  offsets_ = std::vector<int>(nprocs+1);
 
   offsets_[0] = 0;
   for(int rank=1; rank<=nprocs; rank++) {
@@ -110,7 +110,7 @@ void Map::removeEmptyProcs()
   size_t i=0;
   int src=0;
   assert(newNumProcs <= std::numeric_limits<int>::max());
-  Tucker::SizeArray newSize((int)newNumProcs);
+  std::vector<int> newSize((int)newNumProcs);
   for(int dest=0; dest<(int)newNumProcs; dest++) {
     while(i < emptyProcs.size() && src == emptyProcs[i]) {
       src++;
@@ -122,7 +122,7 @@ void Map::removeEmptyProcs()
   numElementsPerProc_ = newSize;
 
   // Remove them from offsets too
-  Tucker::SizeArray newOffsets((int)newNumProcs);
+  std::vector<int> newOffsets((int)newNumProcs);
   i=0;
   src=0;
   for(int dest=0; dest<(int)newNumProcs; dest++) {

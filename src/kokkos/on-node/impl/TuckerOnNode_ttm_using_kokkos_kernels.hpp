@@ -28,7 +28,7 @@ ttm_kker_mode_zero(Tensor<ScalarType, TensorProperties...> B,
    * C is m by blas_n
    * Keep in mind: dimensions are set for a given Mode n
    */
-  const size_t ncols = B.sizeArray().prod(1,B.rank()-1);
+  const size_t ncols = B.prod(1,B.rank()-1);
   char transa = Atransp ? 'T' : 'N';
   const char transb = 'N';
   int m = C.extent(n);                    // 1st dim of A and C
@@ -56,7 +56,7 @@ ttm_kker_mode_greater_than_zero(Tensor<ScalarType, TensorProperties...> B,
   using umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutLeft,
 				Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
-  const size_t ncols = B.sizeArray().prod(0,n-1);
+  const size_t ncols = B.prod(0,n-1);
   int Unrows, Uncols;
   if(Btransp) {
     Unrows = B.extent(n);
@@ -66,7 +66,7 @@ ttm_kker_mode_greater_than_zero(Tensor<ScalarType, TensorProperties...> B,
     Unrows = C.extent(n);
   }
 
-  const size_t nmats = B.sizeArray().prod(n+1,B.rank()-1,1);
+  const size_t nmats = B.prod(n+1,B.rank()-1,1);
   for(size_t i=0; i<nmats; i++) {
     /**C = beta*C + alpha*op(B)*op(A)
      * B is m by k

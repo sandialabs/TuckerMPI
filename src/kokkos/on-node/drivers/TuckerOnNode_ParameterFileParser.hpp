@@ -1,7 +1,6 @@
 #ifndef TUCKER_KOKKOSONLY_PARAM_FILE_PARSER_HPP_
 #define TUCKER_KOKKOSONLY_PARAM_FILE_PARSER_HPP_
 
-#include "Tucker_SizeArray.hpp"
 #include "Tucker_ParameterFileParserUtils.hpp"
 #include <fstream>
 #include <iomanip>
@@ -33,8 +32,8 @@ struct InputParameters
   int scale_mode;
 
 private:
-  Tucker::SizeArray dataTensorDims_;
-  std::optional<Tucker::SizeArray> coreTensorDims_;
+  std::vector<int> dataTensorDims_;
+  std::optional<std::vector<int>> coreTensorDims_;
 
 public:
   InputParameters(const std::string & paramFile)
@@ -44,8 +43,8 @@ public:
     parse(fileAsStrings);
   }
 
-  auto const & sizeArrayOfDataTensor() const { return dataTensorDims_; }
-  auto const & sizeArrayOfCoreTensor() const { return coreTensorDims_; }
+  auto const & dimensionsOfDataTensor() const { return dataTensorDims_; }
+  auto const & dimensionsOfCoreTensor() const { return coreTensorDims_; }
 
   void describe() const
   {
@@ -109,14 +108,17 @@ private:
   void parse(const std::vector<std::string>& fileAsStrings)
   {
     using namespace Tucker;
-    dataTensorDims_ = parse_size_array(fileAsStrings, "Global dims");
+    dataTensorDims_ = parse_multivalued_field<int>(fileAsStrings, "Global dims");
     nd = dataTensorDims_.size();
 
     boolAuto = string_parse<bool>(fileAsStrings, "Automatic rank determination", false);
     if (!boolAuto) {
-      coreTensorDims_ = parse_size_array(fileAsStrings, "Ranks");
+      coreTensorDims_ = parse_multivalued_field<int>(fileAsStrings, "Ranks");
       std::cout << "Global dimensions of the core tensor is fixed:\n";
-      std::cout << "- Ranks = " << coreTensorDims_.value() << std::endl;
+
+      const auto & vec = coreTensorDims_.value();
+      std::cout << "- Ranks = ";
+      std::for_each(vec.cbegin(), vec.cend(), [=](int v){ std::cout << v << " "; });
     }
 
     boolSTHOSVD           = string_parse<bool>(fileAsStrings, "Perform STHOSVD", false);

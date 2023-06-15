@@ -1,8 +1,9 @@
 #include "TuckerMpi_ProcessorGrid.hpp"
+#include <iostream>
 
 namespace TuckerMpiDistributed {
 
-ProcessorGrid::ProcessorGrid(const Tucker::SizeArray& sz,
+ProcessorGrid::ProcessorGrid(const std::vector<int>& sz,
     const MPI_Comm& comm) :
         size_(sz.size()),
         squeezed_(false),
@@ -117,7 +118,7 @@ int ProcessorGrid::getNumProcs(int d, bool squeezed) const
   return nprocs;
 }
 
-void ProcessorGrid::squeeze(const Tucker::SizeArray& sz, const MPI_Comm& comm)
+void ProcessorGrid::squeeze(const std::vector<int>& sz, const MPI_Comm& comm)
 {
   squeezed_ = true;
   int ndims = size_.size();
@@ -166,7 +167,7 @@ void ProcessorGrid::squeeze(const Tucker::SizeArray& sz, const MPI_Comm& comm)
   }
 }
 
-const Tucker::SizeArray & ProcessorGrid::getSizeArray() const
+const std::vector<int> & ProcessorGrid::getSizeArray() const
 {
   return size_;
 }

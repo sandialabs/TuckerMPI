@@ -1,12 +1,12 @@
 #ifndef MPIKOKKOS_TUCKER_PARAM_FILE_PARSER_HPP_
 #define MPIKOKKOS_TUCKER_PARAM_FILE_PARSER_HPP_
 
-#include "Tucker_SizeArray.hpp"
 #include "Tucker_ParameterFileParserUtils.hpp"
 #include <fstream>
 #include <iomanip>
 #include <vector>
 #include <optional>
+#include <algorithm>
 
 namespace TuckerMpiDistributed{
 
@@ -26,8 +26,8 @@ struct InputParameters
   bool useButterflyTSQR;
   ScalarType tol;
   ScalarType stdThresh;
-  Tucker::SizeArray proc_grid_dims;
-  Tucker::SizeArray modeOrder;
+  std::vector<int> proc_grid_dims;
+  std::vector<int> modeOrder;
 
   std::string scaling_type;
   std::string sthosvd_dir;
@@ -42,8 +42,8 @@ struct InputParameters
   int scale_mode;
 
 private:
-  Tucker::SizeArray dataTensorDims_;
-  std::optional<Tucker::SizeArray> coreTensorDims_;
+  std::vector<int> dataTensorDims_;
+  std::optional<std::vector<int>> coreTensorDims_;
 
 public:
   InputParameters(const std::string & paramFile)
@@ -60,13 +60,16 @@ public:
   {
     if (boolPrintOptions) {
       std::cout << "The global dimensions of the tensor to be scaled or compressed\n";
-      std::cout << "- Global dims = " << dataTensorDims_ << std::endl << std::endl;
+      std::cout << "- Global dims = " << std::endl;
+      std::for_each(dataTensorDims_.cbegin(), dataTensorDims_.cend(), [=](int v){ std::cout << v << " "; });
 
       std::cout << "The global dimensions of the processor grid\n";
-      std::cout << "- Grid dims = " << proc_grid_dims << std::endl << std::endl;
+      std::cout << "- Grid dims = " << std::endl;
+      std::for_each(proc_grid_dims.cbegin(), proc_grid_dims.cend(), [=](int v){ std::cout << v << " "; });
 
       std::cout << "Mode order for decomposition\n";
-      std::cout << "- Decompose mode order " << modeOrder << std::endl << std::endl;
+      std::cout << "- Decompose mode order " << std::endl;
+      std::for_each(modeOrder.cbegin(), modeOrder.cend(), [=](int v){ std::cout << v << " "; });
 
       std::cout << "If true, automatically determine rank; otherwise, use the user-defined ranks\n";
       std::cout << "- Automatic rank determination = " << (boolAuto ? "true" : "false") << std::endl << std::endl;
@@ -77,7 +80,9 @@ public:
       if(!boolAuto) {
         std::cout << "Global dimensions of the desired core tensor\n";
         std::cout << "Not used if \"Automatic rank determination\" is enabled\n";
-        std::cout << "- Ranks = " << coreTensorDims_.value() << std::endl << std::endl;
+        std::cout << "- Ranks = ";
+        const auto & vec = coreTensorDims_.value();
+        std::for_each(vec.cbegin(), vec.cend(), [=](int v){ std::cout << v << " "; });
       }
 
       std::cout << "List of filenames of raw data to be read\n";
@@ -146,14 +151,16 @@ private:
   void parse(const std::vector<std::string>& fileAsStrings)
   {
     using namespace Tucker;
-    dataTensorDims_ = parse_size_array(fileAsStrings, "Global dims");
+    dataTensorDims_ = parse_multivalued_field<int>(fileAsStrings, "Global dims");
     nd = dataTensorDims_.size();
 
     boolAuto = string_parse<bool>(fileAsStrings, "Automatic rank determination", false);
     if (!boolAuto) {
-      coreTensorDims_ = parse_size_array(fileAsStrings, "Ranks");
+      coreTensorDims_ = parse_multivalued_field<int>(fileAsStrings, "Ranks");
       std::cout << "Global dimensions of the core tensor is fixed:\n";
-      std::cout << "- Ranks = " << coreTensorDims_.value() << std::endl;
+      const auto & vec = coreTensorDims_.value();
+      std::cout << "- Ranks = ";
+      std::for_each(vec.cbegin(), vec.cend(), [=](int v){ std::cout << v << " "; }); 
     }
 
     boolSTHOSVD             = string_parse<bool>(fileAsStrings, "Perform STHOSVD", false);
@@ -167,8 +174,8 @@ private:
     useButterflyTSQR        = string_parse<bool>(fileAsStrings, "Use butterfly TSQR", false);
     tol                     = string_parse<ScalarType>(fileAsStrings, "SV Threshold", 1e-6);
     stdThresh               = string_parse<ScalarType>(fileAsStrings, "STD Threshold", 1e-9);
-    proc_grid_dims          = parse_size_array(fileAsStrings, "Grid dims");
-    modeOrder               = parse_size_array(fileAsStrings, "Decompose mode order");
+    proc_grid_dims          = parse_multivalued_field<int>(fileAsStrings, "Grid dims");
+    modeOrder               = parse_multivalued_field<int>(fileAsStrings, "Decompose mode order");
     scaling_type            = string_parse<std::string>(fileAsStrings, "Scaling type", "None");
     sthosvd_dir             = string_parse<std::string>(fileAsStrings, "STHOSVD directory", "compressed");
     sthosvd_fn              = string_parse<std::string>(fileAsStrings, "STHOSVD file prefix", "sthosvd");
@@ -196,7 +203,7 @@ private:
     }
 
     if(!modeOrder.data()){
-      modeOrder = Tucker::SizeArray(nd);
+      modeOrder = std::vector<int>(nd);
       for(int i=0; i<nd; i++){
         modeOrder.data()[i] = i;
         std::cout <<"modeOrder[" <<i<<"]: " << modeOrder.data()[i];

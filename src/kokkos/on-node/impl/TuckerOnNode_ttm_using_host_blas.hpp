@@ -57,7 +57,7 @@ ttm_hostblas(Tensor<ScalarType, TensorProperties...> X,
     // Compute number of columns of Y_n
     // Technically, we could divide the total number of entries by n,
     // but that seems like a bad decision
-    size_t ncols = X.sizeArray().prod(1,X.rank()-1);
+    size_t ncols = X.prod(1,X.rank()-1);
 
     if(ncols > std::numeric_limits<std::size_t>::max()) {
       std::ostringstream oss;
@@ -95,10 +95,10 @@ ttm_hostblas(Tensor<ScalarType, TensorProperties...> X,
   else
   {
     // Count the number of columns
-    size_t ncols = X.sizeArray().prod(0,n-1);
+    size_t ncols = X.prod(0,n-1);
 
     // Count the number of matrices
-    size_t nmats = X.sizeArray().prod(n+1,X.rank()-1,1);
+    size_t nmats = X.prod(n+1,X.rank()-1,1);
 
     if(ncols > std::numeric_limits<std::size_t>::max()) {
       std::ostringstream oss;
