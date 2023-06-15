@@ -59,6 +59,7 @@ public:
 
   // ----------------------------------------
   // Regular constructors, destructor, and assignment
+  // ----------------------------------------
 
   Tensor() = default;
   ~Tensor() = default;
@@ -92,7 +93,14 @@ public:
     return *this;
   }
 
-  Tensor& operator=(Tensor&& other) = default;
+  Tensor& operator=(Tensor&& o){
+    is_assignable_else_throw(o);
+    rank_ = std::move(o.rank_);
+    data_ = std::move(o.data_);
+    dims_ = std::move(o.dims_);
+    dims_h_ = std::move(o.dims_h_);
+    return *this;
+  }
 
   // ----------------------------------------
   // copy/move constr, assignment for compatible Tensor

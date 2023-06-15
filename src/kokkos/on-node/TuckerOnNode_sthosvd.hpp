@@ -114,7 +114,7 @@ void appendEigenvaluesAndUpdateSliceInfo(
 template<
   class DataType1, class ...Props1,
   class DataType2, class ...Props2>
-void appendEigenvectorsAndUpdateSliceInfo(
+void appendFactorsAndUpdateSliceInfo(
          int mode,
   	 Kokkos::View<DataType1, Props1...> & dest,
 	 Kokkos::View<DataType2, Props2...> & src,
@@ -138,10 +138,10 @@ void appendEigenvectorsAndUpdateSliceInfo(
 		       });
 
   // update slicing info
-  sliceInfo.eigvecsStartIndex = currentExt;
-  sliceInfo.eigvecsEndIndexExclusive = currentExt + src.size();
-  sliceInfo.eigvecsExtent0 = nR;
-  sliceInfo.eigvecsExtent1 = src.extent(1);
+  sliceInfo.factorsStartIndex = currentExt;
+  sliceInfo.factorsEndIndexExclusive = currentExt + src.size();
+  sliceInfo.factorsExtent0 = nR;
+  sliceInfo.factorsExtent1 = src.extent(1);
 }
 
 } //end namespace impl
@@ -159,10 +159,11 @@ auto STHOSVD(const Tensor<ScalarType, Properties...> & X,
   using slicing_info_view_t = Kokkos::View<impl::PerModeSliceInfo*, Kokkos::HostSpace>;
 
   Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space> eigvals;
-  Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space> eigvecs;
+  Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space> factors;
   slicing_info_view_t perModeSlicingInfo("pmsi", X.rank());
   tensor_type Y = X;
-  for (std::size_t n=0; n<X.rank(); n++){
+  for (std::size_t n=0; n<X.rank(); n++)
+  {
     std::cout << "\tAutoST-HOSVD::Starting Mode(" << n << ")...\n";
 
     std::cout << "\n\tAutoST-HOSVD::Gram(" << n << ") \n";
@@ -181,7 +182,7 @@ auto STHOSVD(const Tensor<ScalarType, Properties...> & X,
     const int nToCopy = Y.extent(n)*numEvecs;
     const int ONE = 1;
     Tucker::copy(&nToCopy, S.data(), &ONE, currEigVecs.data(), &ONE);
-    impl::appendEigenvectorsAndUpdateSliceInfo(n, eigvecs, currEigVecs, perModeSlicingInfo(n));
+    impl::appendFactorsAndUpdateSliceInfo(n, factors, currEigVecs, perModeSlicingInfo(n));
     Tucker::write_view_to_stream(std::cout, currEigVecs);
 
     std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
@@ -190,14 +191,12 @@ auto STHOSVD(const Tensor<ScalarType, Properties...> & X,
 
     Y = temp;
     std::cout << "Local tensor size after STHOSVD iteration " << n << ": ";
-    const auto sizeInfo = Y.dimensions();
-    for (int i=0; i<sizeInfo.extent(0); ++i){
-      std::cout << sizeInfo(i) << " ";
-    }
+    const auto sizeInfo = Y.dimensionsOnHost();
+    for (int i=0; i<sizeInfo.extent(0); ++i){ std::cout << sizeInfo(i) << " "; }
     std::cout << "\n";
    }
 
-  return tucker_tensor_type(Y, eigvals, eigvecs, perModeSlicingInfo);
+  return tucker_tensor_type(Y, eigvals, factors, perModeSlicingInfo);
 }
 
 }

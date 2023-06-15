@@ -2,7 +2,7 @@
 #include "TuckerOnNode_Tensor.hpp"
 #include <Kokkos_Core.hpp>
 
-TEST(tuckerkokkos, tensor_traits)
+TEST(tuckerkokkos_tensor, traits)
 {
   using namespace TuckerOnNode;
 

@@ -40,14 +40,15 @@ int main(int argc, char* argv[])
     if(inputs.boolSTHOSVD){
       auto f = TuckerOnNode::STHOSVD(X, coreTensorTruncator, inputs.boolUseLQ);
 
-      std::string filePrefix = inputs.sv_dir + "/" + inputs.sv_fn + "_mode_";
-      TuckerOnNode::print_eigenvalues(f, filePrefix, false);
-      printf("\n");
       const auto xnorm = std::sqrt(X.frobeniusNormSquared());
       const auto gnorm = std::sqrt(f.coreTensor().frobeniusNormSquared());
       std::cout << "Norm of input tensor: " << std::setprecision(7) << xnorm << std::endl;
       std::cout << "Norm of core tensor: " << std::setprecision(7) << gnorm << std::endl;
-      std::string coreFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_core.mpi";
+
+      const std::string filePrefix = inputs.sv_dir + "/" + inputs.sv_fn + "_mode_";
+      TuckerOnNode::print_eigenvalues(f, filePrefix, false);
+      printf("\n");
+      const std::string coreFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_core.mpi";
       std::cout << "Writing core tensor to " << coreFilename << std::endl;
       TuckerOnNode::export_tensor_binary(f.coreTensor(), coreFilename.c_str());
     }
