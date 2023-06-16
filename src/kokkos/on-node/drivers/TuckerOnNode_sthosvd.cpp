@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 
     // compute
     // FIXME: Compute statistics is missing
-    // FIXME: Perform preprocessing is missing
+    // FIXME: Perform preprocessing is missingx
     if(inputs.boolSTHOSVD){
       auto f = TuckerOnNode::STHOSVD(X, coreTensorTruncator, inputs.boolUseLQ);
 

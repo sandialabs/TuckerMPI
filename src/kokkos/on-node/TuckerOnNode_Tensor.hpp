@@ -1,9 +1,11 @@
 #ifndef TUCKER_KOKKOSONLY_TENSOR_HPP_
 #define TUCKER_KOKKOSONLY_TENSOR_HPP_
 
+#include "Tucker_Utils.hpp"
 #include "KokkosBlas1_nrm2.hpp"
 #include <Kokkos_Random.hpp>
 #include <Kokkos_Core.hpp>
+#include <numeric>
 
 namespace TuckerOnNode{
 
@@ -70,13 +72,10 @@ public:
   explicit Tensor(const std::vector<int> & v)
     : rank_(v.size()), dims_("dims", rank_), dims_h_("dims_h", rank_)
   {
-    std::size_t numEl = 1;
-    for (std::size_t i=0; i<v.size(); ++i){
-      dims_h_(i) = v[i];
-      numEl *= v[i];
-    }
+    Tucker::copy_stdvec_to_view(v, dims_h_);
     Kokkos::deep_copy(dims_, dims_h_);
-
+    const std::size_t numEl = std::accumulate(v.begin(), v.end(), 1,
+					      std::multiplies<std::size_t>());
     // allocate for data
     data_ = data_view_type("tensorData", numEl);
   }

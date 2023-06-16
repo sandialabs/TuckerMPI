@@ -2,7 +2,7 @@
 #include <cassert>
 #include <limits>
 
-namespace TuckerMpiDistributed {
+namespace TuckerMpi {
 
 Map::Map(int globalNumEntries, const MPI_Comm& comm) :
   comm_(comm),
@@ -16,7 +16,7 @@ Map::Map(int globalNumEntries, const MPI_Comm& comm) :
 
   // Assert that the global number of entries is bigger
   // than the number of MPI processes
-	// assert(globalNumEntries > nprocs);
+  // assert(globalNumEntries > nprocs);
 
   // Determine the number of entries owned by each process
   numElementsPerProc_ = std::vector<int>(nprocs);
@@ -40,54 +40,6 @@ Map::Map(int globalNumEntries, const MPI_Comm& comm) :
   indexEnd_ = offsets_[myRank+1]-1;
 
   localNumEntries_ = 1 + indexEnd_ - indexBegin_;
-}
-
-int Map::getLocalIndex(int globalIndex) const
-{
-  assert(globalIndex >= indexBegin_ && globalIndex < indexEnd_);
-  return globalIndex - indexBegin_;
-}
-
-int Map::getGlobalIndex(int localIndex) const
-{
-  assert(localIndex >= 0 && localIndex < localNumEntries_);
-  return indexBegin_+localIndex;
-}
-
-int Map::getLocalNumEntries() const
-{
-  return localNumEntries_;
-}
-
-int Map::getGlobalNumEntries() const
-{
-  return globalNumEntries_;
-}
-
-int Map::getMaxNumEntries() const
-{
-  int maxNumEntries = 0;
-  for(int i=0; i<numElementsPerProc_.size(); i++) {
-    if(numElementsPerProc_[i] > maxNumEntries) {
-      maxNumEntries = numElementsPerProc_[i];
-    }
-  }
-  return maxNumEntries;
-}
-
-int Map::getNumEntries(int rank) const
-{
-  return numElementsPerProc_[rank];
-}
-
-int Map::getOffset(int rank) const
-{
-  return offsets_[rank];
-}
-
-const MPI_Comm& Map::getComm() const
-{
-  return comm_;
 }
 
 void Map::removeEmptyProcs()
@@ -148,4 +100,4 @@ void Map::removeEmptyProcs()
   removedEmptyProcs_ = true;
 }
 
-} /* namespace TuckerMpiDistributed */
+} /* namespace TuckerMpi */

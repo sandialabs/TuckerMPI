@@ -4,25 +4,18 @@
 #include <cassert>
 #include <limits>
 
-namespace TuckerMpiDistributed {
+namespace TuckerMpi{
 
 Distribution::Distribution(const std::vector<int>& dims,
-    const std::vector<int>& procs) :
-        localDims_(dims.size()),
-        globalDims_(dims.size()),
-        maps_squeezed_(),
-        squeezed_(false)
+			   const std::vector<int>& procs)
+  : localDims_(dims.size()),
+    globalDims_(dims),
+    grid_(procs, MPI_COMM_WORLD),
+    maps_squeezed_(),
+    squeezed_(false)
 {
-  // Get number of dimensions
-  int ndims = dims.size();
-  // Copy the global dimensions
-  for(int i=0; i<ndims; i++) {
-    globalDims_[i] = dims[i];
-  }
-  grid_ = TuckerMpiDistributed::ProcessorGrid(procs, MPI_COMM_WORLD);
-  // Create the maps
+  const int ndims = dims.size();
   createMaps();
-
   // Copy local dimensions to localDims_
   for(int d=0; d<ndims; d++) {
     localDims_[d] = maps_[d].getLocalNumEntries();
@@ -30,19 +23,16 @@ Distribution::Distribution(const std::vector<int>& dims,
 
   MPI_Comm comm;
   findAndEliminateEmptyProcs(comm);
-
   if(squeezed_) {
     // Create a map for each dimension
     maps_squeezed_ = std::vector<Map>(ndims);
     for(int d=0; d<ndims; d++) {
       const MPI_Comm& comm = grid_.getColComm(d,false);
-      maps_squeezed_[d] = TuckerMpiDistributed::Map(globalDims_[d], comm);
+      maps_squeezed_[d] = TuckerMpi::Map(globalDims_[d], comm);
     }
 
     // Remove the empty processes from the map communicators
-    for(int i=0; i<ndims; i++) {
-      maps_squeezed_[i].removeEmptyProcs();
-    }
+    for(int i=0; i<ndims; i++) { maps_squeezed_[i].removeEmptyProcs(); }
 
     // Determine whether I own nothing
     ownNothing_ = false;
@@ -66,38 +56,6 @@ Distribution::Distribution(const std::vector<int>& dims,
   }
 }
 
-const std::vector<int>& Distribution::getLocalDims() const
-{
-  return localDims_;
-}
-
-const std::vector<int>& Distribution::getGlobalDims() const
-{
-  return globalDims_;
-}
-
-const ProcessorGrid& Distribution::getProcessorGrid() const
-{
-  return grid_;
-}
-
-const Map* Distribution::getMap(int dimension, bool squeezed) const
-{
-  if(squeezed && squeezed_) {
-    return &maps_squeezed_[dimension];
-  }
-  return &maps_[dimension];
-}
-
-const MPI_Comm& Distribution::getComm(bool squeezed) const
-{
-  return grid_.getComm(squeezed);
-}
-
-bool Distribution::ownNothing() const
-{
-  return ownNothing_;
-}
 
 void Distribution::createMaps()
 {
@@ -107,7 +65,7 @@ void Distribution::createMaps()
   maps_ = std::vector<Map>(ndims);
   for(int d=0; d<ndims; d++) {
     const MPI_Comm& comm = grid_.getColComm(d,false);
-    maps_[d] = TuckerMpiDistributed::Map(globalDims_[d], comm);
+    maps_[d] = TuckerMpi::Map(globalDims_[d], comm);
   }
 }
 

@@ -3,22 +3,51 @@
 
 #include "mpi.h"
 #include <vector>
+#include <cassert>
 
-namespace TuckerMpiDistributed {
+namespace TuckerMpi {
 
 class Map {
 
 public:
   Map() = default;
   Map(int globalNumEntries, const MPI_Comm& comm);
-  int getLocalIndex(int globalIndex) const;
-  int getGlobalIndex(int localIndex) const;
-  int getLocalNumEntries() const;
-  int getGlobalNumEntries() const;
-  int getMaxNumEntries() const;
-  int getNumEntries(int rank) const;
-  int getOffset(int rank) const;
-  const MPI_Comm& getComm() const;
+
+  int getLocalIndex(int globalIndex) const{
+    assert(globalIndex >= indexBegin_ && globalIndex < indexEnd_);
+    return globalIndex - indexBegin_;
+  }
+
+  int getGlobalIndex(int localIndex) const{
+    assert(localIndex >= 0 && localIndex < localNumEntries_);
+    return indexBegin_+localIndex;
+  }
+
+  int getLocalNumEntries() const{ return localNumEntries_; }
+  int getGlobalNumEntries() const{ return globalNumEntries_; }
+
+  int getMaxNumEntries() const{
+    int maxNumEntries = 0;
+    for(int i=0; i<numElementsPerProc_.size(); i++) {
+      if(numElementsPerProc_[i] > maxNumEntries) {
+	maxNumEntries = numElementsPerProc_[i];
+      }
+    }
+    return maxNumEntries;
+  }
+
+  int getNumEntries(int rank) const{
+    return numElementsPerProc_[rank];
+  }
+
+  int getOffset(int rank) const{
+    return offsets_[rank];
+  }
+
+  const MPI_Comm& getComm() const{
+    return comm_;
+  }
+
   void removeEmptyProcs();
 
 private:
@@ -39,5 +68,5 @@ private:
   bool removedEmptyProcs_;
 };
 
-} /* namespace TuckerMpiDistributed */
+} /* namespace TuckerMpi */
 #endif /* MPIKOKKOS_TUCKER_MAP_HPP_ */

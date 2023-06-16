@@ -11,6 +11,8 @@ set(SOURCES)
 LIST(APPEND SOURCES
   ${SHARED_SRC}/Tucker_CmdLineParse.cpp
   ${SHARED_SRC}/Tucker_ParameterFileParserUtils.cpp
+  ${SHARED_SRC}/Tucker_BlasWrapper.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/TuckerMPI_MPIWrapper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/TuckerMpi_Map.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/TuckerMpi_ProcessorGrid.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/TuckerMpi_Distribution.cpp

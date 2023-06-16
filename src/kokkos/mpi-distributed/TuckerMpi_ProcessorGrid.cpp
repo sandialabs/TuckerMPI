@@ -1,7 +1,7 @@
 #include "TuckerMpi_ProcessorGrid.hpp"
 #include <iostream>
 
-namespace TuckerMpiDistributed {
+namespace TuckerMpi {
 
 ProcessorGrid::ProcessorGrid(const std::vector<int>& sz,
     const MPI_Comm& comm) :
@@ -62,61 +62,6 @@ ProcessorGrid::ProcessorGrid(const std::vector<int>& sz,
   }
 }
 
-const MPI_Comm& ProcessorGrid::getComm(bool squeezed) const
-{
-  if(squeezed && squeezed_) {
-    return cartComm_squeezed_;
-  }
-  return cartComm_;
-}
-
-void ProcessorGrid::getCoordinates(std::vector<int> & coords) const
-{
-  int globalRank;
-  MPI_Comm_rank(cartComm_, &globalRank);
-  getCoordinates(coords, globalRank);
-}
-
-void ProcessorGrid::getCoordinates(std::vector<int> & coords, int globalRank) const
-{
-  int ndims = size_.size();
-  MPI_Cart_coords(cartComm_, globalRank, ndims, coords.data());
-}
-
-const MPI_Comm& ProcessorGrid::getRowComm(int d, bool squeezed) const
-{
-  if(squeezed && squeezed_) {
-    return rowcomms_squeezed_[d];
-  }
-  return rowcomms_[d];
-}
-
-const MPI_Comm& ProcessorGrid::getColComm(int d, bool squeezed) const
-{
-  if(squeezed && squeezed_) {
-    return colcomms_squeezed_[d];
-  }
-  return colcomms_[d];
-}
-
-int ProcessorGrid::getRank(const std::vector<int> & coords) const
-{
-  int rank;
-  MPI_Cart_rank(cartComm_, coords.data(), &rank);
-  return rank;
-}
-
-int ProcessorGrid::getNumProcs(int d, bool squeezed) const
-{
-  int nprocs;
-  if(squeezed && squeezed_) {
-    MPI_Comm_size(colcomms_squeezed_[d],&nprocs);
-  }
-  else {
-    MPI_Comm_size(colcomms_[d],&nprocs);
-  }
-  return nprocs;
-}
 
 void ProcessorGrid::squeeze(const std::vector<int>& sz, const MPI_Comm& comm)
 {
@@ -165,11 +110,6 @@ void ProcessorGrid::squeeze(const std::vector<int>& sz, const MPI_Comm& comm)
     MPI_Cart_sub(cartComm_squeezed_, remainDims.data(), &(rowcomms_squeezed_[i]));
     remainDims[i] = 1;
   }
-}
-
-const std::vector<int> & ProcessorGrid::getSizeArray() const
-{
-  return size_;
 }
 
 } /* namespace Tucker */
