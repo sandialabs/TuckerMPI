@@ -4,6 +4,7 @@
 #include "mpi.h"
 #include <vector>
 #include <cassert>
+#include <memory>
 
 namespace TuckerMpi {
 
@@ -36,36 +37,27 @@ public:
     return maxNumEntries;
   }
 
-  int getNumEntries(int rank) const{
-    return numElementsPerProc_[rank];
-  }
-
-  int getOffset(int rank) const{
-    return offsets_[rank];
-  }
-
-  const MPI_Comm& getComm() const{
-    return comm_;
-  }
-
+  int getNumEntries(int rank) const{ return numElementsPerProc_[rank]; }
+  int getOffset(int rank) const{ return offsets_[rank]; }
+  const MPI_Comm& getComm() const{ return *comm_; }
   void removeEmptyProcs();
 
 private:
   //! MPI communicator
-  MPI_Comm comm_;
+  std::shared_ptr<MPI_Comm> comm_ = nullptr;
   //! Number of elements owned by each process
-  std::vector<int> numElementsPerProc_;
+  std::vector<int> numElementsPerProc_ = {};
   //! Offset/displacement array
-  std::vector<int> offsets_;
+  std::vector<int> offsets_ = {};
   //! First index owned by this MPI process
-  int indexBegin_;
+  int indexBegin_ = {};
   //! Last index owned by this MPI process
-  int indexEnd_;
+  int indexEnd_ = {};
   //! Number of entries owned by this MPI process
-  int localNumEntries_;
+  int localNumEntries_ = {};
   //! Total number of entries
-  int globalNumEntries_;
-  bool removedEmptyProcs_;
+  int globalNumEntries_ = {};
+  bool removedEmptyProcs_ = {};
 };
 
 } /* namespace TuckerMpi */

@@ -11,6 +11,8 @@ namespace TuckerMpi{
 class Distribution {
 
 public:
+  Distribution() = default;
+
   Distribution(const std::vector<int>& dims,
 	       const std::vector<int>& procs);
 
@@ -48,20 +50,20 @@ private:
 
 private:
   //! Size of the local grid; number of entries owned in each dimension.
-  std::vector<int> localDims_;
+  std::vector<int> localDims_ = {};
 
   //! The global Cartesian grid size
-  std::vector<int> globalDims_;
+  std::vector<int> globalDims_ = {};
 
   //! Maps MPI processes to a grid
-  ProcessorGrid grid_;
+  ProcessorGrid grid_ = {};
 
   //! The maps describing the parallel distribution in each dimension
-  std::vector<Map> maps_;
-  std::vector<Map> maps_squeezed_;
+  std::vector<Map> maps_ = {};
+  std::vector<Map> maps_squeezed_ = {};
 
-  bool ownNothing_;
-  bool squeezed_;
+  bool ownNothing_ = false;
+  bool squeezed_ = false;
 };
 
 } /* namespace TuckerMpiDistributed */

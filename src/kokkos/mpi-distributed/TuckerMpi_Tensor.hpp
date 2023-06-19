@@ -43,6 +43,9 @@ class Tensor
   using dims_host_const_view_type = typename dims_host_view_type::const_type;
 
 public:
+  // ----------------------------------------
+  // Type aliases
+  // ----------------------------------------
   using traits = impl::TensorTraits<void, ScalarType, Properties...>;
 
 public:
@@ -64,16 +67,18 @@ public:
     Tucker::copy_stdvec_to_view(std_ld, localDims_);
   }
 
-  Tensor(const Tensor& o) = default;
-  Tensor(Tensor&&) = default;
+  // Tensor(const Tensor& o) = default;
+  // Tensor(Tensor&&) = default;
 
-  // FIXME: missing some special mem functions because
-  // we need to define semantics for when distributions are different etc
+  // // FIXME: missing or incomplette some special mem functions because
+  // // we need to define semantics for when distributions are different etc
+  // Tensor& operator=(const Tensor&) = default;
+  // Tensor& operator=(Tensor&&) = default;
 
 public:
   int rank() const{ return localTensor_.rank(); }
-  auto getLocalTensor(){ return localTensor_; }
-  auto getLocalTensor() const{ return localTensor_; }
+  auto & getLocalTensor(){ return localTensor_; }
+  //auto & getLocalTensor() const{ return localTensor_; }
   dims_const_view_type getGlobalSize() const{ return globalDims_; }
   dims_const_view_type getLocalSize() const { return localDims_; }
 
@@ -95,10 +100,10 @@ public:
   }
 
 private:
-  Distribution dist_;
+  Distribution dist_ = {};
   dims_view_type globalDims_ = {};
   dims_view_type localDims_ = {};
-  typename traits::onnode_tensor_type localTensor_;
+  typename traits::onnode_tensor_type localTensor_ = {};
 };
 
 } // end namespace TuckerMpi

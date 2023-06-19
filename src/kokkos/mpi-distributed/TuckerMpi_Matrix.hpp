@@ -38,8 +38,7 @@ public:
   Matrix() = default;
   ~Matrix() = default;
 
-  auto getLocalMatrix()       { return M_; }
-  auto getLocalMatrix() const { return M_; }
+  auto & getLocalMatrix()       { return M_; }
 
   size_t getLocalNumEntries() const{ return M_.size(); }
   int getGlobalNumRows() const { return globalRows_; }
@@ -49,11 +48,11 @@ public:
   const Map* getMap() const{ return &map_; }
 
 private:
-  view_type M_;
-  Map map_;
-  int globalRows_;
-  int globalCols_;
-  const MPI_Comm * comm_;
+  view_type M_ = {};
+  Map map_ = {};
+  int globalRows_ = {};
+  int globalCols_ = {};
+  const MPI_Comm * comm_ = nullptr;
 };
 
 }

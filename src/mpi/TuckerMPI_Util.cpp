@@ -52,11 +52,11 @@ Tucker::Matrix<scalar_t>* localQR(const Matrix<scalar_t>* M, bool isLastMode){
   int sizeOfM = ncolsM*nrowsM;
   int info;
   int nrowsR = nrowsM > ncolsM ? ncolsM : nrowsM;
-  Tucker::Matrix<scalar_t>* R; 
+  Tucker::Matrix<scalar_t>* R;
   scalar_t* tempT = Tucker::MemoryManager::safe_new_array<scalar_t>(5);
   scalar_t* tempWork = Tucker::MemoryManager::safe_new_array<scalar_t>(1);
   if(isLastMode){
-    //Mcopy will become transpose of M since M is row major. 
+    //Mcopy will become transpose of M since M is row major.
     Tucker::Matrix<scalar_t>* Mcopy = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(ncolsM, nrowsM);
     Tucker::copy(&sizeOfM, M->getLocalMatrix()->data(), &one, Mcopy->data(), &one);
     Tucker::geqr(&ncolsM, &nrowsM, Mcopy->data(), &ncolsM, tempT, &negOne, tempWork, &negOne, &info);
@@ -66,7 +66,7 @@ Tucker::Matrix<scalar_t>* localQR(const Matrix<scalar_t>* M, bool isLastMode){
     Tucker::MemoryManager::safe_delete_array(tempWork, 1);
     Tucker::MemoryManager::safe_delete_array(tempT, 5);
     scalar_t* T = Tucker::MemoryManager::safe_new_array<scalar_t>(TSize);
-    scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(lwork);    
+    scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(lwork);
 
     if(globalRank == 0) Tucker::MemoryManager::printMaxMemUsage();
 
@@ -91,14 +91,14 @@ Tucker::Matrix<scalar_t>* localQR(const Matrix<scalar_t>* M, bool isLastMode){
     Tucker::MemoryManager::safe_delete_array(tempWork, 1);
     Tucker::MemoryManager::safe_delete_array(tempT, 5);
     scalar_t* T = Tucker::MemoryManager::safe_new_array<scalar_t>(TSize);
-    scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(lwork);  
-    
+    scalar_t* work = Tucker::MemoryManager::safe_new_array<scalar_t>(lwork);
+
     if(globalRank == 0) Tucker::MemoryManager::printMaxMemUsage();
-    
+
     Tucker::gelq(&nrowsM, &ncolsM, Mcopy->data(), &nrowsM, T, &TSize, work, &lwork, &info);
     Tucker::MemoryManager::safe_delete_array(work, lwork);
     Tucker::MemoryManager::safe_delete_array(T, TSize);
-    
+
     R = Tucker::MemoryManager::safe_new<Tucker::Matrix<scalar_t>>(nrowsR, nrowsM);
     if(nrowsM < ncolsM){
       //transpose the leftmost square of Mcopy one column at a time.
@@ -161,7 +161,7 @@ const scalar_t* packForGram(const Tensor<scalar_t>* Y, int n, const Map* redistM
   // Allocate memory for packed data
   scalar_t* sendData = Tucker::MemoryManager::safe_new_array<scalar_t>(Y->getLocalNumEntries());
 
-  // Local data is row-major    
+  // Local data is row-major
   //after packing the local data should have block column pattern where each block is row major.
   if(n == ndims-1) {
     const scalar_t* YnData = Y->getLocalTensor()->data();
@@ -273,6 +273,7 @@ const Matrix<scalar_t>* redistributeTensorForGram(const Tensor<scalar_t>* Y, int
     if(pack_timer) pack_timer->stop();
   }
   else {
+    std::cout << "other branch \n";
     // If Y has no entries, we're not sending anything
     if(Y->getLocalNumEntries() == 0)
       sendBuf = 0;
@@ -301,6 +302,9 @@ const Matrix<scalar_t>* redistributeTensorForGram(const Tensor<scalar_t>* Y, int
   bool isUnpackingNecessary = isUnpackForGramNecessary(n, ndims, oldMap, redistMap);
   Matrix<scalar_t>* redistY;
   if(isUnpackingNecessary) {
+    if(rank == 0) {
+      std::cout << "____isUnpackingNecessary____" << ": \n" ;
+    }
     redistY = Tucker::MemoryManager::safe_new<Matrix<scalar_t>>(nrows,(int)ncols,comm,false);
 
     if(unpack_timer) unpack_timer->start();
@@ -311,6 +315,9 @@ const Matrix<scalar_t>* redistributeTensorForGram(const Tensor<scalar_t>* Y, int
     Tucker::MemoryManager::safe_delete(recvY);
   }
   else {
+    if(rank == 0) {
+      std::cout << "____ELSE isUnpackingNecessary____" << ": \n" ;
+    }
     redistY = recvY;
   }
 
@@ -319,6 +326,12 @@ const Matrix<scalar_t>* redistributeTensorForGram(const Tensor<scalar_t>* Y, int
   Tucker::MemoryManager::safe_delete_array<int>(sendDispls,numProcs+1);
   Tucker::MemoryManager::safe_delete_array<int>(recvCounts,numProcs);
   Tucker::MemoryManager::safe_delete_array<int>(recvDispls,numProcs+1);
+
+  // if (rank == 0){
+  //   std::cout << " TONI \n";
+  //   auto ss = redistY->getLocalMatrix()->prettyPrint();
+  //   std::cout << ss << "\n";
+  // }
 
   return redistY;
 }

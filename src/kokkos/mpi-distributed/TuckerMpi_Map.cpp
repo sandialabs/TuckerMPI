@@ -5,7 +5,7 @@
 namespace TuckerMpi {
 
 Map::Map(int globalNumEntries, const MPI_Comm& comm) :
-  comm_(comm),
+  comm_(new MPI_Comm(comm)),
   globalNumEntries_(globalNumEntries),
   removedEmptyProcs_(false)
 {
@@ -19,7 +19,7 @@ Map::Map(int globalNumEntries, const MPI_Comm& comm) :
   // assert(globalNumEntries > nprocs);
 
   // Determine the number of entries owned by each process
-  numElementsPerProc_ = std::vector<int>(nprocs);
+  numElementsPerProc_.resize(nprocs);
 
   for(int rank=0; rank<nprocs; rank++) {
     numElementsPerProc_[rank] = globalNumEntries/nprocs;
@@ -28,7 +28,7 @@ Map::Map(int globalNumEntries, const MPI_Comm& comm) :
   }
 
   // Determine the row offsets for each process
-  offsets_ = std::vector<int>(nprocs+1);
+  offsets_.resize(nprocs+1);
 
   offsets_[0] = 0;
   for(int rank=1; rank<=nprocs; rank++) {
@@ -92,11 +92,11 @@ void Map::removeEmptyProcs()
   // Remove them from the communicator too
   MPI_Group old_group, new_group;
   MPI_Comm new_comm;
-  MPI_Comm_group(comm_, &old_group);
+  MPI_Comm_group(*comm_, &old_group);
   MPI_Group_excl (old_group, (int)emptyProcs.size(),
       emptyProcs.data(), &new_group);
-  MPI_Comm_create (comm_, new_group, &new_comm);
-  comm_ = new_comm;
+  MPI_Comm_create (*comm_, new_group, &new_comm);
+  *comm_ = new_comm;
   removedEmptyProcs_ = true;
 }
 

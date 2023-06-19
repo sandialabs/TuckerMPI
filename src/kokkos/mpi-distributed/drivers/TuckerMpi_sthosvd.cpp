@@ -1,4 +1,5 @@
 #include "Tucker_CmdLineParse.hpp"
+#include "TuckerOnNode_Tensor_IO.hpp"
 #include "TuckerMpi_ParameterFileParser.hpp"
 #include "TuckerMpi_Distribution.hpp"
 #include "TuckerMpi_Tensor.hpp"
@@ -20,14 +21,19 @@ int main(int argc, char* argv[])
   MPI_Init(&argc, &argv);
   Kokkos::initialize(argc, argv);
   {
+    /*
+     * prepare
+     */
     using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
-
     int rank, nprocs;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
+    /*
+     * read data and create tensor
+     */
     const auto paramfn = Tucker::parse_cmdline_or(argc, (const char**)argv,
-					  "--parameter-file", "paramfile.txt");
+						  "--parameter-file", "paramfile.txt");
     const TuckerMpiDistributed::InputParameters<scalar_t> inputs(paramfn);
     if(rank == 0) { inputs.describe(); }
 
@@ -35,16 +41,6 @@ int main(int argc, char* argv[])
     TuckerMpi::Distribution dist(dataTensorDim, inputs.proc_grid_dims);
     TuckerMpi::Tensor<scalar_t, memory_space> X(std::move(dist));
     TuckerMpi::read_tensor_binary(X, inputs.in_fns_file.c_str());
-#if 0
-    /*FRIZZI: tmp debug print*/
-    auto v = X.getLocalTensor().data();
-    sleep(rank*1);
-    std::cout << "Rank = " << rank << " ";
-    for (int i=0; i<v.extent(0); ++i){ std::cout << v(i) << " "; }
-    std::cout << "\n";
-    MPI_Barrier(MPI_COMM_WORLD);
-    /**/
-#endif
 
     if(rank == 0) {
       const size_t local_nnz = X.getLocalNumEntries();
@@ -52,28 +48,68 @@ int main(int argc, char* argv[])
       std::cout << "Local input tensor size: ";
       Tucker::write_view_to_stream(std::cout, X.getLocalSize());
       Tucker::printBytes(local_nnz*sizeof(scalar_t));
-
       std::cout << "Global input tensor size: ";
       Tucker::write_view_to_stream(std::cout, X.getGlobalSize());
       Tucker::printBytes(global_nnz*sizeof(scalar_t));
     }
 
+    /*
+     * preprocessing
+     */
     // FIXME: Compute statistics is missing
     // FIXME: Perform preprocessing is missing
+    MPI_Barrier(MPI_COMM_WORLD);
 
-    auto coreTensorTruncator =
+    /*
+     * prepare lambdas "defining" the computation
+     */
+    auto writeEigenvaluesToFile = [=](auto factorization, bool squareBeforeWriting){
+      if(rank == 0) {
+	const std::string filePrefix = inputs.sv_dir + "/" + inputs.sv_fn + "_mode_";
+	TuckerOnNode::print_eigenvalues(factorization, filePrefix, squareBeforeWriting);
+      }
+    };
+
+    auto printNorms = [=](auto factorization){
+      auto xnorm2 = X.frobeniusNormSquared();
+      auto xnorm  = std::sqrt(xnorm2);
+      auto gnorm  = std::sqrt(factorization.coreTensor().frobeniusNormSquared());
+      if(rank == 0) {
+	std::cout << "Norm of input tensor: " << std::setprecision(15) << xnorm << std::endl;
+	std::cout << "Norm of core tensor: "  << std::setprecision(15) << gnorm << std::endl;
+      }
+    };
+
+    auto truncator =
       TuckerMpi::create_core_tensor_truncator(X, inputs.dimensionsOfCoreTensor(), inputs.tol);
 
-    bool flipSign = false;
+    auto sthosvdNewGram = [=](auto truncator){
+      auto f = TuckerMpi::STHOSVD(TuckerMpi::TagNewGram{}, X, truncator,
+				  inputs.modeOrder, false /*flipSign*/);
+
+      writeEigenvaluesToFile(f, false /*for gram we write raw eigenvalues*/);
+      printNorms(f);
+    };
+
+    /*
+     * run for real
+     */
     if(inputs.boolSTHOSVD){
-      auto f = TuckerMpi::STHOSVD(X, coreTensorTruncator, inputs.modeOrder,
-				  inputs.boolUseOldGram, flipSign,
-				  inputs.boolUseLQ, inputs.useButterflyTSQR);
+      if (!inputs.boolUseOldGram && !inputs.boolUseLQ){
+	sthosvdNewGram(truncator);
+      }
     }
 
-  }
+  }//end kokkos scope
   Kokkos::finalize();
   MPI_Finalize();
 
   return 0;
 }
+
+
+// MPI_Barrier(MPI_COMM_WORLD);
+// sleep(rank*1);
+// std::cout << " ____GIGIG____ " << rank << "\n";
+// TuckerOnNode::output_tensor_to_stream(f.coreTensor(), std::cout, 15);
+// MPI_Barrier(MPI_COMM_WORLD);

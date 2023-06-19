@@ -3,6 +3,7 @@
 
 #include "mpi.h"
 #include <vector>
+#include <memory>
 
 namespace TuckerMpi {
 
@@ -13,8 +14,8 @@ public:
 
   //! Returns the MPI communicator
   const MPI_Comm& getComm(bool squeezed) const{
-    if(squeezed && squeezed_) { return cartComm_squeezed_; }
-    return cartComm_;
+    if(squeezed && squeezed_) { return *cartComm_squeezed_; }
+    return *cartComm_;
   }
 
   //! Returns the row communicator for dimension d
@@ -45,45 +46,41 @@ public:
 
   const std::vector<int> & getSizeArray() const{ return size_; }
 
-  // -----------------------------------
-  // Just for debugging
-  // -----------------------------------
   //! Returns the rank of the MPI process at a given coordinate
   int getRank(const std::vector<int> & coords) const{
     int rank;
-    MPI_Cart_rank(cartComm_, coords.data(), &rank);
+    MPI_Cart_rank(*cartComm_, coords.data(), &rank);
     return rank;
   }
 
   //! Returns the cartesian coordinates of the calling process in the grid
   void getCoordinates(std::vector<int> & coords) const{
     int globalRank;
-    MPI_Comm_rank(cartComm_, &globalRank);
+    MPI_Comm_rank(*cartComm_, &globalRank);
     getCoordinates(coords, globalRank);
   }
 
   void getCoordinates(std::vector<int> & coords,
 		      int globalRank) const{
     int ndims = size_.size();
-    MPI_Cart_coords(cartComm_, globalRank, ndims, coords.data());
+    MPI_Cart_coords(*cartComm_, globalRank, ndims, coords.data());
   }
-  // -----------------------------------
 
 private:
   bool squeezed_;
-  std::vector<int> size_;
+  std::vector<int> size_ = {};
   //! MPI communicator storing the Cartesian grid information
-  MPI_Comm cartComm_;
+  std::shared_ptr<MPI_Comm> cartComm_ = {};
   //! Array of row communicators
-  std::vector<MPI_Comm> rowcomms_;
+  std::vector<MPI_Comm> rowcomms_ = {};
   //! Array of column communicators
-  std::vector<MPI_Comm> colcomms_;
+  std::vector<MPI_Comm> colcomms_ = {};
   //! MPI communicator storing the Cartesian grid information
-  MPI_Comm cartComm_squeezed_;
+  std::shared_ptr<MPI_Comm> cartComm_squeezed_ = {};
   //! Array of row communicators
-  std::vector<MPI_Comm> rowcomms_squeezed_;
+  std::vector<MPI_Comm> rowcomms_squeezed_ = {};
   //! Array of column communicators
-  std::vector<MPI_Comm> colcomms_squeezed_;
+  std::vector<MPI_Comm> colcomms_squeezed_= {};
 };
 
 }

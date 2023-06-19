@@ -196,7 +196,7 @@ private:
 template <class ScalarType, class ...Props>
 void print_eigenvalues(TuckerTensor<ScalarType, Props...> factorization,
 		       const std::string& filePrefix,
-		       bool useLQ)
+		       bool squareBeforeWriting)
 {
   const int nmodes = factorization.rank();
 
@@ -208,7 +208,7 @@ void print_eigenvalues(TuckerTensor<ScalarType, Props...> factorization,
     auto eigvals = factorization.eigenvalues(mode);
     const int nevals = eigvals.extent(0);
 
-    if(useLQ){
+    if (squareBeforeWriting){
       for(int i=0; i<nevals; i++) {
         ofs << std::setprecision(16) << std::pow(eigvals(i), 2) << std::endl;
       }

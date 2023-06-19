@@ -10,9 +10,7 @@ Distribution::Distribution(const std::vector<int>& dims,
 			   const std::vector<int>& procs)
   : localDims_(dims.size()),
     globalDims_(dims),
-    grid_(procs, MPI_COMM_WORLD),
-    maps_squeezed_(),
-    squeezed_(false)
+    grid_(procs, MPI_COMM_WORLD)
 {
   const int ndims = dims.size();
   createMaps();

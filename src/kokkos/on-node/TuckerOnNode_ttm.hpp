@@ -22,10 +22,6 @@ void ttm(Tensor<ScalarType, TensorProperties...> X,
     assert(U.extent(0) == Y.extent(n));
   }
 
-  // FIXME: need to guard this somehow to make it work
-  // for example for comparison purposes or when kernels is not on
-  // impl::ttm_hostblas(X, n, U, Y, Utransp);
-
   if(mode == 0) {
     impl::ttm_kker_mode_zero(X, mode, U, Y, Utransp);
   } else {
@@ -46,6 +42,43 @@ auto ttm(const Tensor<ScalarType, TensorProperties...> & X,
   }
   Tensor<ScalarType, TensorProperties...> Y(I);
   ttm(X, mode, U, Y, Utransp);
+  return Y;
+}
+
+template <class ScalarType, class ...TensorProperties>
+void ttm(Tensor<ScalarType, TensorProperties...> X,
+	 int mode,
+	 ScalarType* Uptr,
+	 int strideU,
+	 Tensor<ScalarType, TensorProperties...> Y,
+	 bool Utransp)
+{
+  using tensor_type  = Tensor<ScalarType, TensorProperties...>;
+  using memory_space = typename tensor_type::traits::memory_space;
+  static_assert(Kokkos::SpaceAccessibility<Kokkos::HostSpace, memory_space>::accessible,
+		"TuckerOnNode::ttm: this overload is only for a tensor that is host accessible");
+  impl::ttm_hostblas(X, mode, Uptr, strideU, Y, Utransp);
+}
+
+template <class ScalarType, class ...TensorProperties>
+auto ttm(Tensor<ScalarType, TensorProperties...> X,
+	 const int n,
+	 ScalarType* Uptr,
+	 const int dimU,
+	 int strideU,
+	 bool Utransp)
+{
+  using tensor_type  = Tensor<ScalarType, TensorProperties...>;
+  using memory_space = typename tensor_type::traits::memory_space;
+  static_assert(Kokkos::SpaceAccessibility<Kokkos::HostSpace, memory_space>::accessible,
+		"TuckerOnNode::ttm: this overload is only for a tensor that is host accessible");
+
+  std::vector<int> I(X.rank());
+  for(int i=0; i<I.size(); i++) {
+    I[i] = (i != n) ? X.extent(i) : dimU;
+  }
+  Tensor<ScalarType, TensorProperties...> Y(I);
+  ttm(X, n, Uptr, strideU, Y, Utransp);
   return Y;
 }
 

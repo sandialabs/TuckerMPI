@@ -142,7 +142,7 @@ void computeLQ(const Tensor <scalar_t>* Y, const int n, Matrix<scalar_t>* L){
     for(int i=0; i<n; i++) {
       submatrixNrows *= Y->size(i);
     }
-    int YnTransposeNrows =1; 
+    int YnTransposeNrows =1;
     for(int i=0; i<Y->N(); i++) {
       if(i != n) {
         YnTransposeNrows *= Y->size(i);
@@ -179,7 +179,7 @@ void computeLQ(const Tensor <scalar_t>* Y, const int n, Matrix<scalar_t>* L){
       Tucker::MemoryManager::safe_delete_array(work, 1);
       Tucker::MemoryManager::safe_delete_array(TforGeqr, 5);
       work = MemoryManager::safe_new_array<scalar_t>(lwork);
-      TforGeqr = Tucker::MemoryManager::safe_new_array<scalar_t>(TSize);    
+      TforGeqr = Tucker::MemoryManager::safe_new_array<scalar_t>(TSize);
       geqr(&Rnrows, &Rncols, R->data(), &Rnrows, TforGeqr, &TSize, work, &lwork, &info);
       if(info != 0){
         std::ostringstream oss;
@@ -188,8 +188,8 @@ void computeLQ(const Tensor <scalar_t>* Y, const int n, Matrix<scalar_t>* L){
       }
       MemoryManager::safe_delete_array(work, lwork);
       MemoryManager::safe_delete_array(TforGeqr, TSize);
-      
-      
+
+
       int i; //This is the index for the first submatrix that hasn't been included in the TSQR.
       int numSubmatricesLeft = totalNumSubmatrices - numSubmatrices;
       Matrix<scalar_t>* B;
@@ -236,7 +236,7 @@ void computeLQ(const Tensor <scalar_t>* Y, const int n, Matrix<scalar_t>* L){
       Tucker::MemoryManager::safe_delete_array(work, 1);
       Tucker::MemoryManager::safe_delete_array(TforGeqr, 5);
       work = MemoryManager::safe_new_array<scalar_t>(lwork);
-      TforGeqr = Tucker::MemoryManager::safe_new_array<scalar_t>(TSize);    
+      TforGeqr = Tucker::MemoryManager::safe_new_array<scalar_t>(TSize);
       geqr(&Rnrows, &Rncols, R->data(), &Rnrows, TforGeqr, &TSize, work, &lwork, &info);
       if(info != 0){
         std::ostringstream oss;
@@ -549,7 +549,7 @@ void computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues,
 }
 
 template <class scalar_t>
-void computeSVD(Matrix<scalar_t>* L, scalar_t* singularValues, 
+void computeSVD(Matrix<scalar_t>* L, scalar_t* singularValues,
   Matrix<scalar_t>* leftSingularVectors){
   if(L == 0) {
     throw std::runtime_error("Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, const bool flipSign): G is a null pointer");
@@ -566,7 +566,7 @@ void computeSVD(Matrix<scalar_t>* L, scalar_t* singularValues,
   const int negOne = -1; const int zero = 0; const int one = 1;
   int info;
   //workspace query
-  gesvd(&JOBU, &JOBVT, &Lnrows, &Lncols, L->data(), &Lnrows, singularValues, 
+  gesvd(&JOBU, &JOBVT, &Lnrows, &Lncols, L->data(), &Lnrows, singularValues,
     leftSingularVectors->data(), &Lnrows, VT, &one, work, &negOne, &info);
   if(info != 0){
     std::cout << "error in gesvd in computeSVD()" << std::endl;
@@ -574,7 +574,7 @@ void computeSVD(Matrix<scalar_t>* L, scalar_t* singularValues,
   int lwork = work[0];
   Tucker::MemoryManager::safe_delete_array(work, 1);
   work = Tucker::MemoryManager::safe_new_array<scalar_t>(lwork);
-  gesvd(&JOBU, &JOBVT, &Lnrows, &Lncols, L->data(), &Lnrows, singularValues, 
+  gesvd(&JOBU, &JOBVT, &Lnrows, &Lncols, L->data(), &Lnrows, singularValues,
     leftSingularVectors->data(), &Lnrows, VT, &one, work, &lwork, &info);
   Tucker::MemoryManager::safe_delete_array(work, lwork);
   if(info != 0){
@@ -583,7 +583,7 @@ void computeSVD(Matrix<scalar_t>* L, scalar_t* singularValues,
 }
 
 template <class scalar_t>
-void computeSVD(Matrix<scalar_t>* L, scalar_t*& singularValues, 
+void computeSVD(Matrix<scalar_t>* L, scalar_t*& singularValues,
   Matrix<scalar_t>*& leadingLeftSingularVectors, const scalar_t thresh){
     if(L == 0) {
       throw std::runtime_error("Tucker::computeSingularPairs(Matrix<scalar_t>* G, scalar_t*& singularValues, Matrix<scalar_t>*& singularVectors, const scalar_t thresh): L is a null pointer");
@@ -621,7 +621,7 @@ void computeSVD(Matrix<scalar_t>* L, scalar_t*& singularValues,
 }
 
 template <class scalar_t>
-void computeSVD(Matrix<scalar_t>* L, scalar_t*& singularValues, 
+void computeSVD(Matrix<scalar_t>* L, scalar_t*& singularValues,
   Matrix<scalar_t>*& leadingLeftSingularVectors, const int numSingularVector){
     if(L == 0) {
       throw std::runtime_error("Tucker::computeEigenpairs(Matrix<scalar_t>* G, scalar_t*& eigenvalues, Matrix<scalar_t>*& eigenvectors, const int numEvecs, const bool flipSign): G is a null pointer");
@@ -749,7 +749,7 @@ const struct TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* X,
         << n << ": " << Y->size() << ", or ";
     Tucker::printBytes(nnz*sizeof(scalar_t));
   }
-  
+
 
   factorization->G = const_cast<Tensor<scalar_t>*>(Y);
   factorization->total_timer_.stop();
@@ -897,9 +897,12 @@ Tensor<scalar_t>* ttm(const Tensor<scalar_t>* X, const int n,
 
 
 template <class scalar_t>
-Tensor<scalar_t>* ttm(const Tensor<scalar_t>* const X, const int n,
-    const scalar_t* const Uptr, const int dimU,
-    const int strideU, bool Utransp)
+Tensor<scalar_t>* ttm(const Tensor<scalar_t>* const X,
+		      const int n,
+		      const scalar_t* const Uptr,
+		      const int dimU,
+		      const int strideU,
+		      bool Utransp)
 {
   // Allocate space for the new tensor
   SizeArray I(X->N());
@@ -923,7 +926,8 @@ Tensor<scalar_t>* ttm(const Tensor<scalar_t>* const X, const int n,
 
 template <class scalar_t>
 void ttm(const Tensor<scalar_t>* const X, const int n,
-    const Matrix<scalar_t>* const U, Tensor<scalar_t>* Y, bool Utransp)
+	 const Matrix<scalar_t>* const U,
+	 Tensor<scalar_t>* Y, bool Utransp)
 {
   // Check that the input is valid
   assert(U != 0);
@@ -1672,7 +1676,7 @@ void padToSquare(Matrix<scalar_t>*& R)
   int sizeOfSquareR = Rncols*Rncols;
   for(int i=0; i<Rncols; i++){
     //copy the top part over
-    Tucker::copy(&Rnrows, R->data()+i*Rnrows, &one, squareR->data()+i*Rncols, &one); 
+    Tucker::copy(&Rnrows, R->data()+i*Rnrows, &one, squareR->data()+i*Rncols, &one);
     //padding with zeros
     for(int j=i*Rncols+Rnrows; j<(i+1)*Rncols; j++){
       squareR->data()[j] = 0;

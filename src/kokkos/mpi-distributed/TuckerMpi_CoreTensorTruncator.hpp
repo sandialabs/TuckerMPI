@@ -38,6 +38,9 @@ auto create_core_tensor_truncator(Tensor<ScalarType, Properties...> dataTensor,
 {
   return [=](std::size_t mode, auto eigenValues) -> std::size_t
   {
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+
     if (fixedCoreTensorRanks)
     {
       (void) eigenValues; // unused
@@ -49,12 +52,10 @@ auto create_core_tensor_truncator(Tensor<ScalarType, Properties...> dataTensor,
       const auto rank = dataTensor.rank();
       const ScalarType norm = dataTensor.frobeniusNormSquared();
       const ScalarType threshold  = tol*tol*norm/rank;
-      std::cout << "\tAutoST-HOSVD::Tensor Norm: "
-		<< std::sqrt(norm)
-		<< "...\n";
-      std::cout << "\tAutoST-HOSVD::Relative Threshold: "
-		<< threshold
-		<< "...\n";
+      if (rank==0){
+	std::cout << "\tAutoST-HOSVD::Tensor Norm: " << std::sqrt(norm) << "...\n";
+	std::cout << "\tAutoST-HOSVD::Relative Threshold: " << threshold << "...\n";
+      }
       auto eigVals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigenValues);
       return impl::count_eigvals_using_threshold(eigVals_h, threshold);
     }

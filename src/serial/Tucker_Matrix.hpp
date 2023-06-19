@@ -107,7 +107,7 @@ public:
   /**
    * Assuming the matrix is in column major this returns the string that shows the matrix in row major.
    */
-  std::string prettyPrint()
+  std::string prettyPrint() const
   {
     std::string s = "";
     for(int i=0; i<nrows(); i++){

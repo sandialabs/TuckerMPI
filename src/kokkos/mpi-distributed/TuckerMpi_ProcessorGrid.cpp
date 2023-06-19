@@ -4,13 +4,11 @@
 namespace TuckerMpi {
 
 ProcessorGrid::ProcessorGrid(const std::vector<int>& sz,
-    const MPI_Comm& comm) :
-        size_(sz.size()),
-        squeezed_(false),
-        cartComm_squeezed_(MPI_COMM_NULL),
-        rowcomms_squeezed_(),
-        colcomms_squeezed_()
-
+			     const MPI_Comm& comm)
+  : squeezed_(false),
+    size_(sz.size()),
+    cartComm_(new MPI_Comm),
+    cartComm_squeezed_(new MPI_Comm)
 {
   int ndims = sz.size();
 
@@ -34,10 +32,11 @@ ProcessorGrid::ProcessorGrid(const std::vector<int>& sz,
 
   // Create a virtual topology MPI communicator
   std::vector<int> periods(ndims);
-  for(int i=0; i<ndims; i++) periods[i] = 1;
+  std::fill(periods.begin(), periods.end(), 1);
   int reorder = 0;
-  MPI_Cart_create(comm, ndims, (int*)sz.data(), periods.data(),
-      reorder, &cartComm_);
+  MPI_Comm cc;
+  MPI_Cart_create(comm, ndims, (int*)sz.data(), periods.data(), reorder, &cc);
+  *cartComm_ = cc;
 
   // Allocate memory for subcommunicators
   rowcomms_ = std::vector<MPI_Comm>(ndims);
@@ -45,19 +44,17 @@ ProcessorGrid::ProcessorGrid(const std::vector<int>& sz,
 
   // Get the subcommunicators
   std::vector<int> remainDims(ndims);
-  for(int i=0; i<ndims; i++) remainDims[i] = 0;
-  for(int i=0; i<ndims; i++)
-  {
+  std::fill(remainDims.begin(), remainDims.end(), 0);
+  for(int i=0; i<ndims; i++){
     remainDims[i] = 1;
-    MPI_Cart_sub(cartComm_, remainDims.data(), &(colcomms_[i]));
+    MPI_Cart_sub(*cartComm_, remainDims.data(), &(colcomms_[i]));
     remainDims[i] = 0;
   }
 
-  for(int i=0; i<ndims; i++) remainDims[i] = 1;
-  for(int i=0; i<ndims; i++)
-  {
+  std::fill(remainDims.begin(), remainDims.end(), 1);
+  for(int i=0; i<ndims; i++){
     remainDims[i] = 0;
-    MPI_Cart_sub(cartComm_, remainDims.data(), &(rowcomms_[i]));
+    MPI_Cart_sub(*cartComm_, remainDims.data(), &(rowcomms_[i]));
     remainDims[i] = 1;
   }
 }
@@ -79,15 +76,16 @@ void ProcessorGrid::squeeze(const std::vector<int>& sz, const MPI_Comm& comm)
   }
   if(nprocsRequested != nprocs) {
     std::cerr << "ERROR in ProcessorGrid::squeeze: the processor grid "
-        << "supplied is inconsistent with the total number of processes\n";
+	      << "supplied is inconsistent with the total number of processes\n";
   }
 
   // Create a virtual topology MPI communicator
   std::vector<int> periods(ndims);
   for(int i=0; i<ndims; i++) periods[i] = 1;
   int reorder = 0;
-  MPI_Cart_create(comm, ndims, (int*)sz.data(), periods.data(),
-      reorder, &cartComm_squeezed_);
+  MPI_Comm ccs;
+  MPI_Cart_create(comm, ndims, (int*)sz.data(), periods.data(), reorder, &ccs);
+  *cartComm_squeezed_ = ccs;
 
   // Allocate memory for subcommunicators
   std::vector<MPI_Comm> rowcomms_squeezed_(ndims);
@@ -95,19 +93,17 @@ void ProcessorGrid::squeeze(const std::vector<int>& sz, const MPI_Comm& comm)
 
   // Get the subcommunicators
   std::vector<int> remainDims(ndims);
-  for(int i=0; i<ndims; i++) remainDims[i] = 0;
-  for(int i=0; i<ndims; i++)
-  {
+  std::fill(remainDims.begin(), remainDims.end(), 0);
+  for(int i=0; i<ndims; i++){
     remainDims[i] = 1;
-    MPI_Cart_sub(cartComm_squeezed_, remainDims.data(), &(colcomms_squeezed_[i]));
+    MPI_Cart_sub(*cartComm_squeezed_, remainDims.data(), &(colcomms_squeezed_[i]));
     remainDims[i] = 0;
   }
 
-  for(int i=0; i<ndims; i++) remainDims[i] = 1;
-  for(int i=0; i<ndims; i++)
-  {
+  std::fill(remainDims.begin(), remainDims.end(), 1);
+  for(int i=0; i<ndims; i++){
     remainDims[i] = 0;
-    MPI_Cart_sub(cartComm_squeezed_, remainDims.data(), &(rowcomms_squeezed_[i]));
+    MPI_Cart_sub(*cartComm_squeezed_, remainDims.data(), &(rowcomms_squeezed_[i]));
     remainDims[i] = 1;
   }
 }
