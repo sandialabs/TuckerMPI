@@ -14,14 +14,21 @@ template <class TagType, class ScalarType, class ...Properties, class TruncatorT
 			   const std::vector<int> & modeOrder,
 			   bool flipSign)
 {
-  if constexpr(std::is_same_v<TagType, TagNewGram>){
-    return impl::sthosvd_newgram(X, std::forward<TruncatorType>(truncator),
-				 modeOrder, flipSign);
-  }
-  else{
-    throw std::runtime_error("TuckerMpi: sthosvd: invalid or unsupported tag specified");
-    return {};
-  }
+  // constraints
+  static_assert(std::is_same_v<TagType, TagNewGram>,
+		"TuckerMpi::STHOSVD: invalid tag");
+
+  using tensor_type = ::TuckerMpi::Tensor<ScalarType, Properties...>;
+  using onnode_layout = typename tensor_type::traits::onnode_layout;
+  using memory_space  = typename tensor_type::traits::memory_space;
+  static_assert(std::is_same_v<onnode_layout, Kokkos::LayoutLeft>,
+		"TuckerMpi::STHOSVD: currently only supporting tensor with layoutleft");
+  static_assert(Kokkos::SpaceAccessibility<Kokkos::HostSpace, memory_space>::accessible,
+		"TuckerMpi::STHOSVD: currently only supporting tensor accssible on host");
+
+  // compute
+  return impl::sthosvd_newgram(X, std::forward<TruncatorType>(truncator),
+			       modeOrder, flipSign);
 }
 
 }
