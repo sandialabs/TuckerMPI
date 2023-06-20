@@ -211,7 +211,7 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
       std::vector<ScalarType> sendBuf;
       if(localResult.size() > 0){
 	sendBuf.resize(localResult.size());
-	Tucker::copy_view_to_stdvec(localResult.data(), sendBuf);
+	Tucker::impl::copy_view_to_stdvec(localResult.data(), sendBuf);
       }
       ScalarType* recvBuf = nullptr;
       if(localY.size() > 0){

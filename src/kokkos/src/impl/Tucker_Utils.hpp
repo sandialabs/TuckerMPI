@@ -6,6 +6,7 @@
 #include <vector>
 
 namespace Tucker{
+namespace impl{
 
 template <class T, class ...Properties>
 void copy_stdvec_to_view(const std::vector<T> & from,
@@ -59,5 +60,5 @@ void copy_view_to_stdvec(const Kokkos::View<T**, Properties...> & from,
   }
 }
 
-}// end namespace Tucker
+}}
 #endif

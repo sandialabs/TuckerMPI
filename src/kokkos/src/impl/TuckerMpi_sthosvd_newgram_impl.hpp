@@ -212,7 +212,7 @@ auto redistributeTensorForGram(Tensor<ScalarType, Properties...> & Y, int n)
   else{
     if(Y.getLocalNumEntries() != 0){
       sendBuf.resize(Y.getLocalNumEntries());
-      Tucker::copy_view_to_stdvec(Y.getLocalTensor().data(), sendBuf);
+      Tucker::impl::copy_view_to_stdvec(Y.getLocalTensor().data(), sendBuf);
     }
   }
 
@@ -351,7 +351,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     if(mpiRank == 0) {
       std::cout << "\n\tAutoST-HOSVD::Eigen{vals,vecs}(" << mode << ")...\n";
     }
-    auto currEigvals = Tucker::compute_eigenvals_and_eigenvecs_inplace(S, flipSign);
+    auto currEigvals = Tucker::impl::compute_eigenvals_and_eigenvecs_inplace(S, flipSign);
     TuckerOnNode::impl::appendEigenvaluesAndUpdateSliceInfo(mode, eigvals, currEigvals,
 							    perModeSlicingInfo(mode));
     //if (mpiRank ==0){ Tucker::write_view_to_stream(std::cout, currEigvals); }

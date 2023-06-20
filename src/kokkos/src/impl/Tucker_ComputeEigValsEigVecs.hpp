@@ -6,6 +6,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace Tucker{
+namespace impl{
 
 template<class ScalarType, class ... Properties>
 auto compute_eigenvals_and_eigenvecs_inplace(Kokkos::View<ScalarType**, Properties...> G,
@@ -80,5 +81,5 @@ auto compute_eigenvals_and_eigenvecs_inplace(Kokkos::View<ScalarType**, Properti
   return eigenvalues_d;
 }
 
-}// end namespace Tucker
+}}
 #endif

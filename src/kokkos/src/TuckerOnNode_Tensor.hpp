@@ -72,7 +72,7 @@ public:
   explicit Tensor(const std::vector<int> & v)
     : rank_(v.size()), dims_("dims", rank_), dims_h_("dims_h", rank_)
   {
-    Tucker::copy_stdvec_to_view(v, dims_h_);
+    Tucker::impl::copy_stdvec_to_view(v, dims_h_);
     Kokkos::deep_copy(dims_, dims_h_);
     const std::size_t numEl = std::accumulate(v.begin(), v.end(), 1,
 					      std::multiplies<std::size_t>());

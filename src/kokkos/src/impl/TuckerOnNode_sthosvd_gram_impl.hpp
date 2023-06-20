@@ -101,7 +101,7 @@ auto sthosvd_gram(const Tensor<ScalarType, Properties...> & X,
     Tucker::write_view_to_stream(std::cout, S);
 
     std::cout << "\n\tAutoST-HOSVD::Eigen{vals,vecs}(" << n << ")...\n";
-    auto currEigvals = Tucker::compute_eigenvals_and_eigenvecs_inplace(S, flipSign);
+    auto currEigvals = Tucker::impl::compute_eigenvals_and_eigenvecs_inplace(S, flipSign);
     impl::appendEigenvaluesAndUpdateSliceInfo(n, eigvals, currEigvals, perModeSlicingInfo(n));
     Tucker::write_view_to_stream(std::cout, currEigvals);
 

@@ -65,8 +65,8 @@ public:
   {
     auto std_gd = dist.getGlobalDims();
     auto std_ld = dist.getLocalDims();
-    Tucker::copy_stdvec_to_view(std_gd, globalDims_);
-    Tucker::copy_stdvec_to_view(std_ld, localDims_);
+    Tucker::impl::copy_stdvec_to_view(std_gd, globalDims_);
+    Tucker::impl::copy_stdvec_to_view(std_ld, localDims_);
   }
 
   // Tensor(const Tensor& o) = default;
