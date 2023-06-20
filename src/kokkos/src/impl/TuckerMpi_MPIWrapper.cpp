@@ -9,6 +9,64 @@
 
 namespace TuckerMpi{
 
+namespace impl{
+bool comms_equal(const MPI_Comm & a, const MPI_Comm & b)
+{
+  // we need to be careful when pointers are null and if mpi comm
+  // https://www.mpich.org/static/docs/v3.2/www3/MPI_Comm_compare.html
+
+  if ((a != MPI_COMM_NULL) && (b != MPI_COMM_NULL)){
+    int commIdent = {};
+    MPI_Comm_compare(a, b, &commIdent);
+    if (commIdent != MPI_IDENT){ return false; }
+    else{ return true; }
+  }
+  else if ((a != MPI_COMM_NULL) && (b == MPI_COMM_NULL)){
+    return false;
+  }
+  else if ((a == MPI_COMM_NULL) && (b != MPI_COMM_NULL)){
+    return false;
+  }
+  else{ return true; }
+}
+
+bool comms_equal(std::shared_ptr<MPI_Comm> a, std::shared_ptr<MPI_Comm> b)
+{
+  // we need to be careful when pointers are null and if mpi comm
+  // https://www.mpich.org/static/docs/v3.2/www3/MPI_Comm_compare.html
+  if (a && b)
+  {
+    if ((*a != MPI_COMM_NULL) && (*b != MPI_COMM_NULL)){
+      int commIdent = {};
+      MPI_Comm_compare(*a, *b, &commIdent);
+      if (commIdent != MPI_IDENT){ return false; }
+      else{ return true; }
+    }
+    else if ((*a != MPI_COMM_NULL) && (*b == MPI_COMM_NULL)){
+      return false;
+    }
+    else if ((*a == MPI_COMM_NULL) && (*b != MPI_COMM_NULL)){
+      return false;
+    }
+  }
+  else if (a && !b){ return false; }
+  else if (!a && b){ return false; }
+
+  return true;
+}
+
+bool stdvectors_of_comms_equal(const std::vector<MPI_Comm> & a,
+			       const std::vector<MPI_Comm> & b)
+{
+  if (a.size() != b.size()){ return false; }
+  for (std::size_t i=0; i<a.size(); ++i){
+    if (!comms_equal(a[i], b[i])){ return false; }
+  }
+  return true;
+}
+} //end namespace impl
+
+
 void MPI_Bcast_(float* buffer, int count, int root, MPI_Comm comm)
 {
   MPI_Bcast(buffer, count, MPI_FLOAT, root, comm);

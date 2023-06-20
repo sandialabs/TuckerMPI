@@ -78,7 +78,7 @@ void appendFactorsAndUpdateSliceInfo(
 }
 
 template <class ScalarType, class ...Properties, class TruncatorType>
-auto sthosvd_gram(const Tensor<ScalarType, Properties...> & X,
+auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
 		  TruncatorType && truncator,
 		  bool flipSign)
 {

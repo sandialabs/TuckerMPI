@@ -1,7 +1,7 @@
 #ifndef MPIKOKKOS_TUCKER_PROCESSORGRID_HPP_
 #define MPIKOKKOS_TUCKER_PROCESSORGRID_HPP_
 
-#include "mpi.h"
+#include "TuckerMpi_MPIWrapper.hpp"
 #include <vector>
 #include <memory>
 
@@ -66,22 +66,31 @@ public:
     MPI_Cart_coords(*cartComm_, globalRank, ndims, coords.data());
   }
 
+  /*
+   * operators overloading
+   */
+  friend bool operator==(const ProcessorGrid&, const ProcessorGrid&);
+  friend bool operator!=(const ProcessorGrid&, const ProcessorGrid&);
+
 private:
   bool squeezed_;
   std::vector<int> size_ = {};
   //! MPI communicator storing the Cartesian grid information
-  std::shared_ptr<MPI_Comm> cartComm_ = {};
+  std::shared_ptr<MPI_Comm> cartComm_{new MPI_Comm(MPI_COMM_NULL)};
   //! Array of row communicators
   std::vector<MPI_Comm> rowcomms_ = {};
   //! Array of column communicators
   std::vector<MPI_Comm> colcomms_ = {};
   //! MPI communicator storing the Cartesian grid information
-  std::shared_ptr<MPI_Comm> cartComm_squeezed_ = {};
+  std::shared_ptr<MPI_Comm> cartComm_squeezed_{new MPI_Comm(MPI_COMM_NULL)};
   //! Array of row communicators
   std::vector<MPI_Comm> rowcomms_squeezed_ = {};
   //! Array of column communicators
   std::vector<MPI_Comm> colcomms_squeezed_= {};
 };
+
+bool operator==(const ProcessorGrid& a, const ProcessorGrid& b);
+bool operator!=(const ProcessorGrid& a, const ProcessorGrid& b);
 
 }
 #endif

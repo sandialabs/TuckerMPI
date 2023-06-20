@@ -30,7 +30,7 @@ void ttm(Tensor<ScalarType, TensorProperties...> X,
 }
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
-auto ttm(const Tensor<ScalarType, TensorProperties...> & X,
+auto ttm(Tensor<ScalarType, TensorProperties...> X,
 	 std::size_t mode,
 	 Kokkos::View<ScalarType**, ViewProperties...> U,
 	 bool Utransp)

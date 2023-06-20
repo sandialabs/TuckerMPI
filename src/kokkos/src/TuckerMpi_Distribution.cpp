@@ -6,11 +6,30 @@
 
 namespace TuckerMpi{
 
+bool operator==(const Distribution& a, const Distribution& b)
+{
+  if (a.localDims_     != b.localDims_){ return false; }
+  if (a.globalDims_    != b.globalDims_){ return false; }
+  if (a.grid_          != b.grid_){ return false; }
+  if (a.maps_          != b.maps_){ return false; }
+  if (a.maps_squeezed_ != b.maps_squeezed_){ return false; }
+  if (a.ownNothing_    != b.ownNothing_){ return false; }
+  if (a.squeezed_      != b.squeezed_){ return false; }
+  if (a.empty_         != b.empty_){ return false; }
+
+  return true;
+}
+
+bool operator!=(const Distribution& a, const Distribution& b){
+  return !(a==b);
+}
+
 Distribution::Distribution(const std::vector<int>& dims,
 			   const std::vector<int>& procs)
   : localDims_(dims.size()),
     globalDims_(dims),
-    grid_(procs, MPI_COMM_WORLD)
+    grid_(procs, MPI_COMM_WORLD),
+    empty_(false)
 {
   const int ndims = dims.size();
   createMaps();

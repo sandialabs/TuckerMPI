@@ -9,9 +9,18 @@
 #define MPI_TUCKER_MPIWRAPPER_HPP_
 
 #include <iostream>
+#include <memory>
+#include <vector>
 #include "mpi.h"
 
 namespace TuckerMpi{
+
+namespace impl{
+bool comms_equal(const MPI_Comm & a, const MPI_Comm & b);
+bool comms_equal(std::shared_ptr<MPI_Comm> a, std::shared_ptr<MPI_Comm> b);
+bool stdvectors_of_comms_equal(const std::vector<MPI_Comm> & a,
+			       const std::vector<MPI_Comm> & b);
+}
 
 // Overloaded wrappers
 void MPI_Recv_(float*, int, int, int, MPI_Comm, MPI_Status*);

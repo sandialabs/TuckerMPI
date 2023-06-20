@@ -6,7 +6,7 @@
 namespace TuckerOnNode{
 
 template<class ScalarType, class ...Properties>
-auto compute_gram(Tensor<ScalarType, Properties...> & Y,
+auto compute_gram(Tensor<ScalarType, Properties...> Y,
 		 const std::size_t n)
 {
   using tensor_type = Tensor<ScalarType, Properties...>;

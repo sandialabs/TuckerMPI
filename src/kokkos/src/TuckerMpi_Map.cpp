@@ -4,6 +4,26 @@
 
 namespace TuckerMpi {
 
+bool operator==(const Map& a, const Map& b)
+{
+  // comparison operators for shared_ptr simply compare pointer values;
+  // the actual objects pointed to are not
+  if (!impl::comms_equal(a.comm_,b.comm_)){ return false; }
+  if (a.numElementsPerProc_ != b.numElementsPerProc_){ return false; }
+  if (a.offsets_ != b.offsets_){ return false; }
+  if (a.indexBegin_ != b.indexBegin_){ return false;}
+  if (a.indexEnd_ != b.indexEnd_){ return false;}
+  if (a.localNumEntries_ != b.localNumEntries_){ return false; }
+  if (a.globalNumEntries_ != b.globalNumEntries_){ return false; }
+  if (a.removedEmptyProcs_ != b.removedEmptyProcs_){ return false; }
+
+  return true;
+}
+
+bool operator!=(const Map& a, const Map& b){
+  return !(a==b);
+}
+
 Map::Map(int globalNumEntries, const MPI_Comm& comm) :
   comm_(new MPI_Comm(comm)),
   globalNumEntries_(globalNumEntries),

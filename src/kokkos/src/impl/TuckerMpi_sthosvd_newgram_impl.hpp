@@ -336,7 +336,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space> factors;
   slicing_info_view_t perModeSlicingInfo("pmsi", X.rank());
   tensor_type Y = X;
-  for (std::size_t n=0; n<X.rank(); n++)
+  for (std::size_t n=0; n< X.rank(); n++)
   {
     const int mode = modeOrder.empty() ? n : modeOrder[n];
 
@@ -375,6 +375,10 @@ template <class ScalarType, class ...Properties, class TruncatorType>
       std::cout << "\tAutoST-HOSVD::Starting TTM(" << mode << ")...\n";
     }
     tensor_type temp = ::TuckerMpi::ttm(Y, mode, currEigVecs, true, max_lcl_nnz_x);
+
+    // need to do = {} first, otherwise Y=temp throws because Y = temp
+    // is assigning tensors with different edistributions
+    Y = {};
     Y = temp;
     MPI_Barrier(MPI_COMM_WORLD);
     if(mpiRank == 0) {

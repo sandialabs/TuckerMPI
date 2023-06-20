@@ -41,12 +41,21 @@ public:
     return ownNothing_;
   }
 
+  bool empty() const { return empty_; }
+
+  /*
+   * operators overloading
+   */
+  friend bool operator==(const Distribution&, const Distribution&);
+  friend bool operator!=(const Distribution&, const Distribution&);
+
 private:
   void createMaps();
   //! Finds and eliminates processes that don't have work
   void findAndEliminateEmptyProcs(MPI_Comm& comm);
   //! Creates new processor grid without the processes that don't have work
   void updateProcessorGrid(const MPI_Comm& comm);
+
 
 private:
   //! Size of the local grid; number of entries owned in each dimension.
@@ -64,7 +73,11 @@ private:
 
   bool ownNothing_ = false;
   bool squeezed_ = false;
+  bool empty_ = true;
 };
+
+bool operator==(const Distribution& a, const Distribution& b);
+bool operator!=(const Distribution& a, const Distribution& b);
 
 } /* namespace TuckerMpiDistributed */
 #endif /* MPIKOKKOS_TUCKER_DISTRIBUTION_HPP_ */

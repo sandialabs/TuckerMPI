@@ -71,18 +71,70 @@ public:
     Tucker::impl::copy_stdvec_to_view(std_ld, localDims_);
   }
 
-  // Tensor(const Tensor& o) = default;
-  // Tensor(Tensor&&) = default;
+  Tensor(const Tensor& o) = default;
+  Tensor(Tensor&&) = default;
 
-  // // FIXME: missing or incomplete some special mem functions because
-  // // we need to define semantics for when distributions are different etc
-  // Tensor& operator=(const Tensor&) = default;
-  // Tensor& operator=(Tensor&&) = default;
+  Tensor& operator=(const Tensor& o){
+    is_assignable_else_throw(o);
+    dist_        = o.dist_;
+    globalDims_  = o.globalDims_;
+    localDims_   = o.localDims_;
+    localTensor_ = o.localTensor_;
+    return *this;
+  }
+
+  Tensor& operator=(Tensor&& o){
+    is_assignable_else_throw(o);
+    dist_        = std::move(o.dist_);
+    globalDims_  = std::move(o.globalDims_);
+    localDims_   = std::move(o.localDims_);
+    localTensor_ = std::move(o.localTensor_);
+    return *this;
+  }
+
+  // ----------------------------------------
+  // copy/move constr, assignment for compatible Tensor
+  // ----------------------------------------
+  template<class ST, class ... PS>
+  Tensor(const Tensor<ST,PS...> & o)
+    : dist_(o.dist_),
+      globalDims_(o.globalDims_),
+      localDims_(o.localDims_),
+      localTensor_(o.localTensor_)
+  {}
+
+  template<class ST, class ... PS>
+  Tensor& operator=(const Tensor<ST,PS...> & o){
+    is_assignable_else_throw(o);
+    dist_        = o.dist_;
+    globalDims_  = o.globalDims_;
+    localDims_   = o.localDims_;
+    localTensor_ = o.localTensor_;
+    return *this;
+  }
+
+  template<class ST, class ... PS>
+  Tensor(Tensor<ST,PS...> && o)
+    : dist_(std::move(o.dist_)),
+      globalDims_(std::move(o.globalDims_)),
+      localDims_(std::move(o.localDims_)),
+      localTensor_(std::move(o.localTensor_))
+  {}
+
+  template<class ST, class ... PS>
+  Tensor& operator=(Tensor<ST,PS...> && o){
+    is_assignable_else_throw(o);
+    dist_        = std::move(o.dist_);
+    globalDims_  = std::move(o.globalDims_);
+    localDims_   = std::move(o.localDims_);
+    localTensor_ = std::move(o.localTensor_);
+    return *this;
+  }
+
 
 public:
   int rank() const{ return localTensor_.rank(); }
-  auto & getLocalTensor(){ return localTensor_; }
-  //auto & getLocalTensor() const{ return localTensor_; }
+  auto getLocalTensor(){ return localTensor_; }
   dims_const_view_type getGlobalSize() const{ return globalDims_; }
   dims_const_view_type getLocalSize() const { return localDims_; }
 
@@ -104,6 +156,15 @@ public:
   }
 
   // missing some methods
+
+private:
+  template<class ST, class ... PS>
+  void is_assignable_else_throw(const Tensor<ST,PS...> & o)
+  {
+    if (!dist_.empty() && !o.dist_.empty() && (dist_ != o.dist_)){
+      throw std::runtime_error("TuckerMpi::Tensor: mismatching distributions for copy assignemnt");
+    }
+  }
 
 private:
   Distribution dist_ = {};

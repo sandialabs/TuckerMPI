@@ -8,7 +8,7 @@ namespace TuckerOnNode{
 namespace impl{
 
 template<class ScalarType, class MemorySpace>
-void compute_gram_host(const Tensor<ScalarType, MemorySpace> & Y,
+void compute_gram_host(Tensor<ScalarType, MemorySpace> Y,
 		       const std::size_t n,
 		       ScalarType* gram,
 		       const int stride)

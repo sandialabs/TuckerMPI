@@ -184,8 +184,8 @@ public:
 private:
   template<class ST, class ... PS>
   void is_assignable_else_throw(const Tensor<ST,PS...> & o){
-    /* need to check ranks are compatible */
-    if (rank_ != -1 && (rank_ != o.rank_)){
+    /* need to check ranks are compatible and that this or other are not empty tensors */
+    if (rank_ != -1 && o.rank_ != -1 && (rank_ != o.rank_)){
       throw std::runtime_error("Tensor: mismatching ranks for copy assignemnt");
     }
   }

@@ -1,6 +1,7 @@
 #ifndef MPIKOKKOS_TUCKER_MAP_HPP_
 #define MPIKOKKOS_TUCKER_MAP_HPP_
 
+#include "TuckerMpi_MPIWrapper.hpp"
 #include "mpi.h"
 #include <vector>
 #include <cassert>
@@ -48,6 +49,9 @@ public:
   const MPI_Comm& getComm() const{ return *comm_; }
   void removeEmptyProcs();
 
+  friend bool operator==(const Map&, const Map&);
+  friend bool operator!=(const Map&, const Map&);
+
 private:
   //! MPI communicator
   std::shared_ptr<MPI_Comm> comm_{new MPI_Comm(MPI_COMM_NULL)};
@@ -65,6 +69,9 @@ private:
   int globalNumEntries_ = {};
   bool removedEmptyProcs_ = {};
 };
+
+bool operator==(const Map& a, const Map& b);
+bool operator!=(const Map& a, const Map& b);
 
 } /* namespace TuckerMpi */
 #endif /* MPIKOKKOS_TUCKER_MAP_HPP_ */
