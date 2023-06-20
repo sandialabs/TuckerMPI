@@ -53,7 +53,7 @@ if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
   ADD_LIBRARY(${MpiKokkosTuckerLib} SHARED ${SOURCES})
   TARGET_LINK_LIBRARIES(${MpiKokkosTuckerLib} ${ALL_TPLS_NEEDED})
 
-  include_directories(${TUCKER_SRCDIR} ${TUCKER_SRCDIR}/impl)
+  include_directories(${MPI_CXX_INCLUDE_DIRS} ${TUCKER_SRCDIR} ${TUCKER_SRCDIR}/impl)
 
   set(STHOSVD_DRIVER_NAME MpiKokkosTucker_sthosvd)
   set(STHOSVD_DRIVER_SRCS)
