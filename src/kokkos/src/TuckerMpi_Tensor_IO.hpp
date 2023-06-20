@@ -53,7 +53,7 @@ void import_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
   assert(count <= std::numeric_limits<int>::max());
   if(rank == 0 && sizeof(ScalarType)*count > std::numeric_limits<int>::max()) {
     std::cout << "WARNING: We are attempting to call MPI_File_read_all to read ";
-    Tucker::printBytes(sizeof(ScalarType)*count);
+    Tucker::print_bytes_to_stream(std::cout, sizeof(ScalarType)*count);
     std::cout << "Depending on your MPI implementation, this may fail "
               << "because you are trying to read over 2.1 GB.\nIf MPI_File_read_all"
               << " crashes, please try again with a more favorable processor grid.\n";

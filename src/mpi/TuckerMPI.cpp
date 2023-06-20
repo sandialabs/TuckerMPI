@@ -685,11 +685,11 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
     int mode = modeOrder? modeOrder[n] : n;
     std::cout << " n = " << n << " mode = " << mode << "\n";
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    if(rank == 0) {
-      std::cout << "____BEGIN____" << mode << ": \n" ;
-      Y->getLocalTensor()->print(8);
-    }
+    // MPI_Barrier(MPI_COMM_WORLD);
+    // if(rank == 0) {
+    //   std::cout << "____BEGIN____" << mode << ": \n" ;
+    //   Y->getLocalTensor()->print(8);
+    // }
 
     // if(useLQ){
     //   if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting LQ(" << mode << ")...\n";
@@ -729,11 +729,11 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
             &factorization->gram_unpack_timer_[mode],
             &factorization->gram_allreduce_timer_[mode]);
 
-	if (rank == 0){
-	  std::cout << "NEW GRAm\n";
-	  auto ss = S->prettyPrint();
-	  std::cout << ss << "\n";
-	}
+	// if (rank == 0){
+	//   std::cout << "NEW GRAm\n";
+	//   auto ss = S->prettyPrint();
+	//   std::cout << ss << "\n";
+	// }
       //}
 
       factorization->gram_timer_[mode].stop();
@@ -749,14 +749,14 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
       Tucker::computeEigenpairs(S, factorization->eigenvalues[mode],
 				factorization->U[mode], thresh, flipSign);
 
-      if (rank == 0){
-	auto ev = factorization->eigenvalues[mode];
-	for (int i=0; i<4; ++i){
-	  std::cout << ev[i] << " ";
-	}
-	std::cout << "\n";
-	std::cout << factorization->U[mode]->prettyPrint() << "\n";
-      }
+      // if (rank == 0){
+      // 	auto ev = factorization->eigenvalues[mode];
+      // 	for (int i=0; i<4; ++i){
+      // 	  std::cout << ev[i] << " ";
+      // 	}
+      // 	std::cout << "\n";
+      // 	std::cout << factorization->U[mode]->prettyPrint() << "\n";
+      // }
 
       factorization->eigen_timer_[mode].stop();
       if(rank == 0) {

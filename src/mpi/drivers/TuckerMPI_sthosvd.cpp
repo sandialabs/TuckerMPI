@@ -453,10 +453,10 @@ int main(int argc, char* argv[])
       }
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    sleep(rank*1);
-    auto lT = solution->G->getLocalTensor();
-    lT->print(15);
+    // MPI_Barrier(MPI_COMM_WORLD);
+    // sleep(rank*1);
+    // auto lT = solution->G->getLocalTensor();
+    // lT->print(15);
 
     MPI_Barrier(MPI_COMM_WORLD);
     scalar_t xnorm2 = X.norm2();

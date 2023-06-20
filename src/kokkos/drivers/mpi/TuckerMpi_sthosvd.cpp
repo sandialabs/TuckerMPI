@@ -37,12 +37,12 @@ int main(int argc, char* argv[])
     if(mpiRank == 0) {
       const size_t local_nnz = X.getLocalNumEntries();
       const size_t global_nnz = X.getGlobalNumEntries();
-      std::cout << "Local input tensor size: ";
-      Tucker::write_view_to_stream(std::cout, X.getLocalSize());
-      Tucker::printBytes(local_nnz*sizeof(scalar_t));
-      std::cout << "Global input tensor size: ";
-      Tucker::write_view_to_stream(std::cout, X.getGlobalSize());
-      Tucker::printBytes(global_nnz*sizeof(scalar_t));
+      std::cout << "Local input tensor size  : ";
+      Tucker::write_view_to_stream_inline(std::cout, X.getLocalSize());
+      std::cout << ", or "; Tucker::print_bytes_to_stream(std::cout, local_nnz*sizeof(scalar_t));
+      std::cout << "Global input tensor size : ";
+      Tucker::write_view_to_stream_inline(std::cout, X.getGlobalSize());
+      std::cout << ", or "; Tucker::print_bytes_to_stream(std::cout, global_nnz*sizeof(scalar_t));
     }
 
     /*

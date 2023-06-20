@@ -349,7 +349,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 
     /* Eigenvaulues */
     if(mpiRank == 0) {
-      std::cout << "\n\tAutoST-HOSVD::Eigen{vals,vecs}(" << mode << ")...\n";
+      std::cout << "\tAutoST-HOSVD::Eigen{vals,vecs}(" << mode << ")...\n";
     }
     auto currEigvals = Tucker::impl::compute_eigenvals_and_eigenvecs_inplace(S, flipSign);
     TuckerOnNode::impl::appendEigenvaluesAndUpdateSliceInfo(mode, eigvals, currEigvals,
@@ -358,7 +358,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 
     /* Truncation */
     if(mpiRank == 0) {
-      std::cout << "\n\tAutoST-HOSVD::Truncating\n";
+      std::cout << "\tAutoST-HOSVD::Truncating\n";
     }
     const std::size_t numEvecs = truncator(mode, currEigvals);
     using eigvec_rank2_view_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space>;
@@ -377,17 +377,23 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     tensor_type temp = ::TuckerMpi::ttm(Y, mode, currEigVecs, true, max_lcl_nnz_x);
 
     // need to do = {} first, otherwise Y=temp throws because Y = temp
-    // is assigning tensors with different edistributions
+    // is assigning tensors with different distributions
     Y = {};
     Y = temp;
     MPI_Barrier(MPI_COMM_WORLD);
     if(mpiRank == 0) {
-      size_t local_nnz = Y.getLocalNumEntries();
-      size_t global_nnz = Y.getGlobalNumEntries();
-      std::cout << "Local tensor size after STHOSVD iteration" << mode << ": \n" ;
-      Tucker::printBytes(local_nnz*sizeof(ScalarType));
-      std::cout << "Global tensor size after STHOSVD iteration " << mode << ": \n";
-      Tucker::printBytes(global_nnz*sizeof(ScalarType));
+      const size_t local_nnz = Y.getLocalNumEntries();
+      const size_t global_nnz = Y.getGlobalNumEntries();
+
+      std::cout << "Local tensor size after STHOSVD iteration  " << mode << ": ";
+      Tucker::write_view_to_stream_inline(std::cout, Y.getLocalSize());
+      std::cout << ", or ";
+      Tucker::print_bytes_to_stream(std::cout, local_nnz*sizeof(ScalarType));
+
+      std::cout << "Global tensor size after STHOSVD iteration " << mode << ": ";
+      Tucker::write_view_to_stream_inline(std::cout, Y.getGlobalSize());
+      std::cout << ", or ";
+      Tucker::print_bytes_to_stream(std::cout, global_nnz*sizeof(ScalarType));
     }
 
   }//end loop

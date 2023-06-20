@@ -50,11 +50,11 @@ void write_view_to_stream(std::ostream & out,
 			  int precision = 8)
 {
   using view_type = Kokkos::View<DataType, Properties...>;
-  static_assert(view_type::rank <= 2);
+  static_assert(view_type::rank <= 2, "view must have rank <= 2");
   static_assert(std::is_same_v<typename view_type::array_layout, Kokkos::LayoutRight> ||
-		std::is_same_v<typename view_type::array_layout, Kokkos::LayoutLeft>);
+		std::is_same_v<typename view_type::array_layout, Kokkos::LayoutLeft>,
+		"view must have LayoutLeft or Right");
 
-  out << "\n";
   auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), v);
   if constexpr(view_type::rank == 1){
     for (std::size_t i=0; i<v_h.extent(0); ++i){
@@ -69,11 +69,27 @@ void write_view_to_stream(std::ostream & out,
       out << " \n ";
     }
   }
-  out << "\n";
+}
+
+template <class DataType, class ...Properties>
+void write_view_to_stream_inline(std::ostream & out,
+				 Kokkos::View<DataType, Properties...> v,
+				 int precision = 8)
+{
+  using view_type = Kokkos::View<DataType, Properties...>;
+  static_assert(view_type::rank == 1, "view must have rank == 1");
+  static_assert(std::is_same_v<typename view_type::array_layout, Kokkos::LayoutRight> ||
+		std::is_same_v<typename view_type::array_layout, Kokkos::LayoutLeft>,
+		"view must have LayoutLeft or Right");
+
+  auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), v);
+  for (std::size_t i=0; i<v_h.extent(0); ++i){
+    out << std::setprecision(precision) << v_h(i) << " ";
+  }
 }
 
 template<class T>
-void printBytes(T bytes)
+void print_bytes_to_stream(std::ostream & out, T bytes)
 {
   static_assert(std::is_integral_v<T>);
 
@@ -83,19 +99,19 @@ void printBytes(T bytes)
   const size_t TB = 1e12;
 
   if(bytes > TB) {
-    std::cout << std::setprecision(5) << bytes / (double)TB << " TB\n";
+    out << std::setprecision(5) << bytes / (double)TB << " TB\n";
   }
   else if(bytes > GB) {
-    std::cout << std::setprecision(5) << bytes / (double)GB << " GB\n";
+    out << std::setprecision(5) << bytes / (double)GB << " GB\n";
   }
   else if(bytes > MB) {
-    std::cout << std::setprecision(5) << bytes / (double)MB << " MB\n";
+    out << std::setprecision(5) << bytes / (double)MB << " MB\n";
   }
   else if(bytes > KB) {
-    std::cout << std::setprecision(5) << bytes / (double)KB << " KB\n";
+    out << std::setprecision(5) << bytes / (double)KB << " KB\n";
   }
   else {
-    std::cout << bytes << " bytes\n";
+    out << bytes << " bytes\n";
   }
 }
 
