@@ -5,20 +5,21 @@
 
 namespace TuckerOnNode{
 
-struct TagGram{};
+enum class Method{
+  Gram
+};
 
-template <class TagType, class ScalarType, class ...Properties, class TruncatorType>
-[[nodiscard]] auto STHOSVD(TagType tag,
+template <class ScalarType, class ...Properties, class TruncatorType>
+[[nodiscard]] auto STHOSVD(Method method,
 			   ::TuckerOnNode::Tensor<ScalarType, Properties...> X,
 			   TruncatorType && truncator,
 			   bool flipSign)
 {
-  if constexpr(std::is_same_v<TagType, TagGram>){
+  if (method == Method::Gram){
     return impl::sthosvd_gram(X, std::forward<TruncatorType>(truncator), flipSign);
   }
   else{
-    throw std::runtime_error("TuckerOnNode: sthosvd: invalid or unsupported tag specified");
-    return {};
+    throw std::runtime_error("TuckerOnNode: sthosvd: invalid or unsupported method");
   }
 }
 

@@ -76,7 +76,8 @@ int main(int argc, char* argv[])
       Tucker::create_core_tensor_truncator(X, inputs.dimensionsOfCoreTensor(), inputs.tol, mpiRank);
 
     auto sthosvdNewGram = [=](auto truncator){
-      auto f = TuckerMpi::STHOSVD(TuckerMpi::TagNewGram{}, X, truncator,
+      const auto method = TuckerMpi::Method::NewGram;
+      auto f = TuckerMpi::STHOSVD(method, X, truncator,
 				  inputs.modeOrder, false /*flipSign*/);
       writeEigenvaluesToFile(f, false /*for gram we write raw eigenvalues*/);
       printNorms(f);

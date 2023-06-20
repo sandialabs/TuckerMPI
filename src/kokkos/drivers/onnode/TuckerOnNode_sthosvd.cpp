@@ -54,7 +54,8 @@ int main(int argc, char* argv[])
       Tucker::create_core_tensor_truncator(X, inputs.dimensionsOfCoreTensor(), inputs.tol);
 
     auto sthosvdGram = [=](auto truncator){
-      auto f = TuckerOnNode::STHOSVD(TuckerOnNode::TagGram{}, X, truncator, false /*flipSign*/);
+      const auto method = TuckerOnNode::Method::Gram;
+      auto f = TuckerOnNode::STHOSVD(method, X, truncator, false /*flipSign*/);
       writeResultsToFile(f, false /*for gram we write raw eigenvalues*/);
       printNorms(f);
     };
