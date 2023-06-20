@@ -37,14 +37,20 @@ public:
     return maxNumEntries;
   }
 
-  int getNumEntries(int rank) const{ return numElementsPerProc_[rank]; }
-  int getOffset(int rank) const{ return offsets_[rank]; }
+  int getNumEntries(int rank) const{
+    return numElementsPerProc_.empty() ? 0 : numElementsPerProc_[rank];
+  }
+
+  int getOffset(int rank) const{
+    return offsets_.empty() ? 0 : offsets_[rank];
+  }
+
   const MPI_Comm& getComm() const{ return *comm_; }
   void removeEmptyProcs();
 
 private:
   //! MPI communicator
-  std::shared_ptr<MPI_Comm> comm_ = nullptr;
+  std::shared_ptr<MPI_Comm> comm_{new MPI_Comm(MPI_COMM_NULL)};
   //! Number of elements owned by each process
   std::vector<int> numElementsPerProc_ = {};
   //! Offset/displacement array

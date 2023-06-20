@@ -55,8 +55,7 @@ if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
 
   include_directories(${TUCKER_SRCDIR} ${TUCKER_SRCDIR}/impl)
 
-  # FIXME: need to add scaffoldign for MPI tests before we add this
-  #add_subdirectory(tests)
+  add_subdirectory(tests)
 
   set(STHOSVD_DRIVER_NAME MpiKokkosTucker_sthosvd)
   set(STHOSVD_DRIVER_SRCS)
