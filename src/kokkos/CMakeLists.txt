@@ -20,8 +20,6 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
 
   include_directories(${TUCKER_SRCDIR} ${TUCKER_SRCDIR}/impl)
 
-  add_subdirectory(tests)
-
   set(STHOSVD_DRIVER_NAME KokkosTucker_sthosvd)
   set(STHOSVD_DRIVER_SRCS)
   LIST(APPEND STHOSVD_DRIVER_SRCS
@@ -32,6 +30,8 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   add_executable(${STHOSVD_DRIVER_NAME} ${STHOSVD_DRIVER_SRCS})
   target_include_directories(${STHOSVD_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
   target_link_libraries(${STHOSVD_DRIVER_NAME} ${KokkosOnlyTuckerLib} ${KOKKOS_TPLS})
+
+  add_subdirectory(tests)
 endif()
 
 if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
@@ -55,8 +55,6 @@ if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
 
   include_directories(${TUCKER_SRCDIR} ${TUCKER_SRCDIR}/impl)
 
-  add_subdirectory(tests)
-
   set(STHOSVD_DRIVER_NAME MpiKokkosTucker_sthosvd)
   set(STHOSVD_DRIVER_SRCS)
   LIST(APPEND STHOSVD_DRIVER_SRCS
@@ -68,4 +66,6 @@ if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
   target_include_directories(${STHOSVD_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
   target_link_libraries(${STHOSVD_DRIVER_NAME} ${MpiKokkosTuckerLib} ${ALL_TPLS_NEEDED})
 
+  add_subdirectory(unit_tests)
+  add_subdirectory(drivers_tests)
 endif()
