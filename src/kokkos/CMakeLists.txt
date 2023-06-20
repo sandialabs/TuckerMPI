@@ -5,8 +5,8 @@ find_package(KokkosKernels REQUIRED)
 set(KOKKOS_TPLS
   Kokkos::BLAS Kokkos::LAPACK Kokkos::kokkos Kokkos::kokkoskernels)
 
-if(TUCKER_ENABLE_KOKKOSONLY)
-  MESSAGE(STATUS "\n\nTUCKER_ENABLE_KOKKOSONLY=${TUCKER_ENABLE_KOKKOSONLY}, building code with Kokkos-only\n")
+if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
+  MESSAGE(STATUS "\n\nTUCKER_ENABLE_KOKKOS=${TUCKER_ENABLE_KOKKOS}, building code with Kokkos-only\n")
 
   set(ALL_TPLS_NEEDED ${KOKKOS_TPLS})
 
@@ -34,8 +34,8 @@ if(TUCKER_ENABLE_KOKKOSONLY)
   target_link_libraries(${STHOSVD_DRIVER_NAME} ${KokkosOnlyTuckerLib} ${KOKKOS_TPLS})
 endif()
 
-if(TUCKER_ENABLE_MPIKOKKOS)
-  MESSAGE(STATUS "\n\nTUCKER_ENABLE_MPIKOKKOS=${TUCKER_ENABLE_MPIKOKKOS}, building code with MPI+Kokkos\n")
+if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
+  MESSAGE(STATUS "\n\nTUCKER_ENABLE_KOKKOS=${TUCKER_ENABLE_KOKKOS} and TUCKER_ENABLE_MPI=${TUCKER_ENABLE_MPI}, building code with MPI+Kokkos\n")
 
   find_package(MPI REQUIRED)
 

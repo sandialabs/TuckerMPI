@@ -15,10 +15,10 @@ else()
   FetchContent_MakeAvailable(googletest)
 endif()
 
-if(TUCKER_ENABLE_KOKKOSONLY)
+if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   add_subdirectory(onnode)
 endif()
 
-if(TUCKER_ENABLE_MPIKOKKOS)
+if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
   add_subdirectory(mpi)
 endif()
