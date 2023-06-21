@@ -1,0 +1,6 @@
+Informations to know how the gold.txt files were generated.
+The gold.txt file contains data from the svvalue_mode_* files.
+
+| TEST FOLDER NAME  | TENSOR SIZE   | REPOSITORY                            | BRANCH    | COMMIT SHA                                | EXECUTION DATE    |
+| test_sthosvd_1    | 3x5x7x11      | https://gitlab.com/tensors/TuckerMPI  | master    | a80c79582a3a8f63356f94faa181448b72ef482b  | 21-JUNE-2023      |
+

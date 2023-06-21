@@ -1,8 +1,8 @@
 include(FindUnixCommands)
 
-// put here command to run script taking txt file and dumping binary file
+# put here command to run script taking txt file and dumping binary file
 
-set(CMD "${MPIEXEC} -n ${NUMPROC} ${EXENAME}")
+set(CMD "${MPIEXEC} --oversubscribe -n ${NUMPROC} ${EXENAME}")
 message(STATUS ${CMD})
 execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
 if(RES)

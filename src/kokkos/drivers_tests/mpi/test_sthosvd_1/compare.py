@@ -8,3 +8,6 @@ if __name__== "__main__":
     # logic to compare our singular values to the gold
     # using pythong assert commands
     assert(False)
+
+
+    # compare gold.txt with sv_mode_*
