@@ -2,6 +2,8 @@ include(FindUnixCommands)
 
 # put here command to run script taking txt file and dumping binary file
 
+# REMOVE OVERSUBSCRIBE HERE
+
 set(CMD "${MPIEXEC} --oversubscribe -n ${NUMPROC} ${EXENAME}")
 message(STATUS ${CMD})
 execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
