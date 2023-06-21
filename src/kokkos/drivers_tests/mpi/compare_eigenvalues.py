@@ -37,7 +37,7 @@ if __name__== "__main__":
     print("SV prefix = {}".format(svPrefix))
 
     # compare
-    for i in range(0, modes-1):
+    for i in range(0, modes):
         print("Comparing eigenvalues for mode = {}".format(i))
 
         gold = np.loadtxt("gold"+str(i)+".txt")

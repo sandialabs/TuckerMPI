@@ -1,5 +1,11 @@
-Informations to know how the gold.txt files were generated.
-The gold.txt file contains data from the svvalue_mode_* files.
+Informations to know how the gold files were generated.
 
-| TEST FOLDER NAME  | TENSOR SIZE   | REPOSITORY                                | BRANCH        | COMMIT SHA                                | EXECUTION DATE    |
-| test_sthosvd_1    | 3x5x7x11      | https://gitlab.com/nga-tucker/TuckerMPI   | nga-develop   | db828485c17a56d9d1ddce3fb9928c4453f55070  | 21-JUNE-2023      |
+- test_sthosvd_1
+  - gold files computed using the "old" MPI code after CHANGES
+  - master branch, sha a80c79582a3a8f63356f94faa181448b72ef482b
+    - CHANGES
+      - line 42 in src/mpi/TuckerMPI_Distribution.cpp: add '#include <limits>'
+      - line 73 in src/mpi/TuckerMPI_IO_Util.hpp: remove sqrt() and std::abs()
+  - openmpi version 1.10.2
+  - gcc version 11.3.0
+  - OS: Ubuntu 22.04.2 LTS
