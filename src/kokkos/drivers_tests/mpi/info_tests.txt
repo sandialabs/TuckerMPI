@@ -9,3 +9,23 @@ Informations to know how the gold files were generated.
   - openmpi version 1.10.2
   - gcc version 11.3.0
   - OS: Ubuntu 22.04.2 LTS
+
+- test_sthosvd_2
+  - gold files computed using the "old" MPI code after CHANGES
+  - master branch, sha a80c79582a3a8f63356f94faa181448b72ef482b
+    - CHANGES
+      - line 42 in src/mpi/TuckerMPI_Distribution.cpp: add '#include <limits>'
+      - line 73 in src/mpi/TuckerMPI_IO_Util.hpp: remove sqrt() and std::abs()
+  - openmpi version 1.10.2
+  - gcc version 11.3.0
+  - OS: Ubuntu 22.04.2 LTS
+
+- test_sthosvd_3
+  - gold files computed using the "old" MPI code after CHANGES
+  - master branch, sha a80c79582a3a8f63356f94faa181448b72ef482b
+    - CHANGES
+      - line 42 in src/mpi/TuckerMPI_Distribution.cpp: add '#include <limits>'
+      - line 73 in src/mpi/TuckerMPI_IO_Util.hpp: remove sqrt() and std::abs()
+  - openmpi version 1.10.2
+  - gcc version 11.3.0
+  - OS: Ubuntu 22.04.2 LTS
