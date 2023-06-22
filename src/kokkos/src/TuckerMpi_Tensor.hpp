@@ -134,16 +134,16 @@ public:
 
 public:
   int rank() const{ return localTensor_.rank(); }
-  auto getLocalTensor(){ return localTensor_; }
-  dims_const_view_type getGlobalSize() const{ return globalDims_; }
-  dims_const_view_type getLocalSize() const { return localDims_; }
-
-  int getGlobalSize(int n) const{ return dist_.getGlobalDims()[n]; }
-  int getLocalSize(int n) const{ return dist_.getLocalDims()[n]; }
-  int getNumDimensions() const{ return dist_.getGlobalDims().size(); }
+  auto localTensor(){ return localTensor_; }
   const Distribution & getDistribution() const{ return dist_; }
-  size_t getLocalNumEntries() const{ return localTensor_.size(); }
-  size_t getGlobalNumEntries() const{
+
+  dims_const_view_type globalDimensions() const{ return globalDims_; }
+  dims_const_view_type localDimensions() const { return localDims_; }
+  int globalExtent(int n) const{ return dist_.getGlobalDims()[n]; }
+  int localExtent(int n) const{ return dist_.getLocalDims()[n]; }
+
+  size_t localSize() const{ return localTensor_.size(); }
+  size_t globalSize() const{
     auto dims = dist_.getGlobalDims();
     return std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<std::size_t>());
   }

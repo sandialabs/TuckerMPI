@@ -102,20 +102,20 @@ auto packForGram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
   assert(isPackForGramNecessary(n, Y.getDistribution().getMap(n,true), redistMap));
 
   // Get the local number of rows of Y_n
-  int localNumRows = Y.getLocalSize(n);
+  int localNumRows = Y.localExtent(n);
   // Get the number of columns of Y_n
   int globalNumCols = redistMap->getGlobalNumEntries();
   // Get the number of dimensions
-  int ndims = Y.getNumDimensions();
+  int ndims = Y.rank();
   // Get the number of MPI processes
   int nprocs = Y.getDistribution().getProcessorGrid().getNumProcs(n,true);
   // Allocate memory for packed data
-  std::vector<scalar_t> sendData(Y.getLocalNumEntries());
+  std::vector<scalar_t> sendData(Y.localSize());
 
   // Local data is row-major
   //after packing the local data should have block column pattern where each block is row major.
   if(n == ndims-1) {
-    const scalar_t* YnData = Y.getLocalTensor().data().data();
+    const scalar_t* YnData = Y.localTensor().data().data();
     int offset=0;
     for(int b=0; b<nprocs; b++) {
       int n = redistMap->getNumEntries(b);
@@ -128,13 +128,13 @@ auto packForGram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
   }
   else
   {
-    auto sz = Y.getLocalSize();
+    auto sz = Y.localDimensions();
     // Get information about the local blocks
     size_t numLocalBlocks = impl::prod(sz, n+1,ndims-1);
     size_t ncolsPerLocalBlock = impl::prod(sz, 0,n-1);
     assert(ncolsPerLocalBlock <= std::numeric_limits<int>::max());
 
-    const scalar_t* src = Y.getLocalTensor().data().data();
+    const scalar_t* src = Y.localTensor().data().data();
 
     // Make local data column major
     for(size_t b=0; b<numLocalBlocks; b++) {
@@ -169,8 +169,8 @@ auto redistributeTensorForGram(Tensor<ScalarType, Properties...> & Y, int n)
 
   // Get the dimensions of the redistributed matrix Y_n
   const int ndims = Y.rank();
-  const auto & sz = Y.getLocalSize();
-  const int nrows = Y.getGlobalSize(n);
+  const auto & sz = Y.localDimensions();
+  const int nrows = Y.globalExtent(n);
   size_t ncols = impl::prod(sz, 0,n-1,1) * impl::prod(sz, n+1,ndims-1,1);
   assert(ncols <= std::numeric_limits<int>::max());
 
@@ -181,7 +181,7 @@ auto redistributeTensorForGram(Tensor<ScalarType, Properties...> & Y, int n)
 
   // Get the column map of the redistributed Y_n
   const Map* redistMap = recvY.getMap();
-  int nLocalRows = Y.getLocalSize(n);
+  int nLocalRows = Y.localExtent(n);
   // Get the number of local columns of the redistributed matrix Y_n
   // Same as: int nLocalCols = recvY->getLocalNumCols();
   int nLocalCols = redistMap->getLocalNumEntries();
@@ -210,14 +210,14 @@ auto redistributeTensorForGram(Tensor<ScalarType, Properties...> & Y, int n)
     sendBuf = packForGram(Y, n, redistMap);
   }
   else{
-    if(Y.getLocalNumEntries() != 0){
-      sendBuf.resize(Y.getLocalNumEntries());
-      Tucker::impl::copy_view_to_stdvec(Y.getLocalTensor().data(), sendBuf);
+    if(Y.localSize() != 0){
+      sendBuf.resize(Y.localSize());
+      Tucker::impl::copy_view_to_stdvec(Y.localTensor().data(), sendBuf);
     }
   }
 
   ScalarType * recvBuf;
-  if(recvY.getLocalNumEntries() == 0) {
+  if(recvY.localSize() == 0) {
     recvBuf = 0;
   }
   else {
@@ -256,7 +256,7 @@ auto newGram(Tensor<ScalarType, Properties...> & Y, int n)
 {
   using local_gram_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft>;
 
-  const int ndims = Y.getNumDimensions();
+  const int ndims = Y.rank();
   const MPI_Comm& comm = Y.getDistribution().getProcessorGrid().getColComm(n, false);
   int numProcs;
   MPI_Comm_size(comm, &numProcs);
@@ -268,24 +268,24 @@ auto newGram(Tensor<ScalarType, Properties...> & Y, int n)
     bool myColEmpty = false;
     for(int i=0; i<ndims; i++) {
       if(i==n) continue;
-      if(Y.getLocalSize(i) == 0) {
+      if(Y.localExtent(i) == 0) {
         myColEmpty = true;
         break;
       }
     }
 
     if(myColEmpty) {
-      const int nGlobalRows = Y.getGlobalSize(n);
+      const int nGlobalRows = Y.globalExtent(n);
       Kokkos::resize(localGram, nGlobalRows, nGlobalRows);
     }
     else {
       // Redistribute the data
       auto redistributedY = redistributeTensorForGram(Y, n);
-      if(redistributedY.getLocalNumEntries() > 0) {
+      if(redistributedY.localSize() > 0) {
         localGram = localRankKForGram(redistributedY, n, ndims);
       }
       else {
-        int nGlobalRows = Y.getGlobalSize(n);
+        int nGlobalRows = Y.globalExtent(n);
 	Kokkos::resize(localGram, nGlobalRows, nGlobalRows);
       }
     } // end if(!myColEmpty)
@@ -294,11 +294,11 @@ auto newGram(Tensor<ScalarType, Properties...> & Y, int n)
   else
   {
     if(Y.getDistribution().ownNothing()) {
-      int nGlobalRows = Y.getGlobalSize(n);
+      int nGlobalRows = Y.globalExtent(n);
       Kokkos::resize(localGram, nGlobalRows, nGlobalRows);
     }
     else {
-      localGram = TuckerOnNode::compute_gram(Y.getLocalTensor(), n);
+      localGram = TuckerOnNode::compute_gram(Y.localTensor(), n);
     }
   }
 
@@ -382,16 +382,16 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     Y = temp;
     MPI_Barrier(MPI_COMM_WORLD);
     if(mpiRank == 0) {
-      const size_t local_nnz = Y.getLocalNumEntries();
-      const size_t global_nnz = Y.getGlobalNumEntries();
+      const size_t local_nnz = Y.localSize();
+      const size_t global_nnz = Y.globalSize();
 
       std::cout << "Local tensor size after STHOSVD iteration  " << mode << ": ";
-      Tucker::write_view_to_stream_inline(std::cout, Y.getLocalSize());
+      Tucker::write_view_to_stream_inline(std::cout, Y.localDimensions());
       std::cout << ", or ";
       Tucker::print_bytes_to_stream(std::cout, local_nnz*sizeof(ScalarType));
 
       std::cout << "Global tensor size after STHOSVD iteration " << mode << ": ";
-      Tucker::write_view_to_stream_inline(std::cout, Y.getGlobalSize());
+      Tucker::write_view_to_stream_inline(std::cout, Y.globalDimensions());
       std::cout << ", or ";
       Tucker::print_bytes_to_stream(std::cout, global_nnz*sizeof(ScalarType));
     }

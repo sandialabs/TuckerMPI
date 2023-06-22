@@ -35,13 +35,13 @@ int main(int argc, char* argv[])
     TuckerMpi::read_tensor_binary(X, inputs.in_fns_file.c_str());
 
     if(mpiRank == 0) {
-      const size_t local_nnz = X.getLocalNumEntries();
-      const size_t global_nnz = X.getGlobalNumEntries();
+      const size_t local_nnz = X.localSize();
+      const size_t global_nnz = X.globalSize();
       std::cout << "Local input tensor size  : ";
-      Tucker::write_view_to_stream_inline(std::cout, X.getLocalSize());
+      Tucker::write_view_to_stream_inline(std::cout, X.localDimensions());
       std::cout << ", or "; Tucker::print_bytes_to_stream(std::cout, local_nnz*sizeof(scalar_t));
       std::cout << "Global input tensor size : ";
-      Tucker::write_view_to_stream_inline(std::cout, X.getGlobalSize());
+      Tucker::write_view_to_stream_inline(std::cout, X.globalDimensions());
       std::cout << ", or "; Tucker::print_bytes_to_stream(std::cout, global_nnz*sizeof(scalar_t));
     }
 

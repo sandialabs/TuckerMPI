@@ -93,10 +93,10 @@ Distribution ttm_dist(Tensor<ScalarType, TensorProperties...> X,
 	      std::size_t nnz_limit)
 {
   const int nrows = Utransp ? U.extent(1) : U.extent(0);
-  const int ndims = X.getNumDimensions();
+  const int ndims = X.rank();
   std::vector<int> newSize(ndims);
   for(int i=0; i<ndims; i++) {
-    newSize[i] = (i == n) ? nrows : X.getGlobalSize(i);
+    newSize[i] = (i == n) ? nrows : X.globalExtent(i);
   }
 
   Distribution dist(newSize, X.getDistribution().getProcessorGrid().getSizeArray());
@@ -120,18 +120,18 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
   const int nrows = Utransp ? U.extent(1) : U.extent(0);
 
   // Get the size of the new tensor
-  const int ndims = X.getNumDimensions();
+  const int ndims = X.rank();
   std::vector<int> newSize(ndims);
   for(int i=0; i<ndims; i++) {
-    newSize[i] = (i == n) ? nrows : X.getGlobalSize(i);
+    newSize[i] = (i == n) ? nrows : X.globalExtent(i);
   }
 
   Distribution dist(newSize, X.getDistribution().getProcessorGrid().getSizeArray());
   result_type Y(dist);
 
   // Get the local part of the tensor
-  auto localX = X.getLocalTensor();
-  auto localY = Y.getLocalTensor();
+  auto localX = X.localTensor();
+  auto localY = Y.localTensor();
 
   // Determine whether there are multiple MPI processes along this dimension
   int Pn = X.getDistribution().getProcessorGrid().getNumProcs(n,false);
@@ -155,8 +155,8 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
     int K = nrows;
     int Jn = Utransp ? U.extent(0) : U.extent(1);
 
-    int uGlobalRows = Y.getGlobalSize(n);
-    int uGlobalCols = X.getGlobalSize(n);
+    int uGlobalRows = Y.globalExtent(n);
+    int uGlobalCols = X.globalExtent(n);
     const Map* xMap = X.getDistribution().getMap(n,false);
     const Map* yMap = Y.getDistribution().getMap(n,false);
 
@@ -183,7 +183,7 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
     size_t nnz_reduce_scatter = 1;
     for(int i=0; i<ndims; i++) {
       if(i == n)
-        nnz_reduce_scatter *= Y.getGlobalSize(n);
+        nnz_reduce_scatter *= Y.globalExtent(n);
       else
         nnz_reduce_scatter *= X.getDistribution().getMap(i,false)->getMaxNumEntries();
     }
@@ -197,9 +197,9 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
       if(X.getDistribution().ownNothing()) {
 	std::vector<int> sz(ndims);
         for(int i=0; i<ndims; i++) {
-          sz[i] = X.getLocalSize(i);
+          sz[i] = X.localExtent(i);
         }
-        sz[n] = Y.getGlobalSize(n);
+        sz[n] = Y.globalExtent(n);
         localResult = local_tensor_type(sz);
       }
       else {
@@ -221,7 +221,7 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
       int nprocs;
       MPI_Comm_size(comm,&nprocs);
       int recvCounts[nprocs];
-      auto Ylsz = Y.getLocalSize();
+      auto Ylsz = Y.localDimensions();
       size_t multiplier = impl::prod(Ylsz,0,n-1,1) * impl::prod(Ylsz, n+1,ndims-1,1);
 
       for(int i=0; i<nprocs; i++) {

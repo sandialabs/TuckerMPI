@@ -18,14 +18,14 @@ void import_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
 
   if(Y.getDistribution().ownNothing()) { return; }
 
-  const int ndims = Y.getNumDimensions();
+  const int ndims = Y.rank();
   int starts[ndims];
   int lsizes[ndims];
   int gsizes[ndims];
   for(int i=0; i<ndims; i++) {
     starts[i] = Y.getDistribution().getMap(i,true)->getGlobalIndex(0);
-    lsizes[i] = Y.getLocalSize(i);
-    gsizes[i] = Y.getGlobalSize(i);
+    lsizes[i] = Y.localExtent(i);
+    gsizes[i] = Y.globalExtent(i);
   }
 
   // Create the datatype associated with this layout
@@ -49,7 +49,7 @@ void import_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
 
 
   // Read the file
-  size_t count = Y.getLocalNumEntries();
+  size_t count = Y.localSize();
   assert(count <= std::numeric_limits<int>::max());
   if(rank == 0 && sizeof(ScalarType)*count > std::numeric_limits<int>::max()) {
     std::cout << "WARNING: We are attempting to call MPI_File_read_all to read ";
@@ -60,7 +60,7 @@ void import_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
   }
 
   MPI_Status status;
-  auto localTensorView = Y.getLocalTensor().data();
+  auto localTensorView = Y.localTensor().data();
   ret = MPI_File_read_all_(fh, localTensorView.data(), (int)count, &status);
   int nread;
   MPI_Get_count_<ScalarType>(&status, &nread);
