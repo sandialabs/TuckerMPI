@@ -36,7 +36,7 @@ protected:
       eigvals_h(i) = (double) (i+1);
     }
     double begin = 0.0;
-    for (size_t i=0; i<=18; ++i){
+    for (size_t i=0; i<=17; ++i){
       factors_h(i) = begin + 0.1;
       begin = factors_h(i);
     }
@@ -263,10 +263,9 @@ TEST_F(TuckerTensorFixA, copy_cnstr_has_view_semantics){
   verify1(T2);
   change2(T2);
   verify2(T2);
-  // verify2(T);
+  verify2(T);
 }
 
-#if 0
 TEST_F(TuckerTensorFixA, copy_assign_has_view_semantics){
   tt_t T(core_, eigvals_, factors_, perModeSlicingInfo_);
   verify1(T);
@@ -302,7 +301,6 @@ TEST_F(TuckerTensorFixA, copy_cnstr_const_view){
   auto v = b.eigenvalues(0);
   // v(0) = 1; this MUST fail to compile for the test to be correct
 }
-#endif
 
 
 // FINISH
