@@ -185,40 +185,5 @@ private:
   slicing_info_view_t perModeSlicingInfo_ = {};
 };
 
-// template <class ScalarType, class ...Props>
-// void print_eigenvalues(TuckerTensor<ScalarType, Props...> factorization,
-// 		       const std::string& filePrefix,
-// 		       bool squareBeforeWriting)
-// {
-//   const int nmodes = factorization.rank();
-
-//   for(int mode=0; mode<nmodes; mode++) {
-//     std::ostringstream ss;
-//     ss << filePrefix << mode << ".txt";
-//     std::ofstream ofs(ss.str());
-//     // Determine the number of eigenvalues for this mode
-//     auto eigvals = factorization.eigenvalues(mode);
-//     const int nevals = eigvals.extent(0);
-
-//     if (squareBeforeWriting){
-//       for(int i=0; i<nevals; i++) {
-//         ofs
-//         << std::setprecision(16)
-//         << std::pow(eigvals(i), 2)
-//         << std::endl;
-//       }
-//     }
-//     else{
-//       for(int i=0; i<nevals; i++) {
-//         ofs
-//         << std::setprecision(16)
-//         << eigvals(i)
-//         << std::endl;
-//       }
-//     }
-//     ofs.close();
-//   }
-// }
-
 }
 #endif

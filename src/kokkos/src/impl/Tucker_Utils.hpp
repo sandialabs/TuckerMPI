@@ -45,6 +45,25 @@ void copy_view_to_stdvec(const Kokkos::View<T*, Properties...> & from,
 }
 
 template <class T, class ...Properties>
+auto create_stdvec_from_view(const Kokkos::View<T*, Properties...> & from)
+{
+  using view_t = Kokkos::View<T*, Properties...>;
+  static_assert(
+		(std::is_same<typename view_t::array_layout,
+		 Kokkos::LayoutRight>::value ||
+		 std::is_same<typename view_t::array_layout,
+		 Kokkos::LayoutLeft>::value));
+
+  using value_type = typename view_t::non_const_value_type;
+  std::vector<value_type> v(from.extent(0));
+  auto from_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), from);
+  for (std::size_t i=0; i<from.extent(0); ++i){
+    v[i] = from_h[i];
+  }
+  return v;
+}
+
+template <class T, class ...Properties>
 void copy_view_to_stdvec(const Kokkos::View<T**, Properties...> & from,
 			 std::vector<T> & to)
 {

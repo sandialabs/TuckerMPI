@@ -14,11 +14,10 @@ namespace impl{
 template<
   class DataType1, class ...Props1,
   class DataType2, class ...Props2>
-void appendEigenvaluesAndUpdateSliceInfo(
-         int mode,
-  	 Kokkos::View<DataType1, Props1...> & dest,
-	 Kokkos::View<DataType2, Props2...> & src,
-	 ::Tucker::impl::PerModeSliceInfo & sliceInfo)
+void appendEigenvaluesAndUpdateSliceInfo(int mode,
+					 Kokkos::View<DataType1, Props1...> & dest,
+					 Kokkos::View<DataType2, Props2...> & src,
+					 ::Tucker::impl::PerModeSliceInfo & sliceInfo)
 {
   namespace KEX = Kokkos::Experimental;
 
@@ -47,11 +46,10 @@ void appendEigenvaluesAndUpdateSliceInfo(
 template<
   class DataType1, class ...Props1,
   class DataType2, class ...Props2>
-void appendFactorsAndUpdateSliceInfo(
-         int mode,
-  	 Kokkos::View<DataType1, Props1...> & dest,
-	 Kokkos::View<DataType2, Props2...> & src,
-	 ::Tucker::impl::PerModeSliceInfo & sliceInfo)
+void appendFactorsAndUpdateSliceInfo(int mode,
+				     Kokkos::View<DataType1, Props1...> & dest,
+				     Kokkos::View<DataType2, Props2...> & src,
+				     ::Tucker::impl::PerModeSliceInfo & sliceInfo)
 {
   namespace KEX = Kokkos::Experimental;
 
@@ -83,9 +81,9 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
 		  bool flipSign)
 {
 
-  using tensor_type        = Tensor<ScalarType, Properties...>;
-  using tucker_tensor_type = TuckerTensor<tensor_type>;
-  using memory_space       = typename tensor_type::traits::memory_space;
+  using tensor_type         = Tensor<ScalarType, Properties...>;
+  using tucker_tensor_type  = TuckerTensor<tensor_type>;
+  using memory_space        = typename tensor_type::traits::memory_space;
   using slicing_info_view_t = Kokkos::View<::Tucker::impl::PerModeSliceInfo*, Kokkos::HostSpace>;
 
   Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space> eigvals;
@@ -111,7 +109,16 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
     eigvec_rank2_view_t currEigVecs("currEigVecs", Y.extent(n), numEvecs);
     const int nToCopy = Y.extent(n)*numEvecs;
     const int ONE = 1;
-    Tucker::copy(&nToCopy, S.data(), &ONE, currEigVecs.data(), &ONE);
+
+    if constexpr (Kokkos::SpaceAccessibility<Kokkos::HostSpace, memory_space>::accessible){
+      Tucker::copy(&nToCopy, S.data(), &ONE, currEigVecs.data(), &ONE);
+    }
+    else{
+      auto currEigVecs_h = Kokkos::create_mirror(currEigVecs);
+      auto S_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), S);
+      Tucker::copy(&nToCopy, S_h.data(), &ONE, currEigVecs_h.data(), &ONE);
+      Kokkos::deep_copy(currEigVecs, currEigVecs_h);
+    }
     impl::appendFactorsAndUpdateSliceInfo(n, factors, currEigVecs, perModeSlicingInfo(n));
     Tucker::write_view_to_stream(std::cout, currEigVecs);
 

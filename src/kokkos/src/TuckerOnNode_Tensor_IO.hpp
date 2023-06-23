@@ -14,8 +14,7 @@ void output_tensor_to_stream(Tensor<ScalarType, MemorySpace> X,
 			     std::ostream & stream,
 			     int precision = 2)
 {
-  auto data = X.data();
-  auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), data);
+  auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), X.data());
   const size_t numElements = X.size();
   if(numElements == 0){ return; }
 
@@ -55,13 +54,19 @@ template <class ScalarType, class mem_space>
 void export_tensor_binary(const Tensor<ScalarType, mem_space> & Y,
 			  const char* filename)
 {
+  using tensor_type = Tensor<ScalarType, mem_space>;
+  using layout      = typename tensor_type::traits::array_layout;
+  static_assert(std::is_same_v<layout, Kokkos::LayoutLeft> ||
+		std::is_same_v<layout, Kokkos::LayoutRight>,
+		"export_tensor_binary: only supports layoutLeft or Right");
+
+  auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), Y.data());
   // const std::streamoff MAX_OFFSET = std::numeric_limits<std::streamoff>::max();
   size_t numEntries = Y.size();
-  // Open file
   std::ofstream ofs;
   ofs.open(filename, std::ios::out | std::ios::binary);
   assert(ofs.is_open());
-  const ScalarType* data = Y.data().data();
+  const ScalarType* data = v_h.data();
   ofs.write((char*)data,numEntries*sizeof(ScalarType));
   ofs.close();
 }

@@ -26,17 +26,18 @@ void print_eigenvalues(TuckerTensorType factorization,
 
     // Determine the number of eigenvalues for this mode
     auto eigvals = factorization.eigenvalues(mode);
+    auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
     const int nevals = eigvals.extent(0);
 
     if (squareBeforeWriting){
       for(int i=0; i<nevals; i++) {
-        ofs << std::setprecision(16) << std::pow(eigvals(i),2) << std::endl;
+        ofs << std::setprecision(16) << std::pow(eigvals_h(i),2) << std::endl;
       }
     }
     else{
       for(int i=0; i<nevals; i++) {
         ofs << std::setprecision(16)
-	    << /*sqrt(std::abs(*/eigvals(i)/*))*/ << std::endl;
+	    << /*sqrt(std::abs(*/eigvals_h(i)/*))*/ << std::endl;
       }
     }
     ofs.close();
