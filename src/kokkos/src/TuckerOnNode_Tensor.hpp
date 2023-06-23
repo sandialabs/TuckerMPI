@@ -149,7 +149,7 @@ public:
 
   std::size_t extent(std::size_t mode) const {
     assert(mode < rank_);
-    return dims_[mode];
+    return dims_h_[mode];
   }
 
   size_t size() const{
@@ -162,7 +162,7 @@ public:
     if(low > high) { return defaultReturnVal; }
 
     size_t result = 1;
-    for(int j = low; j <= high; j++){ result *= dims_[j]; }
+    for(int j = low; j <= high; j++){ result *= dims_h_[j]; }
     return result;
   }
 

@@ -8,7 +8,7 @@
 namespace TuckerOnNode{
 namespace impl{
 
-template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
+template <class ScalarType, class ...TensorProperties>
 void ttm_hostblas(Tensor<ScalarType, TensorProperties...> X,
 		  int n,
 		  ScalarType* Uptr_h,

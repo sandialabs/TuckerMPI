@@ -13,7 +13,8 @@ namespace impl{
 
 template<
   class DataType1, class ...Props1,
-  class DataType2, class ...Props2>
+  class DataType2, class ...Props2
+>
 void appendEigenvaluesAndUpdateSliceInfo(int mode,
 					 Kokkos::View<DataType1, Props1...> & dest,
 					 Kokkos::View<DataType2, Props2...> & src,
@@ -43,12 +44,27 @@ void appendEigenvaluesAndUpdateSliceInfo(int mode,
   sliceInfo.eigvalsEndIndexExclusive = KEX::distance(it0, resIt);
 }
 
+template <class IteratorType, class ViewType>
+struct CopyFactorData
+{
+  IteratorType outIt_;
+  ViewType src_;
+  CopyFactorData(IteratorType it, ViewType view) : outIt_(it), src_(view){}
+
+  KOKKOS_FUNCTION void operator()(std::size_t k) const{
+    const std::size_t nR = src_.extent(0);
+    const std::size_t row = k % nR;
+    const std::size_t col = k / nR;
+    *(outIt_ + k) = src_(row, col);
+  }
+};
+
 template<
   class DataType1, class ...Props1,
   class DataType2, class ...Props2>
 void appendFactorsAndUpdateSliceInfo(int mode,
-				     Kokkos::View<DataType1, Props1...> & dest,
-				     Kokkos::View<DataType2, Props2...> & src,
+				     Kokkos::View<DataType1, Props1...> dest,
+				     Kokkos::View<DataType2, Props2...> src,
 				     ::Tucker::impl::PerModeSliceInfo & sliceInfo)
 {
   namespace KEX = Kokkos::Experimental;
@@ -60,20 +76,15 @@ void appendFactorsAndUpdateSliceInfo(int mode,
   // copy the data
   auto it0 = KEX::begin(dest);
   auto outItBegin = it0 + currentExt;
-  const std::size_t nR = src.extent(0);
-  Kokkos::parallel_for(src.size(),
-		       KOKKOS_LAMBDA(std::size_t k){
-			 const std::size_t row = k % nR;
-			 const std::size_t col = k / nR;
-			 *(outItBegin+k) = src(row, col);
-		       });
+  Kokkos::parallel_for(src.size(), CopyFactorData(outItBegin, src));
 
   // update slicing info
   sliceInfo.factorsStartIndex = currentExt;
   sliceInfo.factorsEndIndexExclusive = currentExt + src.size();
-  sliceInfo.factorsExtent0 = nR;
+  sliceInfo.factorsExtent0 = src.extent(0);
   sliceInfo.factorsExtent1 = src.extent(1);
 }
+
 
 template <class ScalarType, class ...Properties, class TruncatorType>
 auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
@@ -119,12 +130,12 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
       Tucker::copy(&nToCopy, S_h.data(), &ONE, currEigVecs_h.data(), &ONE);
       Kokkos::deep_copy(currEigVecs, currEigVecs_h);
     }
+
     impl::appendFactorsAndUpdateSliceInfo(n, factors, currEigVecs, perModeSlicingInfo(n));
     Tucker::write_view_to_stream(std::cout, currEigVecs);
 
     std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
     tensor_type temp = ttm(Y, n, currEigVecs, true);
-    output_tensor_to_stream(temp, std::cout);
 
     Y = temp;
     std::cout << "Local tensor size after STHOSVD iteration " << n << ": ";
