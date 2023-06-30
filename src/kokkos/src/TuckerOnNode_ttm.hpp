@@ -72,6 +72,7 @@ void ttm(Tensor<ScalarType, TensorProperties...> X,
     Y.extent(mode),     // get the 1st dim of Y = 1st dim of A
     strideU             // way to read data on 1st dim
   );
+
   // Create Kokkos's View with Uptr and our layout
   umv_ls_type Aumvls(Uptr, layout);
 
