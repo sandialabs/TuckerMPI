@@ -59,12 +59,10 @@ struct CopyFactorData
   }
 };
 
-template<
-  class DataType1, class ...Props1,
-  class DataType2, class ...Props2>
+template<class DataType, class ...Props, class SourceViewType>
 void appendFactorsAndUpdateSliceInfo(int mode,
-				     Kokkos::View<DataType1, Props1...> dest,
-				     Kokkos::View<DataType2, Props2...> src,
+				     Kokkos::View<DataType, Props...> dest,
+				     SourceViewType src,
 				     ::Tucker::impl::PerModeSliceInfo & sliceInfo)
 {
   namespace KEX = Kokkos::Experimental;
@@ -85,7 +83,6 @@ void appendFactorsAndUpdateSliceInfo(int mode,
   sliceInfo.factorsExtent1 = src.extent(1);
 }
 
-
 template <class ScalarType, class ...Properties, class TruncatorType>
 auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
 		  TruncatorType && truncator,
@@ -105,35 +102,51 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
   {
     std::cout << "\tAutoST-HOSVD::Starting Mode(" << n << ")...\n";
 
+    /*
+     * gram
+     */
     std::cout << "\n\tAutoST-HOSVD::Gram(" << n << ") \n";
     auto S = compute_gram(Y, n);
+    /* check postconditions on the S
+     * - S must be a rank-2 view
+     * - S is a gram matrix so by definition should be symmetric
+     * - S should have leading extent = Y.extent(n) */
+    using S_type = decltype(S);
+    static_assert(Kokkos::is_view_v<S_type> && S_type::rank == 2);
+    assert(S.extent(0) == S.extent(1));
+    assert(S.extent(0) == Y.extent(n));
+    // use S
     Tucker::write_view_to_stream(std::cout, S);
 
+    /*
+     * eigenvalues and eigenvectors
+     */
     std::cout << "\n\tAutoST-HOSVD::Eigen{vals,vecs}(" << n << ")...\n";
-    auto currEigvals = Tucker::impl::compute_eigenvals_and_eigenvecs_inplace(S, flipSign);
+    // Note: eigenvals are returned, but S is being overwritten with eigenvectors
+    auto currEigvals = Tucker::impl::compute_and_sort_descending_eigvals_and_eigvecs_inplace(S, flipSign);
+    /* check postconditions */
+    using ev_ret_type = decltype(currEigvals);
+    static_assert(Kokkos::is_view_v<ev_ret_type> && ev_ret_type::rank == 1);
+    assert(currEigvals.extent(0) == S.extent(0));
+    assert(S.extent(0) == S.extent(1));
+    // use the curreEigvals
     impl::appendEigenvaluesAndUpdateSliceInfo(n, eigvals, currEigvals, perModeSlicingInfo(n));
     Tucker::write_view_to_stream(std::cout, currEigvals);
 
+    /*
+     * truncation
+     */
+    // S now contains the eigenvectors and we need to extract only
+    // a subset of them depending on the truncation method
     std::cout << "\n\tAutoST-HOSVD::Truncating\n";
     const std::size_t numEvecs = truncator(n, currEigvals);
-    using eigvec_rank2_view_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space>;
-    eigvec_rank2_view_t currEigVecs("currEigVecs", Y.extent(n), numEvecs);
-    const int nToCopy = Y.extent(n)*numEvecs;
-    const int ONE = 1;
-
-    if constexpr (Kokkos::SpaceAccessibility<Kokkos::HostSpace, memory_space>::accessible){
-      Tucker::copy(&nToCopy, S.data(), &ONE, currEigVecs.data(), &ONE);
-    }
-    else{
-      auto currEigVecs_h = Kokkos::create_mirror(currEigVecs);
-      auto S_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), S);
-      Tucker::copy(&nToCopy, S_h.data(), &ONE, currEigVecs_h.data(), &ONE);
-      Kokkos::deep_copy(currEigVecs, currEigVecs_h);
-    }
-
+    auto currEigVecs = Kokkos::subview(S, Kokkos::ALL, std::pair<std::size_t,std::size_t>{0, numEvecs});
     impl::appendFactorsAndUpdateSliceInfo(n, factors, currEigVecs, perModeSlicingInfo(n));
     Tucker::write_view_to_stream(std::cout, currEigVecs);
 
+    /*
+     * ttm
+     */
     std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
     tensor_type temp = ttm(Y, n, currEigVecs, true);
 

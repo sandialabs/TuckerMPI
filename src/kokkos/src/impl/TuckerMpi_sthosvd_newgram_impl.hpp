@@ -351,7 +351,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     if(mpiRank == 0) {
       std::cout << "\tAutoST-HOSVD::Eigen{vals,vecs}(" << mode << ")...\n";
     }
-    auto currEigvals = Tucker::impl::compute_eigenvals_and_eigenvecs_inplace(S, flipSign);
+    auto currEigvals = Tucker::impl::compute_and_sort_descending_eigvals_and_eigvecs_inplace(S, flipSign);
     TuckerOnNode::impl::appendEigenvaluesAndUpdateSliceInfo(mode, eigvals, currEigvals,
 							    perModeSlicingInfo(mode));
     //if (mpiRank ==0){ Tucker::write_view_to_stream(std::cout, currEigvals); }

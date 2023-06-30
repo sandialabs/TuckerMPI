@@ -8,14 +8,16 @@
 namespace TuckerOnNode{
 namespace impl{
 
-template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
-std::enable_if_t<
-  std::is_same_v<typename Tensor<ScalarType, TensorProperties...>::traits::array_layout, Kokkos::LayoutLeft>
-  && std::is_same_v<typename Kokkos::View<ScalarType**, ViewProperties...>::array_layout, Kokkos::LayoutLeft>
-  >
+template <class ScalarType, class ...TensorProperties, class AType>
+ std::enable_if_t<
+  std::is_same_v<
+    typename Tensor<ScalarType, TensorProperties...>::traits::array_layout,
+    Kokkos::LayoutLeft>
+  && Kokkos::is_view_v<AType>
+   >
 ttm_kker_mode_zero(Tensor<ScalarType, TensorProperties...> B,
 		   int n,
-		   Kokkos::View<ScalarType**, ViewProperties...> A,
+		   AType A,
 		   Tensor<ScalarType, TensorProperties...> C,
 		   bool Atransp)
 {
@@ -42,14 +44,16 @@ ttm_kker_mode_zero(Tensor<ScalarType, TensorProperties...> B,
   KokkosBlas::gemm(&transa, &transb, alpha, A, Bumv, beta, Cumv);
 }
 
-template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
+template <class ScalarType, class ...TensorProperties, class AType>
 std::enable_if_t<
-  std::is_same_v<typename Tensor<ScalarType, TensorProperties...>::traits::array_layout, Kokkos::LayoutLeft>
-  && std::is_same_v<typename Kokkos::View<ScalarType**, ViewProperties...>::array_layout, Kokkos::LayoutLeft>
+  std::is_same_v<
+    typename Tensor<ScalarType, TensorProperties...>::traits::array_layout,
+    Kokkos::LayoutLeft>
+  && Kokkos::is_view_v<AType>
   >
 ttm_kker_mode_greater_than_zero(Tensor<ScalarType, TensorProperties...> B,
 				int n,
-				Kokkos::View<ScalarType**, ViewProperties...> A,
+				AType A,
 				Tensor<ScalarType, TensorProperties...> C,
 				bool Btransp)
 {

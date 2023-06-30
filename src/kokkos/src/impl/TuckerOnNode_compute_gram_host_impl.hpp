@@ -10,8 +10,7 @@ namespace impl{
 template <class ScalarType, class DataType, class ...ViewProps, class ...Properties>
 void compute_gram_host(Tensor<ScalarType, Properties...> Y,
 		       const std::size_t n,
-		       Kokkos::View<DataType, ViewProps...> gram,
-		       const int stride)
+		       Kokkos::View<DataType, ViewProps...> gram)
 {
   using tensor_type = Tensor<ScalarType, Properties...>;
   using tensor_memory_space = typename tensor_type::traits::memory_space;
@@ -69,8 +68,9 @@ void compute_gram_host(Tensor<ScalarType, Properties...> Y,
     char trans = 'N';
     ScalarType alpha = 1;
     ScalarType beta = 0;
+    int ldc = gram.extent(0);
     Tucker::syrk(&uplo, &trans, &nrows, &ncols, &alpha,
-		 Y_rawPtr, &nrows, &beta, gramPtr, &stride);
+		 Y_rawPtr, &nrows, &beta, gramPtr, &ldc);
   }
   else
   {
@@ -91,9 +91,10 @@ void compute_gram_host(Tensor<ScalarType, Properties...> Y,
       char trans = 'T';
       ScalarType alpha = 1;
       ScalarType beta = (i==0) ? 0 : 1;
+      int ldc = gram.extent(0);
       Tucker::syrk(&uplo, &trans, &nrows, &ncols, &alpha,
 		   Y_rawPtr+i*nrows*ncols, &ncols, &beta,
-		   gramPtr, &stride);
+		   gramPtr, &ldc);
     }
   }
 }

@@ -6,10 +6,10 @@
 
 namespace TuckerOnNode{
 
-template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
+template <class ScalarType, class ...TensorProperties, class UType>
 void ttm(Tensor<ScalarType, TensorProperties...> X,
 	 std::size_t mode,
-	 Kokkos::View<ScalarType**, ViewProperties...> U,
+	 UType U,
 	 Tensor<ScalarType, TensorProperties...> Y,
 	 bool Utransp)
 {
@@ -29,10 +29,10 @@ void ttm(Tensor<ScalarType, TensorProperties...> X,
   }
 }
 
-template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
+template <class ScalarType, class ...TensorProperties, class UType>
 auto ttm(Tensor<ScalarType, TensorProperties...> X,
 	 std::size_t mode,
-	 Kokkos::View<ScalarType**, ViewProperties...> U,
+	 UType U,
 	 bool Utransp)
 {
   const std::size_t nrows = Utransp ? U.extent(1) : U.extent(0);
