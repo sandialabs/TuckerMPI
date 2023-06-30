@@ -17,6 +17,7 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
   auto Y_rawPtr = Y.data().data();
   auto gramPtr = C.data();
 
+  using C_view_type = Kokkos::View<DataType, ViewProps...>;
   using umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutLeft,
 				Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
@@ -37,13 +38,12 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
     //   C := alpha*A*A' + beta*C
     // which corresponds to:
     //   call syrk('U', 'N', nrows, ncols, alpha, Aptr, nrows, beta, Cptr, C.extent(0))
-    char uplo = 'U';
-    char trans = 'N';
     const ScalarType alpha = 1;
     const ScalarType beta = 0;
     umv_type Aview(Y.data().data(), Y.extent(0), ncols);
     Kokkos::parallel_for(Kokkos::RangePolicy(0, C.extent(1)),
-			 KOKKOS_LAMBDA(const std::size_t j) {
+			 KOKKOS_LAMBDA(const std::size_t j)
+			 {
 			   for (std::size_t i = 0; i <= j; ++i) {
 			     ScalarType sum = {};
 			     for (std::size_t k = 0; k < Aview.extent(1); ++k) {
@@ -52,8 +52,8 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
 			     C(i,j) = beta*C(i,j) + alpha*sum;
 			   }
 			 });
-
   }
+
   else
   {
     int ncols = 1;
@@ -78,8 +78,9 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
       auto Aptr = Y_rawPtr+i*nrows*ncols;
       umv_type Aview(Aptr, ncols, nrows);
       Kokkos::parallel_for(Kokkos::RangePolicy(0, C.extent(1)),
-			   KOKKOS_LAMBDA(const std::size_t j) {
- 			     for (std::size_t i = 0; i <= j; ++i) {
+			   KOKKOS_LAMBDA(const std::size_t j)
+			   {
+			     for (std::size_t i = 0; i <= j; ++i) {
 			       ScalarType sum = {};
 			       for (std::size_t k = 0; k < Aview.extent(0); ++k) {
 				 sum += Aview(k,i) * Aview(k,j);
@@ -88,7 +89,7 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
 			     }
 			   });
 
-    }
+   }
   }
 }
 

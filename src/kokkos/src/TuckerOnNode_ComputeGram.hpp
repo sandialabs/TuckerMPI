@@ -15,9 +15,10 @@ auto compute_gram(Tensor<ScalarType, Properties...> Y,
 
   const std::size_t nrows = Y.extent(n);
   Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space> S_d("S", nrows, nrows);
-  impl::compute_gram_kokkos(Y, n, S_d);
 
-#if 0
+  //impl::compute_gram_kokkos(Y, n, S_d);
+
+#if 1
   /* this code below works for any backend, even if obviously is inefficient,
      and is left here for now as a backup case if we need it to verify things
    */

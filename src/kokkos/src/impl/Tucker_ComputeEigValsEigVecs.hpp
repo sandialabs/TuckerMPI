@@ -53,7 +53,7 @@ void flip_sign_eigenvecs_columns_on_host(HostViewType G_h, DevViewType G)
 template<class Exespace, class ViewType>
 void flip_sign_eigenvecs_columns(const Exespace & exespace, ViewType G)
 {
-  static_assert(Kokkos::is_view_v<ViewType> && ViewType::rank() == 2,
+  static_assert(Kokkos::is_view_v<ViewType> && (ViewType::rank == 2),
 		"ViewType must be a rank-2 Kokkos view");
 
   using scalar_type = typename ViewType::non_const_value_type;
@@ -133,7 +133,10 @@ auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<Scalar
   if(info != 0){
     std::cerr << "Error: invalid error code returned by dsyev (" << info << ")\n";
   }
-  Kokkos::deep_copy(eigenvalues_h, eigenvalues_d);
+  //FIXME: these deep copies are here because syev is done on host but
+  // one we do the device call these will go away
+  Kokkos::deep_copy(eigenvalues_d, eigenvalues_h);
+  Kokkos::deep_copy(G, G_h);
 
   /*
     sorting
@@ -168,6 +171,7 @@ auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<Scalar
 #endif
   }
   exespace.fence();
+
 
   return eigenvalues_d;
 }
