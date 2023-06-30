@@ -9,3 +9,9 @@ Informations to know how the gold files were generated.
   - openmpi version 1.10.2
   - gcc version 11.3.0
   - OS: Ubuntu 22.04.2 LTS
+
+- test_sthosvd_2
+  - same as test_sthosvd_1
+
+- test_sthosvd_3
+  - same as test_sthosvd_1
