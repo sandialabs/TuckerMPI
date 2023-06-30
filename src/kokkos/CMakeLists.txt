@@ -32,6 +32,7 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   target_link_libraries(${STHOSVD_DRIVER_NAME} ${KokkosOnlyTuckerLib} ${KOKKOS_TPLS})
 
   add_subdirectory(unit_tests)
+  add_subdirectory(drivers_tests)
 endif()
 
 if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
