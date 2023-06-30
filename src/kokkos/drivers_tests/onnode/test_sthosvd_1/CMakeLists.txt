@@ -1,6 +1,6 @@
 
 set(testname test_sthosvd_1)
-set(exename ${CMAKE_CURRENT_BINARY_DIR}/../../../KokkosTucker_sthosvd)
+set(exename ${CMAKE_CURRENT_BINARY_DIR}/../../../${STHOSVD_DRIVER_NAME})
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../compare_eigenvalues.py compare_eigenvalues.py COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../ascii_to_binary_tensor_data.py ascii_to_binary_tensor_data.py COPYONLY)
