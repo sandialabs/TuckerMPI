@@ -1,6 +1,7 @@
 
 import numpy as np
 import sys
+from argparse import ArgumentParser
 
 def extract_datatensor_rank(paramfile):
     with open(paramfile) as fh:
@@ -26,6 +27,11 @@ def extract_singvals_prefix(paramfile):
 
 if __name__== "__main__":
 
+    parser = ArgumentParser()
+    parser.add_argument("--rtol", dest="relTol", type=float)
+    parser.add_argument("--atol", dest="absTol", type=float)
+    args = parser.parse_args()
+
     # we have as many modes to read as the ranks of the tensor
     modes = extract_datatensor_rank("./paramfile.txt")
     print("Rank = {}".format(modes))
@@ -45,5 +51,5 @@ if __name__== "__main__":
 
         assert (len(gold) == len(computed)), \
             "Failing due to mismatching extents!"
-        assert (np.allclose(gold, computed, rtol=1e-9, atol=1e-11)), \
+        assert (np.allclose(gold, computed, rtol=args.relTol, atol=args.absTol)), \
             "Failing due to numerical differences!"

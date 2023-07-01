@@ -9,7 +9,7 @@ else()
   message("comparison succeeded!")
 endif()
 
-set(CMD "${MPIEXEC} -n ${NUMPROC} ${EXENAME}")
+set(CMD "${EXENAME}")
 message(STATUS ${CMD})
 execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
 if(RES)

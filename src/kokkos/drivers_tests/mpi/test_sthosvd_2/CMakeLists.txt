@@ -1,8 +1,8 @@
 set(testname test_sthosvd_2)
 set(exename ${CMAKE_CURRENT_BINARY_DIR}/../../../${STHOSVD_DRIVER_NAME})
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../compare_eigenvalues.py compare_eigenvalues.py COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../ascii_to_binary_tensor_data.py ascii_to_binary_tensor_data.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../compare_eigenvalues.py compare_eigenvalues.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../ascii_to_binary.py ascii_to_binary.py COPYONLY)
 
 configure_file(gold0.txt gold0.txt COPYONLY)
 configure_file(gold1.txt gold1.txt COPYONLY)
@@ -14,11 +14,13 @@ configure_file(paramfile.txt paramfile.txt COPYONLY)
 add_test(NAME ${testname}
   COMMAND ${CMAKE_COMMAND}
   -DTENSORASCIIDATAFILE=2x6x3.txt
-  -DTENSORBINDATAFILE=2x6x3.mpi
+  -DTENSORBINDATAFILE=2x6x3.bin
   -DSKIPROWS=3
   -DEXENAME=${exename}
   -DMPIEXEC=${MPIEXEC_EXECUTABLE}
   -DOUTDIR=${CMAKE_CURRENT_BINARY_DIR}
   -DNUMPROC=8
+  -DEIGVAL_COMPARISON_RELTOL="1e-9"
+  -DEIGVAL_COMPARISON_ABSTOL="1e-11"
   -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
 )

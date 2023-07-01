@@ -1,0 +1,4 @@
+Informations to know how the gold files were generated.
+
+- test_sthosvd_1, test_sthosvd_2, test_sthosvd_3
+  - using same results used in the corresponding mpi drivers tests
