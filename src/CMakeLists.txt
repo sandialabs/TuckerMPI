@@ -25,6 +25,7 @@ endif()
 
 #=====================================================================
 
+option(TUCKER_ENABLE_DEBUG_PRINTS OFF)
 option(TUCKER_ENABLE_KOKKOS OFF)
 option(TUCKER_ENABLE_MPI OFF)
 option(TUCKER_IMPL_ENABLE_KOKKOSONLY OFF)

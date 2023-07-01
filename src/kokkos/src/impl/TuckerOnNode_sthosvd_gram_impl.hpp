@@ -100,12 +100,15 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
   tensor_type Y = X;
   for (std::size_t n=0; n<X.rank(); n++)
   {
-    std::cout << "\tAutoST-HOSVD::Starting Mode(" << n << ")...\n";
+
+    std::cout << "\n---------------------------------------------\n";
+    std::cout << "--- AutoST-HOSVD::Starting Mode(" << n << ") --- \n";
+    std::cout << "---------------------------------------------\n";
 
     /*
      * gram
      */
-    std::cout << "\n\tAutoST-HOSVD::Gram(" << n << ") \n";
+    std::cout << "  AutoST-HOSVD::Gram(" << n << ") \n";
     auto S = compute_gram(Y, n);
     /* check postconditions on the S
      * - S must be a rank-2 view
@@ -115,13 +118,16 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
     static_assert(Kokkos::is_view_v<S_type> && S_type::rank == 2);
     assert(S.extent(0) == S.extent(1));
     assert(S.extent(0) == Y.extent(n));
-    // use S
+#if defined(TUCKER_ENABLE_DEBUG_PRINTS)
+    std::cout << "\n";
     Tucker::write_view_to_stream(std::cout, S);
+    std::cout << "\n";
+#endif
 
     /*
      * eigenvalues and eigenvectors
      */
-    std::cout << "\n\tAutoST-HOSVD::Eigen{vals,vecs}(" << n << ")...\n";
+    std::cout << "  AutoST-HOSVD::Eigen{vals,vecs}(" << n << ")...\n";
     // Note: eigenvals are returned, but S is being overwritten with eigenvectors
     auto currEigvals = Tucker::impl::compute_and_sort_descending_eigvals_and_eigvecs_inplace(S, flipSign);
     /* check postconditions */
@@ -131,27 +137,35 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
     assert(S.extent(0) == S.extent(1));
     // use the curreEigvals
     impl::appendEigenvaluesAndUpdateSliceInfo(n, eigvals, currEigvals, perModeSlicingInfo(n));
+#if defined(TUCKER_ENABLE_DEBUG_PRINTS)
+    std::cout << "\n";
     Tucker::write_view_to_stream(std::cout, currEigvals);
+    std::cout << "\n";
+#endif
 
     /*
      * truncation
      */
     // S now contains the eigenvectors and we need to extract only
     // a subset of them depending on the truncation method
-    std::cout << "\n\tAutoST-HOSVD::Truncating\n";
+    std::cout << "  AutoST-HOSVD::Truncating\n";
     const std::size_t numEvecs = truncator(n, currEigvals);
     auto currEigVecs = Kokkos::subview(S, Kokkos::ALL, std::pair<std::size_t,std::size_t>{0, numEvecs});
     impl::appendFactorsAndUpdateSliceInfo(n, factors, currEigVecs, perModeSlicingInfo(n));
+#if defined(TUCKER_ENABLE_DEBUG_PRINTS)
+    std::cout << "\n";
     Tucker::write_view_to_stream(std::cout, currEigVecs);
+    std::cout << "\n";
+#endif
 
     /*
      * ttm
      */
-    std::cout << "\tAutoST-HOSVD::Starting TTM(" << n << ")...\n";
+    std::cout << "  AutoST-HOSVD::Starting TTM(" << n << ")...\n";
     tensor_type temp = ttm(Y, n, currEigVecs, true);
 
     Y = temp;
-    std::cout << "Local tensor size after STHOSVD iteration " << n << ": ";
+    std::cout << "  Tensor size after STHOSVD iteration " << n << ": ";
     const auto sizeInfo = Y.dimensionsOnHost();
     for (int i=0; i<sizeInfo.extent(0); ++i){ std::cout << sizeInfo(i) << " "; }
     std::cout << "\n";

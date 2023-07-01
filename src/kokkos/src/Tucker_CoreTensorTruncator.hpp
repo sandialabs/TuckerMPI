@@ -50,8 +50,8 @@ auto create_core_tensor_truncator(TensorType dataTensor,
       const ScalarType norm = dataTensor.frobeniusNormSquared();
       const ScalarType threshold  = tol*tol*norm/rank;
       if (mpiRank==0){
-	std::cout << "\tAutoST-HOSVD::Tensor Norm: " << std::sqrt(norm) << "...\n";
-	std::cout << "\tAutoST-HOSVD::Relative Threshold: " << threshold << "...\n";
+	std::cout << "  AutoST-HOSVD::Tensor Norm: " << std::sqrt(norm) << "...\n";
+	std::cout << "  AutoST-HOSVD::Relative Threshold: " << threshold << "...\n";
       }
       auto eigVals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigenValues);
       return impl::count_eigvals_using_threshold(eigVals_h, threshold);
