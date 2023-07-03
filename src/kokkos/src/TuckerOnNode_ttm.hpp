@@ -93,8 +93,6 @@ auto ttm(Tensor<ScalarType, TensorProperties...> X,
 {
   using tensor_type  = Tensor<ScalarType, TensorProperties...>;
   using memory_space = typename tensor_type::traits::memory_space;
-  static_assert(Kokkos::SpaceAccessibility<Kokkos::HostSpace, memory_space>::accessible,
-		"TuckerOnNode::ttm: this overload is only for a tensor that is host accessible");
 
   std::vector<int> I(X.rank());
   for(int i=0; i<I.size(); i++) {
