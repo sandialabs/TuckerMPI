@@ -80,7 +80,9 @@ void unpackForGram(int n, int ndims,
   int nprocs;
   MPI_Comm_size(comm,&nprocs);
 
-  scalar_t* dest = redistMat.getLocalMatrix().data();
+  auto matrixView_d = redistMat.getLocalMatrix();
+  auto matrixView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), matrixView_d);
+  scalar_t* dest = matrixView_h.data();//redistMat.getLocalMatrix().data();
   for(int c=0; c<nLocalCols; c++) {
     for(int b=0; b<nprocs; b++) {
       int nLocalRows=origMap->getNumEntries(b);
@@ -89,6 +91,7 @@ void unpackForGram(int n, int ndims,
       dest += nLocalRows;
     }
   }
+  Kokkos::deep_copy(matrixView_d, matrixView_h);
 }
 
 
@@ -115,7 +118,9 @@ auto packForGram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
   // Local data is row-major
   //after packing the local data should have block column pattern where each block is row major.
   if(n == ndims-1) {
-    const scalar_t* YnData = Y.localTensor().data().data();
+    auto localTensorView_d = Y.localTensor().data();
+    auto localTensorView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localTensorView_d);
+    const scalar_t* YnData = localTensorView_h.data();
     int offset=0;
     for(int b=0; b<nprocs; b++) {
       int n = redistMap->getNumEntries(b);
@@ -134,7 +139,9 @@ auto packForGram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
     size_t ncolsPerLocalBlock = impl::prod(sz, 0,n-1);
     assert(ncolsPerLocalBlock <= std::numeric_limits<int>::max());
 
-    const scalar_t* src = Y.localTensor().data().data();
+    auto localTensorView_d = Y.localTensor().data();
+    auto localTensorView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localTensorView_d);
+    const scalar_t* src = localTensorView_h.data();
 
     // Make local data column major
     for(size_t b=0; b<numLocalBlocks; b++) {
@@ -169,7 +176,7 @@ auto redistributeTensorForGram(Tensor<ScalarType, Properties...> & Y, int n)
 
   // Get the dimensions of the redistributed matrix Y_n
   const int ndims = Y.rank();
-  const auto & sz = Y.localDimensions();
+  const auto & sz = Y.localDimensionsOnHost();
   const int nrows = Y.globalExtent(n);
   size_t ncols = impl::prod(sz, 0,n-1,1) * impl::prod(sz, n+1,ndims-1,1);
   assert(ncols <= std::numeric_limits<int>::max());
@@ -217,17 +224,19 @@ auto redistributeTensorForGram(Tensor<ScalarType, Properties...> & Y, int n)
   }
 
   ScalarType * recvBuf;
+  auto matrixView_d = recvY.getLocalMatrix();
+  auto matrixView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), matrixView_d);
   if(recvY.localSize() == 0) {
     recvBuf = 0;
   }
   else {
-    recvBuf = recvY.getLocalMatrix().data();
+    recvBuf = matrixView_h.data(); //recvY.getLocalMatrix().data();
   }
   MPI_Alltoallv_(sendBuf.data(), sendCounts, sendDispls,
 		 recvBuf, recvCounts, recvDispls, comm);
+  Kokkos::deep_copy(matrixView_d, matrixView_h);
 
   bool isUnpackingNecessary = isUnpackForGramNecessary(n, ndims, oldMap, redistMap);
-  // result_t redistY;
   if(isUnpackingNecessary) {
     result_t redistY(nrows, (int)ncols, comm, false);
     unpackForGram(n, ndims, redistY, recvBuf, oldMap);
@@ -279,7 +288,6 @@ auto newGram(Tensor<ScalarType, Properties...> & Y, int n)
       Kokkos::resize(localGram, nGlobalRows, nGlobalRows);
     }
     else {
-      // Redistribute the data
       auto redistributedY = redistributeTensorForGram(Y, n);
       if(redistributedY.localSize() > 0) {
         localGram = localRankKForGram(redistributedY, n, ndims);
@@ -302,7 +310,7 @@ auto newGram(Tensor<ScalarType, Properties...> & Y, int n)
     }
   }
 
-  return reduceForGram(localGram);
+  ////// return reduceForGram(localGram); ///
 }
 
 template <class ScalarType, class ...Properties, class TruncatorType>
@@ -336,7 +344,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space> factors;
   slicing_info_view_t perModeSlicingInfo("pmsi", X.rank());
   tensor_type Y = X;
-  for (std::size_t n=0; n< X.rank(); n++)
+  for (std::size_t n=0; n< 1 /*X.rank()*/; n++)
   {
     const int mode = modeOrder.empty() ? n : modeOrder[n];
 
@@ -347,6 +355,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     auto S = newGram(Y, mode);
     //if (mpiRank == 0){ Tucker::write_view_to_stream(std::cout, S); }
 
+#if 0
     /* Eigenvaulues */
     if(mpiRank == 0) {
       std::cout << "\tAutoST-HOSVD::Eigen{vals,vecs}(" << mode << ")...\n";
@@ -395,6 +404,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
       std::cout << ", or ";
       Tucker::print_bytes_to_stream(std::cout, global_nnz*sizeof(ScalarType));
     }
+#endif
 
   }//end loop
 

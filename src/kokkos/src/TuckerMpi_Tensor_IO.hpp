@@ -47,7 +47,6 @@ void import_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
   MPI_Offset disp = 0;
   MPI_File_set_view_<ScalarType>(fh, disp, view, "native", MPI_INFO_NULL);
 
-
   // Read the file
   size_t count = Y.localSize();
   assert(count <= std::numeric_limits<int>::max());
@@ -60,14 +59,17 @@ void import_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
   }
 
   MPI_Status status;
-  auto localTensorView = Y.localTensor().data();
-  ret = MPI_File_read_all_(fh, localTensorView.data(), (int)count, &status);
+  auto localTensorView_d = Y.localTensor().data();
+  auto localTensorView_h = Kokkos::create_mirror(localTensorView_d);
+  //auto localTensorView = Y.localTensor().data();
+  ret = MPI_File_read_all_(fh, localTensorView_h.data(), (int)count, &status);
   int nread;
   MPI_Get_count_<ScalarType>(&status, &nread);
   if(ret != MPI_SUCCESS) {
     std::cerr << "Error: Could not read file " << filename << std::endl;
   }
   MPI_File_close(&fh);
+  Kokkos::deep_copy(localTensorView_d, localTensorView_h);
   MPI_Type_free(&view);
 }
 

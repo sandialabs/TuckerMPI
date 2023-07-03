@@ -31,6 +31,7 @@ int main(int argc, char* argv[])
 
     const auto dataTensorDim = inputs.dimensionsOfDataTensor();
     TuckerMpi::Distribution dist(dataTensorDim, inputs.proc_grid_dims);
+
     TuckerMpi::Tensor<scalar_t, memory_space> X(std::move(dist));
     TuckerMpi::read_tensor_binary(X, inputs.in_fns_file.c_str());
 

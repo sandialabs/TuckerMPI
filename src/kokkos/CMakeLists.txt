@@ -14,7 +14,7 @@ if(TUCKER_ENABLE_FALLBACK_VIA_HOST)
   MESSAGE(STATUS "TUCKER_ENABLE_FALLBACK_VIA_HOST=${TUCKER_ENABLE_FALLBACK_VIA_HOST}, building code executing via host\n")
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/tucker_cmake_config.h.in tucker_cmake_config.h @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/Tucker_cmake_config.h.in Tucker_cmake_config.h @ONLY)
 
 #
 # branch if onnode or mpi

@@ -7,6 +7,53 @@
 namespace TuckerOnNode{
 namespace impl{
 
+template <class ScalarType, class AViewType, class CViewType>
+struct FunctorGramModeZero
+{
+  ScalarType alpha_;
+  ScalarType beta_;
+  AViewType Aview_;
+  CViewType Cview_;
+  FunctorGramModeZero(AViewType Av, CViewType Cv,
+		      ScalarType alpha, ScalarType beta) :
+    Aview_(Av), Cview_(Cv), alpha_(alpha), beta_(beta){}
+
+  KOKKOS_FUNCTION void operator()(const std::size_t j) const
+  {
+    for (std::size_t i = 0; i <= j; ++i) {
+      ScalarType sum = {};
+      for (std::size_t k = 0; k < Aview_.extent(1); ++k) {
+	sum += Aview_(i,k) * Aview_(j,k);
+      }
+      Cview_(i,j) = beta_*Cview_(i,j) + alpha_*sum;
+    }
+
+  }
+};
+
+template <class ScalarType, class AViewType, class CViewType>
+struct FunctorGramModeNonZero
+{
+  ScalarType alpha_;
+  ScalarType beta_;
+  AViewType Aview_;
+  CViewType Cview_;
+  FunctorGramModeNonZero(AViewType Av, CViewType Cv,
+		      ScalarType alpha, ScalarType beta) :
+    Aview_(Av), Cview_(Cv), alpha_(alpha), beta_(beta){}
+
+  KOKKOS_FUNCTION void operator()(const std::size_t j) const
+  {
+    for (std::size_t i = 0; i <= j; ++i) {
+      ScalarType sum = {};
+      for (std::size_t k = 0; k < Aview_.extent(0); ++k) {
+	sum += Aview_(k,i) * Aview_(k,j);
+      }
+      Cview_(i,j) = beta_*Cview_(i,j) + alpha_*sum;
+    }
+  }
+};
+
 template <class ScalarType, class DataType, class ...ViewProps, class ...Properties>
 void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
 			 const std::size_t n,
@@ -41,17 +88,9 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
     const ScalarType alpha = 1;
     const ScalarType beta = 0;
     umv_type Aview(Y.data().data(), Y.extent(0), ncols);
+    using func_t = FunctorGramModeZero<ScalarType, umv_type, C_view_type>;
     Kokkos::parallel_for(Kokkos::RangePolicy(0, C.extent(1)),
-			 KOKKOS_LAMBDA(const std::size_t j)
-			 {
-			   for (std::size_t i = 0; i <= j; ++i) {
-			     ScalarType sum = {};
-			     for (std::size_t k = 0; k < Aview.extent(1); ++k) {
-			       sum += Aview(i,k) * Aview(j,k);
-			     }
-			     C(i,j) = beta*C(i,j) + alpha*sum;
-			   }
-			 });
+			 func_t(Aview, C, alpha, beta));
   }
 
   else
@@ -74,21 +113,11 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
 
       const ScalarType alpha = 1;
       const ScalarType beta = (i==0) ? 0 : 1;
-
       auto Aptr = Y_rawPtr+i*nrows*ncols;
       umv_type Aview(Aptr, ncols, nrows);
+      using func_t = FunctorGramModeNonZero<ScalarType, umv_type, C_view_type>;
       Kokkos::parallel_for(Kokkos::RangePolicy(0, C.extent(1)),
-			   KOKKOS_LAMBDA(const std::size_t j)
-			   {
-			     for (std::size_t i = 0; i <= j; ++i) {
-			       ScalarType sum = {};
-			       for (std::size_t k = 0; k < Aview.extent(0); ++k) {
-				 sum += Aview(k,i) * Aview(k,j);
-			       }
-			       C(i,j) = beta*C(i,j) + alpha*sum;
-			     }
-			   });
-
+			   func_t(Aview, C, alpha, beta));
    }
   }
 }

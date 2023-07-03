@@ -19,11 +19,8 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   // constraints
   using tensor_type = ::TuckerMpi::Tensor<ScalarType, Properties...>;
   using onnode_layout = typename tensor_type::traits::onnode_layout;
-  using memory_space  = typename tensor_type::traits::memory_space;
   static_assert(std::is_same_v<onnode_layout, Kokkos::LayoutLeft>,
 		"TuckerMpi::STHOSVD: currently only supporting tensor with layoutleft");
-  static_assert(Kokkos::SpaceAccessibility<Kokkos::HostSpace, memory_space>::accessible,
-		"TuckerMpi::STHOSVD: currently only supporting tensor accssible on host");
 
   if (method == Method::NewGram){
     return impl::sthosvd_newgram(X, std::forward<TruncatorType>(truncator),

@@ -63,12 +63,16 @@ public:
     : dist_(dist),
       globalDims_("globalDims", dist.getGlobalDims().size()),
       localDims_("localDims", dist.getLocalDims().size()),
+      globalDims_h_("globalDims_h", dist.getGlobalDims().size()),
+      localDims_h_("localDims_h", dist.getLocalDims().size()),
       localTensor_(dist.getLocalDims())
   {
     auto std_gd = dist.getGlobalDims();
     auto std_ld = dist.getLocalDims();
-    Tucker::impl::copy_stdvec_to_view(std_gd, globalDims_);
-    Tucker::impl::copy_stdvec_to_view(std_ld, localDims_);
+    Tucker::impl::copy_stdvec_to_view(std_gd, globalDims_h_);
+    Tucker::impl::copy_stdvec_to_view(std_ld, localDims_h_);
+    Kokkos::deep_copy(globalDims_, globalDims_h_);
+    Kokkos::deep_copy(localDims_, localDims_h_);
   }
 
   Tensor(const Tensor& o) = default;
@@ -79,6 +83,8 @@ public:
     dist_        = o.dist_;
     globalDims_  = o.globalDims_;
     localDims_   = o.localDims_;
+    globalDims_h_  = o.globalDims_h_;
+    localDims_h_   = o.localDims_h_;
     localTensor_ = o.localTensor_;
     return *this;
   }
@@ -88,6 +94,8 @@ public:
     dist_        = std::move(o.dist_);
     globalDims_  = std::move(o.globalDims_);
     localDims_   = std::move(o.localDims_);
+    globalDims_h_  = std::move(o.globalDims_h_);
+    localDims_h_   = std::move(o.localDims_h_);
     localTensor_ = std::move(o.localTensor_);
     return *this;
   }
@@ -100,6 +108,8 @@ public:
     : dist_(o.dist_),
       globalDims_(o.globalDims_),
       localDims_(o.localDims_),
+      globalDims_h_(o.globalDims_h_),
+      localDims_h_(o.localDims_h_),
       localTensor_(o.localTensor_)
   {}
 
@@ -109,6 +119,8 @@ public:
     dist_        = o.dist_;
     globalDims_  = o.globalDims_;
     localDims_   = o.localDims_;
+    globalDims_h_  = o.globalDims_h_;
+    localDims_h_   = o.localDims_h_;
     localTensor_ = o.localTensor_;
     return *this;
   }
@@ -118,6 +130,8 @@ public:
     : dist_(std::move(o.dist_)),
       globalDims_(std::move(o.globalDims_)),
       localDims_(std::move(o.localDims_)),
+      globalDims_h_(std::move(o.globalDims_h_)),
+      localDims_h_(std::move(o.localDims_h_)),
       localTensor_(std::move(o.localTensor_))
   {}
 
@@ -127,6 +141,8 @@ public:
     dist_        = std::move(o.dist_);
     globalDims_  = std::move(o.globalDims_);
     localDims_   = std::move(o.localDims_);
+    globalDims_h_  = std::move(o.globalDims_h_);
+    localDims_h_   = std::move(o.localDims_h_);
     localTensor_ = std::move(o.localTensor_);
     return *this;
   }
@@ -139,6 +155,9 @@ public:
 
   dims_const_view_type globalDimensions() const{ return globalDims_; }
   dims_const_view_type localDimensions() const { return localDims_; }
+  dims_host_const_view_type globalDimensionsOnHost() const{ return globalDims_h_; }
+  dims_host_const_view_type localDimensionsOnHost() const { return localDims_h_; }
+
   int globalExtent(int n) const{ return dist_.getGlobalDims()[n]; }
   int localExtent(int n) const{ return dist_.getLocalDims()[n]; }
 
@@ -170,6 +189,9 @@ private:
   Distribution dist_ = {};
   dims_view_type globalDims_ = {};
   dims_view_type localDims_ = {};
+  dims_host_view_type globalDims_h_ = {};
+  dims_host_view_type localDims_h_ = {};
+
   typename traits::onnode_tensor_type localTensor_ = {};
 };
 
