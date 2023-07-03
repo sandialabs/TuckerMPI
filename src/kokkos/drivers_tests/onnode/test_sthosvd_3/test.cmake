@@ -6,7 +6,7 @@ execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
 if(RES)
   message(FATAL_ERROR "binary convertion failed")
 else()
-  message("comparison succeeded!")
+  message("ascii-to-bin succeeded!")
 endif()
 
 set(CMD "${EXENAME}")
