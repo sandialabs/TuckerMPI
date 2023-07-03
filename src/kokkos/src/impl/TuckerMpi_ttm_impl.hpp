@@ -32,15 +32,14 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
 		int n,
 		const Map* map)
 {
-  size_t nentries = Y.size();
-  if(nentries == 0){ return; }
+  using tensor_type = TuckerOnNode::Tensor<ScalarType, TensorProperties...>;
+  using mem_space = typename tensor_type::memory_space;
 
-  int ndim = Y.rank();
+  if(Y.size() == 0){ return; }
+
   // If n is the last dimension, the data is already packed
   // (because the data is stored in row-major order)
-  if(n == ndim-1) { return; }
-
-  const int inc = 1;
+  if(n == Y.rank()-1) { return; }
 
   // Allocate memory
   size_t numEntries = Y.size();
@@ -51,19 +50,19 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
   MPI_Comm_size(comm,&nprocs);
 
   // Get the leading dimension of this tensor unfolding
-  auto sa = Y.dimensions();
+  auto sa = Y.dimensionsOnHost();
   size_t leadingDim = impl::prod(sa, 0,n-1,1);
 
   // Get the number of global rows of this tensor unfolding
   int nGlobalRows = map->getGlobalNumEntries();
 
-  int RANK;
-  MPI_Comm_rank(MPI_COMM_WORLD,&RANK);
-
   // Get pointer to tensor data
-  ScalarType* tenData = Y.data().data();
+  auto view_Y = Y.data();
+  auto view_Y_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), view_Y);
+  ScalarType* tenData = view_Y_h.data();
   size_t stride = leadingDim*nGlobalRows;
   size_t tempMemOffset = 0;
+  const int inc = 1;
   for(int rank=0; rank<nprocs; rank++)
   {
     int nLocalRows = map->getNumEntries(rank);
@@ -74,8 +73,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
         tensorOffset += stride)
     {
       int tbs = (int)blockSize;
-      Tucker::copy(&tbs, tenData+tensorOffset, &inc,
-		   tempMem.data()+tempMemOffset, &inc);
+      Tucker::copy(&tbs, tenData+tensorOffset, &inc, tempMem.data()+tempMemOffset, &inc);
       tempMemOffset += blockSize;
     }
   }
@@ -83,6 +81,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
   // Copy data from temporary memory back to tensor
   int temp = (int)numEntries;
   Tucker::copy(&temp, tempMem.data(), &inc, tenData, &inc);
+  Kokkos::deep_copy(view_Y, view_Y_h);
 }
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
@@ -128,8 +127,6 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
 
   Distribution dist(newSize, X.getDistribution().getProcessorGrid().getSizeArray());
   result_type Y(dist);
-
-  // Get the local part of the tensor
   auto localX = X.localTensor();
   auto localY = Y.localTensor();
 
@@ -137,10 +134,7 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
   int Pn = X.getDistribution().getProcessorGrid().getNumProcs(n,false);
   if(Pn == 1)
   {
-    if (_myrank == 0){
-      std::cout << "MPITTM: Pn==1 \n";
-    }
-
+    if (_myrank == 0){ std::cout << "MPITTM: Pn==1 \n"; }
     if(!X.getDistribution().ownNothing()) {
       TuckerOnNode::ttm(localX, n, U, localY, Utransp);
     }
