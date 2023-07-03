@@ -39,10 +39,10 @@ int main(int argc, char* argv[])
       const size_t local_nnz = X.localSize();
       const size_t global_nnz = X.globalSize();
       std::cout << "Local input tensor size  : ";
-      Tucker::write_view_to_stream_inline(std::cout, X.localDimensions());
+      Tucker::write_view_to_stream_inline(std::cout, X.localDimensionsOnHost());
       std::cout << ", or "; Tucker::print_bytes_to_stream(std::cout, local_nnz*sizeof(scalar_t));
       std::cout << "Global input tensor size : ";
-      Tucker::write_view_to_stream_inline(std::cout, X.globalDimensions());
+      Tucker::write_view_to_stream_inline(std::cout, X.globalDimensionsOnHost());
       std::cout << ", or "; Tucker::print_bytes_to_stream(std::cout, global_nnz*sizeof(scalar_t));
     }
 

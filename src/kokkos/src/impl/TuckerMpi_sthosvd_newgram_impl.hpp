@@ -19,13 +19,17 @@ auto localRankKForGram(Matrix<scalar_t> Y, int n, int ndims)
 {
   int nrows = Y.getLocalNumRows();
   Kokkos::View<scalar_t**, Kokkos::LayoutLeft> localResult("loc", nrows, nrows);
+  auto localResult_h = Kokkos::create_mirror(localResult);
 
   char uplo = 'U';
   int ncols = Y.getLocalNumCols();
   scalar_t alpha = 1;
-  const scalar_t* A = Y.getLocalMatrix().data();
+  auto YlocalMat = Y.getLocalMatrix();
+  auto YlocalMat_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), YlocalMat);
+
+  const scalar_t* A = YlocalMat_h.data();
   scalar_t beta = 0;
-  scalar_t* C = localResult.data();
+  scalar_t* C = localResult_h.data();
   int ldc = nrows;
   if(n < ndims-1) {
     // Local matrix is column major
@@ -40,6 +44,7 @@ auto localRankKForGram(Matrix<scalar_t> Y, int n, int ndims)
     Tucker::syrk(&uplo, &trans, &nrows, &ncols, &alpha, A, &lda, &beta, C, &ldc);
   }
 
+  Kokkos::deep_copy(localResult, localResult_h);
   return localResult;
 }
 
@@ -133,7 +138,7 @@ auto packForGram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
   }
   else
   {
-    auto sz = Y.localDimensions();
+    auto sz = Y.localDimensionsOnHost();
     // Get information about the local blocks
     size_t numLocalBlocks = impl::prod(sz, n+1,ndims-1);
     size_t ncolsPerLocalBlock = impl::prod(sz, 0,n-1);
@@ -254,8 +259,13 @@ auto reduceForGram(Kokkos::View<ScalarType**, Kokkos::LayoutLeft> U)
   int nrows = U.extent(0);
   int ncols = U.extent(1);
   int count = nrows*ncols;
+
+  auto U_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), U);
   Kokkos::View<ScalarType**, Kokkos::LayoutLeft> reducedU("redU", nrows, ncols);
-  MPI_Allreduce_(U.data(), reducedU.data(), count, MPI_SUM, MPI_COMM_WORLD);
+  auto redU_h = Kokkos::create_mirror(reducedU);
+  MPI_Allreduce_(U_h.data(), redU_h.data(), count, MPI_SUM, MPI_COMM_WORLD);
+  Kokkos::deep_copy(reducedU, redU_h);
+
   return reducedU;
 }
 
@@ -310,7 +320,7 @@ auto newGram(Tensor<ScalarType, Properties...> & Y, int n)
     }
   }
 
-  ////// return reduceForGram(localGram); ///
+  return reduceForGram(localGram);
 }
 
 template <class ScalarType, class ...Properties, class TruncatorType>
@@ -344,44 +354,72 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space> factors;
   slicing_info_view_t perModeSlicingInfo("pmsi", X.rank());
   tensor_type Y = X;
-  for (std::size_t n=0; n< 1 /*X.rank()*/; n++)
+  for (std::size_t n=0; n<X.rank(); n++)
   {
     const int mode = modeOrder.empty() ? n : modeOrder[n];
 
-    /* do GRAM */
     if(mpiRank == 0) {
-      std::cout << "\tAutoST-HOSVD::Starting Gram(" << mode << ")...\n";
+      std::cout << "\n---------------------------------------------\n";
+      std::cout << "--- AutoST-HOSVD::Starting Mode(" << n << ") --- \n";
+      std::cout << "---------------------------------------------\n";
+    }
+
+    /*
+     * GRAM
+     */
+    if(mpiRank == 0) {
+      std::cout << "  AutoST-HOSVD::Gram(" << mode << ") \n";
     }
     auto S = newGram(Y, mode);
-    //if (mpiRank == 0){ Tucker::write_view_to_stream(std::cout, S); }
+    if (mpiRank == 0){
+      std::cout << "\n";
+      Tucker::write_view_to_stream(std::cout, S);
+      std::cout << "\n";
+    }
 
-#if 0
-    /* Eigenvaulues */
+    /*
+     * eigenvalues and eigenvectors
+     */
     if(mpiRank == 0) {
-      std::cout << "\tAutoST-HOSVD::Eigen{vals,vecs}(" << mode << ")...\n";
+      std::cout << "  AutoST-HOSVD::Eigen{vals,vecs}(" << mode << ")...\n";
     }
     auto currEigvals = Tucker::impl::compute_and_sort_descending_eigvals_and_eigvecs_inplace(S, flipSign);
     TuckerOnNode::impl::appendEigenvaluesAndUpdateSliceInfo(mode, eigvals, currEigvals,
 							    perModeSlicingInfo(mode));
-    //if (mpiRank ==0){ Tucker::write_view_to_stream(std::cout, currEigvals); }
+    if (mpiRank == 0){
+      std::cout << "\n";
+      Tucker::write_view_to_stream(std::cout, currEigvals);
+      std::cout << "\n";
+    }
 
-    /* Truncation */
+    /*
+     * Truncation
+     */
     if(mpiRank == 0) {
-      std::cout << "\tAutoST-HOSVD::Truncating\n";
+      std::cout << "  AutoST-HOSVD::Truncating\n";
     }
     const std::size_t numEvecs = truncator(mode, currEigvals);
+    auto currEigVecs = Kokkos::subview(S, Kokkos::ALL, std::pair<std::size_t,std::size_t>{0, numEvecs});
+    TuckerOnNode::impl::appendFactorsAndUpdateSliceInfo(mode, factors, currEigVecs, perModeSlicingInfo(mode));
+#if 0
     using eigvec_rank2_view_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space>;
     eigvec_rank2_view_t currEigVecs("currEigVecs", S.extent(0), numEvecs);
     const int nToCopy = S.extent(0)*numEvecs;
     const int ONE = 1;
     Tucker::copy(&nToCopy, S.data(), &ONE, currEigVecs.data(), &ONE);
-    TuckerOnNode::impl::appendFactorsAndUpdateSliceInfo(mode, factors, currEigVecs,
-							perModeSlicingInfo(mode));
-    //if (mpiRank ==0){ Tucker::write_view_to_stream(std::cout, currEigVecs); }
+    TuckerOnNode::impl::appendFactorsAndUpdateSliceInfo(mode, factors, currEigVecs, perModeSlicingInfo(mode));
+#endif
+    if (mpiRank ==0){
+      std::cout << "\n";
+      Tucker::write_view_to_stream(std::cout, currEigVecs);
+      std::cout << "\n";
+    }
 
-    /* TTM */
+    /*
+     * TTM
+     */
     if(mpiRank == 0) {
-      std::cout << "\tAutoST-HOSVD::Starting TTM(" << mode << ")...\n";
+      std::cout << "  AutoST-HOSVD::Starting TTM(" << mode << ")...\n";
     }
     tensor_type temp = ::TuckerMpi::ttm(Y, mode, currEigVecs, true, max_lcl_nnz_x);
 
@@ -390,21 +428,21 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     Y = {};
     Y = temp;
     MPI_Barrier(MPI_COMM_WORLD);
+
     if(mpiRank == 0) {
       const size_t local_nnz = Y.localSize();
       const size_t global_nnz = Y.globalSize();
 
       std::cout << "Local tensor size after STHOSVD iteration  " << mode << ": ";
-      Tucker::write_view_to_stream_inline(std::cout, Y.localDimensions());
+      Tucker::write_view_to_stream_inline(std::cout, Y.localDimensionsOnHost());
       std::cout << ", or ";
       Tucker::print_bytes_to_stream(std::cout, local_nnz*sizeof(ScalarType));
 
       std::cout << "Global tensor size after STHOSVD iteration " << mode << ": ";
-      Tucker::write_view_to_stream_inline(std::cout, Y.globalDimensions());
+      Tucker::write_view_to_stream_inline(std::cout, Y.globalDimensionsOnHost());
       std::cout << ", or ";
       Tucker::print_bytes_to_stream(std::cout, global_nnz*sizeof(ScalarType));
     }
-#endif
 
   }//end loop
 

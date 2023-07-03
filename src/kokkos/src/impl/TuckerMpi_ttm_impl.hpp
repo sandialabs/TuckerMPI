@@ -33,7 +33,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
 		const Map* map)
 {
   using tensor_type = TuckerOnNode::Tensor<ScalarType, TensorProperties...>;
-  using mem_space = typename tensor_type::memory_space;
+  using mem_space = typename tensor_type::traits::memory_space;
 
   if(Y.size() == 0){ return; }
 
@@ -115,6 +115,9 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
   using result_type = Tensor<ScalarType, TensorProperties...>;
   using local_tensor_type = typename result_type::traits::onnode_tensor_type;
 
+  using U_view = Kokkos::View<ScalarType**, ViewProperties...>;
+  using U_mem_space = typename U_view::memory_space;
+
   // Compute the number of rows for the resulting "matrix"
   const int nrows = Utransp ? U.extent(1) : U.extent(0);
 
@@ -141,12 +144,13 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
   }
   else
   {
+
     // Pn != 1
     const MPI_Comm& comm = X.getDistribution().getProcessorGrid().getColComm(n,false);
 
     // Determine whether we must block the result
     // If the temporary storage is bigger than the tensor, we block instead
-    int K = nrows;
+    //int K = nrows;
     int Jn = Utransp ? U.extent(0) : U.extent(1);
 
     int uGlobalRows = Y.globalExtent(n);
@@ -196,8 +200,18 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
         sz[n] = Y.globalExtent(n);
         localResult = local_tensor_type(sz);
       }
-      else {
-        localResult = TuckerOnNode::ttm(localX, n, Uptr, uGlobalRows, stride, Utransp);
+      else
+      {
+	std::vector<int> I(localX.rank());
+	for(int i=0; i<I.size(); i++) {
+	  I[i] = (i != n) ? localX.extent(i) : uGlobalRows;
+	}
+	localResult = local_tensor_type(I);
+	Kokkos::LayoutStride layout(localX.extent(n), 1, localResult.extent(n), stride);
+	using umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutStride, U_mem_space,
+					 Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+	umv_type Aum(Uptr, layout);
+	TuckerOnNode::ttm(localX, n, Aum, localResult, Utransp);
       }
 
       packForTTM(localResult, n, yMap);
@@ -207,15 +221,17 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
 	sendBuf.resize(localResult.size());
 	Tucker::impl::copy_view_to_stdvec(localResult.data(), sendBuf);
       }
+
+      auto localYview_h = Kokkos::create_mirror_view(localY.data());
       ScalarType* recvBuf = nullptr;
       if(localY.size() > 0){
-	recvBuf = localY.data().data();
+	recvBuf = localYview_h.data(); //localY.data().data();
       }
 
       int nprocs;
       MPI_Comm_size(comm,&nprocs);
       int recvCounts[nprocs];
-      auto Ylsz = Y.localDimensions();
+      auto Ylsz = Y.localDimensionsOnHost();
       size_t multiplier = impl::prod(Ylsz,0,n-1,1) * impl::prod(Ylsz, n+1,ndims-1,1);
 
       for(int i=0; i<nprocs; i++) {
@@ -223,6 +239,7 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
         recvCounts[i] = (int)temp;
       }
       MPI_Reduce_scatter_(sendBuf.data(), recvBuf, recvCounts, MPI_SUM, comm);
+      Kokkos::deep_copy(localY.data(), localYview_h);
 
     // }
     // else{
