@@ -25,9 +25,11 @@ endif()
 
 #=====================================================================
 
-option(TUCKER_ENABLE_DEBUG_PRINTS OFF)
+# public keywords
 option(TUCKER_ENABLE_KOKKOS OFF)
 option(TUCKER_ENABLE_MPI OFF)
+
+# internal keywords
 option(TUCKER_IMPL_ENABLE_KOKKOSONLY OFF)
 option(TUCKER_IMPL_ENABLE_MPIKOKKOS OFF)
 

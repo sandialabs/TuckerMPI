@@ -1,6 +1,7 @@
 #ifndef TUCKER_KOKKOS_ONNODE_SINGLE_INCLUDE_HPP_
 #define TUCKER_KOKKOS_ONNODE_SINGLE_INCLUDE_HPP_
 
+#include "Tucker_cmake_config.h"
 #include "Tucker_BoilerPlate_IO.hpp"
 #include "Tucker_CoreTensorTruncator.hpp"
 #include "TuckerOnNode_Tensor.hpp"

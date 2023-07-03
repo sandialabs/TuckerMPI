@@ -5,8 +5,22 @@ find_package(KokkosKernels REQUIRED)
 set(KOKKOS_TPLS
   Kokkos::BLAS Kokkos::LAPACK Kokkos::kokkos Kokkos::kokkoskernels)
 
+#
+# set some options
+#
+option(TUCKER_ENABLE_DEBUG_PRINTS OFF)
+option(TUCKER_ENABLE_FALLBACK_VIA_HOST OFF)
+if(TUCKER_ENABLE_FALLBACK_VIA_HOST)
+  MESSAGE(STATUS "TUCKER_ENABLE_FALLBACK_VIA_HOST=${TUCKER_ENABLE_FALLBACK_VIA_HOST}, building code executing via host\n")
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/tucker_cmake_config.h.in tucker_cmake_config.h @ONLY)
+
+#
+# branch if onnode or mpi
+#
 if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
-  MESSAGE(STATUS "\n\nTUCKER_ENABLE_KOKKOS=${TUCKER_ENABLE_KOKKOS}, building code with Kokkos-only\n")
+  MESSAGE(STATUS "TUCKER_ENABLE_KOKKOS=${TUCKER_ENABLE_KOKKOS}, building code with Kokkos-only\n")
 
   set(ALL_TPLS_NEEDED ${KOKKOS_TPLS})
 
@@ -18,7 +32,7 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   ADD_LIBRARY(${KokkosOnlyTuckerLib} SHARED ${SOURCES})
   TARGET_LINK_LIBRARIES(${KokkosOnlyTuckerLib} ${ALL_TPLS_NEEDED})
 
-  include_directories(${TUCKER_SRCDIR} ${TUCKER_SRCDIR}/impl)
+  include_directories(${CMAKE_CURRENT_BINARY_DIR} ${TUCKER_SRCDIR} ${TUCKER_SRCDIR}/impl)
 
   set(STHOSVD_DRIVER_NAME KokkosTucker_sthosvd)
   set(STHOSVD_DRIVER_SRCS)
@@ -36,7 +50,7 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
 endif()
 
 if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
-  MESSAGE(STATUS "\n\nTUCKER_ENABLE_KOKKOS=${TUCKER_ENABLE_KOKKOS} and TUCKER_ENABLE_MPI=${TUCKER_ENABLE_MPI}, building code with MPI+Kokkos\n")
+  MESSAGE(STATUS "TUCKER_ENABLE_KOKKOS=${TUCKER_ENABLE_KOKKOS} and TUCKER_ENABLE_MPI=${TUCKER_ENABLE_MPI}, building code with MPI+Kokkos\n")
 
   find_package(MPI REQUIRED)
 
@@ -54,7 +68,7 @@ if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
   ADD_LIBRARY(${MpiKokkosTuckerLib} SHARED ${SOURCES})
   TARGET_LINK_LIBRARIES(${MpiKokkosTuckerLib} ${ALL_TPLS_NEEDED})
 
-  include_directories(${MPI_CXX_INCLUDE_DIRS} ${TUCKER_SRCDIR} ${TUCKER_SRCDIR}/impl)
+  include_directories(${MPI_CXX_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} ${TUCKER_SRCDIR} ${TUCKER_SRCDIR}/impl)
 
   set(STHOSVD_DRIVER_NAME MpiKokkosTucker_sthosvd)
   set(STHOSVD_DRIVER_SRCS)

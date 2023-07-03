@@ -164,14 +164,14 @@ auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<Scalar
   }
 
   if (flipSign){
-    flip_sign_eigenvecs_columns(exespace, G);
-#if 0
+#if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
     // left here for the time being as backup
     flip_sign_eigenvecs_columns_on_host(G_h, G);
+#else
+    flip_sign_eigenvecs_columns(exespace, G);
 #endif
   }
   exespace.fence();
-
 
   return eigenvalues_d;
 }

@@ -16,12 +16,9 @@ auto compute_gram(Tensor<ScalarType, Properties...> Y,
   const std::size_t nrows = Y.extent(n);
   Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space> S_d("S", nrows, nrows);
 
-  //impl::compute_gram_kokkos(Y, n, S_d);
-
-#if 1
-  /* this code below works for any backend, even if obviously is inefficient,
-     and is left here for now as a backup case if we need it to verify things
-   */
+#if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
+  /* this code below works for any backend, even if obviously inefficiently,
+     and is left here for now as a backup case if we need it to verify things */
   if constexpr (Kokkos::SpaceAccessibility<Kokkos::HostSpace, memory_space>::accessible){
     auto S_h = Kokkos::create_mirror(S_d);
     impl::compute_gram_host(Y, n, S_h);
@@ -37,6 +34,9 @@ auto compute_gram(Tensor<ScalarType, Properties...> Y,
     impl::compute_gram_host(Y_h, n, S_h);
     Kokkos::deep_copy(S_d, S_h);
    }
+
+#else
+  impl::compute_gram_kokkos(Y, n, S_d);
 #endif
 
   return S_d;

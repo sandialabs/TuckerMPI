@@ -1,0 +1,8 @@
+
+#ifndef TUCKER_CMAKE_CONFIG_H_
+#define TUCKER_CMAKE_CONFIG_H_
+
+#cmakedefine TUCKER_ENABLE_FALLBACK_VIA_HOST
+#cmakedefine TUCKER_ENABLE_DEBUG_PRINTS
+
+#endif
