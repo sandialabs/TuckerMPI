@@ -22,9 +22,12 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   static_assert(std::is_same_v<onnode_layout, Kokkos::LayoutLeft>,
 		"TuckerMpi::STHOSVD: currently only supporting tensor with layoutleft");
 
+  // preconditions
+  assert(modeOder.size() == (std::size_t) X.rank());
+
+  // execute
   if (method == Method::NewGram){
-    return impl::sthosvd_newgram(X, std::forward<TruncatorType>(truncator),
-			       modeOrder, flipSign);
+    return impl::sthosvd_newgram(X, std::forward<TruncatorType>(truncator), modeOrder, flipSign);
   }
   else{
     throw std::runtime_error("TuckerMpi: sthosvd: invalid or unsupported method");
