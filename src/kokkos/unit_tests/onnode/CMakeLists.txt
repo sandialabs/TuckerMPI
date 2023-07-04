@@ -20,6 +20,9 @@ add_utest_kokkos(${TEST1} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST1}.cc)
 set(TEST1 test_tuckertensor)
 add_utest_kokkos(${TEST1} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST1}.cc)
 
+set(TEST1 test_syrk_kokkos)
+add_utest_kokkos(${TEST1} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST1}.cc)
+
 # set(TEST1 tensor)
 # add_utest_kokkos(${TEST1} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST1}.cc)
 # set(TEST2 tucker_kokkosonly_ttm_using_kernels_gemm)
