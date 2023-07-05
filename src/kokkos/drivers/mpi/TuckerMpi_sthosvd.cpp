@@ -30,9 +30,7 @@ int main(int argc, char* argv[])
     if(mpiRank == 0) { inputs.describe(); }
 
     const auto dataTensorDim = inputs.dimensionsOfDataTensor();
-    TuckerMpi::Distribution dist(dataTensorDim, inputs.proc_grid_dims);
-
-    TuckerMpi::Tensor<scalar_t, memory_space> X(std::move(dist));
+    TuckerMpi::Tensor<scalar_t, memory_space> X(dataTensorDim, inputs.proc_grid_dims);
     TuckerMpi::read_tensor_binary(X, inputs.in_fns_file.c_str());
 
     if(mpiRank == 0) {

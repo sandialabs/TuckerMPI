@@ -75,6 +75,10 @@ public:
     Kokkos::deep_copy(localDims_, localDims_h_);
   }
 
+  Tensor(const std::vector<int>& dims,
+  	 const std::vector<int>& procs)
+    : Tensor( Distribution(dims, procs) ){}
+
   Tensor(const Tensor& o) = default;
   Tensor(Tensor&&) = default;
 
