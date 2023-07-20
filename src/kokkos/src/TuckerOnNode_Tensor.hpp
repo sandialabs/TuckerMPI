@@ -17,6 +17,7 @@ template<class ScalarType> struct TensorTraits<void, ScalarType>{
   using array_layout = Kokkos::LayoutLeft;
   using memory_space = typename Kokkos::DefaultExecutionSpace::memory_space;
   using data_view_type = Kokkos::View<ScalarType*, array_layout, memory_space>;
+  using value_type     = typename data_view_type::value_type;
 };
 
 template<class ScalarType, class MemSpace>
@@ -26,6 +27,7 @@ struct TensorTraits<
   using array_layout = Kokkos::LayoutLeft;
   using memory_space = MemSpace;
   using data_view_type = Kokkos::View<ScalarType*, array_layout, memory_space>;
+  using value_type     = typename data_view_type::value_type;
 };
 }//end namespace impl
 
