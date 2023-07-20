@@ -9,6 +9,8 @@ else()
   message("ascii-to-bin succeeded!")
 endif()
 
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/compressed)
+
 set(CMD "${MPIEXEC} -n ${NUMPROC} ${EXENAME}")
 message(STATUS ${CMD})
 execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
