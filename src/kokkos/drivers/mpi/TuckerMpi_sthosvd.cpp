@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
 
     auto sthosvdNewGram = [=](auto truncator){
       const auto method = TuckerMpi::Method::NewGram;
-      auto [tt, eigvals] = TuckerMpi::STHOSVD(method, X, truncator,
+      auto [tt, eigvals] = TuckerMpi::sthosvd(method, X, truncator,
 					      inputs.modeOrder, false /*flipSign*/);
       writeEigenvaluesToFile(eigvals, false /*for gram we write raw eigenvalues*/);
       printNorms(tt);

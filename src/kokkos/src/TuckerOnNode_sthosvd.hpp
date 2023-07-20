@@ -10,7 +10,7 @@ enum class Method{
 };
 
 template <class ScalarType, class ...Properties, class TruncatorType>
-[[nodiscard]] auto STHOSVD(Method method,
+[[nodiscard]] auto sthosvd(Method method,
 			   ::TuckerOnNode::Tensor<ScalarType, Properties...> X,
 			   TruncatorType && truncator,
 			   bool flipSign)
@@ -19,7 +19,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     return impl::sthosvd_gram(X, std::forward<TruncatorType>(truncator), flipSign);
   }
   else{
-    throw std::runtime_error("TuckerOnNode: sthosvd: invalid or unsupported method");
+    throw std::runtime_error("TuckerOnNode::sthosvd: invalid or unsupported method");
   }
 }
 
