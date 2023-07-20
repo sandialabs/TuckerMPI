@@ -20,7 +20,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   using tensor_type = ::TuckerMpi::Tensor<ScalarType, Properties...>;
   using onnode_layout = typename tensor_type::traits::onnode_layout;
   static_assert(std::is_same_v<onnode_layout, Kokkos::LayoutLeft>,
-		"TuckerMpi::sthosvd: currently only supporting tensor with layoutleft");
+		"TuckerMpi::sthosvd: currently only supporting a tensor with LayoutLeft");
 
   // preconditions
   assert(modeOder.size() == (std::size_t) X.rank());
