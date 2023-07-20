@@ -34,10 +34,8 @@ int main(int argc, char* argv[])
     /*
      * prepare lambdas "expressing" the computation to do
      */
-    auto writeResultsToFile = [=](auto factorization, bool squareEigValsBeforeWriting)
+    auto writeCoreTensorToFile = [=](auto factorization)
     {
-      const std::string filePrefix = inputs.sv_dir + "/" + inputs.sv_fn + "_mode_";
-      Tucker::print_eigenvalues(factorization, filePrefix, squareEigValsBeforeWriting);
       const std::string coreFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_core.mpi";
       std::cout << "Writing core tensor to " << coreFilename << std::endl;
       TuckerOnNode::export_tensor_binary(factorization.coreTensor(), coreFilename.c_str());
@@ -55,9 +53,14 @@ int main(int argc, char* argv[])
 
     auto sthosvdGram = [=](auto truncator){
       const auto method = TuckerOnNode::Method::Gram;
-      auto f = TuckerOnNode::STHOSVD(method, X, truncator, false /*flipSign*/);
-      writeResultsToFile(f, false /*for gram we write raw eigenvalues*/);
-      printNorms(f);
+      auto [tt, eigvals] = TuckerOnNode::STHOSVD(method, X, truncator, false /*flipSign*/);
+
+      writeCoreTensorToFile(tt);
+
+      const std::string filePrefix = inputs.sv_dir + "/" + inputs.sv_fn + "_mode_";
+      Tucker::print_eigenvalues(eigvals, filePrefix, false /*for gram we write raw eigenvalues*/);
+
+      printNorms(tt);
     };
 
     /*

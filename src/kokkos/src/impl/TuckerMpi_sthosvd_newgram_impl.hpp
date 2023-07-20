@@ -5,6 +5,7 @@
 #include "TuckerMpi_Tensor.hpp"
 #include "TuckerMpi_ttm.hpp"
 #include "TuckerOnNode_sthosvd.hpp"
+#include "TuckerOnNode_TensorGramEigenvalues.hpp"
 #include "TuckerMpi_TuckerTensor.hpp"
 #include "Tucker_BlasWrapper.hpp"
 #include "Tucker_ComputeEigValsEigVecs.hpp"
@@ -343,6 +344,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   using tensor_type         = Tensor<ScalarType, Properties...>;
   using memory_space        = typename tensor_type::traits::memory_space;
   using tucker_tensor_type  = ::TuckerMpi::TuckerTensor<tensor_type>;
+  using gram_eigvals_type   = TuckerOnNode::TensorGramEigenvalues<ScalarType, memory_space>;
   using slicing_info_view_t = Kokkos::View<::Tucker::impl::PerModeSliceInfo*, Kokkos::HostSpace>;
 
   // ---------------------
@@ -363,7 +365,9 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   // ---------------------
   Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space> eigvals;
   Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space> factors;
-  slicing_info_view_t perModeSlicingInfo("pmsi", X.rank());
+  slicing_info_view_t perModeSlicingInfo_factors("pmsi_factors", X.rank());
+  slicing_info_view_t perModeSlicingInfo_eigvals("pmsi_eigvals", X.rank());
+
   tensor_type Y = X;
   for (std::size_t n=0; n<X.rank(); n++)
   {
@@ -398,7 +402,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     }
     auto currEigvals = Tucker::impl::compute_and_sort_descending_eigvals_and_eigvecs_inplace(S, flipSign);
     TuckerOnNode::impl::appendEigenvaluesAndUpdateSliceInfo(mode, eigvals, currEigvals,
-							    perModeSlicingInfo(mode));
+							    perModeSlicingInfo_eigvals(mode));
     //#if defined(TUCKER_ENABLE_DEBUG_PRINTS)
     if (mpiRank == 0){
       std::cout << "\n";
@@ -415,7 +419,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     }
     const std::size_t numEvecs = truncator(mode, currEigvals);
     auto currEigVecs = Kokkos::subview(S, Kokkos::ALL, std::pair<std::size_t,std::size_t>{0, numEvecs});
-    TuckerOnNode::impl::appendFactorsAndUpdateSliceInfo(mode, factors, currEigVecs, perModeSlicingInfo(mode));
+    TuckerOnNode::impl::appendFactorsAndUpdateSliceInfo(mode, factors, currEigVecs, perModeSlicingInfo_factors(mode));
 #if defined(TUCKER_ENABLE_DEBUG_PRINTS)
     if (mpiRank ==0){
       std::cout << "\n";
@@ -455,7 +459,8 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 
   }//end loop
 
-  return tucker_tensor_type(Y, eigvals, factors, perModeSlicingInfo);
+  return std::pair( tucker_tensor_type(Y, factors, perModeSlicingInfo_factors),
+		    gram_eigvals_type(eigvals, perModeSlicingInfo_eigvals) );
 }
 
 }}

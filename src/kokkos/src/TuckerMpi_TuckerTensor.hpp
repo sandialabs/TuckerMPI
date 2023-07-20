@@ -20,7 +20,6 @@ struct TuckerTensorTraits<
   using memory_space             = typename Kokkos::DefaultExecutionSpace::memory_space;
   using core_tensor_type         = Tensor<ScalarType, memory_space>;
   using value_type               = typename core_tensor_type::traits::value_type;
-  using eigenvalues_store_view_t = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
   using factors_store_view_t     = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
 };
 
@@ -30,18 +29,9 @@ struct TuckerTensorTraits<void, Tensor<ScalarType, Props...> >
   using core_tensor_type         = Tensor<ScalarType, Props...>;
   using value_type               = typename core_tensor_type::traits::value_type;
   using memory_space             = typename core_tensor_type::traits::memory_space;
-  using eigenvalues_store_view_t = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
   using factors_store_view_t     = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
 };
 
-// struct PerModeSliceInfo{
-//   std::size_t eigvalsStartIndex        = 0;
-//   std::size_t eigvalsEndIndexExclusive = 0;
-//   std::size_t factorsStartIndex        = 0;
-//   std::size_t factorsEndIndexExclusive = 0;
-//   std::size_t factorsExtent0           = 0;
-//   std::size_t factorsExtent1	       = 0;
-// };
 }//end namespace impl
 
 template<class ...Args>
@@ -65,25 +55,21 @@ public:
   TuckerTensor()
     : rank_(-1),
       coreTensor_{},
-      eigenvalues_("eigenvalues", 0),
       factors_("factors", 0),
       perModeSlicingInfo_("info", 0)
   {}
 
-  template<class EigvalsViewType, class FactorsViewType>
+  template<class FactorsViewType>
   TuckerTensor(typename traits::core_tensor_type coreTensor,
-	       EigvalsViewType eigvals,
 	       FactorsViewType factors,
 	       slicing_info_view_t slicingInfo)
     : rank_(slicingInfo.extent(0)),
       coreTensor_(coreTensor),
-      eigenvalues_("eigenvalues", eigvals.extent(0)),
       factors_("factors", factors.extent(0)),
       perModeSlicingInfo_(slicingInfo)
   {
     namespace KEX = Kokkos::Experimental;
-    using exespace = typename EigvalsViewType::execution_space;
-    KEX::copy(exespace(), eigvals, eigenvalues_);
+    using exespace = typename FactorsViewType::execution_space;
     KEX::copy(exespace(), factors, factors_);
   }
 
@@ -103,7 +89,6 @@ public:
   TuckerTensor(const TuckerTensor<LocalArgs...> & o)
     : rank_(o.rank_),
       coreTensor_(o.coreTensor_),
-      eigenvalues_(o.eigenvalues_),
       factors_(o.factors_),
       perModeSlicingInfo_(o.perModeSlicingInfo_)
   {}
@@ -112,7 +97,6 @@ public:
   TuckerTensor& operator=(const TuckerTensor<LocalArgs...> & o){
     rank_ = o.rank_;
     coreTensor_ = o.coreTensor_;
-    eigenvalues_ = o.eigenvalues_;
     factors_ = o.factors_;
     perModeSlicingInfo_ = o.perModeSlicingInfo;
     return *this;
@@ -122,7 +106,6 @@ public:
   TuckerTensor(TuckerTensor<LocalArgs...> && o)
     : rank_(std::move(o.rank_)),
       coreTensor_(std::move(o.coreTensor_)),
-      eigenvalues_(std::move(o.eigenvalues_)),
       factors_(std::move(o.factors_)),
       perModeSlicingInfo_(std::move(o.perModeSlicingInfo_))
   {}
@@ -131,7 +114,6 @@ public:
   TuckerTensor& operator=(TuckerTensor<LocalArgs...> && o){
     rank_ = std::move(o.rank_);
     coreTensor_ = std::move(o.coreTensor_);
-    eigenvalues_ = std::move(o.eigenvalues_);
     factors_ = std::move(o.factors_);
     perModeSlicingInfo_ = std::move(o.perModeSlicingInfo_);
     return *this;
@@ -144,17 +126,6 @@ public:
   int rank() const{ return rank_; }
 
   typename traits::core_tensor_type coreTensor(){ return coreTensor_; }
-
-  auto eigenvalues(int mode){
-    if (rank_ == -1){
-      return Kokkos::subview(eigenvalues_, std::pair{0, 0});
-    }
-
-    const auto & sliceInfo = perModeSlicingInfo_(mode);
-    const std::size_t a = sliceInfo.eigvalsStartIndex;
-    const std::size_t b = sliceInfo.eigvalsEndIndexExclusive;
-    return Kokkos::subview(eigenvalues_, std::pair{a, b});
-  }
 
   auto factorMatrix(int mode)
   {
@@ -171,8 +142,8 @@ public:
     }
 
     const auto & sliceInfo = perModeSlicingInfo_(mode);
-    auto ptr = factors_.data() + sliceInfo.factorsStartIndex;
-    return umv_type(ptr, sliceInfo.factorsExtent0, sliceInfo.factorsExtent1);
+    auto ptr = factors_.data() + sliceInfo.startIndex;
+    return umv_type(ptr, sliceInfo.extent0, sliceInfo.extent1);
   }
 
 private:
@@ -181,13 +152,10 @@ private:
   /** core tensor */
   typename traits::core_tensor_type coreTensor_ = {};
 
-  /** Eigenvalues: eigenvalues for the Gram matrix for each mode */
-  typename traits::eigenvalues_store_view_t eigenvalues_ = {};
-
   /** Factors matrices: factor matrices in "linearized" form for each mode */
   typename traits::factors_store_view_t factors_ = {};
 
-  /** Slicing info: info needed to access mode-specific eigevalues/factors */
+  /** Slicing info: info needed to access mode-specific factors */
   slicing_info_view_t perModeSlicingInfo_ = {};
 };
 

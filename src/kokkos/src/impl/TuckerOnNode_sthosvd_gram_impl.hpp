@@ -3,6 +3,7 @@
 
 #include "Tucker_ComputeEigValsEigVecs.hpp"
 #include "TuckerOnNode_Tensor.hpp"
+#include "TuckerOnNode_TensorGramEigenvalues.hpp"
 #include "TuckerOnNode_TuckerTensor.hpp"
 #include "TuckerOnNode_ComputeGram.hpp"
 #include "TuckerOnNode_ttm.hpp"
@@ -40,8 +41,8 @@ void appendEigenvaluesAndUpdateSliceInfo(int mode,
   auto resIt = KEX::copy(exespace(), KEX::cbegin(src), KEX::cend(src), outItBegin);
 
   // update slicing info
-  sliceInfo.eigvalsStartIndex = KEX::distance(it0, outItBegin);
-  sliceInfo.eigvalsEndIndexExclusive = KEX::distance(it0, resIt);
+  sliceInfo.startIndex = KEX::distance(it0, outItBegin);
+  sliceInfo.endIndexExclusive = KEX::distance(it0, resIt);
 }
 
 template <class IteratorType, class ViewType>
@@ -77,10 +78,10 @@ void appendFactorsAndUpdateSliceInfo(int mode,
   Kokkos::parallel_for(src.size(), CopyFactorData(outItBegin, src));
 
   // update slicing info
-  sliceInfo.factorsStartIndex = currentExt;
-  sliceInfo.factorsEndIndexExclusive = currentExt + src.size();
-  sliceInfo.factorsExtent0 = src.extent(0);
-  sliceInfo.factorsExtent1 = src.extent(1);
+  sliceInfo.startIndex = currentExt;
+  sliceInfo.endIndexExclusive = currentExt + src.size();
+  sliceInfo.extent0 = src.extent(0);
+  sliceInfo.extent1 = src.extent(1);
 }
 
 template <class ScalarType, class ...Properties, class TruncatorType>
@@ -92,11 +93,14 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
   using tensor_type         = Tensor<ScalarType, Properties...>;
   using tucker_tensor_type  = TuckerTensor<tensor_type>;
   using memory_space        = typename tensor_type::traits::memory_space;
+  using gram_eigvals_type   = TensorGramEigenvalues<ScalarType, memory_space>;
   using slicing_info_view_t = Kokkos::View<::Tucker::impl::PerModeSliceInfo*, Kokkos::HostSpace>;
 
   Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space> eigvals;
   Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space> factors;
-  slicing_info_view_t perModeSlicingInfo("pmsi", X.rank());
+  slicing_info_view_t perModeSlicingInfo_factors("pmsi_factors", X.rank());
+  slicing_info_view_t perModeSlicingInfo_eigvals("pmsi_eigvals", X.rank());
+
   tensor_type Y = X;
   for (std::size_t n=0; n<X.rank(); n++)
   {
@@ -136,7 +140,7 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
     assert(currEigvals.extent(0) == S.extent(0));
     assert(S.extent(0) == S.extent(1));
     // use the curreEigvals
-    impl::appendEigenvaluesAndUpdateSliceInfo(n, eigvals, currEigvals, perModeSlicingInfo(n));
+    impl::appendEigenvaluesAndUpdateSliceInfo(n, eigvals, currEigvals, perModeSlicingInfo_eigvals(n));
 #if defined(TUCKER_ENABLE_DEBUG_PRINTS)
     std::cout << "\n";
     Tucker::write_view_to_stream(std::cout, currEigvals);
@@ -151,7 +155,7 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
     std::cout << "  AutoST-HOSVD::Truncating\n";
     const std::size_t numEvecs = truncator(n, currEigvals);
     auto currEigVecs = Kokkos::subview(S, Kokkos::ALL, std::pair<std::size_t,std::size_t>{0, numEvecs});
-    impl::appendFactorsAndUpdateSliceInfo(n, factors, currEigVecs, perModeSlicingInfo(n));
+    impl::appendFactorsAndUpdateSliceInfo(n, factors, currEigVecs, perModeSlicingInfo_factors(n));
 #if defined(TUCKER_ENABLE_DEBUG_PRINTS)
     std::cout << "\n";
     Tucker::write_view_to_stream(std::cout, currEigVecs);
@@ -171,7 +175,8 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
     std::cout << "\n";
    }
 
-  return tucker_tensor_type(Y, eigvals, factors, perModeSlicingInfo);
+  return std::pair( tucker_tensor_type(Y, factors, perModeSlicingInfo_factors),
+		    gram_eigvals_type(eigvals, perModeSlicingInfo_eigvals) );
 }
 
 }} //end namespace TuckerOnNode::impl

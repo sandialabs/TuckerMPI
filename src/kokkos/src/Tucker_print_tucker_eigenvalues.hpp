@@ -9,13 +9,13 @@
 // https://gitlab.com/nga-tucker/TuckerMPI/-/issues/15
 namespace Tucker{
 
-template <class TuckerTensorType>
-void print_eigenvalues(TuckerTensorType factorization,
+template <class StorageType>
+void print_eigenvalues(StorageType container,
 		       std::string filePrefix,
 		       bool squareBeforeWriting)
 {
 
-  const int nmodes = factorization.rank();
+  const int nmodes = container.rank();
   for(int mode=0; mode<nmodes; mode++)
   {
     std::ostringstream ss;
@@ -25,7 +25,7 @@ void print_eigenvalues(TuckerTensorType factorization,
     std::cout << "Writing singular values to " << ss.str() << std::endl;
 
     // Determine the number of eigenvalues for this mode
-    auto eigvals = factorization.eigenvalues(mode);
+    auto eigvals = container.eigenvalues(mode);
     auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
     const int nevals = eigvals.extent(0);
 

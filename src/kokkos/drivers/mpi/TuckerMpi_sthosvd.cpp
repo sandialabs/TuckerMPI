@@ -54,10 +54,10 @@ int main(int argc, char* argv[])
     /*
      * prepare lambdas "expressing" the computation to do
      */
-    auto writeEigenvaluesToFile = [=](auto factorization, bool squareBeforeWriting){
+    auto writeEigenvaluesToFile = [=](auto eigvals, bool squareBeforeWriting){
       if(mpiRank == 0) {
 	const std::string filePrefix = inputs.sv_dir + "/" + inputs.sv_fn + "_mode_";
-	Tucker::print_eigenvalues(factorization, filePrefix, squareBeforeWriting);
+	Tucker::print_eigenvalues(eigvals, filePrefix, squareBeforeWriting);
       }
     };
 
@@ -76,10 +76,10 @@ int main(int argc, char* argv[])
 
     auto sthosvdNewGram = [=](auto truncator){
       const auto method = TuckerMpi::Method::NewGram;
-      auto f = TuckerMpi::STHOSVD(method, X, truncator,
-				  inputs.modeOrder, false /*flipSign*/);
-      writeEigenvaluesToFile(f, false /*for gram we write raw eigenvalues*/);
-      printNorms(f);
+      auto [tt, eigvals] = TuckerMpi::STHOSVD(method, X, truncator,
+					      inputs.modeOrder, false /*flipSign*/);
+      writeEigenvaluesToFile(eigvals, false /*for gram we write raw eigenvalues*/);
+      printNorms(tt);
     };
 
     /*

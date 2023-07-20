@@ -6,12 +6,10 @@ namespace Tucker{
 namespace impl{
 
 struct PerModeSliceInfo{
-  std::size_t eigvalsStartIndex        = 0;
-  std::size_t eigvalsEndIndexExclusive = 0;
-  std::size_t factorsStartIndex        = 0;
-  std::size_t factorsEndIndexExclusive = 0;
-  std::size_t factorsExtent0           = 0;
-  std::size_t factorsExtent1	       = 0;
+  std::size_t startIndex        = 0;
+  std::size_t endIndexExclusive = 0;
+  std::size_t extent0 = 0;
+  std::size_t extent1 = 0;
 };
 
 }}
