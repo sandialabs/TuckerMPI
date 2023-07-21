@@ -43,7 +43,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
 
   // Allocate memory
   size_t numEntries = Y.size();
-  std::vector<ScalarType> tempMem(numEntries);
+  Kokkos::View<ScalarType*, mem_space> tempMem("tempMem", numEntries);
 
   const MPI_Comm& comm = map->getComm();
   int nprocs;
@@ -59,7 +59,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
   // Get pointer to tensor data
   auto view_Y = Y.data();
   auto view_Y_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), view_Y);
-  ScalarType* tenData = view_Y_h.data();
+  ScalarType* tenData = view_Y_h.data(); // TODO
   size_t stride = leadingDim*nGlobalRows;
   size_t tempMemOffset = 0;
   const int inc = 1;
@@ -73,7 +73,8 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
         tensorOffset += stride)
     {
       int tbs = (int)blockSize;
-      Tucker::copy(&tbs, tenData+tensorOffset, &inc, tempMem.data()+tempMemOffset, &inc);
+      // if line below commented => tests failed
+      Tucker::copy(&tbs, tenData+tensorOffset, &inc, tempMem.data()+tempMemOffset, &inc); // TODO
       tempMemOffset += blockSize;
     }
   }
