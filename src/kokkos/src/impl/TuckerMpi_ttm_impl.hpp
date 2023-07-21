@@ -41,7 +41,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
   // (because the data is stored in row-major order)
   if(n == Y.rank()-1) { return; }
 
-  // Allocate memory
+  // Allocate memory in Kokkos::View
   size_t numEntries = Y.size();
   Kokkos::View<ScalarType*, mem_space> tempMem("tempMem", numEntries);
 
@@ -59,7 +59,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
   // Get pointer to tensor data
   auto view_Y = Y.data();
   auto view_Y_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), view_Y);
-  ScalarType* tenData = view_Y_h.data(); // TODO
+  Kokkos::View<ScalarType*, mem_space> tenData(view_Y_h.data());
   size_t stride = leadingDim*nGlobalRows;
   size_t tempMemOffset = 0;
   const int inc = 1;
@@ -73,15 +73,22 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
         tensorOffset += stride)
     {
       int tbs = (int)blockSize;
-      // if line below commented => tests failed
-      Tucker::copy(&tbs, tenData+tensorOffset, &inc, tempMem.data()+tempMemOffset, &inc); // TODO
+      // TOCHANGE
+      Tucker::copy(&tbs, tenData.data()+tensorOffset, &inc, tempMem.data()+tempMemOffset, &inc);
+      /*Kokkos::Experimental::copy(
+        "Old Tucker::copy",
+        Kokkos::HostSpace(),
+        Kokkos::Experimental::begin(tempMem),
+        Kokkos::Experimental::end(tempMem),
+        Kokkos::Experimental::begin(tempMem)
+      );*/
       tempMemOffset += blockSize;
     }
   }
 
   // Copy data from temporary memory back to tensor
   int temp = (int)numEntries;
-  Tucker::copy(&temp, tempMem.data(), &inc, tenData, &inc);
+  Tucker::copy(&temp, tempMem.data(), &inc, tenData.data(), &inc);
   Kokkos::deep_copy(view_Y, view_Y_h);
 }
 
