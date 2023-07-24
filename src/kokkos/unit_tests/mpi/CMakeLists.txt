@@ -12,7 +12,7 @@ macro(add_utest_mpikokkos TESTNAME TESTSRCS nRANKS)
 
   add_test(
     NAME ${testNameFinal}
-    COMMAND ${MPIEXEC_EXECUTABLE} "--oversubscribe" ${MPIEXEC_NUMPROC_FLAG} ${nRANKS}
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${nRANKS}
     ${MPIEXEC_PREFLAGS} ${testNameFinal} ${MPIEXEC_POSTFLAGS}
     )
 endmacro()
