@@ -177,10 +177,6 @@ private:
       std::abort();
     }
 
-    // Add more?
-    // Assert for each parameters?
-    // Just few? Which ones?
-
     std::cout << "Arguments checking: Done" << std::endl;
   }
 };
