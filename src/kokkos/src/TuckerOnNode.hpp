@@ -4,6 +4,7 @@
 #include "Tucker_cmake_config.h"
 #include "Tucker_BoilerPlate_IO.hpp"
 #include "Tucker_CoreTensorTruncator.hpp"
+#include "Tucker_ComputeStatistics.hpp"
 #include "TuckerOnNode_Tensor.hpp"
 #include "TuckerOnNode_Tensor_IO.hpp"
 #include "TuckerOnNode_TuckerTensor.hpp"
