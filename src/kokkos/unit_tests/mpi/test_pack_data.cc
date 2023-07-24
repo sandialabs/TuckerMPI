@@ -6,7 +6,6 @@
 #include <gtest/gtest.h>
 #include "mpi.h"
 #include "TuckerMpi.hpp"
-#include "TuckerMpi_Map.hpp"
 
 TEST(tuckermpi_pack_data, main){
   // Prepare
