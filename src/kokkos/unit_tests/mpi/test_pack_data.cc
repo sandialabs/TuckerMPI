@@ -11,7 +11,6 @@
 TEST(tuckermpi_pack_data, main){
   // Prepare
   typedef double scalar_t;
-  using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
   // Create a 4x2x2 tensor
   std::vector<int> dims = {4, 2, 2};
