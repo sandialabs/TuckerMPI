@@ -22,3 +22,6 @@ add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 3)
 
 set(T1 test_comms_equality)
 add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 4)
+
+set(T1 test_pack_data)
+add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 8)
