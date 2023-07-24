@@ -2,6 +2,8 @@
 #define TUCKER_KOKKOSONLY_TENSOR_IO_HPP_
 
 #include "TuckerOnNode_Tensor.hpp"
+#include "Tucker_deep_copy.hpp"
+#include "Tucker_create_mirror.hpp"
 #include "Tucker_BoilerPlate_IO.hpp"
 #include <Kokkos_Core.hpp>
 #include <fstream>
@@ -14,8 +16,9 @@ void output_tensor_to_stream(Tensor<ScalarType, MemorySpace> X,
 			     std::ostream & stream,
 			     int precision = 2)
 {
-  auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), X.data());
-  const size_t numElements = X.size();
+  auto X_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), X);
+  auto v_h = X_h.data();
+  const size_t numElements = X_h.size();
   if(numElements == 0){ return; }
 
   for(size_t i=0; i<numElements; i++) {
@@ -29,10 +32,9 @@ template <class ScalarType, class MemorySpace>
 void import_tensor_binary(Tensor<ScalarType, MemorySpace> X,
 			  const char* filename)
 {
-  auto view1d_d = X.data();
-  auto view1d_h = Kokkos::create_mirror(view1d_d);
-  Tucker::fill_rank1_view_from_binary_file(view1d_h, filename);
-  Kokkos::deep_copy(view1d_d, view1d_h);
+  auto X_h = Tucker::create_mirror(X);
+  Tucker::fill_rank1_view_from_binary_file(X_h.data(), filename);
+  Tucker::deep_copy(X, X_h);
 }
 
 template <class ScalarType, class MemorySpace>

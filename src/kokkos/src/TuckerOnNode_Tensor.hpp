@@ -9,15 +9,20 @@
 
 namespace TuckerOnNode{
 
+template<class ScalarType, class ...Properties>
+class Tensor;
+
 namespace impl{
 template<class Enable, class ScalarType, class ...Properties>
 struct TensorTraits;
 
-template<class ScalarType> struct TensorTraits<void, ScalarType>{
-  using array_layout = Kokkos::LayoutLeft;
-  using memory_space = typename Kokkos::DefaultExecutionSpace::memory_space;
+template<class ScalarType>
+struct TensorTraits<void, ScalarType>{
+  using array_layout   = Kokkos::LayoutLeft;
+  using memory_space   = typename Kokkos::DefaultExecutionSpace::memory_space;
   using data_view_type = Kokkos::View<ScalarType*, array_layout, memory_space>;
   using value_type     = typename data_view_type::value_type;
+  using HostMirror = Tensor<ScalarType, Kokkos::HostSpace>;
 };
 
 template<class ScalarType, class MemSpace>
@@ -28,6 +33,7 @@ struct TensorTraits<
   using memory_space = MemSpace;
   using data_view_type = Kokkos::View<ScalarType*, array_layout, memory_space>;
   using value_type     = typename data_view_type::value_type;
+  using HostMirror = Tensor<ScalarType, Kokkos::HostSpace>;
 };
 }//end namespace impl
 
@@ -76,10 +82,21 @@ public:
   {
     Tucker::impl::copy_stdvec_to_view(v, dims_h_);
     Kokkos::deep_copy(dims_, dims_h_);
-    const std::size_t numEl = std::accumulate(v.begin(), v.end(), 1,
+    const std::size_t numEl = std::accumulate(v.cbegin(), v.cend(), 1,
 					      std::multiplies<std::size_t>());
     // allocate for data
     data_ = data_view_type("tensorData", numEl);
+  }
+
+  template<class DataView>
+  Tensor(const std::vector<int> & v, DataView dataIn)
+    : rank_(v.size()), dims_("dims", rank_),
+      dims_h_("dims_h", rank_), data_(dataIn)
+  {
+    Tucker::impl::copy_stdvec_to_view(v, dims_h_);
+    Kokkos::deep_copy(dims_, dims_h_);
+    const std::size_t numEl = std::accumulate(v.cbegin(), v.cend(), 1,
+					      std::multiplies<std::size_t>());
   }
 
   Tensor(const Tensor& o) = default;
@@ -199,5 +216,5 @@ private:
   dims_host_view_type dims_h_ = {};
 };
 
-} // end namespace Tucker
+} // end namespace TuckerOnNode
 #endif

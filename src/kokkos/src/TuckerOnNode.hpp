@@ -8,6 +8,8 @@
 #include "TuckerOnNode_Tensor_IO.hpp"
 #include "TuckerOnNode_TuckerTensor.hpp"
 #include "TuckerOnNode_TensorGramEigenvalues.hpp"
+#include "Tucker_create_mirror.hpp"
+#include "Tucker_deep_copy.hpp"
 #include "TuckerOnNode_ttm.hpp"
 #include "TuckerOnNode_ComputeGram.hpp"
 #include "TuckerOnNode_sthosvd.hpp"

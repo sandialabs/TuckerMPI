@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "TuckerOnNode_Tensor.hpp"
+#include "TuckerOnNode.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace {
@@ -196,4 +196,58 @@ TEST(tuckerkokkos_tensor, copy_assign_const_semantics){
 
   // FIXME: add test to ensure this line gives compile error similar to:
   // error: assignment of read-only location 'y_view.Kokkos::View<const double*, Kokkos::LayoutLeft, Kokkos::HostSpace>::operator()<int>(0)'
+}
+
+TEST(tuckerkokkos_tensor, create_mirror)
+{
+  Tensor<scalar_t> T0({2,1,5});
+  T0.fillRandom(-1., 1.);
+
+  auto T_h = Tucker::create_mirror(T0);
+  auto T_h_dims = T_h.dimensionsOnHost();
+  ASSERT_TRUE(T_h_dims(0) == 2);
+  ASSERT_TRUE(T_h_dims(1) == 1);
+  ASSERT_TRUE(T_h_dims(2) == 5);
+
+  auto T_h_data = T_h.data();
+  for (int i=0; i<T_h.size(); ++i){
+    ASSERT_TRUE(T_h_data(i) == 0.);
+  }
+}
+
+TEST(tuckerkokkos_tensor, deep_copy)
+{
+  Tensor<scalar_t> T0({2,1,5});
+  T0.fillRandom(-1., 1.);
+
+  auto T_h = Tucker::create_mirror(T0);
+  auto T_h_data = T_h.data();
+  for (int i=0; i<T_h.size(); ++i){
+    ASSERT_TRUE(T_h_data(i) == 0.);
+  }
+
+  for (int i=0; i<T_h.size(); ++i){
+    T_h_data(i) = (double) i;
+  }
+  Tucker::deep_copy(T0, T_h);
+  auto T0_data = T0.data();
+  auto T0_data_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), T0_data);
+  for (int i=0; i<T0.size(); ++i){
+    ASSERT_TRUE(T0_data_h(i) == (double) i);
+  }
+}
+
+TEST(tuckerkokkos_tensor, create_mirror_tensor_and_copy)
+{
+  Tensor<scalar_t> T0({2,1,5});
+  T0.fillRandom(-1., 1.);
+  auto T0_data = T0.data();
+  auto T0_data_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), T0_data);
+
+  auto T_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), T0);
+  auto T_h_data = T_h.data();
+
+  for (int i=0; i<T_h.size(); ++i){
+    ASSERT_TRUE(T_h_data(i) == T0_data_h(i));
+  }
 }
