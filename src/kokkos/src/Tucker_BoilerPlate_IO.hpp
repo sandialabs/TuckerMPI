@@ -11,8 +11,8 @@
 namespace Tucker{
 
 template <class DataType, class ...Properties>
-void fill_rank1_view_from_binary_file(Kokkos::View<DataType, Properties...> & v,
-				 const char* filename)
+void fill_rank1_view_from_binary_file(const Kokkos::View<DataType, Properties...> & v,
+				      const char* filename)
 {
   using view_type = Kokkos::View<DataType, Properties...>;
   using mem_space = typename view_type::memory_space;
@@ -46,7 +46,7 @@ void fill_rank1_view_from_binary_file(Kokkos::View<DataType, Properties...> & v,
 
 template <class DataType, class ...Properties>
 void write_view_to_stream(std::ostream & out,
-			  Kokkos::View<DataType, Properties...> v,
+			  const Kokkos::View<DataType, Properties...> & v,
 			  int precision = 8)
 {
   using view_type = Kokkos::View<DataType, Properties...>;
@@ -73,7 +73,7 @@ void write_view_to_stream(std::ostream & out,
 
 template <class DataType, class ...Properties>
 void write_view_to_stream_inline(std::ostream & out,
-				 Kokkos::View<DataType, Properties...> v,
+				 const Kokkos::View<DataType, Properties...> & v,
 				 int precision = 8)
 {
   using view_type = Kokkos::View<DataType, Properties...>;
