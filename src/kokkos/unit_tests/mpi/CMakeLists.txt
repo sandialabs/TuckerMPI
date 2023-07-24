@@ -12,7 +12,7 @@ macro(add_utest_mpikokkos TESTNAME TESTSRCS nRANKS)
 
   add_test(
     NAME ${testNameFinal}
-    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${nRANKS}
+    COMMAND ${MPIEXEC_EXECUTABLE} "--oversubscribe" ${MPIEXEC_NUMPROC_FLAG} ${nRANKS}
     ${MPIEXEC_PREFLAGS} ${testNameFinal} ${MPIEXEC_POSTFLAGS}
     )
 endmacro()
@@ -24,4 +24,10 @@ set(T1 test_comms_equality)
 add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 4)
 
 set(T1 test_pack_data)
-add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 8)
+add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 2)
+
+set(T1 test_pack_data2)
+add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 2)
+
+set(T1 test_pack_data3)
+add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 2)
