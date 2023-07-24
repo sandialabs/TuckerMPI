@@ -32,6 +32,6 @@ TEST(tuckermpi_pack_data, main){
   // Check the result
   scalar_t trueResult[16] = {0,1,4,5,8,9,12,13,2,3,6,7,10,11,14,15};
   for(int i=0; i<16; i++) {
-    ASSERT_TRUE(tensor_d[i] == trueResult[i]);
+    ASSERT_TRUE(tensor_d(i) == trueResult[i]);
   }
 }
