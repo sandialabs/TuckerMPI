@@ -1,5 +1,7 @@
-// this test comes from:
-//   TuckerMPI/src/mpi/tests/TuckerMPI_pack_data.cpp
+/**
+ * This test comes from:
+ * TuckerMPI/src/mpi/tests/TuckerMPI_pack_data.cpp
+ */
 
 #include <gtest/gtest.h>
 #include "mpi.h"
@@ -7,8 +9,6 @@
 #include "TuckerMpi_Map.hpp"
 
 const MPI_Comm comm = MPI_COMM_WORLD;
-
-
 
 TEST(tuckermpi_pack_data, main){
   // Prepare
@@ -25,7 +25,8 @@ TEST(tuckermpi_pack_data, main){
   auto local_tensor_view_h = Kokkos::create_mirror(local_tensor_view_d);
   for(int i=0; i<16; i++){
     // ERROR HERE
-    // local_tensor_view_h.data()[i] = i;
+    local_tensor_view_h(i) = i;
+    // Who can I modify data of a TuckerMpi::Tensor?
   }
   Kokkos::deep_copy(local_tensor_view_d, local_tensor_view_h);
 
