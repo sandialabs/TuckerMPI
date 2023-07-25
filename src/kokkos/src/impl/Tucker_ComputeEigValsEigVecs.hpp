@@ -125,6 +125,7 @@ template <class T>
 inline constexpr bool better_off_calling_host_syev_v =
     better_off_calling_host_syev<T>::value;
 
+
 template<class ScalarType, class ... AProperties, class ... EigvalProperties>
 void syev_on_host_views(Kokkos::View<ScalarType**, AProperties...> A,
 			Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
@@ -143,16 +144,12 @@ void syev_on_host_views(Kokkos::View<ScalarType**, AProperties...> A,
   static_assert(Kokkos::SpaceAccessibility<Kokkos::HostSpace, A_mem_space>::accessible
 		&& Kokkos::SpaceAccessibility<Kokkos::HostSpace, ev_mem_space>::accessible,
 		"do_syev_on_host: Views must be accessible on host");
-
   static_assert(std::is_same_v<A_layout, Kokkos::LayoutLeft>
 		&& std::is_same_v<ev_layout, Kokkos::LayoutLeft>,
 		"do_syev_on_host: Views must have LayoutLeft");
-
   static_assert(std::is_floating_point< typename A_view_type::value_type>::value
 		&& std::is_floating_point< typename ev_view_type::value_type>::value,
 		"do_syev_on_host: Views must have floating point value_type");
-
-  // ---
 
   const int nrows = (int) A.extent(0);
 
@@ -212,8 +209,7 @@ auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<Scalar
   /*
    * do the eigen decomposition
    */
-  const int nrows = (int) G.extent(0);
-  Kokkos::View<ScalarType*, Kokkos::LayoutLeft, mem_space> eigenvalues_d("EIG", nrows);
+  Kokkos::View<ScalarType*, Kokkos::LayoutLeft, mem_space> eigenvalues_d("EIG", G.extent(0));
 
   if constexpr( better_off_calling_host_syev_v<exe_space> ){
     syev_on_host_views(G, eigenvalues_d);
@@ -221,29 +217,6 @@ auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<Scalar
   else{
     syev_on_device_views(exespace, G,  eigenvalues_d);
   }
-
-// #if 0
-//   auto G_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), G);
-//   const int nrows = (int) G.extent(0);
-//   Kokkos::View<ScalarType*, mem_space> eigenvalues_d("EIG", nrows);
-//   auto eigenvalues_h = Kokkos::create_mirror_view(eigenvalues_d);
-
-//   // 'V' means Compute eigenvalues and eigenvectors.
-//   char jobz = 'V';
-//   char uplo = 'U';
-//   int lwork = (int) 8*nrows;
-//   std::vector<ScalarType> work(lwork);
-//   int info;
-//   Tucker::syev(&jobz, &uplo, &nrows, G_h.data(), &nrows,
-// 	       eigenvalues_h.data(), work.data(), &lwork, &info);
-//   if(info != 0){
-//     std::cerr << "Error: invalid error code returned by dsyev (" << info << ")\n";
-//   }
-//   //FIXME: these deep copies are here because syev is done on host but
-//   // one we do the device call these will go away
-//   Kokkos::deep_copy(eigenvalues_d, eigenvalues_h);
-//   Kokkos::deep_copy(G, G_h);
-// #endif
 
   /*
     sorting
