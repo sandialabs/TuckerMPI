@@ -59,8 +59,6 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
 
   // Create view with tensor data
   auto view_Y = Y.data();
-  auto view_Y_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), view_Y);
-  Kokkos::View<ScalarType*, mem_space> tenData(view_Y_h.data());
 
   size_t stride = leadingDim*nGlobalRows;
   size_t tempMemOffset = 0;
@@ -77,11 +75,11 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
       int tbs = (int)blockSize;
 
       // Iterator to the beginning of view with data + offset
-      auto it_first_from = KE::begin(tenData)+tensorOffset;
+      auto it_first_from = KE::begin(view_Y)+tensorOffset;
       // Iterator to the beginning of view with zero + offset
       auto it_first_to = KE::begin(tempMem)+tempMemOffset;
 
-      // Copy tenData into tempMem
+      // Copy view_Y into tempMem
       Kokkos::parallel_for(tbs, KOKKOS_LAMBDA (const int i){
         const int shift = inc*i;
         *(it_first_to + shift) = *(it_first_from + shift);
@@ -92,16 +90,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
   }
 
   // Copy data from temporary memory back to tensor
-  int temp = (int)numEntries;
-
-  auto it_first_from = KE::begin(tempMem);
-  auto it_first_to = KE::begin(tenData);
-  Kokkos::parallel_for(temp, KOKKOS_LAMBDA (const int i){
-    const int shift = inc*i;
-    *(it_first_to + shift) = *(it_first_from + shift);
-  });
-
-  Kokkos::deep_copy(view_Y, view_Y_h);
+  KE::copy(typename mem_space::execution_space(), tempMem, view_Y);
 }
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
