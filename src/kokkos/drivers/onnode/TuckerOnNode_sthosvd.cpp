@@ -34,6 +34,16 @@ int main(int argc, char* argv[])
     /*
      * prepare lambdas "expressing" the computation to do
      */
+    auto writeDimensionOfCoreTensor = [=](auto factorization)
+    {
+      // FIXME #6
+    }
+
+    auto writeDimensionOfGlobalTensor = [=](auto factorization)
+    {
+      // FIXME #6
+    }
+
     auto writeCoreTensorToFile = [=](auto factorization)
     {
       const std::string coreFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_core.mpi";
@@ -41,17 +51,10 @@ int main(int argc, char* argv[])
       TuckerOnNode::export_tensor_binary(factorization.coreTensor(), coreFilename.c_str());
     };
 
-    // write dimension of core tensor
-
-    // each factor
-
-
-
-    // dimension of global tensor
-
-
-
-
+    auto writeEachFactor = [=](auto factorization, int mode)
+    {
+      // FIXME #6
+    }
 
     auto printNorms = [=](auto factorization){
       const auto xnorm = std::sqrt(X.frobeniusNormSquared());
@@ -67,12 +70,30 @@ int main(int argc, char* argv[])
       const auto method = TuckerOnNode::Method::Gram;
       auto [tt, eigvals] = TuckerOnNode::sthosvd(method, X, truncator, false /*flipSign*/);
 
-      writeCoreTensorToFile(tt);
-
+      // Write the eigenvalues to files
       const std::string filePrefix = inputs.sv_dir + "/" + inputs.sv_fn + "_mode_";
       Tucker::print_eigenvalues(eigvals, filePrefix, false /*for gram we write raw eigenvalues*/);
 
       printNorms(tt);
+
+      // FIXME: Compute the error bound based on the eigenvalues
+
+      if(inputs.boolWriteSTHOSVD){
+        // Write dimension of core tensor
+        writeDimensionOfCoreTensor(tt);
+
+        // Write dimension of global tensor
+        writeDimensionOfGlobalTensor(tt);
+
+        // Write core tensor
+        writeCoreTensorToFile(tt);
+
+        // Write each factor
+        for(int mode=0; mode<nd; mode++) {
+          writeEachFactor(tt, mode);
+        }
+      }
+
     };
 
     /*
