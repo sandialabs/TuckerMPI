@@ -57,7 +57,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
   // Get the number of global rows of this tensor unfolding
   int nGlobalRows = map->getGlobalNumEntries();
 
-  // Create view with tensor data
+  // Get a Kokkos view "viewing" the tensor data
   auto view_Y = Y.data();
 
   size_t stride = leadingDim*nGlobalRows;
