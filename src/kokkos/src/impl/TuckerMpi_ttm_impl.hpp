@@ -57,7 +57,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
   // Get the number of global rows of this tensor unfolding
   int nGlobalRows = map->getGlobalNumEntries();
 
-  auto y_data_view = Y.data()
+  auto y_data_view = Y.data();
 
   size_t stride = leadingDim*nGlobalRows;
   size_t tempMemOffset = 0;

@@ -12,6 +12,8 @@
 #include "TuckerMpi_Tensor.hpp"
 #include "TuckerMpi_Tensor_IO.hpp"
 #include "TuckerMpi_TuckerTensor.hpp"
+#include "Tucker_create_mirror.hpp"
+#include "Tucker_deep_copy.hpp"
 #include "TuckerMpi_ttm.hpp"
 #include "TuckerMpi_sthosvd.hpp"
 #include "Tucker_print_tucker_eigenvalues.hpp"
