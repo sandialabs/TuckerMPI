@@ -90,7 +90,16 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
 		  bool flipSign)
 {
 
-  using tensor_type         = Tensor<ScalarType, Properties...>;
+  // constraints
+  using tensor_type       = Tensor<ScalarType, Properties...>;
+  using tensor_layout     = typename tensor_type::traits::array_layout;
+  using tensor_value_type = typename tensor_type::traits::value_type;
+  static_assert(   std::is_same_v<tensor_layout, Kokkos::LayoutLeft>
+		&& std::is_floating_point_v<tensor_value_type>,
+		   "TuckerOnNode::impl::sthosvd: supports tensors with LayoutLeft" \
+		   "and floating point scalar");
+
+  // aliases needed below
   using tucker_tensor_type  = TuckerTensor<tensor_type>;
   using memory_space        = typename tensor_type::traits::memory_space;
   using gram_eigvals_type   = TensorGramEigenvalues<ScalarType, memory_space>;

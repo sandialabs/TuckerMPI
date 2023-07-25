@@ -8,21 +8,21 @@
 namespace TuckerOnNode{
 namespace impl{
 
-template <class ScalarType, class ...TensorProperties, class AType>
- std::enable_if_t<
-  std::is_same_v<
-    typename Tensor<ScalarType, TensorProperties...>::traits::array_layout,
-    Kokkos::LayoutLeft>
-  && Kokkos::is_view_v<AType>
-   >
-ttm_kker_mode_zero(Tensor<ScalarType, TensorProperties...> B,
-		   int n,
-		   AType A,
-		   Tensor<ScalarType, TensorProperties...> C,
-		   bool Atransp)
+template <
+  class ScalarType, class ...TensorProperties,
+  class ViewDataType, class ...ViewProps>
+void ttm_kker_mode_zero(Tensor<ScalarType, TensorProperties...> B,
+			int n,
+			Kokkos::View<ViewDataType, ViewProps ...> A,
+			Tensor<ScalarType, TensorProperties...> C,
+			bool Atransp)
 {
-  using umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutLeft,
-				Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+
+  // constraints
+  using tensor_type       = Tensor<ScalarType, TensorProperties...>;
+  using tensor_layout     = typename tensor_type::traits::array_layout;
+  static_assert(std::is_same_v<tensor_layout, Kokkos::LayoutLeft>,
+		"tensor must have LayoutLeft");
 
   /** C = beta*C + alpha*op(A)*op(B)
    * A is m by k
@@ -39,24 +39,29 @@ ttm_kker_mode_zero(Tensor<ScalarType, TensorProperties...> B,
   const ScalarType alpha = ScalarType(1); // input coef. of op(A)*op(B)
   const ScalarType beta = ScalarType(0);  // input coef. of C
 
+  using umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutLeft,
+				Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
   umv_type Bumv(B.data().data(), k, blas_n);
   umv_type Cumv(C.data().data(), m, blas_n);
   KokkosBlas::gemm(&transa, &transb, alpha, A, Bumv, beta, Cumv);
 }
 
-template <class ScalarType, class ...TensorProperties, class AType>
-std::enable_if_t<
-  std::is_same_v<
-    typename Tensor<ScalarType, TensorProperties...>::traits::array_layout,
-    Kokkos::LayoutLeft>
-  && Kokkos::is_view_v<AType>
-  >
-ttm_kker_mode_greater_than_zero(Tensor<ScalarType, TensorProperties...> B,
-				int n,
-				AType A,
-				Tensor<ScalarType, TensorProperties...> C,
-				bool Btransp)
+template <
+  class ScalarType, class ...TensorProperties,
+  class ViewDataType, class ...ViewProps>
+void ttm_kker_mode_greater_than_zero(Tensor<ScalarType, TensorProperties...> B,
+				     int n,
+				     Kokkos::View<ViewDataType, ViewProps ...> A,
+				     Tensor<ScalarType, TensorProperties...> C,
+				     bool Btransp)
 {
+
+  // constraints
+  using tensor_type       = Tensor<ScalarType, TensorProperties...>;
+  using tensor_layout     = typename tensor_type::traits::array_layout;
+  static_assert(std::is_same_v<tensor_layout, Kokkos::LayoutLeft>,
+		"tensor must have LayoutLeft");
+
   using umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutLeft,
 				Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 

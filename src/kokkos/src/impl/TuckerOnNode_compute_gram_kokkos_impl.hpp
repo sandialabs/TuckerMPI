@@ -13,11 +13,16 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
 			 const std::size_t n,
 			 Kokkos::View<DataType, ViewProps...> C)
 {
+  using tensor_type   = Tensor<ScalarType, Properties...>;
+  using tensor_layout = typename tensor_type::traits::array_layout;
+  using view_type   = Kokkos::View<DataType, ViewProps...>;
+  using view_layout = typename view_type::array_layout;
+  static_assert(std::is_same_v<tensor_layout, Kokkos::LayoutLeft>
+		&& std::is_same_v<view_layout, Kokkos::LayoutLeft>);
 
   const int nrows = (int)Y.extent(n);
   auto Y_rawPtr = Y.data().data();
   auto gramPtr = C.data();
-
   using C_view_type = Kokkos::View<DataType, ViewProps...>;
   using umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutLeft,
 				Kokkos::MemoryTraits<Kokkos::Unmanaged>>;

@@ -193,10 +193,8 @@ template<class ScalarType, class ... Properties>
 auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<ScalarType**, Properties...> G,
 							     const bool flipSign)
 {
-  if (G.extent(0) != G.extent(1)){
-    throw std::runtime_error("G must be symmetric for calling syev");
-  }
 
+  // constraints
   using view_type = Kokkos::View<ScalarType**, Properties...>;
   using exe_space = typename view_type::execution_space;
   using mem_space = typename view_type::memory_space;
@@ -204,11 +202,15 @@ auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<Scalar
 		&& std::is_floating_point< typename view_type::value_type>::value,
 		"G must have layoutleft and must be real");
 
-  auto exespace = exe_space();
+  // preconditions
+  if (G.extent(0) != G.extent(1)){
+    throw std::runtime_error("G must be symmetric for calling syev");
+  }
 
   /*
    * do the eigen decomposition
    */
+  auto exespace = exe_space();
   Kokkos::View<ScalarType*, Kokkos::LayoutLeft, mem_space> eigenvalues_d("EIG", G.extent(0));
 
   if constexpr( better_off_calling_host_syev_v<exe_space> ){

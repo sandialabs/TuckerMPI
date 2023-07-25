@@ -8,13 +8,24 @@
 
 namespace TuckerOnNode{
 
-template <class ScalarType, class ...TensorProperties, class UType>
+template <
+  class ScalarType, class ...TensorProperties,
+  class ViewDataType, class ...ViewProps
+  >
 void ttm(Tensor<ScalarType, TensorProperties...> X,
 	 std::size_t mode,
-	 UType U,
+	 Kokkos::View<ViewDataType, ViewProps ...> U,
 	 Tensor<ScalarType, TensorProperties...> Y,
 	 bool Utransp)
 {
+
+  // constraints
+  using tensor_type       = Tensor<ScalarType, TensorProperties...>;
+  using tensor_layout     = typename tensor_type::traits::array_layout;
+  static_assert(std::is_same_v<tensor_layout, Kokkos::LayoutLeft>,
+		"TuckerOnNode::ttm: supports tensors with LayoutLeft");
+
+  // preconditions
   if(Utransp) {
     assert(U.extent(0) == X.extent(n));
     assert(U.extent(1) == Y.extent(n));
@@ -31,34 +42,30 @@ void ttm(Tensor<ScalarType, TensorProperties...> X,
   }
 }
 
-template <class ScalarType, class ...TensorProperties, class UType>
+template <
+  class ScalarType, class ...TensorProperties,
+  class ViewDataType, class ...ViewProps
+  >
 auto ttm(Tensor<ScalarType, TensorProperties...> X,
 	 std::size_t mode,
-	 UType U,
+	 Kokkos::View<ViewDataType, ViewProps ...> U,
 	 bool Utransp)
 {
+
+  // constraints
+  using tensor_type       = Tensor<ScalarType, TensorProperties...>;
+  using tensor_layout     = typename tensor_type::traits::array_layout;
+  static_assert(std::is_same_v<tensor_layout, Kokkos::LayoutLeft>,
+		"TuckerOnNode::ttm: supports tensors with LayoutLeft");
+
   const std::size_t nrows = Utransp ? U.extent(1) : U.extent(0);
   std::vector<int> I(X.rank());
   for(std::size_t i=0; i< (std::size_t)I.size(); i++) {
     I[i] = (i != mode) ? X.extent(i) : nrows;
   }
-  Tensor<ScalarType, TensorProperties...> Y(I);
+  tensor_type Y(I);
   ttm(X, mode, U, Y, Utransp);
   return Y;
-}
-
-template <class ScalarType, class ...TensorProperties, class AType>
-void ttm(Tensor<ScalarType, TensorProperties...> X,
-	 int mode,
-	 AType A,
-	 Tensor<ScalarType, TensorProperties...> Y,
-	 bool Utransp)
-{
-  if(mode == 0) {
-    impl::ttm_kker_mode_zero(X, mode, A, Y, Utransp);
-  } else {
-    impl::ttm_kker_mode_greater_than_zero(X, mode, A, Y, Utransp);
-  }
 }
 
 }

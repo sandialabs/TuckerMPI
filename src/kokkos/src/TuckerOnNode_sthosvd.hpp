@@ -16,10 +16,13 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 			   bool flipSign)
 {
   // constraints
-  using tensor_type = ::TuckerOnNode::Tensor<ScalarType, Properties...>;
-  using layout = typename tensor_type::traits::array_layout;
-  static_assert(std::is_same_v<layout, Kokkos::LayoutLeft>,
-		"TuckerOnNode::sthosvd: currently only supporting a tensor with LayoutLeft");
+  using tensor_type       = ::TuckerOnNode::Tensor<ScalarType, Properties...>;
+  using tensor_layout     = typename tensor_type::traits::array_layout;
+  using tensor_value_type = typename tensor_type::traits::value_type;
+  static_assert(   std::is_same_v<tensor_layout, Kokkos::LayoutLeft>
+		&& std::is_floating_point_v<tensor_value_type>,
+		   "TuckerOnNode::sthosvd: currently, supports tensors with LayoutLeft" \
+		   "and floating point scalar");
 
   if (method == Method::Gram){
     return impl::sthosvd_gram(X, std::forward<TruncatorType>(truncator), flipSign);
