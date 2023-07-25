@@ -6,12 +6,12 @@
 namespace Tucker{
 
 template <class TensorType, class ScalarType>
-auto compute_statistics(TensorType dataTensor,
-        int scaleMode,
-        std::string statsFile,
-        ScalarType stdThresh)
+void compute_statistics(const TensorType dataTensor,
+                        const int scaleMode,
+                        const std::string statsFile,
+                        const ScalarType stdThresh)
 {
-  Tucker::MetricData<ScalarType> metrics = Tucker::compute_slice_metrics(dataTensor, scaleMode, Tucker::MIN+Tucker::MAX+Tucker::MEAN+Tucker::VARIANCE);
+  Tucker::MetricData<ScalarType> metrics = Tucker::compute_slice_metrics(dataTensor, (int)scaleMode, Tucker::MIN+Tucker::MAX+Tucker::MEAN+Tucker::VARIANCE);
 
   std::cout << "Writing file " << statsFile << std::endl;
 
@@ -23,7 +23,7 @@ auto compute_statistics(TensorType dataTensor,
       << std::setw(13) << "Max"
       << std::endl;
 
-  for(int i=0; i<dataTensor.size(scaleMode); i++) {
+  for(int i=0; i<dataTensor.extent(scaleMode); i++) {
     double stdev = sqrt(metrics.getVarianceData()[i]);
 
     if(stdev < stdThresh) {

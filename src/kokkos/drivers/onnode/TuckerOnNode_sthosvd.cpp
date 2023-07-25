@@ -28,6 +28,7 @@ int main(int argc, char* argv[])
     /*
      * preprocessing
      */
+    std::cout << "Compute statistics" << std::endl;
     Tucker::compute_statistics(X, inputs.scale_mode, inputs.stats_file, inputs.stdThresh);
     // FIXME: Perform preprocessing is missingx
 

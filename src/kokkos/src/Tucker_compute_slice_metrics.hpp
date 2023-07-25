@@ -3,11 +3,12 @@
 
 namespace Tucker {
 
-template <class TensorType, class ScalarType>
-auto compute_slice_metrics(const TensorType Y, const int mode, const int metrics)
+template <class ScalarType, class MemorySpace>
+Tucker::MetricData<ScalarType>
+compute_slice_metrics(const TuckerOnNode::Tensor<ScalarType, MemorySpace> Y, const int mode, const int metrics)
 {
   // If there are no slices, calling this function was a bad idea
-  const int numSlices = Y.size(mode);
+  const int numSlices = Y.extent(mode);
   if(numSlices <= 0) {
     std::ostringstream oss;
     oss << "Tucker::computeSliceMetrics(const Tensor<ScalarType>* Y, const int mode, const int metrics): "
@@ -46,15 +47,15 @@ auto compute_slice_metrics(const TensorType Y, const int mode, const int metrics
     }
   }
 
-  if(Y.getNumElements() == 0) {
+  if(Y.size() == 0) {
     return result;
   }
 
   // Compute the result
-  int ndims = Y.N();
-  size_t numContig = Y.size().prod(0,mode-1,1); // Number of contiguous elements in a slice
-  size_t numSetsContig = Y.size().prod(mode+1,ndims-1,1); // Number of sets of contiguous elements per slice
-  size_t distBetweenSets = Y.size().prod(0,mode); // Distance between sets of contiguous elements
+  int ndims = Y.rank();
+  size_t numContig = Y.prod(0,mode-1,1); // Number of contiguous elements in a slice
+  size_t numSetsContig = Y.prod(mode+1,ndims-1,1); // Number of sets of contiguous elements per slice
+  size_t distBetweenSets = Y.prod(0,mode); // Distance between sets of contiguous elements
 
   const ScalarType* dataPtr;
   size_t i, c;
