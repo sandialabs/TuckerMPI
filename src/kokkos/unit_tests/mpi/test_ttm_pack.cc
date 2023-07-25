@@ -10,8 +10,7 @@
 #include "TuckerMpi.hpp"
 
 TEST(tuckermpi, pack_data){
-  // Prepare
-  typedef double scalar_t;
+  using scalar_t = double;
 
   // Create a 4x2x2 tensor
   std::vector<int> dims = {4, 2, 2};
@@ -37,8 +36,7 @@ TEST(tuckermpi, pack_data){
 }
 
 TEST(tuckermpi, pack_data2){
-  // Prepare
-  typedef double scalar_t;
+  using scalar_t = double;
 
   // Create a 3x4x3 tensor
   std::vector<int> dims = {3, 4, 3};
@@ -64,8 +62,7 @@ TEST(tuckermpi, pack_data2){
 }
 
 TEST(tuckermpi, pack_data3){
-  // Prepare
-  typedef double scalar_t;
+  using scalar_t = double;
 
   // Create a 3x4x3 tensor
   std::vector<int> dims = {3, 4, 3};

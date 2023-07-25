@@ -144,26 +144,21 @@ private:
   void check_args(){
     std::cout << "Arguments checking: Starting" << std::endl;
 
-    // Assert that tensor dims are positive
-    for(auto & element : dataTensorDims_){
-      if(element <= 0){
-        std::cerr << "ERROR: Please enter strictly positive dimensions for the tensor\n";
-        std::abort();
-      }
+    auto positive = [](auto v) -> bool{ return v > 0; };
+    bool b1 = std::all_of(dataTensorDims_.cbegin(), dataTensorDims_.cend(), positive);
+    if (!b1){
+      std::cerr << "ERROR: Please enter strictly positive dimensions for the tensor\n";
+      std::abort();
     }
 
-    // Assert that we either have automatic rank determination or the user has supplied their own ranks
     if(!boolAuto && !coreTensorDims_) {
       std::cerr << "ERROR: Please either enable Automatic rank determination, ";
       std::cerr << "or provide the desired core tensor size via the Ranks parameter\n";
       std::abort();
     }
 
-    // Case where user has supplied their own ranks
     if(!boolAuto && coreTensorDims_){
-      // coreTensorDims exists
       int coreTensorDimsSize = coreTensorDims_.value().size();
-      // Check array sizes
       if(coreTensorDimsSize != 0 && coreTensorDimsSize != nd){
         std::cerr << "Error: The size of the ranks array (" << coreTensorDimsSize;
         std::cerr << ") must be 0 or equal to the size of the global dimensions (" << nd << ")" << std::endl;
@@ -171,7 +166,6 @@ private:
       }
     }
 
-    // Assert that SV Threshold is positive
     if(tol <= 0){
       std::cerr << "ERROR: Please enter positive SV Threshold\n";
       std::abort();
