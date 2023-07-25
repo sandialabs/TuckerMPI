@@ -37,12 +37,12 @@ int main(int argc, char* argv[])
     auto writeDimensionOfCoreTensor = [=](auto factorization)
     {
       // FIXME #6
-    }
+    };
 
     auto writeDimensionOfGlobalTensor = [=](auto factorization)
     {
       // FIXME #6
-    }
+    };
 
     auto writeCoreTensorToFile = [=](auto factorization)
     {
@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
     auto writeEachFactor = [=](auto factorization, int mode)
     {
       // FIXME #6
-    }
+    };
 
     auto printNorms = [=](auto factorization){
       const auto xnorm = std::sqrt(X.frobeniusNormSquared());
@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
         writeCoreTensorToFile(tt);
 
         // Write each factor
-        for(int mode=0; mode<nd; mode++) {
+        for(int mode=0; mode<inputs.nd; mode++) {
           writeEachFactor(tt, mode);
         }
       }
