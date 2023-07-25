@@ -79,16 +79,9 @@ int main(int argc, char* argv[])
       // FIXME: Compute the error bound based on the eigenvalues
 
       if(inputs.boolWriteSTHOSVD){
-        // Write dimension of core tensor
         writeDimensionOfCoreTensor(tt);
-
-        // Write dimension of global tensor
         writeDimensionOfGlobalTensor(tt);
-
-        // Write core tensor
         writeCoreTensorToFile(tt);
-
-        // Write each factor
         for(int mode=0; mode<inputs.nd; mode++) {
           writeEachFactor(tt, mode);
         }
