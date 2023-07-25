@@ -74,11 +74,8 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
     {
       int tbs = (int)blockSize;
 
-      // Iterator to the beginning of tensor + offset
       auto it_first_from = KE::begin(view_Y)+tensorOffset;
-      // Iterator to the beginning of view with zero + offset
       auto it_first_to = KE::begin(tempMem)+tempMemOffset;
-      // Copy view_Y into tempMem
       Kokkos::parallel_for(tbs, KOKKOS_LAMBDA (const int i){
         const int shift = inc*i;
         *(it_first_to + shift) = *(it_first_from + shift);
