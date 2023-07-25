@@ -57,8 +57,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
   // Get the number of global rows of this tensor unfolding
   int nGlobalRows = map->getGlobalNumEntries();
 
-  // Get a Kokkos view "viewing" the tensor data
-  auto view_Y = Y.data();
+  auto y_data_view = Y.data()
 
   size_t stride = leadingDim*nGlobalRows;
   size_t tempMemOffset = 0;
@@ -74,7 +73,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
     {
       int tbs = (int)blockSize;
 
-      auto it_first_from = KE::begin(view_Y)+tensorOffset;
+      auto it_first_from = KE::begin(y_data_view)+tensorOffset;
       auto it_first_to = KE::begin(tempMem)+tempMemOffset;
       Kokkos::parallel_for(tbs, KOKKOS_LAMBDA (const int i){
         const int shift = inc*i;
@@ -86,7 +85,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
   }
 
   // Copy data from temporary memory back to tensor
-  KE::copy(typename mem_space::execution_space(), tempMem, view_Y);
+  KE::copy(typename mem_space::execution_space(), tempMem, y_data_view);
 }
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
