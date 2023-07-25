@@ -41,6 +41,18 @@ int main(int argc, char* argv[])
       TuckerOnNode::export_tensor_binary(factorization.coreTensor(), coreFilename.c_str());
     };
 
+    // write dimension of core tensor
+
+    // each factor
+
+
+
+    // dimension of global tensor
+
+
+
+
+
     auto printNorms = [=](auto factorization){
       const auto xnorm = std::sqrt(X.frobeniusNormSquared());
       const auto gnorm = std::sqrt(factorization.coreTensor().frobeniusNormSquared());
