@@ -68,40 +68,28 @@ public:
     throw std::runtime_error("sum data was never allocated!");
   }
 
-  /** \brief Returns the norm1-data array
-   *
-   * \exception std::runtime_error norm1-data was never allocated
-   */
+  // Returns the norm1-data array
   ScalarType* getNorm1Data()
   {
     if(norm1Data_.size() != 0) return norm1Data_.data();
     throw std::runtime_error("norm1 data was never allocated!");
   }
 
-  /** \brief Returns the norm2-data array
-   *
-   * \exception std::runtime_error norm2-data was never allocated
-   */
+  // Returns the norm2-data array
   ScalarType* getNorm2Data()
   {
     if(norm2Data_.size() != 0) return norm2Data_.data();
     throw std::runtime_error("norm2 data was never allocated!");
   }
 
-  /** \brief Returns the mean-data array
-   *
-   * \exception std::runtime_error mean-data was never allocated
-   */
+  // Returns the mean-data array
   ScalarType* getMeanData()
   {
     if(meanData_.size() != 0) return meanData_.data();
     throw std::runtime_error("mean data was never allocated!");
   }
 
-  /** \brief Returns the variance array
-   *
-   * \exception std::runtime_error variance-data was never allocated
-   */
+  // Returns the variance array
   ScalarType* getVarianceData()
   {
     if(varianceData_.size() != 0) return varianceData_.data();
