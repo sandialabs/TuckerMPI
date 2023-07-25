@@ -34,6 +34,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
 {
   using tensor_type = TuckerOnNode::Tensor<ScalarType, TensorProperties...>;
   using mem_space = typename tensor_type::traits::memory_space;
+  namespace KE = Kokkos::Experimental;
 
   if(Y.size() == 0){ return; }
 
@@ -41,9 +42,9 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
   // (because the data is stored in row-major order)
   if(n == Y.rank()-1) { return; }
 
-  // Allocate memory
+  // Create empty view
   size_t numEntries = Y.size();
-  std::vector<ScalarType> tempMem(numEntries);
+  Kokkos::View<ScalarType*, mem_space> tempMem("tempMem", numEntries);
 
   const MPI_Comm& comm = map->getComm();
   int nprocs;
@@ -56,10 +57,8 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
   // Get the number of global rows of this tensor unfolding
   int nGlobalRows = map->getGlobalNumEntries();
 
-  // Get pointer to tensor data
-  auto view_Y = Y.data();
-  auto view_Y_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), view_Y);
-  ScalarType* tenData = view_Y_h.data();
+  auto y_data_view = Y.data()
+
   size_t stride = leadingDim*nGlobalRows;
   size_t tempMemOffset = 0;
   const int inc = 1;
@@ -73,15 +72,20 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
         tensorOffset += stride)
     {
       int tbs = (int)blockSize;
-      Tucker::copy(&tbs, tenData+tensorOffset, &inc, tempMem.data()+tempMemOffset, &inc);
+
+      auto it_first_from = KE::begin(y_data_view)+tensorOffset;
+      auto it_first_to = KE::begin(tempMem)+tempMemOffset;
+      Kokkos::parallel_for(tbs, KOKKOS_LAMBDA (const int i){
+        const int shift = inc*i;
+        *(it_first_to + shift) = *(it_first_from + shift);
+      });
+
       tempMemOffset += blockSize;
     }
   }
 
   // Copy data from temporary memory back to tensor
-  int temp = (int)numEntries;
-  Tucker::copy(&temp, tempMem.data(), &inc, tenData, &inc);
-  Kokkos::deep_copy(view_Y, view_Y_h);
+  KE::copy(typename mem_space::execution_space(), tempMem, y_data_view);
 }
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
