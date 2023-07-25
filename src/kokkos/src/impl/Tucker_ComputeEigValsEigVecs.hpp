@@ -97,6 +97,101 @@ void flip_sign_eigenvecs_columns(const Exespace & exespace, ViewType G)
 
 }
 
+template <class ExecutionSpace>
+struct better_off_calling_host_syev : std::false_type {};
+
+#if defined KOKKOS_ENABLE_SERIAL
+template <>
+struct better_off_calling_host_syev<Kokkos::Serial> : std::true_type {};
+#endif
+
+#if defined KOKKOS_ENABLE_OPENMP
+template <>
+struct better_off_calling_host_syev<Kokkos::OpenMP> : std::true_type {};
+#endif
+
+#if defined KOKKOS_ENABLE_THREADS
+template <>
+struct better_off_calling_host_syev<Kokkos::Threads> : std::true_type {};
+#endif
+
+#if defined KOKKOS_ENABLE_HPX
+template <>
+struct better_off_calling_host_syev<Kokkos::Experimental::HPX> : std::true_type {
+};
+#endif
+
+template <class T>
+inline constexpr bool better_off_calling_host_syev_v =
+    better_off_calling_host_syev<T>::value;
+
+template<class ScalarType, class ... AProperties, class ... EigvalProperties>
+void syev_on_host_views(Kokkos::View<ScalarType**, AProperties...> A,
+			Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
+{
+
+  using A_view_type  = Kokkos::View<ScalarType**, AProperties...>;
+  using A_mem_space  = typename A_view_type::memory_space;
+  using A_layout     = typename A_view_type::array_layout;
+  using A_value_type = typename A_view_type::non_const_value_type;
+
+  using ev_view_type  = Kokkos::View<ScalarType*, EigvalProperties...>;
+  using ev_mem_space  = typename ev_view_type::memory_space;
+  using ev_layout     = typename ev_view_type::array_layout;
+  using ev_value_type = typename ev_view_type::non_const_value_type;
+
+  static_assert(Kokkos::SpaceAccessibility<Kokkos::HostSpace, A_mem_space>::accessible
+		&& Kokkos::SpaceAccessibility<Kokkos::HostSpace, ev_mem_space>::accessible,
+		"do_syev_on_host: Views must be accessible on host");
+
+  static_assert(std::is_same_v<A_layout, Kokkos::LayoutLeft>
+		&& std::is_same_v<ev_layout, Kokkos::LayoutLeft>,
+		"do_syev_on_host: Views must have LayoutLeft");
+
+  static_assert(std::is_floating_point< typename A_view_type::value_type>::value
+		&& std::is_floating_point< typename ev_view_type::value_type>::value,
+		"do_syev_on_host: Views must have floating point value_type");
+
+  // ---
+
+  const int nrows = (int) A.extent(0);
+
+  // 'V' means Compute eigenvalues and eigenvectors.
+  char jobz = 'V';
+  char uplo = 'U';
+  int lwork = (int) 8*nrows;
+  std::vector<ScalarType> work(lwork);
+  int info;
+  Tucker::syev(&jobz, &uplo, &nrows, A.data(), &nrows,
+	       eigenvalues.data(), work.data(), &lwork, &info);
+  if(info != 0){
+    std::cerr << "Error: invalid error code returned by dsyev (" << info << ")\n";
+  }
+}
+
+// #if defined(KOKKOS_ENABLE_CUDA)
+// template<class ScalarType, class ... AProperties, class ... EigvalProperties>
+// void syev_on_device_views(const Kokkos::Cuda & exec,
+// 			  Kokkos::View<ScalarType**, AProperties...> A,
+// 			  Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
+// {}
+// #endif
+
+// fallback case if no better specialization is found
+template<class ExecutionSpace, class ScalarType, class ... AProperties, class ... EigvalProperties>
+void syev_on_device_views(const ExecutionSpace& exec,
+			  Kokkos::View<ScalarType**, AProperties...> A,
+			  Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
+{
+  auto A_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), A);
+  auto eigenvalues_h = Kokkos::create_mirror_view(eigenvalues);
+  syev_on_host_views(A_h, eigenvalues_h);
+  Kokkos::deep_copy(exec, eigenvalues, eigenvalues_h);
+  Kokkos::deep_copy(exec, A, A_h);
+  exec.fence();
+}
+
+
 template<class ScalarType, class ... Properties>
 auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<ScalarType**, Properties...> G,
 							     const bool flipSign)
@@ -117,42 +212,48 @@ auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<Scalar
   /*
    * do the eigen decomposition
    */
-  auto G_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), G);
   const int nrows = (int) G.extent(0);
-  Kokkos::View<ScalarType*, mem_space> eigenvalues_d("EIG", nrows);
-  auto eigenvalues_h = Kokkos::create_mirror_view(eigenvalues_d);
+  Kokkos::View<ScalarType*, Kokkos::LayoutLeft, mem_space> eigenvalues_d("EIG", nrows);
 
-  // 'V' means Compute eigenvalues and eigenvectors.
-  char jobz = 'V';
-  char uplo = 'U';
-  int lwork = (int) 8*nrows;
-  std::vector<ScalarType> work(lwork);
-  int info;
-  Tucker::syev(&jobz, &uplo, &nrows, G_h.data(), &nrows,
-	       eigenvalues_h.data(), work.data(), &lwork, &info);
-  if(info != 0){
-    std::cerr << "Error: invalid error code returned by dsyev (" << info << ")\n";
+  if constexpr( better_off_calling_host_syev_v<exe_space> ){
+    syev_on_host_views(G, eigenvalues_d);
   }
-  //FIXME: these deep copies are here because syev is done on host but
-  // one we do the device call these will go away
-  Kokkos::deep_copy(eigenvalues_d, eigenvalues_h);
-  Kokkos::deep_copy(G, G_h);
+  else{
+    syev_on_device_views(exespace, G,  eigenvalues_d);
+  }
+
+// #if 0
+//   auto G_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), G);
+//   const int nrows = (int) G.extent(0);
+//   Kokkos::View<ScalarType*, mem_space> eigenvalues_d("EIG", nrows);
+//   auto eigenvalues_h = Kokkos::create_mirror_view(eigenvalues_d);
+
+//   // 'V' means Compute eigenvalues and eigenvectors.
+//   char jobz = 'V';
+//   char uplo = 'U';
+//   int lwork = (int) 8*nrows;
+//   std::vector<ScalarType> work(lwork);
+//   int info;
+//   Tucker::syev(&jobz, &uplo, &nrows, G_h.data(), &nrows,
+// 	       eigenvalues_h.data(), work.data(), &lwork, &info);
+//   if(info != 0){
+//     std::cerr << "Error: invalid error code returned by dsyev (" << info << ")\n";
+//   }
+//   //FIXME: these deep copies are here because syev is done on host but
+//   // one we do the device call these will go away
+//   Kokkos::deep_copy(eigenvalues_d, eigenvalues_h);
+//   Kokkos::deep_copy(G, G_h);
+// #endif
 
   /*
     sorting
     -------
     Here, since jobz is V, if info == 0 it means LAPACK computes things in ascending order
     see here: https://netlib.org/lapack/explore-html/d2/d8a/group__double_s_yeigen_ga442c43fca5493590f8f26cf42fed4044.html
-    This means that:
-
-       eigvals(0) < eigvals(1) < ... < eigvals(N-1)
-
+    This means that: eigvals(0) < eigvals(1) < ... < eigvals(N-1)
     and eigenvectors are ordered accordingly.
-    We need to sort eigvvals and eigvec in !!!descending!! order to have:
-
-       eigvals(0) > eigvals(1) > ...
+    Sort eigvvals and eigvec in !!!descending!! order to have: eigvals(0) > eigvals(1) > ...
   */
-  const std::size_t n = eigenvalues_d.extent(0);
   Kokkos::Experimental::reverse(exespace, eigenvalues_d);
 
   // FIXME: this will need to change when we can run team-level swap_ranges
