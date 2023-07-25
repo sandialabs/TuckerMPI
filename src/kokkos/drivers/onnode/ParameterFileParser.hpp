@@ -42,6 +42,7 @@ public:
     const auto fileAsStrings = Tucker::read_file_as_strings(paramFile);
     std::cout << fileAsStrings.size() << " " << fileAsStrings[0] << std::endl;
     parse(fileAsStrings);
+    check_args();
   }
 
   auto const & dimensionsOfDataTensor() const { return dataTensorDims_; }
@@ -141,8 +142,42 @@ private:
   }
 
   void check_args(){
-    std::cout << "Argument checking: MISSING IMPL " << std::endl;
-    std::abort();
+    std::cout << "Arguments checking: Starting" << std::endl;
+
+    // Assert that tensor dims are positive
+    for(auto & element : dataTensorDims_){
+      if(element <= 0){
+        std::cerr << "ERROR: Please enter strictly positive dimensions for the tensor\n";
+        std::abort();
+      }
+    }
+
+    // Assert that we either have automatic rank determination or the user has supplied their own ranks
+    if(!boolAuto && !coreTensorDims_) {
+      std::cerr << "ERROR: Please either enable Automatic rank determination, ";
+      std::cerr << "or provide the desired core tensor size via the Ranks parameter\n";
+      std::abort();
+    }
+
+    // Case where user has supplied their own ranks
+    if(!boolAuto && coreTensorDims_){
+      // coreTensorDims exists
+      int coreTensorDimsSize = coreTensorDims_.value().size();
+      // Check array sizes
+      if(coreTensorDimsSize != 0 && coreTensorDimsSize != nd){
+        std::cerr << "Error: The size of the ranks array (" << coreTensorDimsSize;
+        std::cerr << ") must be 0 or equal to the size of the global dimensions (" << nd << ")" << std::endl;
+        std::abort();
+      }
+    }
+
+    // Assert that SV Threshold is positive
+    if(tol <= 0){
+      std::cerr << "ERROR: Please enter positive SV Threshold\n";
+      std::abort();
+    }
+
+    std::cout << "Arguments checking: Done" << std::endl;
   }
 };
 
