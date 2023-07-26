@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
     auto writeEigenvaluesToFiles = [=](auto eigenvalues)
     {
       const std::string filePrefix = inputs.sv_dir + "/" + inputs.sv_fn + "_mode_";
-      Tucker::print_eigenvalues(eigenvalues, filePrefix, false /*for gram we write raw eigenvalues*/);
+      Tucker::print_eigenvalues(eigenvalues, filePrefix);
     };
 
     auto writeExtentsOfCoreTensor = [=](auto factorization)

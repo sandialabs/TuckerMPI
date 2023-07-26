@@ -9,10 +9,16 @@
 // https://gitlab.com/nga-tucker/TuckerMPI/-/issues/15
 namespace Tucker{
 
-template <class StorageType>
+namespace impl{
+struct ReturnSelf{
+  template<class T> T operator()(const T & v) const { return v; }
+};
+}
+
+template <class StorageType, class UnaryOp = impl::ReturnSelf>
 void print_eigenvalues(StorageType container,
 		       std::string filePrefix,
-		       bool squareBeforeWriting)
+		       UnaryOp op = UnaryOp())
 {
 
   const int nmodes = container.rank();
@@ -29,16 +35,8 @@ void print_eigenvalues(StorageType container,
     auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
     const int nevals = eigvals.extent(0);
 
-    if (squareBeforeWriting){
-      for(int i=0; i<nevals; i++) {
-        ofs << std::setprecision(16) << std::pow(eigvals_h(i),2) << std::endl;
-      }
-    }
-    else{
-      for(int i=0; i<nevals; i++) {
-        ofs << std::setprecision(16)
-	    << /*sqrt(std::abs(*/eigvals_h(i)/*))*/ << std::endl;
-      }
+    for(int i=0; i<nevals; i++) {
+      ofs << std::setprecision(16) << op(eigvals_h(i)) << std::endl;
     }
     ofs.close();
   }
