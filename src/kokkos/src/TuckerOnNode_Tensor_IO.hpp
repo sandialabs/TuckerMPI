@@ -73,5 +73,19 @@ void export_tensor_binary(const Tensor<ScalarType, mem_space> & Y,
   ofs.close();
 }
 
+template <class ScalarType, class ...Properties>
+void export_view_binary(const Kokkos::View<ScalarType**, Properties...> v,
+			  const char* filename)
+{
+  auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), v);
+  size_t numEntries = v.size();
+  std::ofstream ofs;
+  ofs.open(filename, std::ios::out | std::ios::binary);
+  assert(ofs.is_open());
+  const ScalarType* data = v_h.data();
+  ofs.write((char*)data,numEntries*sizeof(ScalarType));
+  ofs.close();
+}
+
 } // end namespace Tucker
 #endif

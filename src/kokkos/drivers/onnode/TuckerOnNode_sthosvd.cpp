@@ -34,14 +34,34 @@ int main(int argc, char* argv[])
     /*
      * prepare lambdas "expressing" the computation to do
      */
+    auto writeEigenvaluesToFiles = [=](auto eigenvalues)
+    {
+      const std::string filePrefix = inputs.sv_dir + "/" + inputs.sv_fn + "_mode_";
+      Tucker::print_eigenvalues(eigenvalues, filePrefix, false /*for gram we write raw eigenvalues*/);
+    };
+
     auto writeDimensionOfCoreTensor = [=](auto factorization)
     {
-      // FIXME #6
+      const std::string dimFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_ranks.txt";
+      std::cout << "Writing core tensor dimensions to " << dimFilename << std::endl;
+      std::ofstream of(dimFilename);
+      assert(of.is_open());
+      for(int mode=0; mode<inputs.nd; mode++) {
+        of << factorization.coreTensor().extent(mode) << std::endl;
+      }
+      of.close();
     };
 
     auto writeDimensionOfGlobalTensor = [=](auto factorization)
     {
-      // FIXME #6
+      const std::string sizeFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_size.txt";
+      std::cout << "Writing global tensor dimensions to " << sizeFilename << std::endl;
+      std::ofstream of(sizeFilename);
+      assert(of.is_open());
+      for(int mode=0; mode<inputs.nd; mode++) {
+        of << inputs.dimensionsOfDataTensor()[mode] << std::endl;
+      }
+      of.close();
     };
 
     auto writeCoreTensorToFile = [=](auto factorization)
@@ -51,9 +71,14 @@ int main(int argc, char* argv[])
       TuckerOnNode::export_tensor_binary(factorization.coreTensor(), coreFilename.c_str());
     };
 
-    auto writeEachFactor = [=](auto factorization, int mode)
+    auto writeEachFactor = [=](auto factorization)
     {
-      // FIXME #6
+      for(int mode=0; mode<inputs.nd; mode++) {
+        // Create the filename by appending the mode #
+        const std::string factorFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_mat_" + std::to_string(mode) + ".mpi";
+        std::cout << "Writing factor " << mode << " to " << factorFilename << std::endl;
+        TuckerOnNode::export_view_binary(factorization.factorMatrix(mode), factorFilename.c_str());
+      }
     };
 
     auto printNorms = [=](auto factorization){
@@ -70,9 +95,7 @@ int main(int argc, char* argv[])
       const auto method = TuckerOnNode::Method::Gram;
       auto [tt, eigvals] = TuckerOnNode::sthosvd(method, X, truncator, false /*flipSign*/);
 
-      // Write the eigenvalues to files
-      const std::string filePrefix = inputs.sv_dir + "/" + inputs.sv_fn + "_mode_";
-      Tucker::print_eigenvalues(eigvals, filePrefix, false /*for gram we write raw eigenvalues*/);
+      writeEigenvaluesToFiles(eigvals);
 
       printNorms(tt);
 
@@ -82,9 +105,7 @@ int main(int argc, char* argv[])
         writeDimensionOfCoreTensor(tt);
         writeDimensionOfGlobalTensor(tt);
         writeCoreTensorToFile(tt);
-        for(int mode=0; mode<inputs.nd; mode++) {
-          writeEachFactor(tt, mode);
-        }
+        writeEachFactor(tt);
       }
 
     };
