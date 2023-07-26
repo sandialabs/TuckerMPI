@@ -14,6 +14,7 @@
 #include "TuckerOnNode_ComputeGram.hpp"
 #include "TuckerOnNode_sthosvd.hpp"
 #include "Tucker_print_tucker_eigenvalues.hpp"
+#include "Tucker_transform_slices.hpp"
 #include <Kokkos_Core.hpp>
 
 #endif
