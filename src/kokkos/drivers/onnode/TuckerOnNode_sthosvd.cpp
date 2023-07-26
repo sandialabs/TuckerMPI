@@ -33,7 +33,6 @@ int main(int argc, char* argv[])
 					      Tucker::Metric::MAX}; //+Tucker::MEAN+Tucker::VARIANCE;
     auto metricsData = TuckerOnNode::compute_slice_metrics(X, inputs.scale_mode, metrics);
     //Tucker::write_statistics(metrics, inputs.stats_file, inputs.stdThresh);
-
     // FIXME: Perform preprocessing is missingx
 
     /*
