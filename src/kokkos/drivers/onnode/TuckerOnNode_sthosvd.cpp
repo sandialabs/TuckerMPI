@@ -40,10 +40,10 @@ int main(int argc, char* argv[])
       Tucker::print_eigenvalues(eigenvalues, filePrefix, false /*for gram we write raw eigenvalues*/);
     };
 
-    auto writeDimensionOfCoreTensor = [=](auto factorization)
+    auto writeExtentsOfCoreTensor = [=](auto factorization)
     {
       const std::string dimFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_ranks.txt";
-      std::cout << "Writing core tensor dimensions to " << dimFilename << std::endl;
+      std::cout << "Writing core tensor extents to " << dimFilename << std::endl;
       std::ofstream of(dimFilename);
       assert(of.is_open());
       for(int mode=0; mode<inputs.nd; mode++) {
@@ -52,10 +52,10 @@ int main(int argc, char* argv[])
       of.close();
     };
 
-    auto writeDimensionOfGlobalTensor = [=](auto factorization)
+    auto writeExtentsOfGlobalTensor = [=]()
     {
       const std::string sizeFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_size.txt";
-      std::cout << "Writing global tensor dimensions to " << sizeFilename << std::endl;
+      std::cout << "Writing global tensor extents to " << sizeFilename << std::endl;
       std::ofstream of(sizeFilename);
       assert(of.is_open());
       for(int mode=0; mode<inputs.nd; mode++) {
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
         // Create the filename by appending the mode #
         const std::string factorFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_mat_" + std::to_string(mode) + ".mpi";
         std::cout << "Writing factor " << mode << " to " << factorFilename << std::endl;
-        TuckerOnNode::export_view_binary(factorization.factorMatrix(mode), factorFilename.c_str());
+        Tucker::export_view_binary(factorization.factorMatrix(mode), factorFilename.c_str());
       }
     };
 
@@ -95,6 +95,7 @@ int main(int argc, char* argv[])
       const auto method = TuckerOnNode::Method::Gram;
       auto [tt, eigvals] = TuckerOnNode::sthosvd(method, X, truncator, false /*flipSign*/);
 
+      std::cout<< "\n";
       writeEigenvaluesToFiles(eigvals);
 
       printNorms(tt);
@@ -102,17 +103,14 @@ int main(int argc, char* argv[])
       // FIXME: Compute the error bound based on the eigenvalues
 
       if(inputs.boolWriteSTHOSVD){
-        writeDimensionOfCoreTensor(tt);
-        writeDimensionOfGlobalTensor(tt);
+        writeExtentsOfCoreTensor(tt);
+        writeExtentsOfGlobalTensor();
         writeCoreTensorToFile(tt);
         writeEachFactor(tt);
       }
-
     };
 
-    /*
-     * run for real
-     */
+    /* run for real */
     if(inputs.boolSTHOSVD){
       if (!inputs.boolUseLQ){
 	sthosvdGram(truncator);

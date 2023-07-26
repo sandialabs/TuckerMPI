@@ -88,6 +88,27 @@ void write_view_to_stream_inline(std::ostream & out,
   }
 }
 
+template <class DataType, class ...Properties>
+void export_view_binary(const Kokkos::View<DataType, Properties...> & v,
+			const char* filename)
+{
+  using view_type = Kokkos::View<DataType, Properties...>;
+  using value_type = typename view_type::non_const_value_type;
+
+  const size_t numEntries = v.size();
+  std::ofstream ofs;
+  ofs.open(filename, std::ios::out | std::ios::binary);
+  assert(ofs.is_open());
+  if (v.span_is_contiguous()){
+    auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), v);
+    ofs.write((char*)v_h.data(), numEntries*sizeof(value_type));
+    ofs.close();
+  }
+  else{
+    throw std::runtime_error("export_view_binary: currently only supports contiguous Views");
+  }
+}
+
 template<class T>
 void print_bytes_to_stream(std::ostream & out, T bytes)
 {
