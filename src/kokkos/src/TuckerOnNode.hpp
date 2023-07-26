@@ -12,7 +12,7 @@
 #include "Tucker_deep_copy.hpp"
 #include "Tucker_MetricData.hpp"
 #include "Tucker_compute_slice_metrics.hpp"
-#include "Tucker_compute_statistics.hpp"
+#include "Tucker_write_statistics.hpp"
 #include "TuckerOnNode_ttm.hpp"
 #include "TuckerOnNode_ComputeGram.hpp"
 #include "TuckerOnNode_sthosvd.hpp"

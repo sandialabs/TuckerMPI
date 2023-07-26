@@ -1,104 +1,85 @@
-#ifndef TUCKER_KOKKOS_COMPUTE_SLICE_METRICS_HPP_
-#define TUCKER_KOKKOS_COMPUTE_SLICE_METRICS_HPP_
+#ifndef TUCKER_KOKKOSONLY_COMPUTE_SLICE_METRICS_HPP_
+#define TUCKER_KOKKOSONLY_COMPUTE_SLICE_METRICS_HPP_
 
-namespace Tucker {
+#include "TuckerOnNode_Tensor.hpp"
+#include "Tucker_MetricData.hpp"
+#include <Kokkos_Core.hpp>
+#include <Kokkos_StdAlgorithms.hpp>
 
-template <class ScalarType, class MemorySpace>
-Tucker::MetricData<ScalarType>
-compute_slice_metrics(const TuckerOnNode::Tensor<ScalarType, MemorySpace> Y, const int mode, const int metrics)
+namespace TuckerOnNode {
+
+template <class ScalarType, class ...Properties>
+auto compute_slice_metrics(const Tensor<ScalarType, Properties...> & Y,
+			   const int mode,
+			   const std::vector<Tucker::Metric> & metrics)
 {
-  // If there are no slices, calling this function was a bad idea
-  const int numSlices = Y.extent(mode);
-  if(numSlices <= 0) {
+  using tensor_type = Tensor<ScalarType, Properties...>;
+  using tensor_mem_space = typename tensor_type::traits::memory_space;
+
+  //
+  // preconditions
+  //
+  if(Y.extent(mode) <= 0) {
     std::ostringstream oss;
-    oss << "Tucker::computeSliceMetrics(const Tensor<ScalarType>* Y, const int mode, const int metrics): "
-        << "numSlices = " << numSlices << " <= 0";
+    oss << "TuckerOnNode::compute_slice_metrics: "
+        << "for mode = " << mode << " we have Y.extent(mode) = " << Y.extent(mode) << " <= 0";
     throw std::runtime_error(oss.str());
   }
 
-  // Allocate memory for the resul
-  Tucker::MetricData<ScalarType> result = Tucker::MetricData<ScalarType>(metrics, numSlices);
-
-  // Initialize the result
-  std::vector<ScalarType> delta;
-  std::vector<int> nArray;
-
-  if((metrics & MEAN) || (metrics & VARIANCE)) {
-    delta = std::vector<ScalarType>(numSlices);
-    nArray = std::vector<int>(numSlices);
+  if(mode < 0) {
+    throw std::runtime_error("mode must be non-negative");
   }
 
-  for(int i=0; i<numSlices; i++) {
-    if(metrics & MIN) {
-      result.getMinData()[i] = std::numeric_limits<ScalarType>::max();
-    }
-    if(metrics & MAX) {
-      result.getMaxData()[i] = std::numeric_limits<ScalarType>::lowest();
-    }
-    if(metrics & SUM) {
-      result.getSumData()[i] = 0;
-    }
-    if((metrics & MEAN) || (metrics & VARIANCE)) {
-      result.getMeanData()[i] = 0;
-      nArray[i] = 0;
-    }
-    if(metrics & VARIANCE) {
-      result.getVarianceData()[i] = 0;
-    }
-  }
+  //
+  // execute
+  //
+  const int numSlices = Y.extent(mode);
+  auto result = TuckerOnNode::MetricData<ScalarType, tensor_mem_space>(metrics, numSlices);
+  if(Y.size() == 0) { return result; }
 
-  if(Y.size() == 0) {
-    return result;
-  }
+  // // Initialize the result
+  // std::vector<ScalarType> delta;
+  // std::vector<int> nArray;
+  // if((metrics & MEAN) || (metrics & VARIANCE)) {
+  //   delta = std::vector<ScalarType>(numSlices);
+  //   nArray = std::vector<int>(numSlices);
+  // }
+  // if(metrics & MIN) {
+  //   Kokkos::fill(result.minData(), std::numeric_limits<ScalarType>::max());
+  // }
 
-  // Compute the result
-  int ndims = Y.rank();
-  size_t numContig = Y.prod(0,mode-1,1); // Number of contiguous elements in a slice
-  size_t numSetsContig = Y.prod(mode+1,ndims-1,1); // Number of sets of contiguous elements per slice
-  size_t distBetweenSets = Y.prod(0,mode); // Distance between sets of contiguous elements
+  const int ndims = Y.rank();
+  std::size_t numContig = Y.prod(0,mode-1,1); // Number of contiguous elements in a slice
+  std::size_t numSetsContig = Y.prod(mode+1,ndims-1,1); // Number of sets of contiguous elements per slice
+  std::size_t distBetweenSets = Y.prod(0,mode); // Distance between sets of contiguous elements
 
-  const ScalarType* dataPtr;
+  auto itBegin = Kokkos::Experimental::cbegin(Y.data());
+  Kokkos::parallel_for("computeResultData", numSlices,
+	KOKKOS_LAMBDA(const int& sliceIndex) {
+	  auto it = itBegin + sliceIndex*numContig;
+	  for(std::size_t c=0; c<numSetsContig; c++)
+	    {
+	      for(std::size_t i=0; i<numContig; i++){
+		if (result.contains(Tucker::Metric::MIN)){
+		  auto view = result.get(Tucker::Metric::MIN);
+		  auto & value = view(sliceIndex);
+		  value = Kokkos::min(value, *(it+i));
+		}
+	      } // end for(i=0; i<numContig; i++)
 
-  size_t i, c;
-  Kokkos::parallel_for("computeResultData", numSlices, [&] (const int& slice) {
-    dataPtr = Y.data().data() + slice*numContig;
-    for(c=0; c<numSetsContig; c++)
-    {
-      for(i=0; i<numContig; i++)
-      {
-        if(metrics & MIN) {
-          result.getMinData()[slice] = std::min(result.getMinData()[slice],dataPtr[i]);
-        }
-        if(metrics & MAX) {
-          result.getMaxData()[slice] = std::max(result.getMaxData()[slice],dataPtr[i]);
-        }
-        if(metrics & SUM) {
-          result.getSumData()[slice] += dataPtr[i];
-        }
-        if((metrics & MEAN) || (metrics & VARIANCE)) {
-          delta[slice] = dataPtr[i] - result.getMeanData()[slice];
-          nArray[slice]++;
-          result.getMeanData()[slice] += (delta[slice]/nArray[slice]);
-        }
-        if(metrics & VARIANCE) {
-          result.getVarianceData()[slice] +=
-              (delta[slice]*(dataPtr[i]-result.getMeanData()[slice]));
-        }
-      } // end for(i=0; i<numContig; i++)
-      dataPtr += distBetweenSets;
-    } // end for(c=0; c<numSetsContig; c++)
-  }); // end parallel_for
+	      it += distBetweenSets;
+	    } // end for(c=0; c<numSetsContig; c++)
+	});
 
-  if(metrics & VARIANCE) {
-    size_t sizeOfSlice = numContig*numSetsContig;
-    for(int i=0; i<numSlices; i++){
-      result.getVarianceData()[i] /= (ScalarType)sizeOfSlice;
-    }
-  }
+  // if(metrics & VARIANCE) {
+  //   size_t sizeOfSlice = numContig*numSetsContig;
+  //   for(int i=0; i<numSlices; i++){
+  //     result.getVarianceData()[i] /= (ScalarType)sizeOfSlice;
+  //   }
+  // }
 
   return result;
 }
 
 }
-
 #endif
