@@ -32,7 +32,7 @@ TEST(tuckerkokkos, transform_slices_3x5x7x11_mode0){
 
   // Read true solution from file
   TuckerOnNode::Tensor<scalar_t, memory_space> true_sol;
-  read_tensor_binary(true_sol, "./3x5x7x11_ss0.bin");
+  read_tensor_binary(true_sol, "./3x5x7x11_ss0.bin"); // best name
 
   // Call shift-scale
   Tucker::transform_slices(tensor, mode, scales, shifts);
