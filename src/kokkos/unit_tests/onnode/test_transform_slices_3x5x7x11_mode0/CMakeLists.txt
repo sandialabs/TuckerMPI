@@ -5,11 +5,18 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../ascii_to_binary.py ascii_to_bin
 configure_file(3x5x7x11.txt 3x5x7x11.txt COPYONLY)
 configure_file(3x5x7x11_ss0.txt 3x5x7x11_ss0.txt COPYONLY)
 
-# run test.cmake
+# convert .txt files by running test.cmake
 execute_process(
   COMMAND ${CMAKE_COMMAND}
   -DTENSORASCIIDATAFILE=3x5x7x11.txt
   -DTENSORBINDATAFILE=3x5x7x11.bin
+  -DSKIPROWS=3
+  -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
+)
+execute_process(
+  COMMAND ${CMAKE_COMMAND}
+  -DTENSORASCIIDATAFILE=3x5x7x11_ss0.txt
+  -DTENSORBINDATAFILE=3x5x7x11_ss0.bin
   -DSKIPROWS=3
   -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
 )
