@@ -1,6 +1,6 @@
 
 #include <gtest/gtest.h>
-#include "Tucker_syrk_kokkos.hpp"
+#include "./impl/Tucker_syrk_kokkos.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Random.hpp>
 #include <random>
@@ -95,7 +95,7 @@ TEST(tuckerkokkos_syrk, uplo_U_opA_N)
   auto C_clone = clone(C);
   auto C_clone_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), C_clone);
 
-  Tucker::syrk_kokkos("U", "N", 1.2, A, 1.6, C);
+  Tucker::impl::syrk_kokkos("U", "N", 1.2, A, 1.6, C);
   Kokkos::deep_copy(C_h, C);
   syrk_gold_solution_opA_N(1.2, 1.6, A_clone_h, C_clone_h);
 
@@ -140,7 +140,7 @@ TEST(tuckerkokkos_syrk, uplo_U_opA_T)
   auto C_clone = clone(C);
   auto C_clone_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), C_clone);
 
-  Tucker::syrk_kokkos("U", "T", 1.2, A, 1.6, C);
+  Tucker::impl::syrk_kokkos("U", "T", 1.2, A, 1.6, C);
   Kokkos::deep_copy(C_h, C);
   syrk_gold_solution_opA_T(1.2, 1.6, A_clone_h, C_clone_h);
 

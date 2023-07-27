@@ -57,8 +57,6 @@ struct SyrkFunctor2
   }
 };
 
-}// end namespace impl
-
 template<class AViewType, class CViewType>
 void syrk_kokkos(const char uplo[],
 		 const char opA[],
@@ -117,5 +115,5 @@ void syrk_kokkos(const char uplo[],
   }
 }
 
-}// end namespace Tucker
+}}// end namespace Tucker::impl
 #endif
