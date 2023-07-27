@@ -21,7 +21,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   using tensor_value_type = typename tensor_type::traits::value_type;
   static_assert(   std::is_same_v<tensor_layout, Kokkos::LayoutLeft>
 		&& std::is_floating_point_v<tensor_value_type>,
-		   "TuckerOnNode::sthosvd: currently, supports tensors with LayoutLeft" \
+		   "TuckerOnNode::sthosvd: currently supports tensors with LayoutLeft" \
 		   "and floating point scalar");
 
   if (method == Method::Gram){

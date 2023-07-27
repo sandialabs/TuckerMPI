@@ -98,6 +98,15 @@ auto compute_slice_metrics(Tensor<ScalarType, Properties...> Y,
 {
   using tensor_type = Tensor<ScalarType, Properties...>;
   using tensor_mem_space = typename tensor_type::traits::memory_space;
+  using tensor_layout = typename tensor_type::traits::array_layout;
+  using tensor_value_type = typename tensor_type::traits::value_type;
+
+  //
+  // constraints
+  static_assert(   std::is_same_v<tensor_layout, Kokkos::LayoutLeft>
+		&& std::is_floating_point_v<tensor_value_type>,
+		   "TuckerOnNode::compute_slice_metrics: supports tensors with LayoutLeft" \
+		   "and floating point scalar");
 
   //
   // preconditions
