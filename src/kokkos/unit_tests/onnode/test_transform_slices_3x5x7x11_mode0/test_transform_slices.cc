@@ -14,10 +14,9 @@ TEST(tuckerkokkos, transform_slices_3x5x7x11_mode0){
   // Create a 3x5x7x11 tensor
   std::vector<int> dims = {3, 5, 7, 11};
   TuckerOnNode::Tensor<scalar_t, memory_space> tensor(dims);
-  int mode = 0;
 
   // Read tensor from file
-  read_tensor_binary(tensor, "./3x5x7x11.bin");
+  TuckerOnNode::import_tensor_binary(tensor, "./gold_3x5x7x11.bin");
 
   // Define scales and shifts
   Kokkos::View<scalar_t*, memory_space> scales("scales", 3);
@@ -31,10 +30,11 @@ TEST(tuckerkokkos, transform_slices_3x5x7x11_mode0){
   shifts(2) =  0.094037031444121;
 
   // Read true solution from file
-  TuckerOnNode::Tensor<scalar_t, memory_space> true_sol;
-  read_tensor_binary(true_sol, "./3x5x7x11_ss0.bin"); // best name
+  TuckerOnNode::Tensor<scalar_t, memory_space> true_sol(dims);
+  TuckerOnNode::import_tensor_binary(true_sol, "./gold_3x5x7x11_ss0.bin");
 
   // Call shift-scale
+  int mode = 0;
   Tucker::transform_slices(tensor, mode, scales, shifts);
 
   // Checks
@@ -62,3 +62,5 @@ TEST(tuckerkokkos, transform_slices_3x5x7x11_mode0){
   scalar_t tol = 100 * std::numeric_limits<scalar_t>::epsilon();
   ASSERT_FALSE(relErr > tol);
 }
+
+// Add tests
