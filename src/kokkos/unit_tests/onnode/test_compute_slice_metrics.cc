@@ -5,46 +5,45 @@ TEST(tuckerkokkos, compute_slice_metrics_mode2){
   // Prepare
   using scalar_t = double;
 
+  constexpr int targetMode = 2;
+
   // Create a 2x2x2 tensor
   std::vector<int> dims = {2, 2, 2};
   TuckerOnNode::Tensor<scalar_t> tensor(dims);
-  int mode = 2;
+  auto tensor_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), tensor);
 
   // Fill it with the entries 0:8
-  auto tensor_d = tensor.data();
+  auto tensor_data = tensor_h.data();
   for(int i=0; i<8; i++){
-    tensor_d(i) = i;
+    tensor_data(i) = i;
   }
+  Tucker::deep_copy(tensor, tensor_h);
 
   // Create a metric data storing the slice
-
   const std::vector<Tucker::Metric> metrics{Tucker::Metric::MIN,
-					    Tucker::Metric::MAX};
-  //Tucker::MEAN+Tucker::VARIANCE;
-  //auto metrics = Tucker::MIN+Tucker::MAX+Tucker::MEAN+Tucker::VARIANCE;
-  auto metricsData = TuckerOnNode::compute_slice_metrics(tensor, mode, metrics);
+    Tucker::Metric::MAX, Tucker::Metric::MEAN, Tucker::Metric::VARIANCE};
+
+  auto metricsData = TuckerOnNode::compute_slice_metrics(tensor, targetMode, metrics);
   auto metricsData_h = TuckerOnNode::create_mirror(metricsData);
   TuckerOnNode::deep_copy(metricsData_h, metricsData);
 
-  // // True results (compute by hand)
-  // int nbr_slice = 2;
-  // scalar_t true_min[nbr_slice]   = {0.0, 4.0};
-  // scalar_t true_max[nbr_slice]   = {3.0, 7.0};
-  // scalar_t true_mean[nbr_slice]  = {1.5, 5.5};
-  // scalar_t true_var[nbr_slice]   = {1.25, 1.25};
-  // scalar_t true_stdev[nbr_slice] = {1.1180, 1.1180};
+  // True results (compute by hand)
+  int nbr_slice = 2;
+  scalar_t true_min[nbr_slice]   = {0.0, 4.0};
+  scalar_t true_max[nbr_slice]   = {3.0, 7.0};
+  scalar_t true_mean[nbr_slice]  = {1.5, 5.5};
+  scalar_t true_var[nbr_slice]   = {1.25, 1.25};
+
   auto minV = metricsData_h.get(Tucker::Metric::MIN);
-  std::cout << minV(0) << " " << minV(1) << "\n";
-
-
-  // // Check the result
-  // for(int i=0; i<nbr_slice; i++){
-  //   ASSERT_TRUE(metric.getMinData()[i]      == true_min[i]);
-  //   ASSERT_TRUE(metric.getMaxData()[i]      == true_max[i]);
-  //   ASSERT_TRUE(metric.getMeanData()[i]     == true_mean[i]);
-  //   ASSERT_TRUE(metric.getVarianceData()[i] == true_var[i]);
-  //   EXPECT_NEAR(sqrt(metric.getVarianceData()[i]), true_stdev[i], 0.0001);
-  // }
+  auto maxV = metricsData_h.get(Tucker::Metric::MAX);
+  auto meanV = metricsData_h.get(Tucker::Metric::MEAN);
+  auto varV = metricsData_h.get(Tucker::Metric::VARIANCE);
+  for(int i=0; i<nbr_slice; i++){
+    ASSERT_TRUE(minV[i]      == true_min[i]);
+    ASSERT_TRUE(maxV[i]      == true_max[i]);
+    ASSERT_TRUE(meanV[i]     == true_mean[i]);
+    ASSERT_TRUE(varV[i] == true_var[i]);
+  }
 }
 
 // TEST(tuckerkokkos, compute_slice_metrics_mode0){
@@ -55,7 +54,7 @@ TEST(tuckerkokkos, compute_slice_metrics_mode2){
 //   // Create a 2x2x2 tensor
 //   std::vector<int> dims = {2, 2, 2};
 //   TuckerOnNode::Tensor<scalar_t, memory_space> tensor(dims);
-//   int mode = 0;
+//   int targetMode = 0;
 
 //   // Fill it with the entries 0:8
 //   auto tensor_d = tensor.data();
@@ -64,7 +63,7 @@ TEST(tuckerkokkos, compute_slice_metrics_mode2){
 //   }
 
 //   // Create a metric data storing the slice
-//   Tucker::MetricData<scalar_t> metric = Tucker::compute_slice_metrics(tensor, (int)mode, Tucker::MIN+Tucker::MAX+Tucker::MEAN+Tucker::VARIANCE);
+//   Tucker::MetricData<scalar_t> metric = Tucker::compute_slice_metrics(tensor, (int)targetMode, Tucker::MIN+Tucker::MAX+Tucker::MEAN+Tucker::VARIANCE);
 
 //   // True results (compute by hand)
 //   int nbr_slice = 2;
@@ -92,7 +91,7 @@ TEST(tuckerkokkos, compute_slice_metrics_mode2){
 //   // Create a 2x2x2 tensor
 //   std::vector<int> dims = {2, 2, 2};
 //   TuckerOnNode::Tensor<scalar_t, memory_space> tensor(dims);
-//   int mode = 1;
+//   int targetMode = 1;
 
 //   // Fill it with the entries 0:8
 //   auto tensor_d = tensor.data();
@@ -101,7 +100,7 @@ TEST(tuckerkokkos, compute_slice_metrics_mode2){
 //   }
 
 //   // Create a metric data storing the slice
-//   Tucker::MetricData<scalar_t> metric = Tucker::compute_slice_metrics(tensor, (int)mode, Tucker::MIN+Tucker::MAX+Tucker::MEAN+Tucker::VARIANCE);
+//   Tucker::MetricData<scalar_t> metric = Tucker::compute_slice_metrics(tensor, (int)targetMode, Tucker::MIN+Tucker::MAX+Tucker::MEAN+Tucker::VARIANCE);
 
 //   // True results (compute by hand)
 //   int nbr_slice = 2;

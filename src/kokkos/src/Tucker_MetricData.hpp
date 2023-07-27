@@ -53,8 +53,6 @@ public:
   using map_t = Kokkos::UnorderedMap<Tucker::Metric, int, MemorySpace>;
   using HostMirror = MetricData<ScalarType, Kokkos::HostSpace>;
 
-  KOKKOS_FUNCTION MetricData() = default;
-
   template<class MapType, class ValuesType>
   MetricData(MapType map, ValuesType values)
     : values_(values), metricToColumnIndex_(map){}
