@@ -1,40 +1,51 @@
 #ifndef TUCKER_WRITE_STATISTICS_HPP_
 #define TUCKER_WRITE_STATISTICS_HPP_
 
+#include "Tucker_MetricData.hpp"
 #include <fstream>
 
 namespace Tucker{
 
-template <class MetricsType, class ScalarType>
-void write_statistics(const MetricsType metrics,
-		      const std::string statsFile,
+template<class ScalarType, class MemSpace>
+void write_statistics(TuckerOnNode::MetricData<ScalarType, MemSpace> metricData,
+		      const std::string & statsFile,
 		      const ScalarType stdThresh)
 {
+  auto metricData_h = Tucker::create_mirror(metricData);
+  Tucker::deep_copy(metricData_h, metricData);
 
-  // std::cout << "Writing file " << statsFile << std::endl;
-  // std::ofstream statStream(statsFile);
-  // statStream << std::setw(5) << "Mode"
-  //     << std::setw(13) << "Mean"
-  //     << std::setw(13) << "Stdev"
-  //     << std::setw(13) << "Min"
-  //     << std::setw(13) << "Max"
-  //     << std::endl;
+  std::cout << "Writing file " << statsFile << std::endl;
+  std::ofstream statStream(statsFile);
+  statStream << std::setw(5) << "Mode"
+      << std::setw(13) << "Mean"
+      << std::setw(13) << "Stdev"
+      << std::setw(13) << "Min"
+      << std::setw(13) << "Max"
+      << std::endl;
 
-  // for(int i=0; i<dataTensor.extent(scaleMode); i++) {
-  //   double stdev = sqrt(metrics.getVarianceData()[i]);
-  //   if(stdev < stdThresh) {
-  //     std::cout << "Slice " << i
-  //         << " is below the cutoff. True value is: "
-  //         << stdev << std::endl;
-  //     stdev = 1;
-  //   }
-  //   statStream << std::setw(5) << i
-  //       << std::setw(13) << metrics.getMeanData()[i]
-  //       << std::setw(13) << stdev
-  //       << std::setw(13) << metrics.getMinData()[i]
-  //       << std::setw(13) << metrics.getMaxData()[i] << std::endl;
-  // }
-  // statStream.close();
+  auto view_max = metricData_h.get(Tucker::Metric::MAX);
+  auto view_min = metricData_h.get(Tucker::Metric::MIN);
+  auto view_mean = metricData_h.get(Tucker::Metric::MEAN);
+  auto view_variance = metricData_h.get(Tucker::Metric::VARIANCE);
+  const std::size_t count = view_max.extent(0);
+
+  for(int i=0; i<count; i++) {
+    double stdev = sqrt(view_variance(i));
+
+    if(stdev < stdThresh) {
+      std::cout << "Slice " << i
+		<< " is below the cutoff. True value is: "
+		<< stdev << std::endl;
+      stdev = 1.;
+    }
+    statStream << std::setw(5) << i
+	       << std::setw(13) << view_mean(i)
+	       << std::setw(13) << stdev
+	       << std::setw(13) << view_min(i)
+	       << std::setw(13) << view_max(i)
+	       << std::endl;
+  }
+  statStream.close();
 }
 
 }//end namespace Tucker

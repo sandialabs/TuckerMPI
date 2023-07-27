@@ -30,9 +30,12 @@ int main(int argc, char* argv[])
      */
     std::cout << "Compute statistics" << std::endl;
     const std::vector<Tucker::Metric> metrics{Tucker::Metric::MIN,
-					      Tucker::Metric::MAX}; //+Tucker::MEAN+Tucker::VARIANCE;
+					      Tucker::Metric::MAX,
+					      Tucker::Metric::MEAN,
+					      Tucker::Metric::VARIANCE};
     auto metricsData = TuckerOnNode::compute_slice_metrics(X, inputs.scale_mode, metrics);
-    //Tucker::write_statistics(metrics, inputs.stats_file, inputs.stdThresh);
+    Tucker::write_statistics(metricsData, inputs.stats_file, inputs.stdThresh);
+
     // FIXME: Perform preprocessing is missingx
 
     /*

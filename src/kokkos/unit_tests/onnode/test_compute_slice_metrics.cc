@@ -42,8 +42,8 @@ TEST(tuckerkokkos, compute_slice_metrics_mode0){
 					    Tucker::Metric::MEAN,
 					    Tucker::Metric::VARIANCE};
   auto metrics = TuckerOnNode::compute_slice_metrics(tensor, targetMode, metricIDs);
-  auto metrics_h = TuckerOnNode::create_mirror(metrics);
-  TuckerOnNode::deep_copy(metrics_h, metrics);
+  auto metrics_h = Tucker::create_mirror(metrics);
+  Tucker::deep_copy(metrics_h, metrics);
 
   // True results (compute by hand)
   int nslices = 2;
@@ -75,8 +75,8 @@ TEST(tuckerkokkos, compute_slice_metrics_mode1){
 					    Tucker::Metric::MEAN,
 					    Tucker::Metric::VARIANCE};
   auto metrics = TuckerOnNode::compute_slice_metrics(tensor, targetMode, metricIDs);
-  auto metrics_h = TuckerOnNode::create_mirror(metrics);
-  TuckerOnNode::deep_copy(metrics_h, metrics);
+  auto metrics_h = Tucker::create_mirror(metrics);
+  Tucker::deep_copy(metrics_h, metrics);
 
   // True results (compute by hand)
   int nslices = 2;
@@ -108,8 +108,8 @@ TEST(tuckerkokkos, compute_slice_metrics_mode2){
 					    Tucker::Metric::MEAN,
 					    Tucker::Metric::VARIANCE};
   auto metrics = TuckerOnNode::compute_slice_metrics(tensor, targetMode, metricIDs);
-  auto metrics_h = TuckerOnNode::create_mirror(metrics);
-  TuckerOnNode::deep_copy(metrics_h, metrics);
+  auto metrics_h = Tucker::create_mirror(metrics);
+  Tucker::deep_copy(metrics_h, metrics);
 
   // True results (compute by hand)
   int nslices = 2;
@@ -196,8 +196,8 @@ TEST(tuckerkokkos, compute_slice_metrics_2x3x5x7_allmode)
 
   for(int mode=0; mode<tensor.rank(); mode++) {
     auto metrics = TuckerOnNode::compute_slice_metrics(tensor, mode, metricIDs);
-    auto metrics_h = TuckerOnNode::create_mirror(metrics);
-    TuckerOnNode::deep_copy(metrics_h, metrics);
+    auto metrics_h = Tucker::create_mirror(metrics);
+    Tucker::deep_copy(metrics_h, metrics);
 
     auto maxV = metrics_h.get(Tucker::Metric::MAX);
     auto minV = metrics_h.get(Tucker::Metric::MIN);
