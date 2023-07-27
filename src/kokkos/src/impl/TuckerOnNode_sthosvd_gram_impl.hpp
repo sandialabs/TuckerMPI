@@ -5,7 +5,7 @@
 #include "TuckerOnNode_Tensor.hpp"
 #include "TuckerOnNode_TensorGramEigenvalues.hpp"
 #include "TuckerOnNode_TuckerTensor.hpp"
-#include "TuckerOnNode_ComputeGram.hpp"
+#include "TuckerOnNode_compute_gram.hpp"
 #include "TuckerOnNode_ttm.hpp"
 #include <Kokkos_Core.hpp>
 

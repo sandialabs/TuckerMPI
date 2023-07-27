@@ -14,7 +14,7 @@
 #include "Tucker_compute_slice_metrics.hpp"
 #include "Tucker_write_statistics.hpp"
 #include "TuckerOnNode_ttm.hpp"
-#include "TuckerOnNode_ComputeGram.hpp"
+#include "TuckerOnNode_compute_gram.hpp"
 #include "TuckerOnNode_sthosvd.hpp"
 #include "Tucker_print_tucker_eigenvalues.hpp"
 #include <Kokkos_Core.hpp>
