@@ -6,7 +6,6 @@
 #include <Kokkos_Core.hpp>
 
 namespace Tucker {
-
 enum class Metric {
   MIN, MAX, SUM, NORM1, NORM2, MEAN, VARIANCE
 };
@@ -14,6 +13,7 @@ enum class Metric {
 
 namespace TuckerOnNode {
 
+// fwd declaration
 template<class ScalarType, class MemorySpace> class MetricData;
 
 template<class ScalarType, class MemorySpace>
@@ -59,7 +59,7 @@ public:
 
   MetricData(const std::vector<Tucker::Metric> & metrics, const int numValues)
     : values_("values", numValues, metrics.size()),
-      metricToColumnIndex_(metrics.size())
+      metricToColumnIndex_(metrics.size() /*this is just a hint for the capacity*/)
   {
 
     using host_map_t = typename map_t::HostMirror;
@@ -97,6 +97,7 @@ public:
     return Kokkos::subview(values_, Kokkos::ALL, colIndex);
   }
 
+  //FIXME: these need to be private and make deep_copy/create_mirror friends
   auto getValues() const { return values_; }
   auto getMap() const { return metricToColumnIndex_; }
 
