@@ -24,7 +24,7 @@ auto create_mirror(const TuckerOnNode::Tensor<ScalarType, Properties...> & T)
 }
 
 template<class SpaceT, class ScalarType, class ...Properties>
-auto create_mirror_tensor_and_copy(const SpaceT & space,
+auto create_mirror_and_copy(const SpaceT & space,
 				   const TuckerOnNode::Tensor<ScalarType, Properties...> & Tin)
 {
   using in_tensor_type = TuckerOnNode::Tensor<ScalarType, Properties...>;

@@ -237,14 +237,14 @@ TEST(tuckerkokkos_tensor, deep_copy)
   }
 }
 
-TEST(tuckerkokkos_tensor, create_mirror_tensor_and_copy)
+TEST(tuckerkokkos_tensor, create_mirror_and_copy)
 {
   Tensor<scalar_t> T0({2,1,5});
   T0.fillRandom(-1., 1.);
   auto T0_data = T0.data();
   auto T0_data_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), T0_data);
 
-  auto T_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), T0);
+  auto T_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), T0);
   auto T_h_data = T_h.data();
 
   for (int i=0; i<T_h.size(); ++i){

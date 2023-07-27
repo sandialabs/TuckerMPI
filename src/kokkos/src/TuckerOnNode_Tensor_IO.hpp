@@ -16,7 +16,7 @@ void output_tensor_to_stream(Tensor<ScalarType, MemorySpace> X,
 			     std::ostream & stream,
 			     int precision = 2)
 {
-  auto X_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), X);
+  auto X_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), X);
   auto v_h = X_h.data();
   const size_t numElements = X_h.size();
   if(numElements == 0){ return; }
