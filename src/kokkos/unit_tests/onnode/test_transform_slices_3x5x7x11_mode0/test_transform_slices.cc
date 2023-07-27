@@ -64,3 +64,4 @@ TEST(tuckerkokkos, transform_slices_3x5x7x11_mode0){
 }
 
 // Add tests
+// other mode 1 and mode 2

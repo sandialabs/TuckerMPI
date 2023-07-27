@@ -21,15 +21,41 @@ void transform_slices(TuckerOnNode::Tensor<ScalarType, TensorParams...> tensor,
   // Compute the result
   int ndims = tensor.rank();
   int numSlices = tensor.extent(mode);
-  //size_t numContig = Y->size().prod(0,mode-1,1); // Number of contiguous elements in a slice
-  //size_t numSetsContig = Y->size().prod(mode+1,ndims-1,1); // Number of sets of contiguous elements per slice
-  //size_t distBetweenSets = Y->size().prod(0,mode); // Distance between sets of contiguous elements
+  // Number of contiguous elements in a slice
+  size_t numContig = tensor.prod(0,mode-1,1);
+  std::cout << "numContig: " << numContig << std::endl;
+  // Number of sets of contiguous elements per slice
+  size_t numSetsContig = tensor.prod(mode+1,ndims-1,1);
+  std::cout << "numSetsContig: " << numSetsContig << std::endl;
+  // Distance between sets of contiguous elements
+  size_t distBetweenSets = tensor.prod(0,mode);
+  std::cout << "distBetweenSets: " << distBetweenSets << std::endl;
 
+  ScalarType* dataPtr;
+  int slice;
+  size_t i, c;
+  #pragma omp parallel for default(shared) private(slice,i,c,dataPtr)
+  for(slice=0; slice<numSlices; slice++)
+  {
+    dataPtr = tensor.data().data() + slice*numContig;
+    for(c=0; c<numSetsContig; c++)
+    {
+      for(i=0; i<numContig; i++)
+        dataPtr[i] = (dataPtr[i] + shifts[slice]) / scales[slice];
+      dataPtr += distBetweenSets;
+    }
+  }
   //
 
   // parallel_for(
   //   just on tensor data
   // )
+
+
+  // DONE 1) FINIR CODE
+  // DONE 2) TEST PASSE NORMALEMENT
+  // 3) METTRE FOOR LOOP IN CMAKELISTS
+  // 4) AJOUTER ANCIEN TESTS
 
 }
 
