@@ -1,15 +1,18 @@
 #ifndef TUCKER_KOKKOS_MPI_STHOSVD_NEW_GRAM_IMPL_HPP_
 #define TUCKER_KOKKOS_MPI_STHOSVD_NEW_GRAM_IMPL_HPP_
 
-#include "TuckerMpi_Matrix.hpp"
+
 #include "TuckerMpi_Tensor.hpp"
 #include "TuckerMpi_ttm.hpp"
-#include "TuckerOnNode_sthosvd.hpp"
-#include "TuckerOnNode_TensorGramEigenvalues.hpp"
-#include "TuckerMpi_TuckerTensor.hpp"
-#include "Tucker_BlasWrapper.hpp"
-#include "Tucker_ComputeEigValsEigVecs.hpp"
-
+#include "TuckerOnNode_compute_gram.hpp"
+#include "Tucker_boilerplate_view_io.hpp"
+#include "Tucker_print_bytes.hpp"
+#include "./TuckerOnNode_TensorGramEigenvalues.hpp"
+#include "./Tucker_TuckerTensorSliceHelpers.hpp"
+#include "./TuckerMpi_Matrix.hpp"
+#include "./Tucker_TuckerTensor_impl.hpp"
+#include "./Tucker_BlasWrapper.hpp"
+#include "./Tucker_ComputeEigValsEigVecs.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace TuckerMpi{
@@ -167,7 +170,7 @@ auto pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
 template <class ScalarType, class ...Properties>
 auto redistribute_tensor_for_gram(Tensor<ScalarType, Properties...> & Y, int n)
 {
-  using result_t = ::TuckerMpi::Matrix<ScalarType>;
+  using result_t = ::TuckerMpi::impl::Matrix<ScalarType>;
 
   // Get the original Tensor map
   const Map* oldMap = Y.getDistribution().getMap(n,false);
@@ -280,7 +283,7 @@ void local_gram_without_data_redistribution(Tensor<ScalarType, Properties...> & 
     Kokkos::resize(localGram, nGlobalRows, nGlobalRows);
   }
   else {
-    localGram = TuckerOnNode::compute_gram(Y.localTensor(), n);
+    localGram = ::TuckerOnNode::compute_gram(Y.localTensor(), n);
   }
 }
 
@@ -343,8 +346,8 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 {
   using tensor_type         = Tensor<ScalarType, Properties...>;
   using memory_space        = typename tensor_type::traits::memory_space;
-  using tucker_tensor_type  = Tucker::impl::TuckerTensor<false, Args...>;
-  using gram_eigvals_type   = TuckerOnNode::TensorGramEigenvalues<ScalarType, memory_space>;
+  using tucker_tensor_type  = Tucker::impl::TuckerTensor<false, tensor_type>;
+  using gram_eigvals_type   = TuckerOnNode::impl::TensorGramEigenvalues<ScalarType, memory_space>;
   using slicing_info_view_t = Kokkos::View<::Tucker::impl::PerModeSliceInfo*, Kokkos::HostSpace>;
 
   // ---------------------
@@ -401,8 +404,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
       std::cout << "  AutoST-HOSVD::Eigen{vals,vecs}(" << mode << ")...\n";
     }
     auto currEigvals = Tucker::impl::compute_and_sort_descending_eigvals_and_eigvecs_inplace(S, flipSign);
-    TuckerOnNode::impl::appendEigenvaluesAndUpdateSliceInfo(mode, eigvals, currEigvals,
-							    perModeSlicingInfo_eigvals(mode));
+    appendEigenvaluesAndUpdateSliceInfo(mode, eigvals, currEigvals, perModeSlicingInfo_eigvals(mode));
     //#if defined(TUCKER_ENABLE_DEBUG_PRINTS)
     if (mpiRank == 0){
       std::cout << "\n";
@@ -419,7 +421,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     }
     const std::size_t numEvecs = truncator(mode, currEigvals);
     auto currEigVecs = Kokkos::subview(S, Kokkos::ALL, std::pair<std::size_t,std::size_t>{0, numEvecs});
-    TuckerOnNode::impl::appendFactorsAndUpdateSliceInfo(mode, factors, currEigVecs, perModeSlicingInfo_factors(mode));
+    appendFactorsAndUpdateSliceInfo(mode, factors, currEigVecs, perModeSlicingInfo_factors(mode));
 #if defined(TUCKER_ENABLE_DEBUG_PRINTS)
     if (mpiRank ==0){
       std::cout << "\n";

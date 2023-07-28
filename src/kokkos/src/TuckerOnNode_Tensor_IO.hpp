@@ -1,7 +1,7 @@
 #ifndef TUCKER_KOKKOSONLY_TENSOR_IO_HPP_
 #define TUCKER_KOKKOSONLY_TENSOR_IO_HPP_
 
-//#include "TuckerOnNode_Tensor.hpp"
+#include "TuckerOnNode_Tensor.hpp"
 #include "Tucker_create_mirror.hpp"
 #include "Tucker_deep_copy.hpp"
 #include "Tucker_boilerplate_view_io.hpp"

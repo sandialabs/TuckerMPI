@@ -1,7 +1,7 @@
 #ifndef MPIKOKKOS_TUCKER_PROCESSORGRID_HPP_
 #define MPIKOKKOS_TUCKER_PROCESSORGRID_HPP_
 
-#include "TuckerMpi_MPIWrapper.hpp"
+#include "./impl/TuckerMpi_MPIWrapper.hpp"
 #include <vector>
 #include <memory>
 

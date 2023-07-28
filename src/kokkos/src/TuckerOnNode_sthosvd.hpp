@@ -1,9 +1,6 @@
 #ifndef TUCKER_ONNODE_KOKKOS_STHOSVD_HPP_
 #define TUCKER_ONNODE_KOKKOS_STHOSVD_HPP_
 
-// #include "TuckerOnNode_Tensor.hpp"
-// // #include "TuckerOnNode_compute_gram.hpp"
-// // #include "TuckerOnNode_ttm.hpp"
 #include "./impl/TuckerOnNode_sthosvd_gram_impl.hpp"
 
 namespace TuckerOnNode{

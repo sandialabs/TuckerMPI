@@ -120,4 +120,4 @@ void Map::removeEmptyProcs()
   removedEmptyProcs_ = true;
 }
 
-} /* namespace TuckerMpi */
+}

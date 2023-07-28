@@ -47,7 +47,7 @@ struct TuckerTensorTraits<
   using factors_store_view_t     = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
 };
 
-#if !defined TUCKER_ENABLE_MPI
+#if defined TUCKER_ENABLE_MPI
 template<bool isOnNode, class ScalarType, class ...Props>
 struct TuckerTensorTraits<
   std::enable_if_t<!isOnNode>, isOnNode, TuckerMpi::Tensor<ScalarType, Props...>

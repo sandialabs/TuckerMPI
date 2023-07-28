@@ -1,9 +1,9 @@
 #ifndef MPIKOKKOS_TUCKER_DISTRIBUTION_HPP_
 #define MPIKOKKOS_TUCKER_DISTRIBUTION_HPP_
 
-#include <memory>
 #include "TuckerMpi_Map.hpp"
 #include "TuckerMpi_ProcessorGrid.hpp"
+#include <memory>
 
 namespace TuckerMpi{
 
@@ -79,5 +79,5 @@ private:
 bool operator==(const Distribution& a, const Distribution& b);
 bool operator!=(const Distribution& a, const Distribution& b);
 
-} /* namespace TuckerMpiDistributed */
-#endif /* MPIKOKKOS_TUCKER_DISTRIBUTION_HPP_ */
+}
+#endif

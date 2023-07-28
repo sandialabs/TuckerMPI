@@ -17,6 +17,8 @@ endif()
 
 set(TUCKER_HEADERS ${TUCKER_COMMON_HEADERS} ${TUCKER_ONNODE_HEADERS} ${TUCKER_MPI_HEADERS})
 
+message(STATUS ${TUCKER_HEADERS})
+
 foreach (_header ${TUCKER_HEADERS})
   string(REGEX REPLACE "[\./]" "_" header_test_name ${_header})
   set(header_test_name Tucker_HeaderSelfContained_${header_test_name})

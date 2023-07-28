@@ -1,8 +1,11 @@
 #ifndef TUCKER_MPI_TENSOR_IO_HPP_
 #define TUCKER_MPI_TENSOR_IO_HPP_
 
-#include "Tucker_BoilerPlate_IO.hpp"
-#include "TuckerMpi_MPIWrapper.hpp"
+
+#include "./impl/TuckerMpi_MPIWrapper.hpp"
+#include "Tucker_print_bytes.hpp"
+#include "Tucker_boilerplate_view_io.hpp"
+#include "TuckerMpi_Tensor.hpp"
 #include <Kokkos_Core.hpp>
 #include <fstream>
 #include <iomanip>

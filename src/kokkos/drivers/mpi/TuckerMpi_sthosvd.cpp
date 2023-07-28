@@ -54,10 +54,25 @@ int main(int argc, char* argv[])
     /*
      * prepare lambdas "expressing" the computation to do
      */
-    auto writeEigenvaluesToFile = [=](auto eigvals){
+    auto writeEigenvaluesToFile = [=](auto container){
       if(mpiRank == 0) {
 	const std::string filePrefix = inputs.sv_dir + "/" + inputs.sv_fn + "_mode_";
-	Tucker::print_eigenvalues(eigvals, filePrefix);
+
+	const int nmodes = container.rank();
+	for(int mode=0; mode<nmodes; mode++){
+	  std::ostringstream ss;
+	  ss << filePrefix << mode << ".txt";
+	  std::ofstream ofs(ss.str());
+	  std::cout << "Writing singular values to " << ss.str() << std::endl;
+
+	  // Determine the number of eigenvalues for this mode
+	  auto eigvals = container.eigenvalues(mode);
+	  auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
+	  for(int i=0; i<eigvals.extent(0); i++) {
+	    ofs << std::setprecision(16) << eigvals_h(i) << std::endl;
+	  }
+	  ofs.close();
+	}
       }
     };
 

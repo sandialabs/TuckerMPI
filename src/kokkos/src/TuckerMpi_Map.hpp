@@ -1,7 +1,7 @@
 #ifndef MPIKOKKOS_TUCKER_MAP_HPP_
 #define MPIKOKKOS_TUCKER_MAP_HPP_
 
-#include "TuckerMpi_MPIWrapper.hpp"
+#include "./impl/TuckerMpi_MPIWrapper.hpp"
 #include "mpi.h"
 #include <vector>
 #include <cassert>
@@ -10,7 +10,6 @@
 namespace TuckerMpi {
 
 class Map {
-
 public:
   Map() = default;
   Map(int globalNumEntries, const MPI_Comm& comm);
@@ -73,5 +72,5 @@ private:
 bool operator==(const Map& a, const Map& b);
 bool operator!=(const Map& a, const Map& b);
 
-} /* namespace TuckerMpi */
-#endif /* MPIKOKKOS_TUCKER_MAP_HPP_ */
+}
+#endif
