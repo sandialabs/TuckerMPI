@@ -1,12 +1,14 @@
 include(FindUnixCommands)
 
 # convert .txt files by running test.cmake
-set(CMD "python3 ${CMAKE_CURRENT_SOURCE_DIR}/../../ascii_to_binary.py -i ${CMAKE_CURRENT_SOURCE_DIR}/gold_3x5x7x11.txt -o ${CMAKE_CURRENT_BINARY_DIR}/gold_3x5x7x11.bin --skip 3")
-execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
+set(SCRIPT_PY   ${CMAKE_CURRENT_SOURCE_DIR}/../../ascii_to_binary.py)
+list(APPEND FILES_TXT   ${CMAKE_CURRENT_SOURCE_DIR}/gold_3x5x7x11.txt   ${CMAKE_CURRENT_SOURCE_DIR}/gold_3x5x7x11_ss0.txt)
+list(APPEND BIN_TXT     ${CMAKE_CURRENT_BINARY_DIR}/gold_3x5x7x11.bin   ${CMAKE_CURRENT_BINARY_DIR}/gold_3x5x7x11_ss0.bin)
 
-set(CMD "python3 ${CMAKE_CURRENT_SOURCE_DIR}/../../ascii_to_binary.py -i ${CMAKE_CURRENT_SOURCE_DIR}/gold_3x5x7x11_ss0.txt -o ${CMAKE_CURRENT_BINARY_DIR}/gold_3x5x7x11_ss0.bin --skip 3")
-execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
-# for loop: => 2 files
+foreach(fi bi IN ZIP_LISTS FILES_TXT BIN_TXT)
+    set(CMD "python3 ${SCRIPT_PY} -i ${fi} -o ${bi} --skip 3")
+    execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
+endforeach()
 
 # run test
 set(TEST1 test_transform_slices)
