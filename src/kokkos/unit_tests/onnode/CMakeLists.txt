@@ -28,7 +28,7 @@ add_utest_kokkos(${TEST1} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST1}.cc ${GTEST_MAIN})
 set(TEST1 test_syrk_kokkos)
 add_utest_kokkos(${TEST1} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST1}.cc ${GTEST_MAIN})
 
-add_subdirectory(test_transform_slices_3x5x7x11_mode0)
+add_subdirectory(test_transform_slices_3x5x7x11)
 
 # set(TEST1 tensor)
 # add_utest_kokkos(${TEST1} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST1}.cc)
