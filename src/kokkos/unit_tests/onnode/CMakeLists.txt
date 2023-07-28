@@ -4,7 +4,7 @@ macro(add_utest_kokkos TESTNAME TESTSRCS)
   add_executable(${testNameFinal} ${TESTSRCS} gtest_main.cc)
   target_link_libraries(
     ${testNameFinal}
-    ${KokkosOnlyTuckerLib} ${ALL_TPLS_NEEDED}
+    ${KokkosOnlyTuckerLib} ${TUCKER_ALL_TPLS_NEEDED}
     GTest::gtest_main)
 
   add_test(NAME ${testNameFinal} COMMAND ${testNameFinal})

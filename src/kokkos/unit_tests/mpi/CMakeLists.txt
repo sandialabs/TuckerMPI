@@ -7,7 +7,7 @@ macro(add_utest_mpikokkos TESTNAME TESTSRCS nRANKS)
   target_link_libraries(
     ${testNameFinal}
     ${MpiKokkosTuckerLib}
-    ${ALL_TPLS_NEEDED} # this contains already kokkos and mpi libs
+    ${TUCKER_ALL_TPLS_NEEDED} # this contains already kokkos and mpi libs
     GTest::gtest_main)
 
   add_test(
