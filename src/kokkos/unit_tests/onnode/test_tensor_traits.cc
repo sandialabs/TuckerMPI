@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
-#include "TuckerOnNode_Tensor.hpp"
-#include <Kokkos_Core.hpp>
+#include "TuckerOnNode.hpp"
 
 TEST(tuckerkokkos_tensor, traits)
 {

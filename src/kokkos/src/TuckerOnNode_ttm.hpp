@@ -1,6 +1,7 @@
 #ifndef TTM_TOPLEVEL_HPP_
 #define TTM_TOPLEVEL_HPP_
 
+#include "TuckerOnNode_Tensor.hpp"
 #if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
 #include "./impl/TuckerOnNode_ttm_using_host_blas_impl.hpp"
 #endif

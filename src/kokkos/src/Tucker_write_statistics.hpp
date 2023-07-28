@@ -1,13 +1,15 @@
 #ifndef TUCKER_WRITE_STATISTICS_HPP_
 #define TUCKER_WRITE_STATISTICS_HPP_
 
-#include "Tucker_MetricData.hpp"
+#include "Tucker_fwd.hpp"
+#include "Tucker_create_mirror.hpp"
+#include "Tucker_deep_copy.hpp"
 #include <fstream>
 
 namespace Tucker{
 
 template<class ScalarType, class MemSpace>
-void write_statistics(TuckerOnNode::MetricData<ScalarType, MemSpace> metricData,
+void write_statistics(TuckerOnNode::impl::MetricData<ScalarType, MemSpace> metricData,
 		      const std::string & statsFile,
 		      const ScalarType stdThresh)
 {

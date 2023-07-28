@@ -2,11 +2,8 @@
 #define TUCKER_KOKKOSONLY_STHOSVD_GRAM_IMPL_HPP_
 
 #include "Tucker_ComputeEigValsEigVecs.hpp"
-#include "TuckerOnNode_Tensor.hpp"
 #include "TuckerOnNode_TensorGramEigenvalues.hpp"
-#include "TuckerOnNode_TuckerTensor.hpp"
-#include "TuckerOnNode_compute_gram.hpp"
-#include "TuckerOnNode_ttm.hpp"
+#include "Tucker_TuckerTensor_impl.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace TuckerOnNode{
@@ -100,7 +97,7 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
 		   "and floating point scalar");
 
   // aliases needed below
-  using tucker_tensor_type  = TuckerTensor<tensor_type>;
+  using tucker_tensor_type  = Tucker::impl::TuckerTensor<true, tensor_type>;
   using memory_space        = typename tensor_type::traits::memory_space;
   using gram_eigvals_type   = TensorGramEigenvalues<ScalarType, memory_space>;
   using slicing_info_view_t = Kokkos::View<::Tucker::impl::PerModeSliceInfo*, Kokkos::HostSpace>;

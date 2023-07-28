@@ -1,14 +1,9 @@
 #ifndef TUCKER_DEEP_COPY_HPP_
 #define TUCKER_DEEP_COPY_HPP_
 
-#include <Kokkos_Core.hpp>
+#include "Tucker_fwd.hpp"
 #include <Kokkos_UnorderedMap.hpp>
-
-// fwd declaration
-namespace TuckerOnNode{
-template<class ScalarType, class ...Properties> class Tensor;
-template<class ScalarType, class MemorySpace> class MetricData;
-}
+#include <Kokkos_Core.hpp>
 
 namespace Tucker{
 
@@ -24,8 +19,8 @@ void deep_copy(const TuckerOnNode::Tensor<ScalarTypeDest, PropertiesDest...> & d
 }
 
 template<class ScalarType, class MemorySpaceFrom, class MemorySpaceDest>
-void deep_copy(const TuckerOnNode::MetricData<ScalarType, MemorySpaceDest> & dest,
-	       const TuckerOnNode::MetricData<ScalarType, MemorySpaceFrom> & from)
+void deep_copy(const TuckerOnNode::impl::MetricData<ScalarType, MemorySpaceDest> & dest,
+	       const TuckerOnNode::impl::MetricData<ScalarType, MemorySpaceFrom> & from)
 {
   auto vals_dest = dest.getValues();
   auto map_dest  = dest.getMap();

@@ -1,9 +1,6 @@
 
 #include <gtest/gtest.h>
-#include "./impl/Tucker_syrk_kokkos.hpp"
-#include <Kokkos_Core.hpp>
-#include <Kokkos_Random.hpp>
-#include <random>
+#include "TuckerOnNode.hpp"
 
 template <class ValueType>
 struct UnifDist;

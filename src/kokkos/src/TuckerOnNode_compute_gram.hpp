@@ -1,6 +1,7 @@
 #ifndef TUCKERKOKKOS_COMP_GRAM_HPP_
 #define TUCKERKOKKOS_COMP_GRAM_HPP_
 
+#include "TuckerOnNode_Tensor.hpp"
 #include "./impl/TuckerOnNode_compute_gram_host_impl.hpp"
 #include "./impl/TuckerOnNode_compute_gram_kokkos_impl.hpp"
 

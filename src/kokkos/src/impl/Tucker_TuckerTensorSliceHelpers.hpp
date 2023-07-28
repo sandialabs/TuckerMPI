@@ -2,6 +2,8 @@
 #ifndef TUCKER_TUCKERTENSORSLICEHELPERS_HPP_
 #define TUCKER_TUCKERTENSORSLICEHELPERS_HPP_
 
+#include <cuchar>
+
 namespace Tucker{
 namespace impl{
 

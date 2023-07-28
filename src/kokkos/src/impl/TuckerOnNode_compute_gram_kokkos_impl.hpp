@@ -1,8 +1,6 @@
 #ifndef TUCKERKOKKOS_COMP_GRAM_KOKKOS_IMPL_HPP_
 #define TUCKERKOKKOS_COMP_GRAM_KOKKOS_IMPL_HPP_
 
-#include "Tucker_BlasWrapper.hpp"
-#include "TuckerOnNode_Tensor.hpp"
 #include "Tucker_syrk_kokkos.hpp"
 
 namespace TuckerOnNode{

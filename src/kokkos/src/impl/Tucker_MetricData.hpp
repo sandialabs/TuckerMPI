@@ -1,19 +1,13 @@
 #ifndef TUCKER_KOKKOS_METRIC_DATA_HPP_
 #define TUCKER_KOKKOS_METRIC_DATA_HPP_
 
+#include "Tucker_fwd.hpp"
 #include <Kokkos_StdAlgorithms.hpp>
 #include <Kokkos_UnorderedMap.hpp>
 #include <Kokkos_Core.hpp>
 
-namespace Tucker{
-
-enum class Metric {
-  MIN, MAX, SUM, NORM1, NORM2, MEAN, VARIANCE
-};
-
-}//end namespace Tucker
-
 namespace TuckerOnNode {
+namespace impl{
 
 template<
   class ScalarType,
@@ -80,6 +74,5 @@ private:
   map_t metricToColumnIndex_ = {};
 };
 
-}
-
+}}
 #endif

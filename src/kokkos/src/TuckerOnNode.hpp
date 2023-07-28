@@ -1,22 +1,29 @@
 #ifndef TUCKER_KOKKOS_ONNODE_SINGLE_INCLUDE_HPP_
 #define TUCKER_KOKKOS_ONNODE_SINGLE_INCLUDE_HPP_
 
+// NOTE that below the order of the includes is intentional
+// and based on the actualy dependencies
+
+// first include headers that only depende on TPLs
+#include "Tucker_boilerplate_view_io.hpp"
+
+// then include cmake-based config
 #include "Tucker_cmake_config.h"
-#include "Tucker_BoilerPlate_IO.hpp"
-#include "Tucker_CoreTensorTruncator.hpp"
+
+// then actualy library headers, starting from
+// fwd decl and tensor class and operations on it
+#include "Tucker_fwd.hpp"
 #include "TuckerOnNode_Tensor.hpp"
-#include "TuckerOnNode_Tensor_IO.hpp"
-#include "TuckerOnNode_TuckerTensor.hpp"
-#include "TuckerOnNode_TensorGramEigenvalues.hpp"
 #include "Tucker_create_mirror.hpp"
 #include "Tucker_deep_copy.hpp"
-#include "Tucker_MetricData.hpp"
+#include "TuckerOnNode_Tensor_io.hpp"
 #include "Tucker_compute_slice_metrics.hpp"
 #include "Tucker_write_statistics.hpp"
-#include "TuckerOnNode_ttm.hpp"
+
+// finally functions related/needed by sthosvd
 #include "TuckerOnNode_compute_gram.hpp"
+#include "TuckerOnNode_ttm.hpp"
+#include "Tucker_create_core_tensor_truncator.hpp"
 #include "TuckerOnNode_sthosvd.hpp"
-#include "Tucker_print_tucker_eigenvalues.hpp"
-#include <Kokkos_Core.hpp>
 
 #endif

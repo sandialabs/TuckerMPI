@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include "TuckerOnNode.hpp"
-#include <Kokkos_Core.hpp>
 
 namespace {
 

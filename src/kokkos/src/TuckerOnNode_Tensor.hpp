@@ -1,10 +1,9 @@
 #ifndef TUCKER_KOKKOSONLY_TENSOR_HPP_
 #define TUCKER_KOKKOSONLY_TENSOR_HPP_
 
-#include "Tucker_Utils.hpp"
+#include "./impl/Tucker_stdvec_view_conversion_helpers.hpp"
 #include "KokkosBlas1_nrm2.hpp"
 #include <Kokkos_Random.hpp>
-#include <Kokkos_Core.hpp>
 #include <numeric>
 
 namespace TuckerOnNode{
