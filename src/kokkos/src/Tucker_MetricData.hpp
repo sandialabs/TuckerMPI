@@ -5,43 +5,12 @@
 #include <Kokkos_UnorderedMap.hpp>
 #include <Kokkos_Core.hpp>
 
-namespace TuckerOnNode {
-// fwd declaration
-template<class ScalarType, class MemorySpace> class MetricData;
-}//end namespace TuckerOnNOde
-
 namespace Tucker{
 
 enum class Metric {
   MIN, MAX, SUM, NORM1, NORM2, MEAN, VARIANCE
 };
 
-template<class ScalarType, class MemorySpace>
-auto create_mirror(TuckerOnNode::MetricData<ScalarType, MemorySpace> d){
-  using T = TuckerOnNode::MetricData<ScalarType, MemorySpace>;
-  using T_mirror = typename T::HostMirror;
-
-  auto vals = d.getValues();
-  auto map  = d.getMap();
-  auto vals_h = Kokkos::create_mirror(vals);
-  typename T_mirror::map_t map_h(map.capacity());
-  // we need this or deep copy below won't work
-  Kokkos::deep_copy(map_h, map);
-
-  return T_mirror(map_h, vals_h);
-}
-
-template<class ScalarType, class MemorySpaceFrom, class MemorySpaceDest>
-void deep_copy(const TuckerOnNode::MetricData<ScalarType, MemorySpaceDest> & dest,
-	       const TuckerOnNode::MetricData<ScalarType, MemorySpaceFrom> & from)
-{
-  auto vals_dest = dest.getValues();
-  auto map_dest  = dest.getMap();
-  auto vals_from = from.getValues();
-  auto map_from  = from.getMap();
-  Kokkos::deep_copy(map_dest, map_from);
-  Kokkos::deep_copy(vals_dest, vals_from);
-}
 }//end namespace Tucker
 
 namespace TuckerOnNode {
