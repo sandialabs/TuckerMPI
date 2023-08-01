@@ -19,6 +19,7 @@
 #include "TuckerOnNode_Tensor_io.hpp"
 #include "Tucker_compute_slice_metrics.hpp"
 #include "Tucker_write_statistics.hpp"
+#include "Tucker_transform_slices.hpp"
 
 // finally functions related/needed by sthosvd
 #include "TuckerOnNode_compute_gram.hpp"

@@ -8,8 +8,8 @@
 
 namespace TuckerOnNode{
 
-template <class ScalarType, class MemorySpace>
-void output_tensor_to_stream(Tensor<ScalarType, MemorySpace> X,
+template <class ScalarType, class ...Properties>
+void output_tensor_to_stream(Tensor<ScalarType, Properties...> X,
 			     std::ostream & stream,
 			     int precision = 2)
 {
@@ -25,8 +25,8 @@ void output_tensor_to_stream(Tensor<ScalarType, MemorySpace> X,
   }
 }
 
-template <class ScalarType, class MemorySpace>
-void import_tensor_binary(Tensor<ScalarType, MemorySpace> X,
+template <class ScalarType, class ...Properties>
+void import_tensor_binary(Tensor<ScalarType, Properties...> X,
 			  const char* filename)
 {
   auto X_h = Tucker::create_mirror(X);
@@ -34,8 +34,8 @@ void import_tensor_binary(Tensor<ScalarType, MemorySpace> X,
   Tucker::deep_copy(X, X_h);
 }
 
-template <class ScalarType, class MemorySpace>
-void read_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
+template <class ScalarType, class ...Properties>
+void read_tensor_binary(Tensor<ScalarType, Properties...> Y,
 			const char* filename)
 {
   std::ifstream inStream(filename);
