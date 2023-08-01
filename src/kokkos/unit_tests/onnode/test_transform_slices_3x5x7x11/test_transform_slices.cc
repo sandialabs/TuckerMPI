@@ -3,8 +3,10 @@
  * https://gitlab.com/tensors/TuckerMPI/-/blob/master/src/serial/tests/Tucker_shift_scale_test.cpp
  */
 
-#include <gtest/gtest.h>
 #include "TuckerOnNode.hpp"
+
+#include <gtest/gtest.h>
+
 
 template<class ScalarType, class MemorySpaces>
 bool checks(TuckerOnNode::Tensor<ScalarType, MemorySpaces> t1,

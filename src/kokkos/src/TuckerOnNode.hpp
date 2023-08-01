@@ -19,14 +19,12 @@
 #include "TuckerOnNode_Tensor_io.hpp"
 #include "Tucker_compute_slice_metrics.hpp"
 #include "Tucker_write_statistics.hpp"
+#include "Tucker_transform_slices.hpp"
 
 // finally functions related/needed by sthosvd
 #include "TuckerOnNode_compute_gram.hpp"
 #include "TuckerOnNode_ttm.hpp"
 #include "Tucker_create_core_tensor_truncator.hpp"
 #include "TuckerOnNode_sthosvd.hpp"
-#include "Tucker_print_tucker_eigenvalues.hpp"
-#include "Tucker_transform_slices.hpp"
-#include <Kokkos_Core.hpp>
 
 #endif
