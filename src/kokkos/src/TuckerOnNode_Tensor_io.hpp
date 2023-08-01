@@ -70,5 +70,38 @@ void export_tensor_binary(const Tensor<ScalarType, mem_space> & Y,
   ofs.close();
 }
 
+template <class ScalarType, class MemorySpace>
+void write_tensor_binary(const Tensor<ScalarType, MemorySpace> X,
+			  const char* filename)
+{
+  // Count the number of filenames
+  std::ifstream inStream(filename);
+
+  std::string temp;
+  int nfiles = 0;
+  while(inStream >> temp) {
+    nfiles++;
+  }
+
+  inStream.close();
+
+  if(nfiles == 1) {
+    export_tensor_binary(X,temp.c_str());
+  }
+  else {
+    int ndims = X.rank();
+    if(nfiles != X.extent(ndims-1)) {
+      std::ostringstream oss;
+      oss << "Tucker::writeTensorBinary(const Tensor<scalar_t>* Y, const char* filename: "
+          << "The number of filenames you provided is "
+          << nfiles << ", but the dimension of the tensor's last mode is "
+          << X.extent(ndims-1);
+
+      throw std::runtime_error(oss.str());
+    }
+    // exportTimeSeries(Y,filename); >> TOREMOVE?
+  }
+}
+
 } // end namespace Tucker
 #endif

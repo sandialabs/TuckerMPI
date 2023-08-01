@@ -36,7 +36,11 @@ int main(int argc, char* argv[])
     auto metricsData = TuckerOnNode::compute_slice_metrics(X, inputs.scale_mode, metrics);
     Tucker::write_statistics(metricsData, inputs.stats_file, inputs.stdThresh);
 
-    // FIXME: Perform preprocessing is missingx
+    std::cout << "Perform preprocessing" << std::endl;
+    Tucker::perform_preprocessing(X, inputs.sthosvd_dir,
+                inputs.sthosvd_fn, inputs.scaling_type,
+                inputs.scale_mode, inputs.stdThresh,
+                inputs.boolWritePreprocessed, inputs.pre_fns_file);
 
     /*
      * prepare lambdas "expressing" the computation to do
