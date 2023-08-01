@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
-#include "TuckerMpi_Map.hpp"
-#include "mpi.h"
+#include "TuckerMpi.hpp"
 
 using namespace TuckerMpi;
 

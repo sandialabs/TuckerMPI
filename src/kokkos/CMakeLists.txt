@@ -8,6 +8,7 @@ set(KOKKOS_TPLS
 #
 # set some options
 #
+option(TUCKER_ENABLE_MPI OFF)
 option(TUCKER_ENABLE_DEBUG_PRINTS OFF)
 option(TUCKER_ENABLE_FALLBACK_VIA_HOST OFF)
 if(TUCKER_ENABLE_FALLBACK_VIA_HOST)
@@ -22,7 +23,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/Tucker_cmake_config.h.in Tucker_c
 if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   MESSAGE(STATUS "TUCKER_ENABLE_KOKKOS=${TUCKER_ENABLE_KOKKOS}, building code with Kokkos-only\n")
 
-  set(ALL_TPLS_NEEDED ${KOKKOS_TPLS})
+  set(TUCKER_ALL_TPLS_NEEDED ${KOKKOS_TPLS})
 
   set(KokkosOnlyTuckerLib kokkosonly_tucker)
   set(SOURCES)
@@ -30,9 +31,9 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
     ${TUCKER_SRCDIR}/impl/Tucker_BlasWrapper.cpp
   )
   ADD_LIBRARY(${KokkosOnlyTuckerLib} SHARED ${SOURCES})
-  TARGET_LINK_LIBRARIES(${KokkosOnlyTuckerLib} ${ALL_TPLS_NEEDED})
+  TARGET_LINK_LIBRARIES(${KokkosOnlyTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
 
-  include_directories(${CMAKE_CURRENT_BINARY_DIR} ${TUCKER_SRCDIR} ${TUCKER_SRCDIR}/impl)
+  include_directories(${CMAKE_CURRENT_BINARY_DIR} ${TUCKER_SRCDIR})
 
   set(STHOSVD_DRIVER_NAME KokkosTucker_sthosvd)
   set(STHOSVD_DRIVER_SRCS)
@@ -52,9 +53,11 @@ endif()
 if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
   MESSAGE(STATUS "TUCKER_ENABLE_KOKKOS=${TUCKER_ENABLE_KOKKOS} and TUCKER_ENABLE_MPI=${TUCKER_ENABLE_MPI}, building code with MPI+Kokkos\n")
 
+  set(TUCKER_ENABLE_MPI ON)
+
   find_package(MPI REQUIRED)
 
-  set(ALL_TPLS_NEEDED ${KOKKOS_TPLS} ${MPI_CXX_LIBRARIES})
+  set(TUCKER_ALL_TPLS_NEEDED ${KOKKOS_TPLS} ${MPI_CXX_LIBRARIES})
 
   set(MpiKokkosTuckerLib mpikokkos_tucker)
   set(SOURCES)
@@ -66,9 +69,9 @@ if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
     ${TUCKER_SRCDIR}/TuckerMpi_Distribution.cpp
   )
   ADD_LIBRARY(${MpiKokkosTuckerLib} SHARED ${SOURCES})
-  TARGET_LINK_LIBRARIES(${MpiKokkosTuckerLib} ${ALL_TPLS_NEEDED})
+  TARGET_LINK_LIBRARIES(${MpiKokkosTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
 
-  include_directories(${MPI_CXX_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} ${TUCKER_SRCDIR} ${TUCKER_SRCDIR}/impl)
+  include_directories(${MPI_CXX_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} ${TUCKER_SRCDIR})
 
   set(STHOSVD_DRIVER_NAME MpiKokkosTucker_sthosvd)
   set(STHOSVD_DRIVER_SRCS)
@@ -79,7 +82,7 @@ if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
   )
   add_executable(${STHOSVD_DRIVER_NAME} ${STHOSVD_DRIVER_SRCS})
   target_include_directories(${STHOSVD_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
-  target_link_libraries(${STHOSVD_DRIVER_NAME} ${MpiKokkosTuckerLib} ${ALL_TPLS_NEEDED})
+  target_link_libraries(${STHOSVD_DRIVER_NAME} ${MpiKokkosTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
 
   add_subdirectory(unit_tests)
   add_subdirectory(drivers_tests)

@@ -125,4 +125,4 @@ void ProcessorGrid::squeeze(const std::vector<int>& sz, const MPI_Comm& comm)
   }
 }
 
-} /* namespace Tucker */
+}

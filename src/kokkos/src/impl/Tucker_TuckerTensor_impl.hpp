@@ -1,18 +1,10 @@
 #ifndef TUCKER_KOKKOS_TUCKERTENSOR_IMPL_HPP_
 #define TUCKER_KOKKOS_TUCKERTENSOR_IMPL_HPP_
 
+#include "../Tucker_fwd.hpp"
 #include "Tucker_TuckerTensorSliceHelpers.hpp"
-#include <Kokkos_Core.hpp>
 #include <Kokkos_StdAlgorithms.hpp>
-
-// fwd declarations
-namespace TuckerOnNode{
-template<class ScalarType, class ...Properties> class Tensor;
-}
-namespace TuckerMpi{
-template<class ScalarType, class ...Properties> class Tensor;
-}
-
+#include <Kokkos_Core.hpp>
 
 namespace Tucker{
 namespace impl{
@@ -25,16 +17,24 @@ struct TuckerTensorTraits<
   std::enable_if_t<std::is_floating_point_v<ScalarType>>, isOnNode, ScalarType
   >
 {
+#if !defined TUCKER_ENABLE_MPI
+   static_assert(isOnNode, "TuckerTensorTraits: TUCKER_ENABLE_MPI=OFF, so isOnNode must be true");
+#endif
+
   using memory_space             = typename Kokkos::DefaultExecutionSpace::memory_space;
   using core_tensor_type         =
+#if defined TUCKER_ENABLE_MPI
     std::conditional_t<isOnNode,
 		       TuckerOnNode::Tensor<ScalarType, memory_space>,
 		       TuckerMpi::Tensor<ScalarType, memory_space>
 		       >;
+#else
+  TuckerOnNode::Tensor<ScalarType, memory_space>;
+#endif
+
   using value_type               = typename core_tensor_type::traits::value_type;
   using factors_store_view_t     = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
 };
-
 
 template<bool isOnNode, class ScalarType, class ...Props>
 struct TuckerTensorTraits<
@@ -47,6 +47,7 @@ struct TuckerTensorTraits<
   using factors_store_view_t     = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
 };
 
+#if defined TUCKER_ENABLE_MPI
 template<bool isOnNode, class ScalarType, class ...Props>
 struct TuckerTensorTraits<
   std::enable_if_t<!isOnNode>, isOnNode, TuckerMpi::Tensor<ScalarType, Props...>
@@ -57,7 +58,7 @@ struct TuckerTensorTraits<
   using memory_space             = typename core_tensor_type::traits::memory_space;
   using factors_store_view_t     = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
 };
-
+#endif
 
 template<bool isOnNode, class ...Args>
 class TuckerTensor

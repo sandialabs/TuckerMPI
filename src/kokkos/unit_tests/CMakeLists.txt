@@ -15,6 +15,8 @@ else()
   FetchContent_MakeAvailable(googletest)
 endif()
 
+add_subdirectory(headers_are_selfcontained_and_guarded)
+
 if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   add_subdirectory(onnode)
 endif()

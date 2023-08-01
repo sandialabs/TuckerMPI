@@ -2,7 +2,6 @@
 #define TTM_IMPL_USING_HOST_BLAS_HPP_
 
 #include "Tucker_BlasWrapper.hpp"
-#include "TuckerOnNode_Tensor.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace TuckerOnNode{

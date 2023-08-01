@@ -88,32 +88,26 @@ void write_view_to_stream_inline(std::ostream & out,
   }
 }
 
-template<class T>
-void print_bytes_to_stream(std::ostream & out, T bytes)
+template <class DataType, class ...Properties>
+void export_view_binary(const Kokkos::View<DataType, Properties...> & v,
+			const char* filename)
 {
-  static_assert(std::is_integral_v<T>);
+  using view_type = Kokkos::View<DataType, Properties...>;
+  using value_type = typename view_type::non_const_value_type;
 
-  const size_t KB = 1e3;
-  const size_t MB = 1e6;
-  const size_t GB = 1e9;
-  const size_t TB = 1e12;
-
-  if(bytes > TB) {
-    out << std::setprecision(5) << bytes / (double)TB << " TB\n";
+  const size_t numEntries = v.size();
+  std::ofstream ofs;
+  ofs.open(filename, std::ios::out | std::ios::binary);
+  assert(ofs.is_open());
+  if (v.span_is_contiguous()){
+    auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), v);
+    ofs.write((char*)v_h.data(), numEntries*sizeof(value_type));
+    ofs.close();
   }
-  else if(bytes > GB) {
-    out << std::setprecision(5) << bytes / (double)GB << " GB\n";
-  }
-  else if(bytes > MB) {
-    out << std::setprecision(5) << bytes / (double)MB << " MB\n";
-  }
-  else if(bytes > KB) {
-    out << std::setprecision(5) << bytes / (double)KB << " KB\n";
-  }
-  else {
-    out << bytes << " bytes\n";
+  else{
+    throw std::runtime_error("export_view_binary: currently only supports contiguous Views");
   }
 }
 
 }// end namespace Tucker
-#endif /* TUCKER_IO_UTIL_HPP_ */
+#endif

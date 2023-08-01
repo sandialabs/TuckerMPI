@@ -2,12 +2,9 @@
 #define TUCKER_KOKKOSONLY_TENSOR_IO_HPP_
 
 #include "TuckerOnNode_Tensor.hpp"
-#include "Tucker_deep_copy.hpp"
 #include "Tucker_create_mirror.hpp"
-#include "Tucker_BoilerPlate_IO.hpp"
-#include <Kokkos_Core.hpp>
-#include <fstream>
-#include <iomanip>
+#include "Tucker_deep_copy.hpp"
+#include "Tucker_boilerplate_view_io.hpp"
 
 namespace TuckerOnNode{
 
@@ -16,7 +13,7 @@ void output_tensor_to_stream(Tensor<ScalarType, MemorySpace> X,
 			     std::ostream & stream,
 			     int precision = 2)
 {
-  auto X_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), X);
+  auto X_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), X);
   auto v_h = X_h.data();
   const size_t numElements = X_h.size();
   if(numElements == 0){ return; }

@@ -1,17 +1,18 @@
 #ifndef TUCKER_KOKKOS_MPI_TENSOR_HPP_
 #define TUCKER_KOKKOS_MPI_TENSOR_HPP_
 
-#include "Tucker_Utils.hpp"
+#include "./impl/TuckerMpi_MPIWrapper.hpp"
+#include "./impl/Tucker_stdvec_view_conversion_helpers.hpp"
+#include "TuckerMpi_Distribution.hpp"
 #include "TuckerOnNode_Tensor.hpp"
-#include "TuckerMpi_MPIWrapper.hpp"
 #include <Kokkos_Random.hpp>
 #include <Kokkos_StdAlgorithms.hpp>
 #include <Kokkos_Core.hpp>
 #include <numeric>
 
 namespace TuckerMpi{
-
 namespace impl{
+
 template<class Enable, class ScalarType, class ...Properties>
 struct TensorTraits;
 

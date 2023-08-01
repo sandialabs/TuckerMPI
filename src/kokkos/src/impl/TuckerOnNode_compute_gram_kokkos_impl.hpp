@@ -1,8 +1,6 @@
 #ifndef TUCKERKOKKOS_COMP_GRAM_KOKKOS_IMPL_HPP_
 #define TUCKERKOKKOS_COMP_GRAM_KOKKOS_IMPL_HPP_
 
-#include "Tucker_BlasWrapper.hpp"
-#include "TuckerOnNode_Tensor.hpp"
 #include "Tucker_syrk_kokkos.hpp"
 
 namespace TuckerOnNode{
@@ -44,7 +42,7 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
     const ScalarType alpha = 1;
     const ScalarType beta = 0;
     umv_type Aview(Y.data().data(), Y.extent(0), ncols);
-    Tucker::syrk_kokkos("U", "N", alpha, Aview, beta, C);
+    Tucker::impl::syrk_kokkos("U", "N", alpha, Aview, beta, C);
   }
 
   else
@@ -66,7 +64,7 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
       const ScalarType beta = (i==0) ? 0 : 1;
       auto Aptr = Y_rawPtr+i*nrows*ncols;
       umv_type Aview(Aptr, ncols, nrows);
-      Tucker::syrk_kokkos("U", "T", alpha, Aview, beta, C);
+      Tucker::impl::syrk_kokkos("U", "T", alpha, Aview, beta, C);
    }
   }
 }

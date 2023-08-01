@@ -2,7 +2,6 @@
 #define TUCKERKOKKOS_COMP_GRAM_HOST_IMPL_HPP_
 
 #include "Tucker_BlasWrapper.hpp"
-#include "TuckerOnNode_Tensor.hpp"
 
 namespace TuckerOnNode{
 namespace impl{

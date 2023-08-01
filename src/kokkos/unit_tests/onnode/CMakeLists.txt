@@ -4,7 +4,7 @@ macro(add_utest_kokkos TESTNAME TESTSRCS GTEST_PATH)
   add_executable(${testNameFinal} ${TESTSRCS} ${GTEST_PATH})
   target_link_libraries(
     ${testNameFinal}
-    ${KokkosOnlyTuckerLib} ${ALL_TPLS_NEEDED}
+    ${KokkosOnlyTuckerLib} ${TUCKER_ALL_TPLS_NEEDED}
     GTest::gtest_main)
 
   add_test(NAME ${testNameFinal} COMMAND ${testNameFinal})
@@ -30,7 +30,5 @@ add_utest_kokkos(${TEST1} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST1}.cc ${GTEST_MAIN})
 
 add_subdirectory(test_transform_slices_3x5x7x11)
 
-# set(TEST1 tensor)
-# add_utest_kokkos(${TEST1} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST1}.cc)
-# set(TEST2 tucker_kokkosonly_ttm_using_kernels_gemm)
-# add_utest_kokkos(${TEST2} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST2}.cc)
+set(TEST1 test_compute_slice_metrics)
+add_utest_kokkos(${TEST1} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST1}.cc)

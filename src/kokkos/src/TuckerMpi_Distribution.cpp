@@ -162,4 +162,4 @@ void Distribution::updateProcessorGrid(const MPI_Comm& newcomm)
   grid_.squeeze(newProcs,newcomm);
 }
 
-} /* namespace TuckerMPI */
+}

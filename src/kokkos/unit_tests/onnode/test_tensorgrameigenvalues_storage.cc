@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
-#include "TuckerOnNode_TensorGramEigenvalues.hpp"
-#include <Kokkos_Core.hpp>
+#include "TuckerOnNode.hpp"
 
 using namespace TuckerOnNode;
 
@@ -46,7 +45,7 @@ protected:
   }
 
   using scalar_t = double;
-  using tt_t = TensorGramEigenvalues<scalar_t>;
+  using tt_t = impl::TensorGramEigenvalues<scalar_t>;
   using slicing_info_view_t = Kokkos::View<Tucker::impl::PerModeSliceInfo*, Kokkos::HostSpace>;
   using eigvals_rank1_view_t = Kokkos::View<scalar_t*, Kokkos::LayoutLeft>;
 
@@ -186,7 +185,7 @@ TEST_F(TensorGramEigvalsFixA, move_assign){
 
 TEST_F(TensorGramEigvalsFixA, copy_cnstr_const_view){
   tt_t T(eigvals_, perModeSlicingInfo_);
-  TensorGramEigenvalues<const scalar_t> b = T;
+  impl::TensorGramEigenvalues<const scalar_t> b = T;
   auto f = b.eigenvalues(0);
   //f(0) = 1; //this MUST fail to compile for the test to be correct
 }

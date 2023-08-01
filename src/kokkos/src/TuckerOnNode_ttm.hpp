@@ -1,6 +1,7 @@
 #ifndef TTM_TOPLEVEL_HPP_
 #define TTM_TOPLEVEL_HPP_
 
+#include "TuckerOnNode_Tensor.hpp"
 #if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
 #include "./impl/TuckerOnNode_ttm_using_host_blas_impl.hpp"
 #endif
@@ -20,10 +21,10 @@ void ttm(Tensor<ScalarType, TensorProperties...> X,
 {
 
   // constraints
-  using tensor_type       = Tensor<ScalarType, TensorProperties...>;
-  using tensor_layout     = typename tensor_type::traits::array_layout;
+  using tensor_type   = Tensor<ScalarType, TensorProperties...>;
+  using tensor_layout = typename tensor_type::traits::array_layout;
   static_assert(std::is_same_v<tensor_layout, Kokkos::LayoutLeft>,
-		"TuckerOnNode::ttm: supports tensors with LayoutLeft");
+		"TuckerOnNode::ttm: currently supports tensors with LayoutLeft");
 
   // preconditions
   if(Utransp) {

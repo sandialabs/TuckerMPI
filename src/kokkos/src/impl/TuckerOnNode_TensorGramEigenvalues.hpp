@@ -6,6 +6,7 @@
 #include <Kokkos_StdAlgorithms.hpp>
 
 namespace TuckerOnNode{
+namespace impl{
 
 template<class ScalarType, class MemorySpace = Kokkos::DefaultExecutionSpace::memory_space>
 class TensorGramEigenvalues
@@ -111,5 +112,5 @@ private:
   slicing_info_view_t perModeSlicingInfo_ = {};
 };
 
-}
+}}
 #endif

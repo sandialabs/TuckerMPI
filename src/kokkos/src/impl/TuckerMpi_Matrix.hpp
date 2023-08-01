@@ -2,11 +2,11 @@
 #ifndef MATRIX_MPI_HPP_
 #define MATRIX_MPI_HPP_
 
-#include "TuckerMpi_Map.hpp"
 #include "mpi.h"
 #include <Kokkos_Core.hpp>
 
 namespace TuckerMpi {
+namespace impl{
 
 template <class scalar_t, class ...Ps>
 class Matrix {
@@ -38,8 +38,7 @@ public:
   Matrix() = default;
   ~Matrix() = default;
 
-  auto & getLocalMatrix()       { return M_; }
-
+  auto & getLocalMatrix() { return M_; }
   size_t localSize() const{ return M_.size(); }
   int getGlobalNumRows() const { return globalRows_; }
   int getLocalNumRows() const  { return M_.extent(0); }
@@ -55,5 +54,5 @@ private:
   const MPI_Comm * comm_ = nullptr;
 };
 
-}
+}} // end namespace impl::TuckerMpi
 #endif /* MATRIX_MPI_HPP_ */

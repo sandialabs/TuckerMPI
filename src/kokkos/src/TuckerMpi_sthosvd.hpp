@@ -5,9 +5,7 @@
 
 namespace TuckerMpi{
 
-enum class Method{
-  NewGram
-};
+enum class Method{ NewGram };
 
 template <class ScalarType, class ...Properties, class TruncatorType>
 [[nodiscard]] auto sthosvd(Method method,

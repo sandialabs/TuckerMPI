@@ -1,9 +1,8 @@
 #ifndef TUCKER_TTM_USING_KOKKOS_KERNELS_HPP_
 #define TUCKER_TTM_USING_KOKKOS_KERNELS_HPP_
 
-#include "TuckerOnNode_Tensor.hpp"
-#include <Kokkos_Core.hpp>
 #include <KokkosBlas3_gemm.hpp>
+#include <Kokkos_Core.hpp>
 
 namespace TuckerOnNode{
 namespace impl{

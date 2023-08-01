@@ -1,6 +1,7 @@
 #ifndef TUCKERKOKKOS_COMP_GRAM_HPP_
 #define TUCKERKOKKOS_COMP_GRAM_HPP_
 
+#include "TuckerOnNode_Tensor.hpp"
 #include "./impl/TuckerOnNode_compute_gram_host_impl.hpp"
 #include "./impl/TuckerOnNode_compute_gram_kokkos_impl.hpp"
 
@@ -19,9 +20,8 @@ auto compute_gram(Tensor<ScalarType, Properties...> Y,
   // constraints
   static_assert(   std::is_same_v<tensor_layout, Kokkos::LayoutLeft>
 		&& std::is_floating_point_v<tensor_value_type>,
-		   "TuckerOnNode::impl::sthosvd: supports tensors with LayoutLeft" \
+		   "TuckerOnNode::compute_gram: supports tensors with LayoutLeft" \
 		   "and floating point scalar");
-
 
   const std::size_t nrows = Y.extent(n);
   Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space> S_d("S", nrows, nrows);
