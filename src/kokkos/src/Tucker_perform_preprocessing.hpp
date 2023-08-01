@@ -2,8 +2,7 @@
 #define TUCKER_PERFORM_PREPROCESSING_HPP_
 
 #include "TuckerOnNode_Tensor_io.hpp"
-
-// #include "Tucker_normalizes.hpp"
+#include "Tucker_normalizes.hpp"
 
 namespace Tucker{
 
