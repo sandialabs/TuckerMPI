@@ -103,5 +103,28 @@ void write_tensor_binary(const Tensor<ScalarType, MemorySpace> X,
   }
 }
 
+template<
+  class ScalarType, class ViewDataType,
+  class ... ViewParams>
+void write_scale_shift(const int mode,
+			  const int sizeOfModeDim,
+        const Kokkos::View<ViewDataType, ViewParams...> scales,
+        const Kokkos::View<ViewDataType, ViewParams...> shifts,
+        const char* scale_file)
+{
+  std::ofstream outStream(scale_file);
+
+  outStream << mode << std::endl;
+
+  // Set output precision to match ScalarType representation (8 or 16)
+  outStream << std::fixed << std::setprecision(std::numeric_limits<ScalarType>::digits);
+  for(int i=0; i<sizeOfModeDim; i++)
+  {
+    outStream << scales(i) << " " << shifts(i) << std::endl;
+  }
+
+  outStream.close();
+}
+
 } // end namespace Tucker
 #endif
