@@ -64,7 +64,7 @@ struct CopyFactorData
 
 template<class DataType, class ...Props, class SourceViewType>
 void appendFactorsAndUpdateSliceInfo(int mode,
-				     Kokkos::View<DataType, Props...> dest,
+				     Kokkos::View<DataType, Props...> & dest,
 				     SourceViewType src,
 				     ::Tucker::impl::PerModeSliceInfo & sliceInfo)
 {
