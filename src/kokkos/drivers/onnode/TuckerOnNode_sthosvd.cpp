@@ -29,6 +29,21 @@ int main(int argc, char* argv[])
      * preprocessing
      */
     const int scaleMode = inputs.scale_mode;
+
+    auto writeScalesShifts = [=](auto scales, auto shifts){
+      auto scales_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), scales);
+      auto shifts_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), shifts);
+      const std::string scale_file = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_scale.txt";
+      std::ofstream outStream(scale_file);
+      outStream << scaleMode << std::endl;
+      // Set output precision to match ScalarType representation (8 or 16)
+      outStream << std::fixed << std::setprecision(std::numeric_limits<scalar_t>::digits);
+      for(int i=0; i<X.extent(scaleMode); i++){
+        outStream << scales_h(i) << " " << shifts_h(i) << std::endl;
+      }
+      outStream.close();
+    };
+
     std::cout << "Compute statistics" << std::endl;
     const std::vector<Tucker::Metric> metrics{Tucker::Metric::MIN,  Tucker::Metric::MAX,
 					      Tucker::Metric::MEAN, Tucker::Metric::VARIANCE};
@@ -38,25 +53,13 @@ int main(int argc, char* argv[])
     if (inputs.scaling_type != "None"){
       std::cout << "Normalize tensor if needed" << std::endl;
       auto [scales, shifts] = TuckerOnNode::normalize_tensor(X, inputs.scaling_type, inputs.scale_mode, inputs.stdThresh);
-      // if(inputs.pre_fns_file){
-      //   std::ofstream outStream(scale_file);
-      //   outStream << mode << std::endl;
-      //   // Set output precision to match ScalarType representation (8 or 16)
-      //   outStream << std::fixed << std::setprecision(std::numeric_limits<ScalarType>::digits);
-      //   for(int i=0; i<sizeOfModeDim; i++){
-      //     outStream << scales(i) << " " << shifts(i) << std::endl;
-      //   }
-      //   outStream.close();
-      // }
-
-      //std::string scale_file = sthosvdDir + "/" + sthosvdFn + "_scale.txt";
-      //inputs.sthosvd_dir, inputs.sthosvd_fn,
-      // if (inputs.boolWritePreprocessed){
-      //   TuckerOnNode::write_tensor_binary(X, preFnsFile.c_str());
-      // }
+      writeScalesShifts(scales, shifts);
     }
     else{
       std::cout << "inputs.scaling_type == None, therefore we are not normalizing the tensor\n";
+    }
+    if (inputs.boolWriteTensorAfterPreprocessing){
+      TuckerOnNode::write_tensor_binary(X, inputs.pre_fns_file.c_str());
     }
 
     /*
@@ -146,7 +149,7 @@ int main(int argc, char* argv[])
 
       // FIXME: Compute the error bound based on the eigenvalues
 
-      if(inputs.boolWriteSTHOSVD){
+      if(inputs.boolWriteResultsOfSTHOSVD){
         writeExtentsOfCoreTensor(tt);
         writeExtentsOfGlobalTensor();
         writeCoreTensorToFile(tt);
