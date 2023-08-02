@@ -4,7 +4,7 @@ set(exename ${CMAKE_CURRENT_BINARY_DIR}/../../../${STHOSVD_DRIVER_NAME})
 
 set(ScriptsPython compare_utils.py compare_eigenvalues.py ascii_to_binary.py compare_core_tensor.py compare_factor_matrices.py)
 foreach(fi IN LISTS ScriptsPython)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../scripts_python/${fi} ${fi} COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../python_scripts/${fi} ${fi} COPYONLY)
 endforeach()
 
 configure_file(gold0.txt gold0.txt COPYONLY)
