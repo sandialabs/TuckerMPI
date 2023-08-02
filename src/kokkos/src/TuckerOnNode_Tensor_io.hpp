@@ -92,7 +92,7 @@ void write_tensor_binary(const Tensor<ScalarType, MemorySpace> X,
     int ndims = X.rank();
     if(nfiles != X.extent(ndims-1)) {
       std::ostringstream oss;
-      oss << "Tucker::writeTensorBinary(const Tensor<scalar_t>* Y, const char* filename: "
+      oss << "TuckerOnNode::writeTensorBinary: "
           << "The number of filenames you provided is "
           << nfiles << ", but the dimension of the tensor's last mode is "
           << X.extent(ndims-1);
@@ -101,29 +101,6 @@ void write_tensor_binary(const Tensor<ScalarType, MemorySpace> X,
     }
     // exportTimeSeries(Y,filename); >> TOREMOVE?
   }
-}
-
-template<
-  class ScalarType, class ViewDataType,
-  class ... ViewParams>
-void write_scale_shift(const int mode,
-			  const int sizeOfModeDim,
-        const Kokkos::View<ViewDataType, ViewParams...> scales,
-        const Kokkos::View<ViewDataType, ViewParams...> shifts,
-        const char* scale_file)
-{
-  std::ofstream outStream(scale_file);
-
-  outStream << mode << std::endl;
-
-  // Set output precision to match ScalarType representation (8 or 16)
-  outStream << std::fixed << std::setprecision(std::numeric_limits<ScalarType>::digits);
-  for(int i=0; i<sizeOfModeDim; i++)
-  {
-    outStream << scales(i) << " " << shifts(i) << std::endl;
-  }
-
-  outStream.close();
 }
 
 } // end namespace Tucker
