@@ -20,7 +20,7 @@ std::size_t count_eigvals_using_threshold(Kokkos::View<ScalarType*, Properties..
   std::size_t nrows = eigvals.extent(0);
   std::size_t numEvecs = nrows;
   ScalarType sum = 0;
-  for(std::size_t i=nrows-1; i==0; i--) {
+  for(int i=nrows-1; i>=0; i--) {
     sum += std::abs(eigvals[i]);
     if(sum > thresh) {
       break;
