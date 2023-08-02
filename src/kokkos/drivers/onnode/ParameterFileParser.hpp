@@ -14,11 +14,11 @@ template<class ScalarType>
 struct InputParameters
 {
   int nd;
-  bool boolAuto;
+  bool boolAutoRankDetermination;
   bool boolSTHOSVD;
-  bool boolWriteSTHOSVD;
+  bool boolWriteResultsOfSTHOSVD;
   bool boolPrintOptions;
-  bool boolWritePreprocessed;
+  bool boolWriteTensorAfterPreprocessing;
   bool boolUseLQ;
   ScalarType tol;
   ScalarType stdThresh;
@@ -52,7 +52,7 @@ public:
   {
     if (boolPrintOptions) {
       std::cout << "If true, automatically determine rank; otherwise, use the user-defined ranks\n";
-      std::cout << "- Automatic rank determination = " << (boolAuto ? "true" : "false") << std::endl << std::endl;
+      std::cout << "- Automatic rank determination = " << (boolAutoRankDetermination ? "true" : "false") << std::endl << std::endl;
 
       std::cout << "Used for automatic rank determination; the desired error rate\n";
       std::cout << "- SV Threshold = " << tol << std::endl << std::endl;
@@ -77,23 +77,23 @@ public:
       std::cout << "- Stats file = " << stats_file << std::endl << std::endl;
 
       std::cout << "If true, write the preprocessed data to a file\n";
-      std::cout << "- Write preprocessed data = " << (boolWritePreprocessed ? "true" : "false") << std::endl << std::endl;
+      std::cout << "- Write tensor after preprocessing = " << (boolWriteTensorAfterPreprocessing ? "true" : "false") << std::endl << std::endl;
 
       std::cout << "File containing a list of filenames to output the scaled data into\n";
       std::cout << "- Preprocessed output file list = " << pre_fns_file << std::endl << std::endl;
 
       std::cout << "If true, record the result of ST-HOSVD (the core tensor and all factors)\n";
-      std::cout << "- Write STHOSVD result = " << (boolWriteSTHOSVD ? "true" : "false") << std::endl << std::endl;
+      std::cout << "- Write STHOSVD result = " << (boolWriteResultsOfSTHOSVD ? "true" : "false") << std::endl << std::endl;
 
       std::cout << "Directory location of ST-HOSVD output files\n";
-      if(boolWriteSTHOSVD) std::cout << "NOTE: Please ensure that this directory actually exists!\n";
+      if(boolWriteResultsOfSTHOSVD) std::cout << "NOTE: Please ensure that this directory actually exists!\n";
       std::cout << "- STHOSVD directory = " << sthosvd_dir << std::endl << std::endl;
 
       std::cout << "Base name of ST-HOSVD output files\n";
       std::cout << "- STHOSVD file prefix = " << sthosvd_fn << std::endl << std::endl;
 
       std::cout << "Directory to place singular value files into\n";
-      if(boolWriteSTHOSVD) std::cout << "NOTE: Please ensure that this directory actually exists!\n";
+      if(boolWriteResultsOfSTHOSVD) std::cout << "NOTE: Please ensure that this directory actually exists!\n";
       std::cout << "- SV directory = " << sv_dir << std::endl << std::endl;
 
       std::cout << "Base name for writing the singular value files\n";
@@ -113,8 +113,8 @@ private:
     dataTensorDims_ = parse_multivalued_field<int>(fileAsStrings, "Global dims");
     nd = dataTensorDims_.size();
 
-    boolAuto = string_parse<bool>(fileAsStrings, "Automatic rank determination", false);
-    if (!boolAuto) {
+    boolAutoRankDetermination = string_parse<bool>(fileAsStrings, "Automatic rank determination", false);
+    if (!boolAutoRankDetermination) {
       coreTensorDims_ = parse_multivalued_field<int>(fileAsStrings, "Ranks");
       std::cout << "Global dimensions of the core tensor is fixed:\n";
 
@@ -124,9 +124,9 @@ private:
     }
 
     boolSTHOSVD           = string_parse<bool>(fileAsStrings, "Perform STHOSVD", false);
-    boolWriteSTHOSVD      = string_parse<bool>(fileAsStrings, "Write core tensor and factor matrices", false);
+    boolWriteResultsOfSTHOSVD      = string_parse<bool>(fileAsStrings, "Write core tensor and factor matrices", false);
     boolPrintOptions      = string_parse<bool>(fileAsStrings, "Print options", false);
-    boolWritePreprocessed = string_parse<bool>(fileAsStrings, "Write preprocessed data", false);
+    boolWriteTensorAfterPreprocessing = string_parse<bool>(fileAsStrings, "Write preprocessed data", false);
     boolUseLQ             = string_parse<bool>(fileAsStrings, "Compute SVD via LQ", false);
     tol                   = string_parse<ScalarType>(fileAsStrings, "SV Threshold", 1e-6);
     stdThresh             = string_parse<ScalarType>(fileAsStrings, "STD Threshold", 1e-9);
@@ -151,13 +151,13 @@ private:
       std::abort();
     }
 
-    if(!boolAuto && !coreTensorDims_) {
+    if(!boolAutoRankDetermination && !coreTensorDims_) {
       std::cerr << "ERROR: Please either enable Automatic rank determination, ";
       std::cerr << "or provide the desired core tensor size via the Ranks parameter\n";
       std::abort();
     }
 
-    if(!boolAuto && coreTensorDims_){
+    if(!boolAutoRankDetermination && coreTensorDims_){
       int coreTensorDimsSize = coreTensorDims_.value().size();
       if(coreTensorDimsSize != 0 && coreTensorDimsSize != nd){
         std::cerr << "Error: The size of the ranks array (" << coreTensorDimsSize;
