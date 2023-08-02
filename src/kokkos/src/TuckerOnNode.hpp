@@ -20,6 +20,7 @@
 #include "Tucker_compute_slice_metrics.hpp"
 #include "Tucker_write_statistics.hpp"
 #include "Tucker_transform_slices.hpp"
+#include "Tucker_perform_preprocessing.hpp"
 
 // finally functions related/needed by sthosvd
 #include "TuckerOnNode_compute_gram.hpp"
