@@ -28,7 +28,7 @@ else()
   message("eigenvalues comparison succeeded!")
 endif()
 
-set(CMD "python3 compare_core_tensor.py")
+set(CMD "python3 compare_core_tensor.py --rtol ${EIGVAL_COMPARISON_RELTOL} --atol ${EIGVAL_COMPARISON_ABSTOL}")
 execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
 if(RES)
   message(FATAL_ERROR "core tensor comparison failed")
