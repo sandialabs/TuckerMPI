@@ -2,8 +2,10 @@
 set(testname test_sthosvd_1)
 set(exename ${CMAKE_CURRENT_BINARY_DIR}/../../../${STHOSVD_DRIVER_NAME})
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../compare_eigenvalues.py compare_eigenvalues.py COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../ascii_to_binary.py ascii_to_binary.py COPYONLY)
+set(ScriptsPython compare_utils.py compare_eigenvalues.py ascii_to_binary.py)
+foreach(fi IN LISTS ScriptsPython)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../scripts_python/${fi} ${fi} COPYONLY)
+endforeach()
 
 configure_file(gold0.txt gold0.txt COPYONLY)
 configure_file(gold1.txt gold1.txt COPYONLY)
@@ -20,7 +22,7 @@ add_test(NAME ${testname}
   -DSKIPROWS=3
   -DEXENAME=${exename}
   -DOUTDIR=${CMAKE_CURRENT_BINARY_DIR}
-  -DEIGVAL_COMPARISON_RELTOL="1e-9"
-  -DEIGVAL_COMPARISON_ABSTOL="1e-11"
+  -DEIGVAL_COMPARISON_RELTOL=1e-9
+  -DEIGVAL_COMPARISON_ABSTOL=1e-11
   -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
 )
