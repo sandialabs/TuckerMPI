@@ -97,7 +97,7 @@ auto normalize_tensor(const TuckerOnNode::Tensor<ScalarType, Props...> & X,
 
   //
   // 3. use scales and shifts to normalize tensor data
-  Tucker::transform_slices(X, scaleMode, scales, shifts);
+  transform_slices(X, scaleMode, scales, shifts);
 
   return std::pair(scales, shifts);
 }
