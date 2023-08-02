@@ -12,5 +12,4 @@ if __name__== "__main__":
     args = parser.parse_args()
 
     data = np.loadtxt(args.inFile, skiprows=args.rowsToSkipWhenReading)
-    print(data)
     data.tofile(args.outFile, format='%20.15f')
