@@ -21,7 +21,46 @@ int main(int argc, char* argv[])
     std::puts("FAILED");
     return 0;
   }
-
+  if (inputs.in_fns_file.compare("myraw.txt") != 0){
+    std::puts("FAILED");
+    return 0;
+  }
+  if (!inputs.boolSTHOSVD){
+    std::puts("FAILED");
+    return 0;
+  }
+  if(!inputs.boolWriteResultsOfSTHOSVD){
+    std::puts("FAILED");
+    return 0;
+  }
+  if (inputs.scaling_type.compare("Somestring") != 0){
+    std::puts("FAILED");
+    return 0;
+  }
+  if ( (inputs.scale_mode - 123) > 1e-10 ){
+    std::puts("FAILED");
+    return 0;
+  }
+  if (inputs.sthosvd_dir.compare("mycompressed") != 0){
+    std::puts("FAILED");
+    return 0;
+  }
+  if (inputs.sthosvd_fn.compare("sthosvd_myprefix") != 0){
+    std::puts("FAILED");
+    return 0;
+  }
+  if (inputs.sv_dir.compare("./somedir") != 0){
+    std::puts("FAILED");
+    return 0;
+  }
+  if (inputs.sv_fn.compare("mysvprefix") != 0){
+    std::puts("FAILED");
+    return 0;
+  }
+  if (!inputs.boolPrintOptions){
+    std::puts("FAILED");
+    return 0;
+  }
   std::puts("PASSED");
   return 0;
 }
