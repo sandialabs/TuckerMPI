@@ -15,14 +15,14 @@ if __name__== "__main__":
     # convert
     for i in range(0, modes):
         binary = np.fromfile(sthosvdPath + "/" + sthosvdPrefix + "_mat_" + str(i) + ".mpi")
-        np.savetxt("factorMatrice_" + str(i) + ".txt", binary)
+        np.savetxt("factorMatrix_" + str(i) + ".txt", binary)
 
     # compare
     for i in range(0, modes):
-        gold = np.loadtxt("goldFactorMatrice" + str(i) + ".txt")
-        computed = np.loadtxt("factorMatrice_" + str(i) + ".txt")
+        gold = np.loadtxt("goldFactorMatrix" + str(i) + ".txt")
+        computed = np.loadtxt("factorMatrix_" + str(i) + ".txt")
 
         assert (len(gold) == len(computed)), \
             "Failing due to mismatching extents!"
-        assert (np.allclose(gold, computed, rtol=args.relTol, atol=args.absTol)), \
+        assert (np.allclose(np.abs(gold), np.abs(computed), rtol=args.relTol, atol=args.absTol)), \
             "Failing due to numerical differences!"

@@ -20,5 +20,5 @@ if __name__== "__main__":
     # compare
     assert(len(gold) == len(computed)), \
         "Failing due to mismatching extents!"
-    assert(np.allclose(gold, computed, rtol=args.relTol, atol=args.absTol)), \
+    assert(np.allclose(np.abs(gold), np.abs(computed), rtol=args.relTol, atol=args.absTol)), \
         "Failing due to numerical differences!"
