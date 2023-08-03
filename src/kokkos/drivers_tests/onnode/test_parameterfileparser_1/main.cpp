@@ -3,8 +3,13 @@
 
 int main(int argc, char* argv[])
 {
+  #ifdef PARAM1
+  std::string filename = "paramfile_1.txt";
+  #else
+  std::string filename = "paramfile_2.txt";
+  #endif
   const auto paramfn = Tucker::parse_cmdline_or(argc, (const char**)argv,
-						"--parameter-file", "paramfile.txt");
+						"--parameter-file", filename);
   const TuckerOnNode::InputParameters<double> inputs(paramfn);
 
   const auto globdims = inputs.dimensionsOfDataTensor();
@@ -13,10 +18,33 @@ int main(int argc, char* argv[])
     std::puts("FAILED");
     return 0;
   }
+
+  const auto ranks_optional = inputs.dimensionsOfCoreTensor();
+  #ifdef PARAM1
+  if (ranks_optional){
+    std::puts("FAILED");
+    return 0;
+  }
   if (!inputs.boolAutoRankDetermination){
     std::puts("FAILED");
     return 0;
   }
+  #else
+  if (!ranks_optional){
+    std::puts("FAILED");
+    return 0;
+  }
+  if (inputs.boolAutoRankDetermination){
+    std::puts("FAILED");
+    return 0;
+  }
+  const std::vector<int> goldRanks = {2,2,2,2,1,1};
+  if (ranks_optional.value() != goldRanks){
+    std::puts("FAILED");
+    return 0;
+  }
+  #endif
+
   if ( (inputs.tol - 0.123456) > 1e-10 ){
     std::puts("FAILED");
     return 0;
