@@ -8,7 +8,7 @@
 
 namespace TuckerOnNode{
 
-auto check_scaling_type_else_throw(const std::string & scalingType){
+void check_scaling_type_else_throw(const std::string & scalingType){
   if(scalingType != "Max" &&
      scalingType != "MinMax" &&
      scalingType != "StandardCentering")
