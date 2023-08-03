@@ -12,7 +12,7 @@ namespace Tucker{
 
 template <class DataType, class ...Properties>
 void fill_rank1_view_from_binary_file(const Kokkos::View<DataType, Properties...> & v,
-				      const char* filename)
+				      const std::string & filename)
 {
   using view_type = Kokkos::View<DataType, Properties...>;
   using mem_space = typename view_type::memory_space;
@@ -89,8 +89,8 @@ void write_view_to_stream_inline(std::ostream & out,
 }
 
 template <class DataType, class ...Properties>
-void export_view_binary(const Kokkos::View<DataType, Properties...> & v,
-			const char* filename)
+void write_view_to_binary_file(const Kokkos::View<DataType, Properties...> & v,
+			       const std::string & filename)
 {
   using view_type = Kokkos::View<DataType, Properties...>;
   using value_type = typename view_type::non_const_value_type;
@@ -105,7 +105,7 @@ void export_view_binary(const Kokkos::View<DataType, Properties...> & v,
     ofs.close();
   }
   else{
-    throw std::runtime_error("export_view_binary: currently only supports contiguous Views");
+    throw std::runtime_error("write_view_to_binary_file: currently only supports contiguous Views");
   }
 }
 

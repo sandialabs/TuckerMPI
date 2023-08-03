@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
         // Create the filename by appending the mode #
         const std::string factorFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_mat_" + std::to_string(mode) + ".mpi";
         std::cout << "Writing factor " << mode << " to " << factorFilename << std::endl;
-        Tucker::export_view_binary(factorization.factorMatrix(mode), factorFilename.c_str());
+        Tucker::write_view_to_binary_file(factorization.factorMatrix(mode), factorFilename.c_str());
       }
     };
 
