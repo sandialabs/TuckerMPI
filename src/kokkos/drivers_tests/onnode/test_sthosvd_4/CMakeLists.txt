@@ -1,7 +1,11 @@
 set(testname test_sthosvd_4)
 set(exename ${CMAKE_CURRENT_BINARY_DIR}/../../../${STHOSVD_DRIVER_NAME})
 
-set(TXT_FILE_TO_COPY raw.txt 7x9x10.txt paramfile.txt)
+set(TXT_FILE_TO_COPY
+  gold0.txt gold1.txt gold2.txt goldCoreTensor.txt
+  goldFactorMatrix0.txt goldFactorMatrix1.txt goldFactorMatrix2.txt
+  raw.txt 7x9x10.txt paramfile.txt
+)
 foreach(fi IN LISTS TXT_FILE_TO_COPY)
   configure_file(${fi} ${fi} COPYONLY)
 endforeach()

@@ -4,14 +4,7 @@ Informations to know how the gold files were generated.
   - using same results used in the corresponding mpi drivers tests
 
 - test_sthosvd_4
-  - gold files computed using the "old" MPI code after CHANGES
-    - master branch, sha a80c79582a3a8f63356f94faa181448b72ef482b
-      - CHANGES
-        - line 42 in src/mpi/TuckerMPI_Distribution.cpp: add '#include <limits>'
-        - line 73 in src/mpi/TuckerMPI_IO_Util.hpp: remove sqrt() and std::abs()
-    - openmpi version 1.10.2
-    - gcc version 11.3.0
-    - OS: Ubuntu 22.04.2 LTS
+  - using same results used in the corresponding mpi drivers tests
   - test purpose
-    - parameter "Automatic rank determination = false" (and parameter "Ranks" is useful)
+    - parameter "Automatic rank determination = false" (and parameter "Ranks" is define and useful)
     - parameter "Scaling type = Max"
