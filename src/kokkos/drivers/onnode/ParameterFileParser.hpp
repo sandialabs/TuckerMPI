@@ -26,7 +26,14 @@ struct InputParameters
   std::string sthosvd_fn;
   std::string sv_dir;
   std::string sv_fn;
+
+  // is the file which inside contains list of files to read from,
+  // see raw.txt inside the driver tests
   std::string in_fns_file;
+
+  // rawDataFilenames: contains each row read from in_fns_file
+  std::vector<std::string> rawDataFilenames;
+
   std::string pre_fns_file;
   std::string stats_file;
   int scale_mode;
@@ -134,6 +141,7 @@ private:
     sv_dir                = string_parse<std::string>(fileAsStrings, "SV directory", ".");
     sv_fn                 = string_parse<std::string>(fileAsStrings, "SV file prefix", "sv");
     in_fns_file           = string_parse<std::string>(fileAsStrings, "Input file list", "raw.txt");
+    rawDataFilenames      = read_file_as_strings(in_fns_file);
     pre_fns_file          = string_parse<std::string>(fileAsStrings, "Preprocessed output file list", "pre.txt");
     stats_file            = string_parse<std::string>(fileAsStrings, "Stats file", "stats.txt");
     scale_mode            = string_parse<int>(fileAsStrings, "Scale mode", nd-1);

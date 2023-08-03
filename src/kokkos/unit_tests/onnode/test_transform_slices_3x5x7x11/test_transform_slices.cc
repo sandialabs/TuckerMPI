@@ -52,7 +52,7 @@ TEST(tuckerkokkos, transform_slices_3x5x7x11_mode0)
 
   std::vector<int> dims = {3, 5, 7, 11};
   TuckerOnNode::Tensor<scalar_t> tensor(dims);
-  TuckerOnNode::import_tensor_binary(tensor, "./gold_3x5x7x11.bin");
+  TuckerOnNode::read_tensor_binary(tensor, "./gold_3x5x7x11.bin");
 
   // Define scales and shifts
   Kokkos::View<scalar_t*> scales("scales", 3);
@@ -71,7 +71,7 @@ TEST(tuckerkokkos, transform_slices_3x5x7x11_mode0)
 
   // Read true solution from file
   TuckerOnNode::Tensor<scalar_t, Kokkos::HostSpace> true_sol_h(dims);
-  TuckerOnNode::import_tensor_binary(true_sol_h, "./gold_3x5x7x11_ss0.bin");
+  TuckerOnNode::read_tensor_binary(true_sol_h, "./gold_3x5x7x11_ss0.bin");
 
   const int mode = 0;
   TuckerOnNode::transform_slices(tensor, mode, scales, shifts);
@@ -86,7 +86,7 @@ TEST(tuckerkokkos, transform_slices_3x5x7x11_mode1)
 
   std::vector<int> dims = {3, 5, 7, 11};
   TuckerOnNode::Tensor<scalar_t> tensor(dims);
-  TuckerOnNode::import_tensor_binary(tensor, "./gold_3x5x7x11.bin");
+  TuckerOnNode::read_tensor_binary(tensor, "./gold_3x5x7x11.bin");
 
   Kokkos::View<scalar_t*> scales("scales", 5);
   auto scales_h = Kokkos::create_mirror(scales);
@@ -107,7 +107,7 @@ TEST(tuckerkokkos, transform_slices_3x5x7x11_mode1)
   Kokkos::deep_copy(shifts, shifts_h);
 
   TuckerOnNode::Tensor<scalar_t> true_sol_h(dims);
-  TuckerOnNode::import_tensor_binary(true_sol_h, "./gold_3x5x7x11_ss1.bin");
+  TuckerOnNode::read_tensor_binary(true_sol_h, "./gold_3x5x7x11_ss1.bin");
 
   const int mode = 1;
   TuckerOnNode::transform_slices(tensor, mode, scales, shifts);
@@ -121,7 +121,7 @@ TEST(tuckerkokkos, transform_slices_3x5x7x11_mode2)
   using scalar_t = double;
   std::vector<int> dims = {3, 5, 7, 11};
   TuckerOnNode::Tensor<scalar_t> tensor(dims);
-  TuckerOnNode::import_tensor_binary(tensor, "./gold_3x5x7x11.bin");
+  TuckerOnNode::read_tensor_binary(tensor, "./gold_3x5x7x11.bin");
 
   Kokkos::View<scalar_t*> scales("scales", 7);
   auto scales_h = Kokkos::create_mirror(scales);
@@ -140,7 +140,7 @@ TEST(tuckerkokkos, transform_slices_3x5x7x11_mode2)
   Kokkos::deep_copy(shifts, shifts_h);
 
   TuckerOnNode::Tensor<scalar_t> true_sol_h(dims);
-  TuckerOnNode::import_tensor_binary(true_sol_h, "./gold_3x5x7x11_ss2.bin");
+  TuckerOnNode::read_tensor_binary(true_sol_h, "./gold_3x5x7x11_ss2.bin");
 
   const int mode = 2;
   TuckerOnNode::transform_slices(tensor, mode, scales, shifts);
@@ -155,7 +155,7 @@ TEST(tuckerkokkos, transform_slices_3x5x7x11_mode3)
 
   std::vector<int> dims = {3, 5, 7, 11};
   TuckerOnNode::Tensor<scalar_t> tensor(dims);
-  TuckerOnNode::import_tensor_binary(tensor, "./gold_3x5x7x11.bin");
+  TuckerOnNode::read_tensor_binary(tensor, "./gold_3x5x7x11.bin");
 
   Kokkos::View<scalar_t*> scales("scales", 11);
   auto scales_h = Kokkos::create_mirror(scales);
@@ -178,7 +178,7 @@ TEST(tuckerkokkos, transform_slices_3x5x7x11_mode3)
   Kokkos::deep_copy(shifts, shifts_h);
 
   TuckerOnNode::Tensor<scalar_t> true_sol_h(dims);
-  TuckerOnNode::import_tensor_binary(true_sol_h, "./gold_3x5x7x11_ss3.bin");
+  TuckerOnNode::read_tensor_binary(true_sol_h, "./gold_3x5x7x11_ss3.bin");
 
   const int mode = 3;
   TuckerOnNode::transform_slices(tensor, mode, scales, shifts);

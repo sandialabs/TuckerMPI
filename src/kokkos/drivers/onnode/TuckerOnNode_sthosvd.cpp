@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
     const TuckerOnNode::InputParameters<scalar_t> inputs(paramfn);
     inputs.describe();
     TuckerOnNode::Tensor<scalar_t, memory_space> X(inputs.dimensionsOfDataTensor());
-    TuckerOnNode::read_tensor_binary(X, inputs.in_fns_file.c_str());
+    TuckerOnNode::read_tensor_binary(X, inputs.rawDataFilenames);
 
     /*
      * preprocessing
@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
       std::cout << "inputs.scaling_type == None, therefore we are not normalizing the tensor\n";
     }
     if (inputs.boolWriteTensorAfterPreprocessing){
-      TuckerOnNode::write_tensor_binary(X, inputs.pre_fns_file.c_str());
+      TuckerOnNode::write_tensor_binary(X, inputs.pre_fns_file);
     }
 
     /*
@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
     {
       const std::string coreFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_core.mpi";
       std::cout << "Writing core tensor to " << coreFilename << std::endl;
-      TuckerOnNode::export_tensor_binary(factorization.coreTensor(), coreFilename.c_str());
+      TuckerOnNode::write_tensor_binary(factorization.coreTensor(), coreFilename);
     };
 
     auto writeEachFactor = [=](auto factorization)
@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
         // Create the filename by appending the mode #
         const std::string factorFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_mat_" + std::to_string(mode) + ".mpi";
         std::cout << "Writing factor " << mode << " to " << factorFilename << std::endl;
-        Tucker::write_view_to_binary_file(factorization.factorMatrix(mode), factorFilename.c_str());
+        Tucker::write_view_to_binary_file(factorization.factorMatrix(mode), factorFilename);
       }
     };
 

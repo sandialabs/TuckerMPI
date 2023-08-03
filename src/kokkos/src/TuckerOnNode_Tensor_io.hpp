@@ -9,9 +9,10 @@
 namespace TuckerOnNode{
 
 template <class ScalarType, class ...Properties>
-void import_tensor_binary(Tensor<ScalarType, Properties...> X,
-			  const char* filename)
+void read_tensor_binary(Tensor<ScalarType, Properties...> X,
+			const std::string & filename)
 {
+  std::cout << " filename = " << filename << '\n';
   auto X_h = Tucker::create_mirror(X);
   Tucker::fill_rank1_view_from_binary_file(X_h.data(), filename);
   Tucker::deep_copy(X, X_h);
@@ -19,23 +20,19 @@ void import_tensor_binary(Tensor<ScalarType, Properties...> X,
 
 template <class ScalarType, class ...Properties>
 void read_tensor_binary(Tensor<ScalarType, Properties...> Y,
-			const char* filename)
+			const std::vector<std::string> & filenames)
 {
-  std::ifstream inStream(filename);
-  std::string temp;
-  int nfiles = 0;
-  while(inStream >> temp) { nfiles++; }
-  inStream.close();
-  if(nfiles != 1) {
-    throw std::runtime_error("readTensorBinary hardwired for one file only for now");
+  if(filenames.size() != 1) {
+    throw std::runtime_error("TuckerOnNode::read_tensor_binary: only supports one file for now");
   }
-  import_tensor_binary(Y, temp.c_str());
+  read_tensor_binary(Y, filenames[0]);
 }
 
 template <class ScalarType, class mem_space>
-void export_tensor_binary(const Tensor<ScalarType, mem_space> & Y,
-			  const char* filename)
+void write_tensor_binary(const Tensor<ScalarType, mem_space> & Y,
+			 const std::string & filename)
 {
+
   using tensor_type = Tensor<ScalarType, mem_space>;
   using layout      = typename tensor_type::traits::array_layout;
   static_assert(std::is_same_v<layout, Kokkos::LayoutLeft> ||
@@ -51,40 +48,6 @@ void export_tensor_binary(const Tensor<ScalarType, mem_space> & Y,
   const ScalarType* data = v_h.data();
   ofs.write((char*)data,numEntries*sizeof(ScalarType));
   ofs.close();
-}
-
-template <class ScalarType, class MemorySpace>
-void write_tensor_binary(const Tensor<ScalarType, MemorySpace> X,
-			  const char* filename)
-{
-  // Count the number of filenames
-  std::ifstream inStream(filename);
-
-  std::string temp;
-  int nfiles = 0;
-  while(inStream >> temp) {
-    nfiles++;
-  }
-
-  inStream.close();
-
-  if(nfiles == 1) {
-    export_tensor_binary(X,temp.c_str());
-  }
-  else {
-    throw std::runtime_error("write_tensor_binary using multiple files missing impl");
-
-    // int ndims = X.rank();
-    // if(nfiles != X.extent(ndims-1)) {
-    //   std::ostringstream oss;
-    //   oss << "TuckerOnNode::writeTensorBinary: "
-    //       << "The number of filenames you provided is "
-    //       << nfiles << ", but the dimension of the tensor's last mode is "
-    //       << X.extent(ndims-1);
-    //   throw std::runtime_error(oss.str());
-    // }
-    // // exportTimeSeries(Y,filename); >> TOREMOVE?
-  }
 }
 
 } // end namespace Tucker

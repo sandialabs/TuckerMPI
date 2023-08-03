@@ -72,9 +72,9 @@ void write_view_to_stream(std::ostream & out,
 }
 
 template <class DataType, class ...Properties>
-void write_view_to_stream_inline(std::ostream & out,
-				 const Kokkos::View<DataType, Properties...> & v,
-				 int precision = 8)
+void write_view_to_stream_singleline(std::ostream & out,
+				     const Kokkos::View<DataType, Properties...> & v,
+				     int precision = 8)
 {
   using view_type = Kokkos::View<DataType, Properties...>;
   static_assert(view_type::rank == 1, "view must have rank == 1");
