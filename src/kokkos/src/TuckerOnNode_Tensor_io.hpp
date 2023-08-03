@@ -9,23 +9,6 @@
 namespace TuckerOnNode{
 
 template <class ScalarType, class ...Properties>
-void output_tensor_to_stream(Tensor<ScalarType, Properties...> X,
-			     std::ostream & stream,
-			     int precision = 2)
-{
-  auto X_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), X);
-  auto v_h = X_h.data();
-  const size_t numElements = X_h.size();
-  if(numElements == 0){ return; }
-
-  for(size_t i=0; i<numElements; i++) {
-    stream << "data[" << i << "] = "
-	   << std::setprecision(precision)
-	   << v_h(i) << std::endl;
-  }
-}
-
-template <class ScalarType, class ...Properties>
 void import_tensor_binary(Tensor<ScalarType, Properties...> X,
 			  const char* filename)
 {
