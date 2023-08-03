@@ -1,5 +1,13 @@
-Global dims = 3 5 7 11
-
-TODO
-
-TODO
+Global dims = 3 5 7 11 1 1
+Automatic rank determination = true
+SV Threshold = 0.123456
+Input file list = myraw.txt
+Perform STHOSVD = true
+Write core tensor and factor matrices = true
+Scaling type = Somestring
+Scale mode = 123
+STHOSVD directory = mycompressed
+STHOSVD file prefix = sthosvd_myprefix
+SV directory = ./somedir
+SV file prefix = mysvprefix
+Print options = true
