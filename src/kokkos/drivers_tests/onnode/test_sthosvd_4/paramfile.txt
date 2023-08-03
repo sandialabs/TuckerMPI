@@ -1,0 +1,13 @@
+Global dims = 7 9 10
+Automatic rank determination = false
+Ranks = 4 2 5
+SV Threshold = 1e-2
+Input file list = raw.txt
+Scaling type = Max
+Scale mode = 0
+Perform STHOSVD = true
+STHOSVD directory = compressed
+STHOSVD file prefix = sthosvd
+SV directory = .
+SV file prefix = sv
+Print options = true
