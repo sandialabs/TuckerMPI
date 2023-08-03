@@ -1,5 +1,5 @@
 
-set(testname test_sthosvd_2)
+set(testname test_sthosvd_3)
 set(exename ${CMAKE_CURRENT_BINARY_DIR}/../../../${STHOSVD_DRIVER_NAME})
 
 set(TXT_FILE_TO_COPY
