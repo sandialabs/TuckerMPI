@@ -1,4 +1,5 @@
 add_subdirectory(test_sthosvd_1)
 add_subdirectory(test_sthosvd_2)
 add_subdirectory(test_sthosvd_3)
+add_subdirectory(test_sthosvd_4)
 add_subdirectory(test_parameterfileparser_1)

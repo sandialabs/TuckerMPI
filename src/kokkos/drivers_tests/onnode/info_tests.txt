@@ -2,3 +2,9 @@ Informations to know how the gold files were generated.
 
 - test_sthosvd_1, test_sthosvd_2, test_sthosvd_3
   - using same results used in the corresponding mpi drivers tests
+
+- test_sthosvd_4
+  - using same results used in the corresponding mpi drivers tests
+  - test purpose
+    - parameter "Automatic rank determination = false" (and parameter "Ranks" is define and useful)
+    - parameter "Scaling type = Max"
