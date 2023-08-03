@@ -159,9 +159,7 @@ int main(int argc, char* argv[])
 
     /* run for real */
     if(inputs.boolSTHOSVD){
-      if (!inputs.boolUseLQ){
-	sthosvdGram(truncator);
-      }
+      sthosvdGram(truncator);
     }
 
   } // local scope to ensure all Kokkos views are destructed appropriately

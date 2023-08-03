@@ -19,7 +19,6 @@ struct InputParameters
   bool boolWriteResultsOfSTHOSVD;
   bool boolPrintOptions;
   bool boolWriteTensorAfterPreprocessing;
-  bool boolUseLQ;
   ScalarType tol;
   ScalarType stdThresh;
   std::string scaling_type;
@@ -127,7 +126,6 @@ private:
     boolWriteResultsOfSTHOSVD      = string_parse<bool>(fileAsStrings, "Write core tensor and factor matrices", false);
     boolPrintOptions      = string_parse<bool>(fileAsStrings, "Print options", false);
     boolWriteTensorAfterPreprocessing = string_parse<bool>(fileAsStrings, "Write preprocessed data", false);
-    boolUseLQ             = string_parse<bool>(fileAsStrings, "Compute SVD via LQ", false);
     tol                   = string_parse<ScalarType>(fileAsStrings, "SV Threshold", 1e-6);
     stdThresh             = string_parse<ScalarType>(fileAsStrings, "STD Threshold", 1e-9);
     scaling_type          = string_parse<std::string>(fileAsStrings, "Scaling type", "None");
