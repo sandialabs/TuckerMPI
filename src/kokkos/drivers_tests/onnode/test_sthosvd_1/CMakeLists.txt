@@ -2,16 +2,14 @@
 set(testname test_sthosvd_1)
 set(exename ${CMAKE_CURRENT_BINARY_DIR}/../../../${STHOSVD_DRIVER_NAME})
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../compare_eigenvalues.py compare_eigenvalues.py COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../ascii_to_binary.py ascii_to_binary.py COPYONLY)
-
-configure_file(gold0.txt gold0.txt COPYONLY)
-configure_file(gold1.txt gold1.txt COPYONLY)
-configure_file(gold2.txt gold2.txt COPYONLY)
-configure_file(gold3.txt gold3.txt COPYONLY)
-configure_file(raw.txt raw.txt COPYONLY)
-configure_file(3x5x7x11.txt 3x5x7x11.txt COPYONLY)
-configure_file(paramfile.txt paramfile.txt COPYONLY)
+set(TXT_FILE_TO_COPY
+  gold0.txt gold1.txt gold2.txt gold3.txt goldCoreTensor.txt
+  goldFactorMatrix0.txt goldFactorMatrix1.txt goldFactorMatrix2.txt goldFactorMatrix3.txt
+  raw.txt 3x5x7x11.txt paramfile.txt
+)
+foreach(fi IN LISTS TXT_FILE_TO_COPY)
+  configure_file(${fi} ${fi} COPYONLY)
+endforeach()
 
 add_test(NAME ${testname}
   COMMAND ${CMAKE_COMMAND}
@@ -20,7 +18,12 @@ add_test(NAME ${testname}
   -DSKIPROWS=3
   -DEXENAME=${exename}
   -DOUTDIR=${CMAKE_CURRENT_BINARY_DIR}
-  -DEIGVAL_COMPARISON_RELTOL="1e-9"
-  -DEIGVAL_COMPARISON_ABSTOL="1e-11"
-  -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
+  -DPYTHON_COMPARE_SCRIPTS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/../../python_scripts
+  -DEIGVAL_COMPARISON_RELTOL=1e-9
+  -DEIGVAL_COMPARISON_ABSTOL=1e-11
+  -DCORETENSOR_COMPARISON_RELTOL=1e-9
+  -DCORETENSOR_COMPARISON_ABSTOL=1e-11
+  -DFACTORMATRIX_COMPARISON_RELTOL=1e-9
+  -DFACTORMATRIX_COMPARISON_ABSTOL=1e-11
+  -P ${CMAKE_CURRENT_SOURCE_DIR}/../test_compare_eigval_coretensor_factors.cmake
 )

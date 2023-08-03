@@ -1,7 +1,7 @@
 include(FindUnixCommands)
 
 # convert .txt into .bin files by running test.cmake
-set(SCRIPT_PY ${CMAKE_CURRENT_SOURCE_DIR}/../../../drivers_tests/ascii_to_binary.py)
+set(SCRIPT_PY ${CMAKE_CURRENT_SOURCE_DIR}/../../../drivers_tests/python_scripts/ascii_to_binary.py)
 list(APPEND TXT_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/gold_3x5x7x11.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/gold_3x5x7x11_ss0.txt
