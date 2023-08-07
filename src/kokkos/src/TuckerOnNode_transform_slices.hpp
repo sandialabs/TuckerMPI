@@ -1,7 +1,7 @@
 #ifndef TUCKER_KOKKOS_TRANSFORM_SLICES_HPP_
 #define TUCKER_KOKKOS_TRANSFORM_SLICES_HPP_
 
-#include "./impl/Tucker_transform_slices.hpp"
+#include "./impl/TuckerOnNode_transform_slices.hpp"
 
 namespace TuckerOnNode{
 

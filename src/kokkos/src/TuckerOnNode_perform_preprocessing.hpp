@@ -2,8 +2,8 @@
 #define TUCKER_PERFORM_PREPROCESSING_HPP_
 
 #include "Tucker_fwd.hpp"
-#include "Tucker_compute_slice_metrics.hpp"
-#include "Tucker_transform_slices.hpp"
+#include "TuckerOnNode_compute_slice_metrics.hpp"
+#include "TuckerOnNode_transform_slices.hpp"
 #include "./impl/Tucker_tensor_normalization.hpp"
 
 namespace TuckerOnNode{

@@ -18,10 +18,10 @@
 #include "Tucker_create_mirror.hpp"
 #include "Tucker_deep_copy.hpp"
 #include "TuckerOnNode_Tensor_io.hpp"
-#include "Tucker_compute_slice_metrics.hpp"
+#include "TuckerOnNode_compute_slice_metrics.hpp"
 #include "Tucker_write_statistics.hpp"
-#include "Tucker_transform_slices.hpp"
-#include "Tucker_perform_preprocessing.hpp"
+#include "TuckerOnNode_transform_slices.hpp"
+#include "TuckerOnNode_perform_preprocessing.hpp"
 
 // finally functions related/needed by sthosvd
 #include "TuckerOnNode_compute_gram.hpp"
