@@ -13,11 +13,23 @@ template<
   class MemorySpace = Kokkos::DefaultExecutionSpace::memory_space>
 class MetricData
 {
+  template <class ScalarType1, class ...Properties1>
+  friend auto compute_slice_metrics(Tensor<ScalarType1, Properties1...> Y,
+				    const int mode,
+				    const std::vector<Tucker::Metric> & metrics);
+
+  template<class ScalarType1, class MemorySpace1>
+  friend auto ::Tucker::create_mirror(MetricData<ScalarType1, MemorySpace1> d);
+
+  template<class ScalarType1, class MemorySpaceFrom, class MemorySpaceDest>
+  friend void ::Tucker::deep_copy(const MetricData<ScalarType1, MemorySpaceDest> & dest,
+				  const MetricData<ScalarType1, MemorySpaceFrom> & from);
 
 public:
   using map_t = Kokkos::UnorderedMap<Tucker::Metric, int, MemorySpace>;
   using HostMirror = MetricData<ScalarType, Kokkos::HostSpace>;
 
+private:
   template<class MapType, class ValuesType>
   MetricData(MapType map, ValuesType values)
     : values_(values), metricToColumnIndex_(map){}
@@ -51,6 +63,7 @@ public:
     Kokkos::deep_copy(metricToColumnIndex_, map_h);
   }
 
+public:
   KOKKOS_FUNCTION bool contains(Tucker::Metric key) const{
     const uint32_t ind = metricToColumnIndex_.find(key);
     return metricToColumnIndex_.valid_at(ind);
@@ -62,11 +75,10 @@ public:
     return Kokkos::subview(values_, Kokkos::ALL, colIndex);
   }
 
-  //FIXME: these need to be private and make deep_copy/create_mirror friends
+private:
   auto getValues() const { return values_; }
   auto getMap() const { return metricToColumnIndex_; }
 
-private:
   // each column contains all values of a given metric computed for all "slices"
   Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> values_ = {};
 
