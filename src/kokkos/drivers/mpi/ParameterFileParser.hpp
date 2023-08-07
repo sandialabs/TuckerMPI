@@ -19,11 +19,8 @@ struct InputParameters
   bool boolWriteSTHOSVD;
   bool boolPrintOptions;
   bool boolWritePreprocessed;
-  bool boolUseOldGram;
-  bool boolUseLQ;
   bool boolPrintSV;
   bool boolReconstruct;
-  bool useButterflyTSQR;
   ScalarType tol;
   ScalarType stdThresh;
 
@@ -35,9 +32,15 @@ struct InputParameters
   std::string sthosvd_fn;
   std::string sv_dir;
   std::string sv_fn;
+
+  // is the file which inside contains list of files to read from,
+  // see raw.txt inside the driver tests
   std::string in_fns_file;
+
+  // rawDataFilenames: contains each row read from in_fns_file
+  std::vector<std::string> rawDataFilenames;
+
   std::string pre_fns_file;
-  std::string reconstruct_report_file;
   std::string stats_file;
   std::string timing_file;
   int scale_mode;
@@ -110,12 +113,6 @@ public:
       std::cout << "If true, perform ST-HOSVD\n";
       std::cout << "- Perform STHOSVD = " << (boolSTHOSVD ? "true" : "false") <<  std::endl;
 
-      std::cout << "If true, use the old Gram algorithm; otherwise use the new one\n";
-      std::cout << "- Use old Gram = " << (boolUseOldGram ? "true" : "false") <<  std::endl;
-
-      std::cout << "Location of a report of the reconstruction errors \n";
-      std::cout << "- Reconstruction report file = " << reconstruct_report_file <<  std::endl;
-
       std::cout << "Location of statistics file containing min, max, mean, and std of each hyperslice\n";
       std::cout << "- Stats file = " << stats_file <<  std::endl;
 
@@ -176,11 +173,8 @@ private:
     boolWriteSTHOSVD        = string_parse<bool>(fileAsStrings, "Write core tensor and factor matrices", false);
     boolPrintOptions        = string_parse<bool>(fileAsStrings, "Print options", false);
     boolWritePreprocessed   = string_parse<bool>(fileAsStrings, "Write preprocessed data", false);
-    boolUseOldGram          = string_parse<bool>(fileAsStrings, "Use old Gram", false);
-    boolUseLQ               = string_parse<bool>(fileAsStrings, "Compute SVD via LQ", false);
     boolPrintSV             = string_parse<bool>(fileAsStrings, "Print factor matrices", false);
     boolReconstruct         = string_parse<bool>(fileAsStrings, "Reconstruct tensor", false);
-    useButterflyTSQR        = string_parse<bool>(fileAsStrings, "Use butterfly TSQR", false);
     tol                     = string_parse<ScalarType>(fileAsStrings, "SV Threshold", 1e-6);
     stdThresh               = string_parse<ScalarType>(fileAsStrings, "STD Threshold", 1e-9);
     proc_grid_dims          = parse_multivalued_field<int>(fileAsStrings, "Grid dims");
@@ -191,11 +185,10 @@ private:
     sv_dir                  = string_parse<std::string>(fileAsStrings, "SV directory", ".");
     sv_fn                   = string_parse<std::string>(fileAsStrings, "SV file prefix", "sv");
     in_fns_file             = string_parse<std::string>(fileAsStrings, "Input file list", "raw.txt");
+    rawDataFilenames        = read_file_as_strings(in_fns_file);
     pre_fns_file            = string_parse<std::string>(fileAsStrings, "Preprocessed output file list", "pre.txt");
-    reconstruct_report_file = string_parse<std::string>(fileAsStrings, "Reconstruction report file", "reconstruction.txt");
     stats_file              = string_parse<std::string>(fileAsStrings, "Stats file", "stats.txt");
     timing_file             = string_parse<std::string>(fileAsStrings, "Timing file", "runtime.csv");
-
     scale_mode              = string_parse<int>(fileAsStrings, "Scale mode", nd-1);
   }
 

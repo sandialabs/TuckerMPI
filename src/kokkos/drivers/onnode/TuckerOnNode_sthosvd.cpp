@@ -77,7 +77,6 @@ int main(int argc, char* argv[])
 	std::ofstream ofs(ss.str());
 	std::cout << "Writing singular values to " << ss.str() << std::endl;
 
-	// Determine the number of eigenvalues for this mode
 	auto eigvals = container.eigenvalues(mode);
 	auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
 	for(int i=0; i<eigvals.extent(0); i++) {

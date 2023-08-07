@@ -1,7 +1,6 @@
 #ifndef TUCKER_MPI_TENSOR_IO_HPP_
 #define TUCKER_MPI_TENSOR_IO_HPP_
 
-
 #include "./impl/TuckerMpi_MPIWrapper.hpp"
 #include "Tucker_print_bytes.hpp"
 #include "Tucker_boilerplate_view_io.hpp"
@@ -13,8 +12,8 @@
 namespace TuckerMpi{
 
 template <class ScalarType, class MemorySpace>
-void import_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
-			  const char* filename)
+void read_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
+			const std::string & filename)
 {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -40,7 +39,7 @@ void import_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
   // Open the file
   MPI_File fh;
   const MPI_Comm& comm = Y.getDistribution().getComm(true);
-  int ret = MPI_File_open(comm, (char*)filename, MPI_MODE_RDONLY,
+  int ret = MPI_File_open(comm, filename.c_str(), MPI_MODE_RDONLY,
 			  MPI_INFO_NULL, &fh);
   if(ret != MPI_SUCCESS) {
     std::cerr << "Error: Could not open file " << filename << std::endl;
@@ -78,17 +77,12 @@ void import_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
 
 template <class ScalarType, class MemorySpace>
 void read_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
-			const char* filename)
+			const std::vector<std::string> & filenames)
 {
-  std::ifstream inStream(filename);
-  std::string temp;
-  int nfiles = 0;
-  while(inStream >> temp) { nfiles++; }
-  inStream.close();
-  if(nfiles != 1) {
-    throw std::runtime_error("TuckerMpi::read_tensor_binary hardwired for one file for now");
+  if(filenames.size() != 1) {
+    throw std::runtime_error("TuckerMpi::read_tensor_binary: only supports one file for now");
   }
-  import_tensor_binary(Y, temp.c_str());
+  read_tensor_binary(Y, filenames[0]);
 }
 
 } // end namespace Tucker

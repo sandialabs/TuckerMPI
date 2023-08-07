@@ -2,9 +2,6 @@
 set(testname test_sthosvd_1)
 set(exename ${CMAKE_CURRENT_BINARY_DIR}/../../../${STHOSVD_DRIVER_NAME})
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../compare_eigenvalues.py compare_eigenvalues.py COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../ascii_to_binary.py ascii_to_binary.py COPYONLY)
-
 configure_file(gold0.txt gold0.txt COPYONLY)
 configure_file(gold1.txt gold1.txt COPYONLY)
 configure_file(gold2.txt gold2.txt COPYONLY)
@@ -21,8 +18,9 @@ add_test(NAME ${testname}
   -DEXENAME=${exename}
   -DMPIEXEC=${MPIEXEC_EXECUTABLE}
   -DOUTDIR=${CMAKE_CURRENT_BINARY_DIR}
+  -DPYTHON_COMPARE_SCRIPTS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/../../python_scripts
   -DNUMPROC=8
   -DEIGVAL_COMPARISON_RELTOL="1e-9"
   -DEIGVAL_COMPARISON_ABSTOL="1e-11"
-  -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
+  -P ${CMAKE_CURRENT_SOURCE_DIR}/../test_compare_eigval.cmake
 )

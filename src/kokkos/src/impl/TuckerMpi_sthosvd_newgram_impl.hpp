@@ -449,12 +449,12 @@ template <class ScalarType, class ...Properties, class TruncatorType>
       const size_t global_nnz = Y.globalSize();
 
       std::cout << "Local tensor size after STHOSVD iteration  " << mode << ": ";
-      Tucker::write_view_to_stream_inline(std::cout, Y.localDimensionsOnHost());
+      Tucker::write_view_to_stream_singleline(std::cout, Y.localDimensionsOnHost());
       std::cout << ", or ";
       Tucker::print_bytes_to_stream(std::cout, local_nnz*sizeof(ScalarType));
 
       std::cout << "Global tensor size after STHOSVD iteration " << mode << ": ";
-      Tucker::write_view_to_stream_inline(std::cout, Y.globalDimensionsOnHost());
+      Tucker::write_view_to_stream_singleline(std::cout, Y.globalDimensionsOnHost());
       std::cout << ", or ";
       Tucker::print_bytes_to_stream(std::cout, global_nnz*sizeof(ScalarType));
     }
