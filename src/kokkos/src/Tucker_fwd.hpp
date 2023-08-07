@@ -9,11 +9,7 @@ enum class Metric {
 
 namespace TuckerOnNode{
 template<class ScalarType, class ...Properties> class Tensor;
-
-namespace impl{
 template<class ScalarType, class MemorySpace> class MetricData;
-}//end namespace impl
-
 }//end namespace TuckerOnNode
 
 namespace TuckerMpi{

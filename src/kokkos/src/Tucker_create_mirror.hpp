@@ -39,12 +39,12 @@ auto create_mirror_and_copy(const SpaceT & space,
 }
 
 //
-// overloads accepting a TuckerOnNode::impl::MetricData
+// overloads accepting a TuckerOnNode::MetricData
 //
 template<class ScalarType, class MemorySpace>
-auto create_mirror(TuckerOnNode::impl::MetricData<ScalarType, MemorySpace> d)
+auto create_mirror(TuckerOnNode::MetricData<ScalarType, MemorySpace> d)
 {
-  using T = TuckerOnNode::impl::MetricData<ScalarType, MemorySpace>;
+  using T = TuckerOnNode::MetricData<ScalarType, MemorySpace>;
   using T_mirror = typename T::HostMirror;
 
   auto vals = d.getValues();

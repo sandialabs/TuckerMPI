@@ -19,8 +19,8 @@ void deep_copy(const TuckerOnNode::Tensor<ScalarTypeDest, PropertiesDest...> & d
 }
 
 template<class ScalarType, class MemorySpaceFrom, class MemorySpaceDest>
-void deep_copy(const TuckerOnNode::impl::MetricData<ScalarType, MemorySpaceDest> & dest,
-	       const TuckerOnNode::impl::MetricData<ScalarType, MemorySpaceFrom> & from)
+void deep_copy(const TuckerOnNode::MetricData<ScalarType, MemorySpaceDest> & dest,
+	       const TuckerOnNode::MetricData<ScalarType, MemorySpaceFrom> & from)
 {
   auto vals_dest = dest.getValues();
   auto map_dest  = dest.getMap();

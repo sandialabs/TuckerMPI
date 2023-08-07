@@ -7,7 +7,6 @@
 #include <Kokkos_Core.hpp>
 
 namespace TuckerOnNode {
-namespace impl{
 
 template<
   class ScalarType,
@@ -74,5 +73,5 @@ private:
   map_t metricToColumnIndex_ = {};
 };
 
-}}
+}
 #endif

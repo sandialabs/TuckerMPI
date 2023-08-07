@@ -39,7 +39,7 @@ auto compute_slice_metrics(Tensor<ScalarType, Properties...> Y,
   //
   // execute
   const int numSlices = Y.extent(mode);
-  auto result = TuckerOnNode::impl::MetricData<ScalarType, tensor_mem_space>(metrics, numSlices);
+  auto result = TuckerOnNode::MetricData<ScalarType, tensor_mem_space>(metrics, numSlices);
   if(Y.size() > 0) {
     impl::compute_slice_metrics(Y, mode, metrics, result);
   }

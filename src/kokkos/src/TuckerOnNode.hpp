@@ -14,6 +14,7 @@
 // fwd decl and tensor class and operations on it
 #include "Tucker_fwd.hpp"
 #include "TuckerOnNode_Tensor.hpp"
+#include "Tucker_MetricData.hpp"
 #include "Tucker_create_mirror.hpp"
 #include "Tucker_deep_copy.hpp"
 #include "TuckerOnNode_Tensor_io.hpp"

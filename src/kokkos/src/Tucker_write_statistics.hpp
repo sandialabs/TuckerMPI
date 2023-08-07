@@ -9,7 +9,7 @@
 namespace Tucker{
 
 template<class ScalarType, class MemSpace>
-void write_statistics(TuckerOnNode::impl::MetricData<ScalarType, MemSpace> metricData,
+void write_statistics(TuckerOnNode::MetricData<ScalarType, MemSpace> metricData,
 		      const std::string & statsFile,
 		      const ScalarType stdThresh)
 {
