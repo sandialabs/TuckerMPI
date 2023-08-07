@@ -6,7 +6,7 @@
 #include "Tucker_deep_copy.hpp"
 #include <fstream>
 
-namespace Tucker{
+namespace TuckerOnNode{
 
 template<class ScalarType, class MemSpace>
 void write_statistics(TuckerOnNode::MetricData<ScalarType, MemSpace> metricData,

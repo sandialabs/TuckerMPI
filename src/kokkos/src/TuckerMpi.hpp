@@ -17,9 +17,13 @@
 #include "TuckerMpi_ProcessorGrid.hpp"
 #include "TuckerMpi_Distribution.hpp"
 #include "TuckerMpi_Tensor.hpp"
+#include "TuckerOnNode_MetricData.hpp"
 #include "Tucker_create_mirror.hpp"
 #include "Tucker_deep_copy.hpp"
 #include "TuckerMpi_Tensor_io.hpp"
+#include "TuckerMpi_compute_slice_metrics.hpp"
+#include "TuckerMpi_write_statistics.hpp"
+#include "TuckerMpi_perform_preprocessing.hpp"
 
 // finally functions related/needed by sthosvd
 #include "TuckerMpi_ttm.hpp"

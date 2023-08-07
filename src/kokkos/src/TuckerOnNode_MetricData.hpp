@@ -64,6 +64,11 @@ private:
   }
 
 public:
+
+  std::size_t numMetricsStored() const{
+    return values_.extent(1);
+  }
+
   KOKKOS_FUNCTION bool contains(Tucker::Metric key) const{
     const uint32_t ind = metricToColumnIndex_.find(key);
     return metricToColumnIndex_.valid_at(ind);

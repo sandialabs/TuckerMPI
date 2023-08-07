@@ -11,8 +11,8 @@
 
 namespace TuckerMpi{
 
-template <class ScalarType, class MemorySpace>
-void read_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
+template <class ScalarType, class ...Properties>
+void read_tensor_binary(Tensor<ScalarType, Properties...> Y,
 			const std::string & filename)
 {
   int rank;
@@ -75,8 +75,8 @@ void read_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
   MPI_Type_free(&view);
 }
 
-template <class ScalarType, class MemorySpace>
-void read_tensor_binary(Tensor<ScalarType, MemorySpace> Y,
+template <class ScalarType, class ...Properties>
+void read_tensor_binary(Tensor<ScalarType, Properties...> Y,
 			const std::vector<std::string> & filenames)
 {
   if(filenames.size() != 1) {

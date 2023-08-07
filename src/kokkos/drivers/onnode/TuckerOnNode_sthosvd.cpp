@@ -48,10 +48,10 @@ int main(int argc, char* argv[])
     const std::vector<Tucker::Metric> metrics{Tucker::Metric::MIN,  Tucker::Metric::MAX,
 					      Tucker::Metric::MEAN, Tucker::Metric::VARIANCE};
     auto metricsData = TuckerOnNode::compute_slice_metrics(X, scaleMode, metrics);
-    Tucker::write_statistics(metricsData, inputs.stats_file, inputs.stdThresh);
+    TuckerOnNode::write_statistics(metricsData, inputs.stats_file, inputs.stdThresh);
 
     if (inputs.scaling_type != "None"){
-      std::cout << "Normalize tensor if needed" << std::endl;
+      std::cout << "Normalizing tensor" << std::endl;
       auto [scales, shifts] = TuckerOnNode::normalize_tensor(X, inputs.scaling_type, inputs.scale_mode, inputs.stdThresh);
       writeScalesShifts(scales, shifts);
     }

@@ -37,8 +37,27 @@ void run(const TuckerMpiDistributed::InputParameters<ScalarType> & inputs)
   /*
    * preprocessing
    */
-  // FIXME: Compute statistics is missing
-  // FIXME: Perform preprocessing is missing
+  const int scaleMode = inputs.scale_mode;
+  if(mpiRank == 0) {
+    std::cout << "Compute statistics" << std::endl;
+  }
+  const std::vector<Tucker::Metric> metrics{Tucker::Metric::MIN,  Tucker::Metric::MAX,
+					    Tucker::Metric::MEAN, Tucker::Metric::VARIANCE};
+  auto metricsData = TuckerMpi::compute_slice_metrics(mpiRank, X, scaleMode, metrics);
+  TuckerMpi::write_statistics(mpiRank, X.rank(), scaleMode, X.getDistribution(),
+			      metricsData, inputs.stats_file, inputs.stdThresh);
+
+  // if (inputs.scaling_type != "None"){
+  //   std::cout << "Normalize tensor if needed" << std::endl;
+  //   auto [scales, shifts] = TuckerMpi::normalize_tensor(X, inputs.scaling_type, inputs.scale_mode, inputs.stdThresh);
+  //   //writeScalesShifts(scales, shifts);
+  // }
+  // else{
+  //   std::cout << "inputs.scaling_type == None, therefore we are not normalizing the tensor\n";
+  // }
+  // if (inputs.boolWriteTensorAfterPreprocessing){
+  //   TuckerMpi::write_tensor_binary(X, inputs.pre_fns_file);
+  // }
 
   /*
    * prepare lambdas "expressing" the computation to do

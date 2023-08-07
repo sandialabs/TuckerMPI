@@ -2,7 +2,7 @@
 #ifndef TUCKER_KOKKOSONLY_COMPUTE_SLICE_METRICS_IMPL_HPP_
 #define TUCKER_KOKKOSONLY_COMPUTE_SLICE_METRICS_IMPL_HPP_
 
-#include "Tucker_MetricData.hpp"
+#include "TuckerOnNode_MetricData.hpp"
 #include <Kokkos_StdAlgorithms.hpp>
 
 namespace TuckerOnNode {

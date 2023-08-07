@@ -985,7 +985,8 @@ Tucker::MetricData<scalar_t>* computeSliceMetrics(const Tensor<scalar_t>* const 
     }
     // If X is partitioned into X_A and X_B,
     // mean_X = (n_A mean_A + n_B mean_B) / (n_A + n_B)
-    if((metrics & Tucker::MEAN) || (metrics & Tucker::VARIANCE)) {
+    if((metrics & Tucker::MEAN) || (metrics & Tucker::VARIANCE)) 
+    {
       // Compute the size of my local slice
       int ndims = Y->getNumDimensions();
       const Tucker::SizeArray& localSize = Y->getLocalSize();

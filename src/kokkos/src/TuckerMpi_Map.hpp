@@ -41,8 +41,16 @@ public:
     return numElementsPerProc_.empty() ? 0 : numElementsPerProc_[rank];
   }
 
+  const auto & getOffsets() const{
+    return offsets_;
+  }
+
   int getOffset(int rank) const{
     return offsets_.empty() ? 0 : offsets_[rank];
+  }
+
+  const auto & getNumElementsPerProc() const{
+    return numElementsPerProc_;
   }
 
   const MPI_Comm& getComm() const{ return *comm_; }
