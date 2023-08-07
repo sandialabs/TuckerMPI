@@ -50,3 +50,6 @@ add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 2)
 
 set(T1 test_compute_slice_metrics)
 add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 3)
+
+set(T1 test_local_rank_k_for_gram)
+add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 4)

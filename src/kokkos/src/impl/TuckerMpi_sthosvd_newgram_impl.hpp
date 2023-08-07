@@ -19,7 +19,7 @@ namespace TuckerMpi{
 namespace impl{
 
 template <class scalar_t>
-auto local_rank_k_for_gram(Matrix<scalar_t> Y, int n, int ndims)
+auto local_rank_k_for_gram_host(Matrix<scalar_t> Y, int n, int ndims)
 {
   using C_view_type = Kokkos::View<scalar_t**, Kokkos::LayoutLeft>;
 
@@ -51,6 +51,32 @@ auto local_rank_k_for_gram(Matrix<scalar_t> Y, int n, int ndims)
   }
 
   Kokkos::deep_copy(C, C_h);
+  return C;
+}
+
+template <class scalar_t>
+auto local_rank_k_for_gram(Matrix<scalar_t> Y, int n, int ndims)
+{  
+  using C_view_type = Kokkos::View<scalar_t**, Kokkos::LayoutLeft>;
+  using umv_type = Kokkos::View<scalar_t**, Kokkos::LayoutLeft,
+				Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+  const int nrows = Y.getLocalNumRows();
+  C_view_type C("loc", nrows, nrows);
+
+  int ncols = Y.getLocalNumCols();
+  auto YlocalMat = Y.getLocalMatrix();
+
+  scalar_t alpha = 1;
+  scalar_t beta = 0;
+
+  if(n < ndims-1) {
+    Tucker::impl::syrk_kokkos("U", "N", alpha, YlocalMat, beta, C);
+  }
+  else {
+    umv_type Aview(YlocalMat.data(), ncols, nrows);
+    Tucker::impl::syrk_kokkos("U", "T", alpha, Aview, beta, C);
+  }
+
   return C;
 }
 
@@ -309,7 +335,11 @@ void local_gram_after_data_redistribution(Tensor<ScalarType, Properties...> & Y,
   else {
     auto redistributedY = redistribute_tensor_for_gram(Y, n);
     if(redistributedY.localSize() > 0) {
-      localGram = local_rank_k_for_gram(redistributedY, n, Y.rank());
+      #if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
+        localGram = local_rank_k_for_gram_host(redistributedY, n, Y.rank());
+      #else
+        localGram = local_rank_k_for_gram(redistributedY, n, Y.rank());
+      #endif 
     }
     else {
       int nGlobalRows = Y.globalExtent(n);
