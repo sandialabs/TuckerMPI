@@ -15,3 +15,12 @@ Informations to know how the gold files were generated.
 
 - test_sthosvd_3
   - same as test_sthosvd_1
+
+- test_sthosvd_4
+  - same as test_sthosvd_1
+
+- test_sthosvd_5
+  - same as test_sthosvd_1
+
+- test_sthosvd_6
+  - same as test_sthosvd_1
