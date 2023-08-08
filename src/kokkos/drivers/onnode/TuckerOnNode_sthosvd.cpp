@@ -45,21 +45,20 @@ int main(int argc, char* argv[])
     };
 
     std::cout << "Compute statistics" << std::endl;
-    const std::vector<Tucker::Metric> metrics{Tucker::Metric::MIN,  Tucker::Metric::MAX,
-					      Tucker::Metric::MEAN, Tucker::Metric::VARIANCE};
-    auto metricsData = TuckerOnNode::compute_slice_metrics(X, scaleMode, metrics);
+    auto metricsData = TuckerOnNode::compute_slice_metrics(X, scaleMode, Tucker::defaultMetrics);
     TuckerOnNode::write_statistics(metricsData, inputs.stats_file, inputs.stdThresh);
 
     if (inputs.scaling_type != "None"){
       std::cout << "Normalizing tensor" << std::endl;
-      auto [scales, shifts] = TuckerOnNode::normalize_tensor(X, inputs.scaling_type, inputs.scale_mode, inputs.stdThresh);
+      auto [scales, shifts] = TuckerOnNode::normalize_tensor(X, metricsData, inputs.scaling_type,
+							     inputs.scale_mode, inputs.stdThresh);
       writeScalesShifts(scales, shifts);
     }
     else{
       std::cout << "inputs.scaling_type == None, therefore we are not normalizing the tensor\n";
     }
     if (inputs.boolWriteTensorAfterPreprocessing){
-      TuckerOnNode::write_tensor_binary(X, inputs.pre_fns_file);
+      TuckerOnNode::write_tensor_binary(X, inputs.preprocDataFilenames);
     }
 
     /*

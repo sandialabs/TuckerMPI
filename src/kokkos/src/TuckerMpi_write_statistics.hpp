@@ -15,14 +15,15 @@ void write_statistics(const int mpiRank,
 		      const int scaleMode,
 		      const Distribution & distribution,
 		      TuckerOnNode::MetricData<ScalarType, MemSpace> metricData,
-		      const std::string & statsFile,
+		      const std::string & outputFile,
 		      const ScalarType stdThresh)
 {
-  // everything below needs to be accessible on host
+  // for the code below to work, we need the metricsData to be accessible on host
   auto metricData_h = Tucker::create_mirror(metricData);
   Tucker::deep_copy(metricData_h, metricData);
 
-  // metricData must have MIN, MAX, MEAN, VARIANCE
+  // metricData must have MIN, MAX, MEAN, VARIANCE because the code below
+  // is hardwired for writing to file those stats
   const std::vector<Tucker::Metric> metricIDsNeeded{Tucker::Metric::MIN,
 						    Tucker::Metric::MAX,
 						    Tucker::Metric::MEAN,
@@ -59,33 +60,30 @@ void write_statistics(const int mpiRank,
     const std::size_t metricsCount = metricData_h.numMetricsStored();
 
     std::unordered_map<Tucker::Metric, int> metricNameToColIndex;
-    Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::HostSpace> finalMet("finalMet",
-									       numEntries,
-									       metricsCount);
+    Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::HostSpace> M("M",
+									numEntries,
+									metricsCount);
     for (std::size_t i=0; i<metricIDsNeeded.size(); ++i){
       const auto metricID = metricIDsNeeded[i];
-      if (metricData_h.contains(metricID))
-      {
-	metricNameToColIndex[metricID] = i;
-	auto view = metricData_h.get(metricID);
-	std::vector<ScalarType> tmp(numEntries);
-	Tucker::impl::copy_view_to_stdvec(view, tmp);
-	auto dest_col = Kokkos::subview(finalMet, Kokkos::ALL, i);
-	TuckerMpi::MPI_Gatherv_(tmp.data(),
-				map->getLocalNumEntries(),
-				dest_col.data(), // can do this because of LayoutLeft
-				(int*)map->getNumElementsPerProc().data(),
-				(int*)map->getOffsets().data(),
-				0, rowComm);
-      }
+      metricNameToColIndex[metricID] = i;
+      auto view = metricData_h.get(metricID);
+      std::vector<ScalarType> tmp(numEntries);
+      Tucker::impl::copy_view_to_stdvec(view, tmp);
+      auto dest_col = Kokkos::subview(M, Kokkos::ALL, i);
+      TuckerMpi::MPI_Gatherv_(tmp.data(),
+			      map->getLocalNumEntries(),
+			      dest_col.data(), // can do this because of LayoutLeft
+			      (int*)map->getNumElementsPerProc().data(),
+			      (int*)map->getOffsets().data(),
+			      0, rowComm);
     }
 
     //
     // write stats to file
     //
     if(mpiRank == 0) {
-      std::cout << "Writing file " << statsFile << std::endl;
-      std::ofstream statStream(statsFile);
+      std::cout << "Writing file " << outputFile << std::endl;
+      std::ofstream statStream(outputFile);
       statStream << std::setw(5)  << "Mode"
 		 << std::setw(13) << "Mean"
 		 << std::setw(13) << "Stdev"
@@ -98,21 +96,20 @@ void write_statistics(const int mpiRank,
       const int mean_colInd = metricNameToColIndex[Tucker::Metric::MEAN];
       const int var_colInd  = metricNameToColIndex[Tucker::Metric::VARIANCE];
 
-      for(int i=0; i<numEntries; i++)
-	{
-	  double stdev = std::sqrt(finalMet(i, var_colInd));
-	  if(stdev < stdThresh) {
-	    std::cout << "Slice " << i << " is below the cutoff. True value is: " << stdev << std::endl;
-	    stdev = 1;
-	  }
-
-	  statStream << std::setw(5) << i
-		     << std::setw(13) << finalMet(i, mean_colInd)
-		     << std::setw(13) << stdev
-		     << std::setw(13) << finalMet(i, min_colInd)
-		     << std::setw(13) << finalMet(i, max_colInd)
-		     << std::endl;
+      for(int i=0; i<numEntries; i++){
+	double stdev = std::sqrt(M(i, var_colInd));
+	if(stdev < stdThresh) {
+	  std::cout << "Slice " << i << " is below the cutoff. True value is: " << stdev << std::endl;
+	  stdev = 1;
 	}
+
+	statStream << std::setw(5) << i
+		   << std::setw(13) << M(i, mean_colInd)
+		   << std::setw(13) << stdev
+		   << std::setw(13) << M(i, min_colInd)
+		   << std::setw(13) << M(i, max_colInd)
+		   << std::endl;
+      }
 
       statStream.close();
     }//end if mpiRank==0

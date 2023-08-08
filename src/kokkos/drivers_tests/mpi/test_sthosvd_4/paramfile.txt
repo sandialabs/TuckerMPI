@@ -1,0 +1,15 @@
+Global dims = 3 5 7 11
+Grid dims = 2 2 2 1
+Automatic rank determination = true
+SV Threshold = 1e-2
+Input file list = raw.txt
+Scaling type = Max
+Scale mode = 0
+Perform STHOSVD = true
+Write core tensor and factor matrices = true
+Write preprocessed data = true
+STHOSVD directory = compressed
+STHOSVD file prefix = sthosvd
+SV directory = .
+SV file prefix = sv
+Print options = true

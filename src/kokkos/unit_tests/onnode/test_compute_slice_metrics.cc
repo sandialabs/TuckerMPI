@@ -37,11 +37,7 @@ TEST(tuckerkokkos, compute_slice_metrics_mode0){
   Tucker::deep_copy(tensor, tensor_h);
 
   // compute metrics
-  const std::vector<Tucker::Metric> metricIDs{Tucker::Metric::MIN,
-					    Tucker::Metric::MAX,
-					    Tucker::Metric::MEAN,
-					    Tucker::Metric::VARIANCE};
-  auto metrics = TuckerOnNode::compute_slice_metrics(tensor, targetMode, metricIDs);
+  auto metrics = TuckerOnNode::compute_slice_metrics(tensor, targetMode, Tucker::defaultMetrics);
   auto metrics_h = Tucker::create_mirror(metrics);
   Tucker::deep_copy(metrics_h, metrics);
 
@@ -70,11 +66,7 @@ TEST(tuckerkokkos, compute_slice_metrics_mode1){
   Tucker::deep_copy(tensor, tensor_h);
 
   // compute metrics
-  const std::vector<Tucker::Metric> metricIDs{Tucker::Metric::MIN,
-					    Tucker::Metric::MAX,
-					    Tucker::Metric::MEAN,
-					    Tucker::Metric::VARIANCE};
-  auto metrics = TuckerOnNode::compute_slice_metrics(tensor, targetMode, metricIDs);
+  auto metrics = TuckerOnNode::compute_slice_metrics(tensor, targetMode, Tucker::defaultMetrics);
   auto metrics_h = Tucker::create_mirror(metrics);
   Tucker::deep_copy(metrics_h, metrics);
 
@@ -103,11 +95,7 @@ TEST(tuckerkokkos, compute_slice_metrics_mode2){
   Tucker::deep_copy(tensor, tensor_h);
 
   // compute metrics
-  const std::vector<Tucker::Metric> metricIDs{Tucker::Metric::MIN,
-					    Tucker::Metric::MAX,
-					    Tucker::Metric::MEAN,
-					    Tucker::Metric::VARIANCE};
-  auto metrics = TuckerOnNode::compute_slice_metrics(tensor, targetMode, metricIDs);
+  auto metrics = TuckerOnNode::compute_slice_metrics(tensor, targetMode, Tucker::defaultMetrics);
   auto metrics_h = Tucker::create_mirror(metrics);
   Tucker::deep_copy(metrics_h, metrics);
 
@@ -190,9 +178,8 @@ TEST(tuckerkokkos, compute_slice_metrics_2x3x5x7_allmode)
   trueData[6][3][2] = 5865;
 
   // Checks
-  const std::vector<Tucker::Metric> metricIDs{Tucker::Metric::MAX,
-					    Tucker::Metric::MIN,
-					    Tucker::Metric::SUM};
+  const std::array<Tucker::Metric, 3> metricIDs{Tucker::Metric::MAX,
+  Tucker::Metric::MIN, Tucker::Metric::SUM};
 
   for(int mode=0; mode<tensor.rank(); mode++) {
     auto metrics = TuckerOnNode::compute_slice_metrics(tensor, mode, metricIDs);

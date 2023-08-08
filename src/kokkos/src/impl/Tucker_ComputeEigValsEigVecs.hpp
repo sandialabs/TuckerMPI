@@ -30,7 +30,6 @@ void flip_sign_eigenvecs_columns_on_host(HostViewType G_h, DevViewType G)
       for(int r=1; r<nrows; r++)
 	{
 	  scalar_type testVal = std::abs(Gptr[c*nrows+r]);
-	  std::cout << c << " " << r << " " << maxVal << " " << testVal << std::endl;
 	  if(testVal > maxVal) {
 	    maxIndex = r;
 	    maxVal = testVal;
@@ -38,9 +37,6 @@ void flip_sign_eigenvecs_columns_on_host(HostViewType G_h, DevViewType G)
 	}
 
       if(Gptr[c*nrows+maxIndex] < 0) {
-	std::cout << "scal : "
-		  << maxIndex << " " << Gptr[c*nrows+maxIndex]
-	   	  << " " << *(Gptr+c*nrows) << std::endl;
 	const int ONE = 1;
         const scalar_type NEGONE = -1;
 	Tucker::scal(&nrows, &NEGONE, Gptr+c*nrows, &ONE);

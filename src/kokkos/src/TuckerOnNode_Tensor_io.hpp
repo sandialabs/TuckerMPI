@@ -50,5 +50,15 @@ void write_tensor_binary(const Tensor<ScalarType, mem_space> & Y,
   ofs.close();
 }
 
+template <class ScalarType, class ...Properties>
+void write_tensor_binary(Tensor<ScalarType, Properties...> Y,
+			 const std::vector<std::string> & filenames)
+{
+  if(filenames.size() != 1) {
+    throw std::runtime_error("TuckerMpi::write_tensor_binary: only supports one file for now");
+  }
+  write_tensor_binary(Y, filenames[0]);
+}
+
 } // end namespace Tucker
 #endif

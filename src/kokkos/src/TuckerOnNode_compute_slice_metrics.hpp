@@ -6,10 +6,10 @@
 
 namespace TuckerOnNode{
 
-template <class ScalarType, class ...Properties>
+template <std::size_t n, class ScalarType, class ...Properties>
 auto compute_slice_metrics(Tensor<ScalarType, Properties...> Y,
 			   const int mode,
-			   const std::vector<Tucker::Metric> & metrics)
+			   const std::array<Tucker::Metric, n> & metrics)
 {
   using tensor_type = Tensor<ScalarType, Properties...>;
   using tensor_mem_space = typename tensor_type::traits::memory_space;

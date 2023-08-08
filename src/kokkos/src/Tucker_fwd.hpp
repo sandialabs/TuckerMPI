@@ -1,10 +1,17 @@
 #ifndef TUCKER_KOKKOS_FWD_DECL_HPP_
 #define TUCKER_KOKKOS_FWD_DECL_HPP_
 
+#include <array>
+
 namespace Tucker{
 enum class Metric {
   MIN, MAX, SUM, NORM1, NORM2, MEAN, VARIANCE
 };
+
+constexpr std::array<Tucker::Metric, 4> defaultMetrics{
+  Tucker::Metric::MIN,  Tucker::Metric::MAX,
+  Tucker::Metric::MEAN, Tucker::Metric::VARIANCE};
+
 }//end namespace Tucker
 
 namespace TuckerOnNode{

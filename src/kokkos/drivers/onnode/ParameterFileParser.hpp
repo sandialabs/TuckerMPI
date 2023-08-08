@@ -30,11 +30,15 @@ struct InputParameters
   // is the file which inside contains list of files to read from,
   // see raw.txt inside the driver tests
   std::string in_fns_file;
-
   // rawDataFilenames: contains each row read from in_fns_file
   std::vector<std::string> rawDataFilenames;
 
-  std::string pre_fns_file;
+  // is the file which inside contains list of files to *write* to,
+  // see pre.txt inside the driver tests
+  std::string preproc_fns_file;
+  // rawDataFilenames: contains each row read from in_fns_file
+  std::vector<std::string> preprocDataFilenames;
+
   std::string stats_file;
   int scale_mode;
 
@@ -86,7 +90,7 @@ public:
       std::cout << "- Write tensor after preprocessing = " << (boolWriteTensorAfterPreprocessing ? "true" : "false") << std::endl << std::endl;
 
       std::cout << "File containing a list of filenames to output the scaled data into\n";
-      std::cout << "- Preprocessed output file list = " << pre_fns_file << std::endl << std::endl;
+      std::cout << "- Preprocessed output file list = " << preproc_fns_file << std::endl << std::endl;
 
       std::cout << "If true, record the result of ST-HOSVD (the core tensor and all factors)\n";
       std::cout << "- Write STHOSVD result = " << (boolWriteResultsOfSTHOSVD ? "true" : "false") << std::endl << std::endl;
@@ -140,9 +144,13 @@ private:
     sthosvd_fn            = string_parse<std::string>(fileAsStrings, "STHOSVD file prefix", "sthosvd");
     sv_dir                = string_parse<std::string>(fileAsStrings, "SV directory", ".");
     sv_fn                 = string_parse<std::string>(fileAsStrings, "SV file prefix", "sv");
+
     in_fns_file           = string_parse<std::string>(fileAsStrings, "Input file list", "raw.txt");
     rawDataFilenames      = read_file_as_strings(in_fns_file);
-    pre_fns_file          = string_parse<std::string>(fileAsStrings, "Preprocessed output file list", "pre.txt");
+
+    preproc_fns_file      = string_parse<std::string>(fileAsStrings, "Preprocessed output file list", "pre.txt");
+    preprocDataFilenames  = read_file_as_strings(preproc_fns_file);
+
     stats_file            = string_parse<std::string>(fileAsStrings, "Stats file", "stats.txt");
     scale_mode            = string_parse<int>(fileAsStrings, "Scale mode", nd-1);
   }

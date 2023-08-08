@@ -405,13 +405,13 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     }
     auto currEigvals = Tucker::impl::compute_and_sort_descending_eigvals_and_eigvecs_inplace(S, flipSign);
     appendEigenvaluesAndUpdateSliceInfo(mode, eigvals, currEigvals, perModeSlicingInfo_eigvals(mode));
-    //#if defined(TUCKER_ENABLE_DEBUG_PRINTS)
+#if defined(TUCKER_ENABLE_DEBUG_PRINTS)
     if (mpiRank == 0){
       std::cout << "\n";
       Tucker::write_view_to_stream(std::cout, currEigvals);
       std::cout << "\n";
     }
-    //#endif
+#endif
 
     /*
      * Truncation

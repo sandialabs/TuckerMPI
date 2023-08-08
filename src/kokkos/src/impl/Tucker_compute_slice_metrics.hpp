@@ -90,10 +90,10 @@ void normalize_variance(MetricData<ScalarType, MemSpace> metricData,
 		       });
 }
 
-template <class ScalarType, class ...Properties, class MemSpace>
+template <std::size_t n, class ScalarType, class ...Properties, class MemSpace>
 void compute_slice_metrics(::TuckerOnNode::Tensor<ScalarType, Properties...> Y,
 			   const int mode,
-			   const std::vector<Tucker::Metric> & metrics,
+			   const std::array<Tucker::Metric, n> & metrics,
 			   MetricData<ScalarType, MemSpace> metricsData)
 {
 

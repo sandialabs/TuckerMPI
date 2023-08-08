@@ -50,23 +50,34 @@ struct NormalizeFunc{
   }
 };
 
-auto set_target_metrics(const std::string & scalingType)
+void check_scaling_type_else_throw(const std::string & scalingType)
 {
-  using result_type = std::vector<Tucker::Metric>;
-  if(scalingType == "Max") {
-    return result_type{Tucker::Metric::MIN, Tucker::Metric::MAX};
-  }
-  else if(scalingType == "MinMax") {
-    return result_type{Tucker::Metric::MIN, Tucker::Metric::MAX};
-  }
-  else if(scalingType == "StandardCentering") {
-    return result_type{Tucker::Metric::MEAN, Tucker::Metric::VARIANCE};
-  }
-  else {
+  if(scalingType != "Max" &&
+     scalingType != "MinMax" &&
+     scalingType != "StandardCentering")
+  {
     throw std::runtime_error("Error: invalid scaling type");
-    return result_type{}; // just to make compiler happy
   }
 }
 
-}} //end namespace TuckerOnNode::impl
+template <class ScalarType>
+void check_metricdata_usable_for_scaling_else_throw
+(const TuckerOnNode::MetricData<ScalarType, Kokkos::HostSpace> & metricData,
+ const std::string & scalingType)
+{
+  if(scalingType == "Max" || scalingType == "MinMax")
+  {
+    if (!metricData.contains(Tucker::Metric::MAX) || !metricData.contains(Tucker::Metric::MIN) ){
+      throw std::runtime_error("Error: for Max or MinMax scaling, metric data must contain Tucker::Metric::MIN, MAX");
+    }
+  }
+
+  else if(scalingType == "StandardCentering"){
+    if (!metricData.contains(Tucker::Metric::MEAN) || !metricData.contains(Tucker::Metric::VARIANCE) ){
+      throw std::runtime_error("Error: for StandardCentering scaling, metric data must contain Tucker::Metric::MEAN, VARIANCE");
+    }
+  }
+}
+
+}}
 #endif

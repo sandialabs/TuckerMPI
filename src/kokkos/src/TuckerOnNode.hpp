@@ -21,7 +21,7 @@
 #include "TuckerOnNode_compute_slice_metrics.hpp"
 #include "TuckerOnNode_write_statistics.hpp"
 #include "TuckerOnNode_transform_slices.hpp"
-#include "TuckerOnNode_perform_preprocessing.hpp"
+#include "TuckerOnNode_normalize_tensor.hpp"
 
 // finally functions related/needed by sthosvd
 #include "TuckerOnNode_compute_gram.hpp"

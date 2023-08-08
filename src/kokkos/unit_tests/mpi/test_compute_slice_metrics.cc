@@ -151,7 +151,7 @@ TEST(tuckerkokkosmpi, compute_slice_metrics_allmode)
     TuckerMpi::Tensor<scalar_t> tensor(dataTensorDim, procGrid);
     TuckerMpi::read_tensor_binary(tensor, "./tensor_data_files/3x5x7x11.bin");
 
-    const std::vector<Tucker::Metric> metricIDs{Tucker::Metric::MIN,
+    const std::array<Tucker::Metric,5> metricIDs{Tucker::Metric::MIN,
                 Tucker::Metric::MAX, Tucker::Metric::SUM, Tucker::Metric::MEAN, 
                 Tucker::Metric::VARIANCE};
 

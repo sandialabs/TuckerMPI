@@ -13,10 +13,10 @@ template<
   class MemorySpace = Kokkos::DefaultExecutionSpace::memory_space>
 class MetricData
 {
-  template <class ScalarType1, class ...Properties1>
+  template <std::size_t n, class ScalarType1, class ...Properties1>
   friend auto compute_slice_metrics(Tensor<ScalarType1, Properties1...> Y,
 				    const int mode,
-				    const std::vector<Tucker::Metric> & metrics);
+				    const std::array<Tucker::Metric, n> & metrics);
 
   template<class ScalarType1, class MemorySpace1>
   friend auto ::Tucker::create_mirror(MetricData<ScalarType1, MemorySpace1> d);
@@ -34,7 +34,8 @@ private:
   MetricData(MapType map, ValuesType values)
     : values_(values), metricToColumnIndex_(map){}
 
-  MetricData(const std::vector<Tucker::Metric> & metrics, const int numValues)
+  template<std::size_t n>
+  MetricData(const std::array<Tucker::Metric, n> & metrics, const int numValues)
     : values_("values", numValues, metrics.size()),
       metricToColumnIndex_(metrics.size() /*this is just a hint for the capacity*/)
   {

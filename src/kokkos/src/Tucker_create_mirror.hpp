@@ -3,8 +3,12 @@
 
 #include "Tucker_fwd.hpp"
 #include "./impl/Tucker_stdvec_view_conversion_helpers.hpp"
+#if defined TUCKER_ENABLE_MPI
+#include "TuckerMpi_Distribution.hpp"
+#endif
 #include <Kokkos_UnorderedMap.hpp>
 #include <Kokkos_Core.hpp>
+#include <Kokkos_StdAlgorithms.hpp>
 
 namespace Tucker{
 
@@ -26,7 +30,7 @@ auto create_mirror(const TuckerOnNode::Tensor<ScalarType, Properties...> & T)
 
 template<class SpaceT, class ScalarType, class ...Properties>
 auto create_mirror_and_copy(const SpaceT & space,
-				   const TuckerOnNode::Tensor<ScalarType, Properties...> & Tin)
+			    const TuckerOnNode::Tensor<ScalarType, Properties...> & Tin)
 {
   using in_tensor_type = TuckerOnNode::Tensor<ScalarType, Properties...>;
   using out_tensor_type = TuckerOnNode::Tensor<ScalarType, SpaceT>;
@@ -56,6 +60,33 @@ auto create_mirror(TuckerOnNode::MetricData<ScalarType, MemorySpace> d)
 
   return T_mirror(map_h, vals_h);
 }
+
+#if defined TUCKER_ENABLE_MPI
+//
+// overloads accepting a TuckerMpi::Tensor
+//
+template<class SpaceT, class ScalarType, class ...Properties>
+auto create_mirror_and_copy(const SpaceT & space,
+			    ::TuckerMpi::Tensor<ScalarType, Properties...> Tin)
+{
+  using in_tensor_type  = ::TuckerMpi::Tensor<ScalarType, Properties...>;
+  using out_tensor_type = ::TuckerMpi::Tensor<ScalarType, SpaceT>;
+
+  const ::TuckerMpi::Distribution & Tin_dist = Tin.getDistribution();
+  auto Tin_local_tensor = Tin.localTensor();
+  //auto Tin_local_tensor_data_mirror = Kokkos::create_mirror_view_and_copy(space, Tin_local_tensor.data());
+
+  out_tensor_type Tout(Tin_dist);
+  auto Tout_local_tensor = Tout.localTensor();
+  Tucker::deep_copy(Tout_local_tensor, Tin_local_tensor);
+
+  //auto Tout_local_tensor_view = Tout.localTensor().data();
+  // namespace KE = Kokkos::Experimental;
+  // KE::copy(Kokkos::HostSpace(), Tin_local_tensor_data_mirror, Tout_local_tensor_view);
+  return Tout;
+}
+#endif
+
 
 
 } // end namespace Tucker
