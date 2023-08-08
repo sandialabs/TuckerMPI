@@ -131,7 +131,7 @@ void unpack_for_gram(int n, int ndims,
 // Y_n is block-row distributed; we are packing
 // so that Y_n will be block-column distributed
 template <class scalar_t, class ...Ps>
-auto pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
+auto pack_for_gram_host(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
 {
   const int ONE = 1;
   assert(is_pack_for_gram_necessary(n, Y.getDistribution().getMap(n,true), redistMap));
@@ -191,6 +191,66 @@ auto pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
   return sendData;
 }
 
+template <class scalar_t, class ...Ps>
+auto pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
+{
+  const int ONE = 1;
+  assert(is_pack_for_gram_necessary(n, Y.getDistribution().getMap(n,true), redistMap));
+
+  // Get the local number of rows of Y_n
+  int localNumRows = Y.localExtent(n);
+  // Get the number of columns of Y_n
+  int globalNumCols = redistMap->getGlobalNumEntries();
+  // Get the number of dimensions
+  int ndims = Y.rank();
+  // Get the number of MPI processes
+  int nprocs = Y.getDistribution().getProcessorGrid().getNumProcs(n,true);
+  // Allocate memory for packed data
+  std::vector<scalar_t> sendData(Y.localSize());
+
+  // Local data is row-major
+  // after packing the local data should have block column pattern where each block is row major.
+  /*if(n == ndims-1) {
+    auto localTensorView_d = Y.localTensor().data();
+    auto localTensorView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localTensorView_d);
+    //const scalar_t* YnData = localTensorView_h.data();
+    int offset=0;
+    for(int b=0; b<nprocs; b++) {
+      int n = redistMap->getNumEntries(b);
+      for(int r=0; r<localNumRows; r++) {
+        //Tucker::copy(&n, YnData+redistMap->getOffset(b)+globalNumCols*r, &ONE, &sendData[0]+offset, &ONE);
+        offset += n;
+      }
+    }
+  }
+  else
+  {
+    auto sz = Y.localDimensionsOnHost();
+    // Get information about the local blocks
+    size_t numLocalBlocks = impl::prod(sz, n+1,ndims-1);
+    size_t ncolsPerLocalBlock = impl::prod(sz, 0,n-1);
+    assert(ncolsPerLocalBlock <= std::numeric_limits<int>::max());
+
+    auto localTensorView_d = Y.localTensor().data();
+    auto localTensorView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localTensorView_d);
+    //const scalar_t* src = localTensorView_h.data();
+
+    // Make local data column major
+    for(size_t b=0; b<numLocalBlocks; b++) {
+      scalar_t* dest = &sendData[0] + b*localNumRows*ncolsPerLocalBlock;
+      // Copy one row at a time
+      for(int r=0; r<localNumRows; r++) {
+        int temp = (int)ncolsPerLocalBlock;
+        //Tucker::copy(&temp, src, &ONE, dest, &localNumRows);
+        src += ncolsPerLocalBlock;
+        dest += 1;
+      }
+    }
+  }*/
+
+  return sendData;
+}
+
 template <class ScalarType, class ...Properties>
 auto redistribute_tensor_for_gram(Tensor<ScalarType, Properties...> & Y, int n)
 {
@@ -246,7 +306,11 @@ auto redistribute_tensor_for_gram(Tensor<ScalarType, Properties...> & Y, int n)
   bool isPackingNecessary = is_pack_for_gram_necessary(n, oldMap, redistMap);
   std::vector<ScalarType> sendBuf;
   if(isPackingNecessary) {
-    sendBuf = pack_for_gram(Y, n, redistMap);
+    //#if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
+      sendBuf = pack_for_gram_host(Y, n, redistMap);
+    //#else
+    //  sendBuf = pack_for_gram(Y, n, redistMap);
+    //#endif 
   }
   else{
     if(Y.localSize() != 0){
