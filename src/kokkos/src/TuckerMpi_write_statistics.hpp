@@ -54,20 +54,19 @@ void write_statistics(const int mpiRank,
 
   const auto map = distribution.getMap(scaleMode, false);
   const MPI_Comm& rowComm = grid.getColComm(scaleMode, false);
+  const std::size_t metricsCount = metricData_h.numMetricsStored();
   if(needToSendToZero)
   {
-    const std::size_t numEntries = map->getGlobalNumEntries();
-    const std::size_t metricsCount = metricData_h.numMetricsStored();
-
+    const std::size_t globalNumEntries = map->getGlobalNumEntries();
     std::unordered_map<Tucker::Metric, int> metricNameToColIndex;
     Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Kokkos::HostSpace> M("M",
-									numEntries,
+									globalNumEntries,
 									metricsCount);
     for (std::size_t i=0; i<metricIDsNeeded.size(); ++i){
       const auto metricID = metricIDsNeeded[i];
       metricNameToColIndex[metricID] = i;
       auto view = metricData_h.get(metricID);
-      std::vector<ScalarType> tmp(numEntries);
+      std::vector<ScalarType> tmp(view.extent(0));
       Tucker::impl::copy_view_to_stdvec(view, tmp);
       auto dest_col = Kokkos::subview(M, Kokkos::ALL, i);
       TuckerMpi::MPI_Gatherv_(tmp.data(),
@@ -96,7 +95,7 @@ void write_statistics(const int mpiRank,
       const int mean_colInd = metricNameToColIndex[Tucker::Metric::MEAN];
       const int var_colInd  = metricNameToColIndex[Tucker::Metric::VARIANCE];
 
-      for(int i=0; i<numEntries; i++){
+      for(int i=0; i<M.extent(0); i++){
 	double stdev = std::sqrt(M(i, var_colInd));
 	if(stdev < stdThresh) {
 	  std::cout << "Slice " << i << " is below the cutoff. True value is: " << stdev << std::endl;

@@ -38,9 +38,17 @@ void copy_view_to_stdvec(const Kokkos::View<T*, Properties...> & from,
 		 std::is_same<typename view_t::array_layout,
 		 Kokkos::LayoutLeft>::value));
 
-  auto from_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), from);
-  for (std::size_t i=0; i<to.size(); ++i){
-    to[i] = from_h[i];
+  if (to.size() != from.extent(0)){
+    to.resize(from.extent(0));
+  }
+
+  using mem_space = typename view_t::memory_space;
+  if constexpr(Kokkos::SpaceAccessibility<Kokkos::HostSpace, mem_space>::accessible){
+    for (std::size_t i=0; i<to.size(); ++i){ to[i] = from[i]; }
+  }
+  else{
+    auto from_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), from);
+    for (std::size_t i=0; i<to.size(); ++i){ to[i] = from_h[i]; }
   }
 }
 
