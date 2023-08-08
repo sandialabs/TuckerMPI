@@ -58,7 +58,6 @@ Map::Map(int globalNumEntries, const MPI_Comm& comm) :
   // Determine the starting and ending indices for THIS process
   indexBegin_ = offsets_[myRank];
   indexEnd_ = offsets_[myRank+1]-1;
-
   localNumEntries_ = 1 + indexEnd_ - indexBegin_;
 }
 
