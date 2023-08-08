@@ -15,7 +15,7 @@ public:
   Map(int globalNumEntries, const MPI_Comm& comm);
 
   int getLocalIndex(int globalIndex) const{
-    assert(globalIndex >= indexBegin_ && globalIndex < indexEnd_);
+    assert(globalIndex >= indexBegin_ && globalIndex <= indexEnd_);
     return globalIndex - indexBegin_;
   }
 
