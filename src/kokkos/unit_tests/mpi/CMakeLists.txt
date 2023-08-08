@@ -56,3 +56,9 @@ add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 4)
 
 #set(T1 test_pack_for_gram)
 #add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 8)
+
+set(T1 test_new_gram)
+add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 2)
+
+set(T1 test_new_gram)
+add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 6)
