@@ -1,5 +1,5 @@
 
-set(testname test_sthosvd_4)
+set(testname test_sthosvd_6)
 set(exename ${CMAKE_CURRENT_BINARY_DIR}/../../../${STHOSVD_DRIVER_NAME})
 
 configure_file(gold0.txt gold0.txt COPYONLY)
