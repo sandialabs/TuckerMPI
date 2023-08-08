@@ -40,18 +40,20 @@ bool checkUTEqual(const scalar_t* arr1, const scalar_t* arr2, int numRows)
   return true;
 }
 
-bool runSim(std::vector<int> procs)
+bool runSim(std::initializer_list<int> procs)
 {
   if(mpi_rank() == 0){
-    for(int element: procs)
+    for(int element: procs){
       std::cout << element << ", ";
+    }
+    std::cout << "\n";
   }
 
   std::vector<int> dims = {3, 5, 7, 11};
   Tensor<scalar_t> T(dims, procs);
   read_tensor_binary(T, "./tensor_data_files/3x5x7x11.bin");
 
-  auto matrix = impl::new_gram(T, 0);
+  auto matrix = TuckerMpi::compute_gram(T, 0);
 
   const scalar_t TRUE_SOLUTION_0[3*3] =
     {30.443306716415002, 2.839326384970902, 3.302846757455287,
@@ -59,10 +61,9 @@ bool runSim(std::vector<int> procs)
      3.302846757455286,  -1.525701935166856,  33.203090378426815};
 
   bool matchesTrueSol = checkUTEqual(matrix.data(), TRUE_SOLUTION_0, 3);
-  if(!matchesTrueSol)
-    return false;
+  if(!matchesTrueSol){ return false;}
   
-  matrix = impl::new_gram(T, 1);
+  matrix = TuckerMpi::compute_gram(T, 1);
 
   const scalar_t TRUE_SOLUTION_1[5*5] =
     {19.818638147579669, -1.262410163567289, -0.702854185504209, -1.530487842705398, 0.076595773936855,
@@ -73,10 +74,9 @@ bool runSim(std::vector<int> procs)
 
   matchesTrueSol = checkUTEqual(matrix.data(), TRUE_SOLUTION_1, 5);
 
-  if(!matchesTrueSol)
-    return false;
+  if(!matchesTrueSol){ return false;}
 
-  matrix = impl::new_gram(T, 2);
+  matrix = TuckerMpi::compute_gram(T, 2);
 
   const scalar_t TRUE_SOLUTION_2[7*7] =
     {15.008467435803363, 0.759679780649146, 0.036286707752565, -0.289429119623268, 0.297697996043826, 1.775651754316252, 0.290583279984489,
@@ -89,10 +89,9 @@ bool runSim(std::vector<int> procs)
 
   matchesTrueSol = checkUTEqual(matrix.data(), TRUE_SOLUTION_2, 7);
 
-  if(!matchesTrueSol)
-    return false;
+  if(!matchesTrueSol){ return false;}
   
-  matrix = impl::new_gram(T, 3);
+  matrix = TuckerMpi::compute_gram(T, 3);
 
   const scalar_t TRUE_SOLUTION_3[11*11] =
     {9.161015785664386, 0.727680925086397, -0.027808461977047, -1.858926623169289, 2.161910031054029, 0.538498274148853, -1.513458574761186, 1.560326634563823, 0.092898181083783, 0.193490784986641, -1.989938728094985,
@@ -109,87 +108,39 @@ bool runSim(std::vector<int> procs)
 
   matchesTrueSol = checkUTEqual(matrix.data(), TRUE_SOLUTION_3, 11);
 
-  if(!matchesTrueSol)
-    return false;
-
-  if(mpi_rank() == 0)
-    std::cout << ": PASSED" << std::endl;;
+  if(!matchesTrueSol){ return false; }
 
   return true;
 }
 
 TEST(tuckermpi, ttm_new_gram_nprocs2)
 {
-  std::vector<int> procs = {-1, -1, -1, -1};
-
   if(mpi_size() == 2) {
-    procs[0] = 2; procs[1] = 1; procs[2] = 1; procs[3] = 1;
-    ASSERT_TRUE(runSim(procs));
-
-    procs[0] = 1; procs[1] = 2; procs[2] = 1; procs[3] = 1;
-    ASSERT_TRUE(runSim(procs));
-
-    procs[0] = 1; procs[1] = 1; procs[2] = 2; procs[3] = 1;
-    ASSERT_TRUE(runSim(procs));
-
-    procs[0] = 1; procs[1] = 1; procs[2] = 1; procs[3] = 2;
-    ASSERT_TRUE(runSim(procs));
+    ASSERT_TRUE(runSim({2,1,1,1}));
+    ASSERT_TRUE(runSim({1,2,1,1}));
+    ASSERT_TRUE(runSim({1,1,2,1}));
+    ASSERT_TRUE(runSim({1,1,1,2}));
   }
 }
 
 TEST(tuckermpi, ttm_new_gram_nprocs6)
 {
-  using scalar_t = double;
-
-  std::vector<int> procs = {-1, -1, -1, -1};
-
   if(mpi_size() == 6){
-    procs[0] = 6; procs[1] = 1; procs[2] = 1; procs[3] = 1;
-    ASSERT_TRUE(runSim(procs));
-    
-    procs[0] = 1; procs[1] = 6; procs[2] = 1; procs[3] = 1;
-    ASSERT_TRUE(runSim(procs));
-
-    procs[0] = 1; procs[1] = 1; procs[2] = 6; procs[3] = 1;
-    ASSERT_TRUE(runSim(procs));
-
-    procs[0] = 1; procs[1] = 1; procs[2] = 1; procs[3] = 6;
-    ASSERT_TRUE(runSim(procs));
-
-    procs[0] = 2; procs[1] = 3; procs[2] = 1; procs[3] = 1;
-    ASSERT_TRUE(runSim(procs));
-    
-    procs[0] = 2; procs[1] = 1; procs[2] = 3; procs[3] = 1;
-    ASSERT_TRUE(runSim(procs));
-
-    procs[0] = 2; procs[1] = 1; procs[2] = 1; procs[3] = 3;
-    ASSERT_TRUE(runSim(procs));
-
-    procs[0] = 1; procs[1] = 2; procs[2] = 3; procs[3] = 1;
-    ASSERT_TRUE(runSim(procs));
-
-    procs[0] = 1; procs[1] = 2; procs[2] = 1; procs[3] = 3;
-    ASSERT_TRUE(runSim(procs));
-
-    procs[0] = 1; procs[1] = 1; procs[2] = 2; procs[3] = 3;
-    ASSERT_TRUE(runSim(procs));
-
-    procs[0] = 3; procs[1] = 2; procs[2] = 1; procs[3] = 1;
-    ASSERT_TRUE(runSim(procs));
-    
-    procs[0] = 3; procs[1] = 1; procs[2] = 2; procs[3] = 1;
-    ASSERT_TRUE(runSim(procs));
-
-    procs[0] = 3; procs[1] = 1; procs[2] = 1; procs[3] = 2;
-    ASSERT_TRUE(runSim(procs));
-
-    procs[0] = 1; procs[1] = 3; procs[2] = 2; procs[3] = 1;
-    ASSERT_TRUE(runSim(procs));
-    
-    procs[0] = 1; procs[1] = 3; procs[2] = 1; procs[3] = 2;
-    ASSERT_TRUE(runSim(procs));
-    
-    procs[0] = 1; procs[1] = 1; procs[2] = 3; procs[3] = 2;
-    ASSERT_TRUE(runSim(procs));
+    ASSERT_TRUE(runSim({6,1,1,1}));
+    ASSERT_TRUE(runSim({1,6,1,1}));
+    ASSERT_TRUE(runSim({1,1,6,1}));
+    ASSERT_TRUE(runSim({1,1,1,6}));
+    ASSERT_TRUE(runSim({2,3,1,1}));
+    ASSERT_TRUE(runSim({2,1,3,1}));
+    ASSERT_TRUE(runSim({2,1,1,3}));
+    ASSERT_TRUE(runSim({1,2,3,1}));
+    ASSERT_TRUE(runSim({1,2,1,3}));
+    ASSERT_TRUE(runSim({1,1,2,3}));
+    ASSERT_TRUE(runSim({3,2,1,1}));
+    ASSERT_TRUE(runSim({3,1,2,1}));
+    ASSERT_TRUE(runSim({3,1,1,2}));
+    ASSERT_TRUE(runSim({1,3,2,1}));
+    ASSERT_TRUE(runSim({1,3,1,2}));
+    ASSERT_TRUE(runSim({1,1,3,2}));
   }
 }

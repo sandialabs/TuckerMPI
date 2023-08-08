@@ -151,6 +151,7 @@ auto pack_for_gram_fallback_copy_host(Tensor<scalar_t, Ps...> & Y, int n, const 
   //after packing the local data should have block column pattern where each block is row major.
   if(n == ndims-1)
   {
+
     int offset=0;
     for(int b=0; b<nprocs; b++) {
       int n = redistMap->getNumEntries(b);
@@ -220,24 +221,30 @@ std::vector<scalar_t> pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Ma
   //after packing the local data should have block column pattern where each block is row major.
   if(n == ndims-1)
   {
+
+    // FIXME: this loop should be improved
     auto itFrom = KE::begin(localTensorView_h);
     auto itDest = KE::begin(sendDataView);
-
-    for(std::size_t b=0; b<nprocs; b++) {
+    std::size_t offset = 0;
+    for(std::size_t b=0; b<nprocs; b++)
+    {
       std::size_t n = redistMap->getNumEntries(b);
-      policy_t policy(host_exe(), 0, localNumRows);
-      Kokkos::parallel_for(policy,
-			   KOKKOS_LAMBDA(std::size_t r){
-			     const std::size_t r_offset = r*n;
-			     for (std::size_t i=0; i<n; ++i){
-			       *(itDest + r_offset + i) = *(itFrom + offsetsView(b) + globalNumCols*r +i);
-			     }
+      for(int r=0; r<localNumRows; r++)
+      {
+	policy_t policy(host_exe(), 0, n);
+	Kokkos::parallel_for(policy,
+			     KOKKOS_LAMBDA(std::size_t i){
+			       *(itDest + offset + i) = *(itFrom + offsetsView(b) + globalNumCols*r +i);
 			   });
+        offset += n;
+      }
     }
+
   }
   else
   {
 
+    // FIXME: this loop should be improved
     auto sz = Y.localDimensionsOnHost();
     size_t numLocalBlocks = impl::prod(sz, n+1,ndims-1);
     size_t ncolsPerLocalBlock = impl::prod(sz, 0,n-1);
@@ -322,7 +329,7 @@ auto redistribute_tensor_for_gram(Tensor<ScalarType, Properties...> & Y, int n)
 #if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
     sendBuf = pack_for_gram_fallback_copy_host(Y, n, redistMap);
 #else
-      sendBuf = pack_for_gram(Y, n, redistMap);
+       sendBuf = pack_for_gram(Y, n, redistMap);
 #endif
   }
 
