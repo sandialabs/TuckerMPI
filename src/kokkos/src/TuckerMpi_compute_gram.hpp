@@ -19,11 +19,13 @@ auto compute_gram(Tensor<ScalarType, Properties...> Y,
   // constraints
   static_assert(   std::is_same_v<onnode_layout, Kokkos::LayoutLeft>
 		&& std::is_floating_point_v<tensor_value_type>,
-		   "TuckerOnNode::compute_gram: supports tensors with LayoutLeft" \
+		   "TuckerMpi::compute_gram: supports tensors with LayoutLeft" \
 		   "and floating point scalar");
 
-  using local_gram_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space>;
-  local_gram_t localGram;
+  //
+  // compute local gram
+  using gram_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space>;
+  gram_t localGram;
 
   const MPI_Comm& comm = Y.getDistribution().getProcessorGrid().getColComm(n, false);
   int numProcs;
@@ -36,7 +38,20 @@ auto compute_gram(Tensor<ScalarType, Properties...> Y,
     impl::local_gram_without_data_redistribution(Y, n, localGram);
   }
 
-  return impl::reduce_for_gram(localGram);
+  //
+  // now create a new view and do reduction across mpi ranks
+  const std::size_t nrows = localGram.extent(0);
+  const std::size_t ncols = localGram.extent(1);
+  const std::size_t count = nrows*ncols;
+  gram_t reducedGram("reducedGram", nrows, ncols);
+
+  auto reducedGram_h = Kokkos::create_mirror(reducedGram);
+  auto localGram_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localGram);
+  // FIXME: why we must use MPI_COMM_WORLD or all tests fails?
+  MPI_Allreduce_(localGram_h.data(), reducedGram_h.data(), count, MPI_SUM, MPI_COMM_WORLD);
+  Kokkos::deep_copy(reducedGram, reducedGram_h);
+
+  return reducedGram;
 }
 
 }

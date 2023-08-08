@@ -24,6 +24,8 @@ template<class ScalarType, class ...Properties> class Tensor;
 }
 
 namespace Tucker{
+// NOTE: the following two funcs are forward declared here because 
+// TuckerOnNode::MetricData has private constructors and they are friend funcs
 template<class ScalarType, class MemorySpace>
 auto create_mirror(::TuckerOnNode::MetricData<ScalarType, MemorySpace>);
 

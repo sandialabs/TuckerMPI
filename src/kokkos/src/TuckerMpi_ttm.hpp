@@ -13,6 +13,18 @@ auto ttm(Tensor<ScalarType, TensorProperties...> X,
 	 bool Utransp,
 	 std::size_t nnz_limit)
 {
+
+  // constraints
+  using tensor_type   = Tensor<ScalarType, TensorProperties...>;
+  using tensor_layout = typename tensor_type::traits::onnode_layout;
+  using tensor_memory_space = typename tensor_type::traits::memory_space;
+  static_assert(std::is_same_v<tensor_layout, Kokkos::LayoutLeft>,
+		"TuckerMpi::ttm: currently supports tensors with LayoutLeft");
+
+  using u_view_t = Kokkos::View<ScalarType**, ViewProperties...>;
+  static_assert(std::is_same_v<tensor_memory_space, typename u_view_t::memory_space>,
+		"TuckerMpi::ttm: tensor and matrix arguments must have matching memory spaces");
+
   return impl::ttm_impl(X, n, U, Utransp, nnz_limit);
 }
 

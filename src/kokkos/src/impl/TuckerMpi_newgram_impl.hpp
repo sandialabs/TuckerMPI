@@ -364,31 +364,10 @@ auto redistribute_tensor_for_gram(Tensor<ScalarType, Properties...> & Y, int n)
   }
 }
 
-
-template <class ScalarType, class ...Props>
-auto reduce_for_gram(Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Props...> U)
-{
-  using view_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, Props...>;
-  using reduced_U_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, typename view_t::memory_space>;
-
-  int nrows = U.extent(0);
-  int ncols = U.extent(1);
-  int count = nrows*ncols;
-
-  auto U_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), U);
-  reduced_U_t reducedU("redU", nrows, ncols);
-  auto redU_h = Kokkos::create_mirror(reducedU);
-  MPI_Allreduce_(U_h.data(), redU_h.data(), count, MPI_SUM, MPI_COMM_WORLD);
-  Kokkos::deep_copy(reducedU, redU_h);
-
-  return reducedU;
-}
-
-
-template <class ScalarType, class GramViewType, class ...Properties>
+template <class ScalarType, class ...Properties, class ...ViewProps>
 void local_gram_without_data_redistribution(Tensor<ScalarType, Properties...> & Y,
-					    int n,
-					    GramViewType & localGram)
+					    const int n,
+					    Kokkos::View<ScalarType**, Kokkos::LayoutLeft, ViewProps...> & localGram)
 {
   if(Y.getDistribution().ownNothing()) {
     const int nGlobalRows = Y.globalExtent(n);
@@ -399,10 +378,10 @@ void local_gram_without_data_redistribution(Tensor<ScalarType, Properties...> & 
   }
 }
 
-template <class ScalarType, class GramViewType, class ...Properties>
+template <class ScalarType, class ...Properties, class ...ViewProps>
 void local_gram_after_data_redistribution(Tensor<ScalarType, Properties...> & Y,
-					  int n,
-					  GramViewType & localGram)
+					  const int n,
+					  Kokkos::View<ScalarType**, Kokkos::LayoutLeft, ViewProps...> & localGram)
 {
 
   bool myColEmpty = false;

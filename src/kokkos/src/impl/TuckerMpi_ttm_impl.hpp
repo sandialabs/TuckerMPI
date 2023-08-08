@@ -211,7 +211,7 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
       auto localYview_h = Kokkos::create_mirror_view(localY.data());
       ScalarType* recvBuf = nullptr;
       if(localY.size() > 0){
-	recvBuf = localYview_h.data(); //localY.data().data();
+	recvBuf = localYview_h.data();
       }
 
       int nprocs;

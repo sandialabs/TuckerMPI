@@ -17,8 +17,10 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   // constraints
   using tensor_type = ::TuckerMpi::Tensor<ScalarType, Properties...>;
   using onnode_layout = typename tensor_type::traits::onnode_layout;
-  static_assert(std::is_same_v<onnode_layout, Kokkos::LayoutLeft>,
-		"TuckerMpi::sthosvd: currently only supporting a tensor with LayoutLeft");
+  static_assert(   std::is_same_v<onnode_layout, Kokkos::LayoutLeft>
+		&& std::is_floating_point_v<ScalarType>,
+		   "TuckerMpi::sthosvd: currently only supporting a tensor with LayoutLeft" \
+		   "and floating point scalar");
 
   // preconditions
   assert(modeOrder.empty() || modeOrder.size() == (std::size_t) X.rank());
