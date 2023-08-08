@@ -210,7 +210,7 @@ auto pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
 
   // Local data is row-major
   // after packing the local data should have block column pattern where each block is row major.
-  /*if(n == ndims-1) {
+  if(n == ndims-1) {
     auto localTensorView_d = Y.localTensor().data();
     auto localTensorView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localTensorView_d);
     //const scalar_t* YnData = localTensorView_h.data();
@@ -219,9 +219,11 @@ auto pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
       int n = redistMap->getNumEntries(b);
       for(int r=0; r<localNumRows; r++) {
         //Tucker::copy(&n, YnData+redistMap->getOffset(b)+globalNumCols*r, &ONE, &sendData[0]+offset, &ONE);
+        Tucker::impl::copy_view_to_stdvec(localTensorView_h, &sendData[0]+offset);
         offset += n;
       }
     }
+    //Kokkos::deep_copy(localTensorView_h, localTensorView_d);
   }
   else
   {
@@ -237,17 +239,19 @@ auto pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
 
     // Make local data column major
     for(size_t b=0; b<numLocalBlocks; b++) {
-      scalar_t* dest = &sendData[0] + b*localNumRows*ncolsPerLocalBlock;
+      //scalar_t* dest = &sendData[0] + b*localNumRows*ncolsPerLocalBlock;
       // Copy one row at a time
       for(int r=0; r<localNumRows; r++) {
-        int temp = (int)ncolsPerLocalBlock;
+        //int temp = (int)ncolsPerLocalBlock;
         //Tucker::copy(&temp, src, &ONE, dest, &localNumRows);
-        src += ncolsPerLocalBlock;
-        dest += 1;
+        // view => vector
+        Tucker::impl::copy_view_to_stdvec(localTensorView_h, sendData);
+        //src += ncolsPerLocalBlock;
+        //dest += 1;
       }
     }
-  }*/
-
+    //Kokkos::deep_copy(localTensorView_h, localTensorView_d);
+  }
   return sendData;
 }
 
