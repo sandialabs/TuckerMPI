@@ -123,7 +123,7 @@ inline constexpr bool better_off_calling_host_syev_v =
 
 
 template<class ScalarType, class ... AProperties, class ... EigvalProperties>
-void syev_on_host_views(Kokkos::View<ScalarType**, AProperties...> A,
+void compute_syev_use_host_lapack(Kokkos::View<ScalarType**, AProperties...> A,
 			Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
 {
 
@@ -170,9 +170,52 @@ void syev_on_host_views(Kokkos::View<ScalarType**, AProperties...> A,
 // {}
 // #endif
 
+#if defined(KOKKOS_ENABLE_CUDA) && !defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
+// enable if cuda
+void compute_syev_on_device_views(Kokkos::View<ScalarType**, Properties...> G, eigenvalues, ...){
+  auto cusolverStatus = cusolverDnCreate(&cuDnHandle);
+  assert(cusolverStatus == CUSOLVER_STATUS_SUCCESS);
+
+// Doc for Reference
+// https://github.com/NVIDIA/CUDALibrarySamples/blob/master/cuSOLVER/Xsyevd/cusolver_Xsyevd_example.cu
+// cusolverStatus_t
+// cusolverDnXsyevd(
+//     cusolverDnHandle_t handle,
+//     cusolverDnParams_t params,
+//     cusolverEigMode_t jobz,
+//     cublasFillMode_t uplo,
+//     int64_t n,
+//     cudaDataType dataTypeA,
+//     void *A,
+//     int64_t lda,
+//     cudaDataType dataTypeW,
+//     void *W,
+//     cudaDataType computeType,
+//     void *bufferOnDevice,
+//     size_t workspaceInBytesOnDevice,
+//     void *bufferOnHost,
+//     size_t workspaceInBytesOnHost,
+//     int *info)
+  //use CUDA_CHECK() as in doc above?
+  cusolverStatus_t cusolverDnXsyevd(cusolverStatus, NULL, &jobz, &uplo, &nrows, A.data(), &nrows,
+	                                  eigenvalues.data(), work.data(), &lwork, &info)
+  assert(cusolverStatus == CUSOLVER_STATUS_SUCCESS);
+
+  auto cusolverStatus = cusolverDnDestroy(cuDnHandle);
+  assert(cusolverStatus == CUSOLVER_STATUS_SUCCESS);
+}
+#endif
+
+#if defined(KOKKOS_ENABLE_HIP) && !defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
+// enable if HIP
+void compute_syev_on_device_views(Kokkos::View<ScalarType**, Properties...> G eigenvalues, ...){
+ // use rocSOLVER
+}
+#endif
+#if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST) && !defined(KOKKOS_ENABLE_HIP) && !defined(KOKKOS_ENABLE_CUDA)
 // fallback case if no better specialization is found
 template<class ExecutionSpace, class ScalarType, class ... AProperties, class ... EigvalProperties>
-void syev_on_device_views(const ExecutionSpace& exec,
+void compute_syev_on_device_views(const ExecutionSpace& exec,
 			  Kokkos::View<ScalarType**, AProperties...> A,
 			  Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
 {
@@ -183,7 +226,7 @@ void syev_on_device_views(const ExecutionSpace& exec,
   Kokkos::deep_copy(exec, A, A_h);
   exec.fence();
 }
-
+#endif
 
 template<class ScalarType, class ... Properties>
 auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<ScalarType**, Properties...> G,
@@ -210,10 +253,10 @@ auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<Scalar
   Kokkos::View<ScalarType*, Kokkos::LayoutLeft, mem_space> eigenvalues_d("EIG", G.extent(0));
 
   if constexpr( better_off_calling_host_syev_v<exe_space> ){
-    syev_on_host_views(G, eigenvalues_d);
+    compute_syev_use_host_lapack(G, eigenvalues_d);
   }
   else{
-    syev_on_device_views(exespace, G,  eigenvalues_d);
+    compute_syev_on_device_views(exespace, G,  eigenvalues_d);
   }
 
   /*
