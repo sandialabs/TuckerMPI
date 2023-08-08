@@ -188,7 +188,7 @@ auto pack_for_gram_fallback_copy_host(Tensor<scalar_t, Ps...> & Y, int n, const 
 }
 
 template <class scalar_t, class ...Ps>
-auto pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
+std::vector<scalar_t> pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
 {
   assert(is_pack_for_gram_necessary(n, Y.getDistribution().getMap(n,true), redistMap));
 
@@ -214,6 +214,8 @@ auto pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
 
   namespace KE = Kokkos::Experimental;
 
+  using host_exe = Kokkos::DefaultHostExecutionSpace;
+  using policy_t = Kokkos::RangePolicy<host_exe>;
 
   // Local data is row-major
   //after packing the local data should have block column pattern where each block is row major.
@@ -224,7 +226,8 @@ auto pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
 
     for(std::size_t b=0; b<nprocs; b++) {
       std::size_t n = redistMap->getNumEntries(b);
-      Kokkos::parallel_for(localNumRows,
+      policy_t policy(host_exe(), 0, localNumRows);
+      Kokkos::parallel_for(policy,
 			   KOKKOS_LAMBDA(std::size_t r){
 			     const std::size_t r_offset = r*n;
 			     for (std::size_t i=0; i<n; ++i){
@@ -247,7 +250,8 @@ auto pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
       auto itDest = KE::begin(sendDataView) + b*localNumRows*ncolsPerLocalBlock;
       for(std::size_t r=0; r<localNumRows; r++)
       {
-	Kokkos::parallel_for(ncolsPerLocalBlock,
+	policy_t policy(host_exe(), 0, ncolsPerLocalBlock);
+	Kokkos::parallel_for(policy,
 			     KOKKOS_LAMBDA(std::size_t i){
 			       *(itDest + i*localNumRows) = *(itFrom + i);
 			     });
@@ -319,7 +323,7 @@ auto redistribute_tensor_for_gram(Tensor<ScalarType, Properties...> & Y, int n)
 #if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
     sendBuf = pack_for_gram_fallback_copy_host(Y, n, redistMap);
 #else
-     sendBuf = pack_for_gram(Y, n, redistMap);
+      sendBuf = pack_for_gram(Y, n, redistMap);
 #endif
   }
 
