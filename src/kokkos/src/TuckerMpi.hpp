@@ -26,6 +26,7 @@
 #include "TuckerMpi_normalize_tensor.hpp"
 
 // finally functions related/needed by sthosvd
+#include "TuckerMpi_compute_gram.hpp"
 #include "TuckerMpi_ttm.hpp"
 #include "Tucker_create_core_tensor_truncator.hpp"
 #include "TuckerMpi_sthosvd.hpp"
