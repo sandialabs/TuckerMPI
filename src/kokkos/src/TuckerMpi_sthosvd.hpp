@@ -21,7 +21,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 		"TuckerMpi::sthosvd: currently only supporting a tensor with LayoutLeft");
 
   // preconditions
-  assert(modeOder.size() == (std::size_t) X.rank());
+  assert(modeOrder.empty() || modeOrder.size() == (std::size_t) X.rank());
 
   // execute
   if (method == Method::NewGram){

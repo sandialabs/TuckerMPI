@@ -74,15 +74,11 @@ auto create_mirror_and_copy(const SpaceT & space,
 
   const ::TuckerMpi::Distribution & Tin_dist = Tin.getDistribution();
   auto Tin_local_tensor = Tin.localTensor();
-  //auto Tin_local_tensor_data_mirror = Kokkos::create_mirror_view_and_copy(space, Tin_local_tensor.data());
 
   out_tensor_type Tout(Tin_dist);
   auto Tout_local_tensor = Tout.localTensor();
   Tucker::deep_copy(Tout_local_tensor, Tin_local_tensor);
 
-  //auto Tout_local_tensor_view = Tout.localTensor().data();
-  // namespace KE = Kokkos::Experimental;
-  // KE::copy(Kokkos::HostSpace(), Tin_local_tensor_data_mirror, Tout_local_tensor_view);
   return Tout;
 }
 #endif

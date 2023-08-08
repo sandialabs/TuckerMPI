@@ -115,6 +115,7 @@ void unpack_for_gram(int n, int ndims,
   auto matrixView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), matrixView_d);
   scalar_t* dest = matrixView_h.data();
   const int ONE = 1;
+
   for(int c=0; c<nLocalCols; c++) {
     for(int b=0; b<nprocs; b++) {
       int nLocalRows=origMap->getNumEntries(b);
@@ -131,50 +132,45 @@ void unpack_for_gram(int n, int ndims,
 // Y_n is block-row distributed; we are packing
 // so that Y_n will be block-column distributed
 template <class scalar_t, class ...Ps>
-auto pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
+auto pack_for_gram_fallback_copy_host(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
 {
   const int ONE = 1;
   assert(is_pack_for_gram_necessary(n, Y.getDistribution().getMap(n,true), redistMap));
 
-  // Get the local number of rows of Y_n
   int localNumRows = Y.localExtent(n);
-  // Get the number of columns of Y_n
   int globalNumCols = redistMap->getGlobalNumEntries();
-  // Get the number of dimensions
   int ndims = Y.rank();
-  // Get the number of MPI processes
   int nprocs = Y.getDistribution().getProcessorGrid().getNumProcs(n,true);
+
+  auto localTensorView_d = Y.localTensor().data();
+  auto localTensorView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localTensorView_d);
+
   // Allocate memory for packed data
   std::vector<scalar_t> sendData(Y.localSize());
 
   // Local data is row-major
   //after packing the local data should have block column pattern where each block is row major.
-  if(n == ndims-1) {
-    auto localTensorView_d = Y.localTensor().data();
-    auto localTensorView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localTensorView_d);
-    const scalar_t* YnData = localTensorView_h.data();
+  if(n == ndims-1)
+  {
     int offset=0;
     for(int b=0; b<nprocs; b++) {
       int n = redistMap->getNumEntries(b);
-      for(int r=0; r<localNumRows; r++) {
-        Tucker::copy(&n, YnData+redistMap->getOffset(b)+globalNumCols*r, &ONE,
-		     &sendData[0]+offset, &ONE);
+      const scalar_t* YnData = localTensorView_h.data();
+      for(int r=0; r<localNumRows; r++){
+        Tucker::copy(&n, YnData + redistMap->getOffset(b)+globalNumCols*r,
+		     &ONE, &sendData[0]+offset, &ONE);
         offset += n;
       }
     }
   }
-  else
-  {
+  else{
+
     auto sz = Y.localDimensionsOnHost();
-    // Get information about the local blocks
     size_t numLocalBlocks = impl::prod(sz, n+1,ndims-1);
     size_t ncolsPerLocalBlock = impl::prod(sz, 0,n-1);
     assert(ncolsPerLocalBlock <= std::numeric_limits<int>::max());
 
-    auto localTensorView_d = Y.localTensor().data();
-    auto localTensorView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localTensorView_d);
     const scalar_t* src = localTensorView_h.data();
-
     // Make local data column major
     for(size_t b=0; b<numLocalBlocks; b++) {
       scalar_t* dest = &sendData[0] + b*localNumRows*ncolsPerLocalBlock;
@@ -184,6 +180,80 @@ auto pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
         Tucker::copy(&temp, src, &ONE, dest, &localNumRows);
         src += ncolsPerLocalBlock;
         dest += 1;
+      }
+    }
+  }
+
+  return sendData;
+}
+
+template <class scalar_t, class ...Ps>
+auto pack_for_gram(Tensor<scalar_t, Ps...> & Y, int n, const Map* redistMap)
+{
+  assert(is_pack_for_gram_necessary(n, Y.getDistribution().getMap(n,true), redistMap));
+
+  int localNumRows = Y.localExtent(n);
+  int globalNumCols = redistMap->getGlobalNumEntries();
+  int ndims = Y.rank();
+  int nprocs = Y.getDistribution().getProcessorGrid().getNumProcs(n,true);
+
+  auto localTensorView_d = Y.localTensor().data();
+  auto localTensorView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localTensorView_d);
+
+  // Allocate memory for packed data
+  std::vector<scalar_t> sendData(Y.localSize());
+
+  using senddata_umview_t = Kokkos::View<
+    scalar_t*, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+  senddata_umview_t sendDataView(sendData.data(), sendData.size());
+
+  using offsets_umview_t = Kokkos::View<
+    const int*, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+  auto & offsetsStdVec = redistMap->getOffsets();
+  offsets_umview_t offsetsView(offsetsStdVec.data(), offsetsStdVec.size());
+
+  namespace KE = Kokkos::Experimental;
+
+
+  // Local data is row-major
+  //after packing the local data should have block column pattern where each block is row major.
+  if(n == ndims-1)
+  {
+    auto itFrom = KE::begin(localTensorView_h);
+    auto itDest = KE::begin(sendDataView);
+
+    for(std::size_t b=0; b<nprocs; b++) {
+      std::size_t n = redistMap->getNumEntries(b);
+      Kokkos::parallel_for(localNumRows,
+			   KOKKOS_LAMBDA(std::size_t r){
+			     const std::size_t r_offset = r*n;
+			     for (std::size_t i=0; i<n; ++i){
+			       *(itDest + r_offset + i) = *(itFrom + offsetsView(b) + globalNumCols*r +i);
+			     }
+			   });
+    }
+  }
+  else
+  {
+
+    auto sz = Y.localDimensionsOnHost();
+    size_t numLocalBlocks = impl::prod(sz, n+1,ndims-1);
+    size_t ncolsPerLocalBlock = impl::prod(sz, 0,n-1);
+    assert(ncolsPerLocalBlock <= std::numeric_limits<int>::max());
+
+    auto itFrom = KE::begin(localTensorView_h);
+    for(size_t b=0; b<numLocalBlocks; b++)
+    {
+      auto itDest = KE::begin(sendDataView) + b*localNumRows*ncolsPerLocalBlock;
+      for(std::size_t r=0; r<localNumRows; r++)
+      {
+	Kokkos::parallel_for(ncolsPerLocalBlock,
+			     KOKKOS_LAMBDA(std::size_t i){
+			       *(itDest + i*localNumRows) = *(itFrom + i);
+			     });
+
+	itFrom += ncolsPerLocalBlock;
+	itDest += 1;
       }
     }
   }
@@ -246,8 +316,13 @@ auto redistribute_tensor_for_gram(Tensor<ScalarType, Properties...> & Y, int n)
   bool isPackingNecessary = is_pack_for_gram_necessary(n, oldMap, redistMap);
   std::vector<ScalarType> sendBuf;
   if(isPackingNecessary) {
-    sendBuf = pack_for_gram(Y, n, redistMap);
+#if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
+    sendBuf = pack_for_gram_fallback_copy_host(Y, n, redistMap);
+#else
+     sendBuf = pack_for_gram(Y, n, redistMap);
+#endif
   }
+
   else{
     if(Y.localSize() != 0){
       sendBuf.resize(Y.localSize());

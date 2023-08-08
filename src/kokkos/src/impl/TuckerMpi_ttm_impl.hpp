@@ -145,7 +145,7 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
     const Map* yMap = Y.getDistribution().getMap(n,false);
 
     ScalarType* Uptr;
-    assert(U.getNumElements() > 0);
+    assert(U.size() > 0);
     if(Utransp){
       Uptr = U.data() + xMap->getGlobalIndex(0);
     }

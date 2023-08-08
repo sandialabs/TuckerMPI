@@ -14,7 +14,6 @@ template<
 void deep_copy(const TuckerOnNode::Tensor<ScalarTypeDest, PropertiesDest...> & dest,
 	       const TuckerOnNode::Tensor<ScalarTypeSrc, PropertiesSrc...> & src)
 {
-  assert(dest.dimensionsOnHost() == serc.dimensionsOnHost() );
   Kokkos::deep_copy(dest.data(), src.data());
 }
 

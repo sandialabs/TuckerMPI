@@ -28,12 +28,12 @@ void ttm(Tensor<ScalarType, TensorProperties...> X,
 
   // preconditions
   if(Utransp) {
-    assert(U.extent(0) == X.extent(n));
-    assert(U.extent(1) == Y.extent(n));
+    assert(U.extent(0) == X.extent(mode));
+    assert(U.extent(1) == Y.extent(mode));
   }
   else {
-    assert(U.extent(1) == X.extent(n));
-    assert(U.extent(0) == Y.extent(n));
+    assert(U.extent(1) == X.extent(mode));
+    assert(U.extent(0) == Y.extent(mode));
   }
 
   if(mode == 0) {
