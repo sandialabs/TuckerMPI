@@ -16,7 +16,7 @@ struct InputParameters
   int nd;
   bool boolAutoRankDetermination;
   bool boolSTHOSVD;
-  bool boolWriteSTHOSVD;
+  bool boolWriteResultsOfSTHOSVD;
   bool boolPrintOptions;
   bool boolWriteTensorAfterPreprocessing;
   bool boolPrintSV;
@@ -128,17 +128,17 @@ public:
       std::cout << "- Preprocessed output file list = " << preproc_fns_file <<  std::endl;
 
       std::cout << "If true, record the result of ST-HOSVD (the core tensor and all factors)\n";
-      std::cout << "- Write STHOSVD result = " << (boolWriteSTHOSVD ? "true" : "false") <<  std::endl;
+      std::cout << "- Write STHOSVD result = " << (boolWriteResultsOfSTHOSVD ? "true" : "false") <<  std::endl;
 
       std::cout << "Directory location of ST-HOSVD output files\n";
-      if(boolWriteSTHOSVD) std::cout << "NOTE: Please ensure that this directory actually exists!\n";
+      if(boolWriteResultsOfSTHOSVD) std::cout << "NOTE: Please ensure that this directory actually exists!\n";
       std::cout << "- STHOSVD directory = " << sthosvd_dir <<  std::endl;
 
       std::cout << "Base name of ST-HOSVD output files\n";
       std::cout << "- STHOSVD file prefix = " << sthosvd_fn <<  std::endl;
 
       std::cout << "Directory to place singular value files into\n";
-      if(boolWriteSTHOSVD) std::cout << "NOTE: Please ensure that this directory actually exists!\n";
+      if(boolWriteResultsOfSTHOSVD) std::cout << "NOTE: Please ensure that this directory actually exists!\n";
       std::cout << "- SV directory = " << sv_dir <<  std::endl;
 
       std::cout << "Base name for writing the singular value files\n";
@@ -175,7 +175,7 @@ private:
     }
 
     boolSTHOSVD             = string_parse<bool>(fileAsStrings, "Perform STHOSVD", false);
-    boolWriteSTHOSVD        = string_parse<bool>(fileAsStrings, "Write core tensor and factor matrices", false);
+    boolWriteResultsOfSTHOSVD = string_parse<bool>(fileAsStrings, "Write core tensor and factor matrices", false);
     boolPrintOptions        = string_parse<bool>(fileAsStrings, "Print options", false);
     boolWriteTensorAfterPreprocessing = string_parse<bool>(fileAsStrings, "Write preprocessed data", false);
     boolPrintSV             = string_parse<bool>(fileAsStrings, "Print factor matrices", false);
