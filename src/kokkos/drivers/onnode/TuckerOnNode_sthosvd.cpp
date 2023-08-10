@@ -139,13 +139,9 @@ int main(int argc, char* argv[])
     auto sthosvdGram = [=](auto truncator){
       const auto method = TuckerOnNode::Method::Gram;
       auto [tt, eigvals] = TuckerOnNode::sthosvd(method, X, truncator, false /*flipSign*/);
-
       std::cout<< "\n";
       writeEigenvaluesToFiles(eigvals);
-
       printNorms(tt);
-
-      // FIXME: Compute the error bound based on the eigenvalues
 
       if(inputs.boolWriteResultsOfSTHOSVD){
         writeExtentsOfCoreTensor(tt);
