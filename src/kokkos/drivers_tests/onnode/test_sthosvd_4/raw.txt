@@ -1,1 +1,1 @@
-./7x9x10.bin
+./tensor_data.bin

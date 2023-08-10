@@ -1,0 +1,2 @@
+./normalized_tensor.bin
+

@@ -1,1 +1,1 @@
-./4x4x4.bin
+./tensor_data.bin

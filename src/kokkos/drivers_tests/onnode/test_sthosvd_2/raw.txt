@@ -1,1 +1,1 @@
-./2x6x3.bin
+./tensor_data.bin

@@ -25,5 +25,5 @@ add_test(NAME ${testname}
   -DCORETENSOR_COMPARISON_ABSTOL=1e-8
   -DFACTORMATRIX_COMPARISON_RELTOL=1e-8
   -DFACTORMATRIX_COMPARISON_ABSTOL=1e-8
-  -P ${CMAKE_CURRENT_SOURCE_DIR}/../test_compare_eigval_coretensor_factors.cmake
+  -P ${CMAKE_CURRENT_SOURCE_DIR}/../../test.cmake
 )
