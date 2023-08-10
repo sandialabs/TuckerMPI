@@ -25,6 +25,7 @@ add_utest_kokkos(${TEST1} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST1}.cc)
 
 set(TEST1 test_tensorgrameigenvalues_storage)
 add_utest_kokkos(${TEST1} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST1}.cc)
+target_compile_definitions(${TEST1} PUBLIC TUCKER_ALLOW_PRIVATE_CONSTRUCTORS_TO_BE_PUBLIC_FOR_TESTING)
 
 set(TEST1 test_syrk_kokkos)
 add_utest_kokkos(${TEST1} ${CMAKE_CURRENT_SOURCE_DIR}/${TEST1}.cc)

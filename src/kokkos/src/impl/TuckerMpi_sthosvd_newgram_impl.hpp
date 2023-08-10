@@ -16,7 +16,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   using tensor_type         = Tensor<ScalarType, Properties...>;
   using memory_space        = typename tensor_type::traits::memory_space;
   using tucker_tensor_type  = Tucker::TuckerTensor<tensor_type>;
-  using gram_eigvals_type   = TuckerOnNode::impl::TensorGramEigenvalues<ScalarType, memory_space>;
+  using gram_eigvals_type   = TuckerOnNode::TensorGramEigenvalues<ScalarType, memory_space>;
   using slicing_info_view_t = Kokkos::View<::Tucker::impl::PerModeSliceInfo*, Kokkos::HostSpace>;
 
   // ---------------------

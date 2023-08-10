@@ -25,6 +25,7 @@
 #include "TuckerOnNode_normalize_tensor.hpp"
 
 // finally functions related/needed by sthosvd
+#include "TuckerOnNode_TensorGramEigenvalues.hpp"
 #include "TuckerOnNode_compute_gram.hpp"
 #include "TuckerOnNode_ttm.hpp"
 #include "Tucker_create_core_tensor_truncator.hpp"

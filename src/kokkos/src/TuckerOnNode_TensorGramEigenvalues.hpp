@@ -1,12 +1,12 @@
 #ifndef TUCKER_KOKKOSONLY_TENSOR_GRAM_EIGENVALUES_HPP_
 #define TUCKER_KOKKOSONLY_TENSOR_GRAM_EIGENVALUES_HPP_
 
-#include "Tucker_TuckerTensorSliceHelpers.hpp"
-#include <Kokkos_Core.hpp>
+#include "Tucker_fwd.hpp"
+#include "./impl/Tucker_TuckerTensorSliceHelpers.hpp"
 #include <Kokkos_StdAlgorithms.hpp>
+#include <Kokkos_Core.hpp>
 
 namespace TuckerOnNode{
-namespace impl{
 
 template<class ScalarType, class MemorySpace = Kokkos::DefaultExecutionSpace::memory_space>
 class TensorGramEigenvalues
@@ -17,13 +17,29 @@ class TensorGramEigenvalues
   // need for the copy/move constr/assign accepting a compatible tensor
   template <class, class> friend class TensorGramEigenvalues;
 
-public:
+#if !defined TUCKER_ALLOW_PRIVATE_CONSTRUCTORS_TO_BE_PUBLIC_FOR_TESTING
+  template <class ScalarTypeIn, class ...Properties, class TruncatorType>
+  friend auto ::TuckerOnNode::impl::sthosvd_gram(::TuckerOnNode::Tensor<ScalarTypeIn, Properties...> X,
+						 TruncatorType && truncator,
+						 bool flipSign);
+
+#if defined TUCKER_ENABLE_MPI
+  template <class ScalarTypeIn, class ...Properties, class TruncatorType>
+  friend auto ::TuckerMpi::impl::sthosvd_newgram(::TuckerMpi::Tensor<ScalarTypeIn, Properties...> X,
+						 TruncatorType && truncator,
+						 const std::vector<int> & modeOrder,
+						 bool flipSign);
+#endif
+#endif
 
   // ----------------------------------------
   // Regular constructors, destructor, and assignment
   // ----------------------------------------
-
-  ~TensorGramEigenvalues() = default;
+#if defined TUCKER_ALLOW_PRIVATE_CONSTRUCTORS_TO_BE_PUBLIC_FOR_TESTING
+public:
+#else
+private:
+#endif
 
   TensorGramEigenvalues()
     : rank_(-1),
@@ -42,6 +58,9 @@ public:
     using exespace = typename EigvalsViewType::execution_space;
     KEX::copy(exespace(), eigvals, eigenvalues_);
   }
+
+public:
+  ~TensorGramEigenvalues() = default;
 
   TensorGramEigenvalues(const TensorGramEigenvalues& o) = default;
   TensorGramEigenvalues(TensorGramEigenvalues&&) = default;
@@ -112,5 +131,5 @@ private:
   slicing_info_view_t perModeSlicingInfo_ = {};
 };
 
-}}
+}
 #endif

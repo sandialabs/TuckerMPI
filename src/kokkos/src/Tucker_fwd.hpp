@@ -2,6 +2,7 @@
 #define TUCKER_KOKKOS_FWD_DECL_HPP_
 
 #include <array>
+#include <vector>
 
 namespace Tucker
 {
@@ -10,8 +11,10 @@ enum class Metric {
 };
 
 constexpr std::array<Tucker::Metric, 4> defaultMetrics{
-  Tucker::Metric::MIN,  Tucker::Metric::MAX,
-  Tucker::Metric::MEAN, Tucker::Metric::VARIANCE};
+  Tucker::Metric::MIN,
+  Tucker::Metric::MAX,
+  Tucker::Metric::MEAN,
+  Tucker::Metric::VARIANCE};
 
 template<class CoreTensorType> class TuckerTensor;
 }//end namespace Tucker
@@ -20,11 +23,27 @@ namespace TuckerOnNode
 {
 template<class ScalarType, class ...Properties> class Tensor;
 template<class ScalarType, class MemorySpace> class MetricData;
+template<class ScalarType, class MemorySpace> class TensorGramEigenvalues;
+
+namespace impl{
+template <class ScalarTypeIn, class ...Properties, class TruncatorType>
+auto sthosvd_gram(Tensor<ScalarTypeIn, Properties...> X,
+		  TruncatorType && truncator,
+		  bool flipSign);
+}
 }//end namespace TuckerOnNode
 
 namespace TuckerMpi
 {
 template<class ScalarType, class ...Properties> class Tensor;
+
+namespace impl{
+template <class ScalarType, class ...Properties, class TruncatorType>
+auto sthosvd_newgram(Tensor<ScalarType, Properties...> X,
+		     TruncatorType && truncator,
+		     const std::vector<int> & modeOrder,
+		     bool flipSign);
+}
 }//end namespace TuckerMpi
 
 namespace Tucker
