@@ -30,8 +30,7 @@ auto compute_gram(Tensor<ScalarType, Properties...> Y,
   const MPI_Comm& comm = Y.getDistribution().getProcessorGrid().getColComm(n, false);
   int numProcs;
   MPI_Comm_size(comm, &numProcs);
-  if(numProcs > 1)
-  {
+  if(numProcs > 1){
     impl::local_gram_after_data_redistribution(Y, n, localGram);
   }
   else{

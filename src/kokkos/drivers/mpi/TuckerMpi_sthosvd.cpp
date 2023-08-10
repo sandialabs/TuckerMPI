@@ -5,17 +5,17 @@
 template<class ScalarType>
 void run(const TuckerMpiDistributed::InputParameters<ScalarType> & inputs)
 {
-  /*
-   * prepare
-   */
+  // ------------------------------------------------------
+  // prepare
+  // ------------------------------------------------------
   using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
   int mpiRank, nprocs;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-  /*
-   * read data and create tensor
-   */
+  // ------------------------------------------------------
+  // read data and create tensor
+  // ------------------------------------------------------
   if(mpiRank == 0) { inputs.describe(); }
 
   const auto dataTensorDim = inputs.dimensionsOfDataTensor();
@@ -34,9 +34,9 @@ void run(const TuckerMpiDistributed::InputParameters<ScalarType> & inputs)
   }
   MPI_Barrier(MPI_COMM_WORLD);
 
-  /*
-   * preprocessing
-   */
+  // ------------------------------------------------------
+  // preprocessing
+  // ------------------------------------------------------
   const int scaleMode = inputs.scale_mode;
   if(mpiRank == 0) {
     std::cout << "Compute statistics" << std::endl;
@@ -58,9 +58,9 @@ void run(const TuckerMpiDistributed::InputParameters<ScalarType> & inputs)
     TuckerMpi::write_tensor_binary(mpiRank, X, inputs.preprocDataFilenames);
   }
 
-  /*
-   * prepare lambdas "expressing" the computation to do
-   */
+  // ------------------------------------------------------
+  // prepare bricks "expressing" the computation to do
+  // ------------------------------------------------------
   auto writeEigenvaluesToFile = [=](auto container){
     if(mpiRank == 0) {
       const std::string filePrefix = inputs.sv_dir + "/" + inputs.sv_fn + "_mode_";
@@ -92,6 +92,25 @@ void run(const TuckerMpiDistributed::InputParameters<ScalarType> & inputs)
     }
   };
 
+  auto writeCoreTensorToFile = [=](auto factorization)
+  {
+    const std::string coreFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_core.mpi";
+    if (mpiRank==0){
+      std::cout << "Writing core tensor to " << coreFilename << std::endl;
+    }
+    TuckerMpi::write_tensor_binary(mpiRank, factorization.coreTensor(), coreFilename);
+  };
+
+  auto writeEachFactor = [=](auto factorization)
+  {
+    for(int mode=0; mode<inputs.nd; mode++) {
+      const std::string factorFilename = inputs.sthosvd_dir + "/" +
+	inputs.sthosvd_fn + "_mat_" + std::to_string(mode) + ".mpi";
+      std::cout << "Writing factor " << mode << " to " << factorFilename << std::endl;
+      Tucker::write_view_to_binary_file(factorization.factorMatrix(mode), factorFilename);
+    }
+  };
+
   auto truncator =
     Tucker::create_core_tensor_truncator(X, inputs.dimensionsOfCoreTensor(), inputs.tol, mpiRank);
 
@@ -101,11 +120,18 @@ void run(const TuckerMpiDistributed::InputParameters<ScalarType> & inputs)
 					    inputs.modeOrder, false /*flipSign*/);
     writeEigenvaluesToFile(eigvals);
     printNorms(tt);
+
+    if(inputs.boolWriteResultsOfSTHOSVD){
+      writeCoreTensorToFile(tt);
+      if (mpiRank==0){
+	writeEachFactor(tt);
+      }
+    }
   };
 
-  /*
-   * run for real
-   */
+  // ------------------------------------------------------
+  // use bricks and run for real
+  // ------------------------------------------------------
   if(inputs.boolSTHOSVD){
     sthosvdNewGram(truncator);
   }

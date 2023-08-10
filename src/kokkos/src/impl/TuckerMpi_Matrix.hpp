@@ -8,10 +8,10 @@
 namespace TuckerMpi {
 namespace impl{
 
-template <class scalar_t, class ...Ps>
+template <class scalar_t, class MemorySpace = typename Kokkos::DefaultExecutionSpace::memory_space>
 class Matrix {
 
-  using view_type = Kokkos::View<scalar_t**, Kokkos::LayoutLeft>;
+  using view_type = Kokkos::View<scalar_t**, Kokkos::LayoutLeft, MemorySpace>;
 
 public:
   Matrix(int nrows, int ncols, const MPI_Comm& comm, bool isBlockRow)
