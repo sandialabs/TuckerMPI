@@ -2,6 +2,7 @@
 #define TUCKER_KOKKOS_MPI_STHOSVD_NEW_GRAM_IMPL_HPP_
 
 #include "TuckerMpi_compute_gram.hpp"
+#include "Tucker_TuckerTensor.hpp"
 
 namespace TuckerMpi{
 namespace impl{
@@ -14,7 +15,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 {
   using tensor_type         = Tensor<ScalarType, Properties...>;
   using memory_space        = typename tensor_type::traits::memory_space;
-  using tucker_tensor_type  = Tucker::impl::TuckerTensor<false, tensor_type>;
+  using tucker_tensor_type  = Tucker::TuckerTensor<tensor_type>;
   using gram_eigvals_type   = TuckerOnNode::impl::TensorGramEigenvalues<ScalarType, memory_space>;
   using slicing_info_view_t = Kokkos::View<::Tucker::impl::PerModeSliceInfo*, Kokkos::HostSpace>;
 

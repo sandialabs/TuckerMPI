@@ -17,6 +17,7 @@
 #include "TuckerMpi_ProcessorGrid.hpp"
 #include "TuckerMpi_Distribution.hpp"
 #include "TuckerMpi_Tensor.hpp"
+#include "Tucker_TuckerTensor.hpp"
 #include "TuckerOnNode_MetricData.hpp"
 #include "Tucker_deep_copy.hpp"
 #include "Tucker_create_mirror.hpp"

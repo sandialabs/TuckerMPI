@@ -3,7 +3,8 @@
 
 #include <array>
 
-namespace Tucker{
+namespace Tucker
+{
 enum class Metric {
   MIN, MAX, SUM, NORM1, NORM2, MEAN, VARIANCE
 };
@@ -12,20 +13,24 @@ constexpr std::array<Tucker::Metric, 4> defaultMetrics{
   Tucker::Metric::MIN,  Tucker::Metric::MAX,
   Tucker::Metric::MEAN, Tucker::Metric::VARIANCE};
 
+template<class CoreTensorType> class TuckerTensor;
 }//end namespace Tucker
 
-namespace TuckerOnNode{
+namespace TuckerOnNode
+{
 template<class ScalarType, class ...Properties> class Tensor;
 template<class ScalarType, class MemorySpace> class MetricData;
 }//end namespace TuckerOnNode
 
-namespace TuckerMpi{
+namespace TuckerMpi
+{
 template<class ScalarType, class ...Properties> class Tensor;
-}
+}//end namespace TuckerMpi
 
-namespace Tucker{
-// NOTE: the following two funcs are forward declared here because 
-// TuckerOnNode::MetricData has private constructors and they are friend funcs
+namespace Tucker
+{
+// NOTE: the following funcs are forward declared here because
+// TuckerOnNode::MetricData has private constructors and they are its friend funcs
 template<class ScalarType, class MemorySpace>
 auto create_mirror(::TuckerOnNode::MetricData<ScalarType, MemorySpace>);
 

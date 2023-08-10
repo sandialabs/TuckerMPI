@@ -2,6 +2,8 @@
 #ifndef TUCKER_TUCKERTENSORSLICEHELPERS_HPP_
 #define TUCKER_TUCKERTENSORSLICEHELPERS_HPP_
 
+#include <Kokkos_StdAlgorithms.hpp>
+#include <Kokkos_Core.hpp>
 #include <cuchar>
 
 namespace Tucker{

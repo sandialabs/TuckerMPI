@@ -1,81 +1,40 @@
 #ifndef TUCKER_KOKKOS_TUCKERTENSOR_IMPL_HPP_
 #define TUCKER_KOKKOS_TUCKERTENSOR_IMPL_HPP_
 
-#include "../Tucker_fwd.hpp"
-#include "Tucker_TuckerTensorSliceHelpers.hpp"
+#include "./impl/Tucker_TuckerTensorSliceHelpers.hpp"
 #include <Kokkos_StdAlgorithms.hpp>
 #include <Kokkos_Core.hpp>
 
 namespace Tucker{
-namespace impl{
 
-template<class Enable, bool isOnNode, class ...Args>
-struct TuckerTensorTraits;
-
-template<bool isOnNode, class ScalarType>
-struct TuckerTensorTraits<
-  std::enable_if_t<std::is_floating_point_v<ScalarType>>, isOnNode, ScalarType
-  >
+template<class CoreTensorType>
+struct TuckerTensorTraits
 {
-#if !defined TUCKER_ENABLE_MPI
-   static_assert(isOnNode, "TuckerTensorTraits: TUCKER_ENABLE_MPI=OFF, so isOnNode must be true");
-#endif
-
-  using memory_space             = typename Kokkos::DefaultExecutionSpace::memory_space;
-  using core_tensor_type         =
-#if defined TUCKER_ENABLE_MPI
-    std::conditional_t<isOnNode,
-		       TuckerOnNode::Tensor<ScalarType, memory_space>,
-		       TuckerMpi::Tensor<ScalarType, memory_space>
-		       >;
-#else
-  TuckerOnNode::Tensor<ScalarType, memory_space>;
-#endif
-
-  using value_type               = typename core_tensor_type::traits::value_type;
-  using factors_store_view_t     = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
+  using core_tensor_type     = CoreTensorType;
+  using value_type           = typename core_tensor_type::traits::value_type;
+  using memory_space         = typename core_tensor_type::traits::memory_space;
+  using factors_store_view_t = Kokkos::View<value_type*, Kokkos::LayoutLeft, memory_space>;
 };
 
-template<bool isOnNode, class ScalarType, class ...Props>
-struct TuckerTensorTraits<
-  std::enable_if_t<isOnNode>, isOnNode, TuckerOnNode::Tensor<ScalarType, Props...>
-  >
-{
-  using core_tensor_type         = TuckerOnNode::Tensor<ScalarType, Props...>;
-  using value_type               = typename core_tensor_type::traits::value_type;
-  using memory_space             = typename core_tensor_type::traits::memory_space;
-  using factors_store_view_t     = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
-};
-
-#if defined TUCKER_ENABLE_MPI
-template<bool isOnNode, class ScalarType, class ...Props>
-struct TuckerTensorTraits<
-  std::enable_if_t<!isOnNode>, isOnNode, TuckerMpi::Tensor<ScalarType, Props...>
-  >
-{
-  using core_tensor_type         = TuckerMpi::Tensor<ScalarType, Props...>;
-  using value_type               = typename core_tensor_type::traits::value_type;
-  using memory_space             = typename core_tensor_type::traits::memory_space;
-  using factors_store_view_t     = Kokkos::View<ScalarType*, Kokkos::LayoutLeft, memory_space>;
-};
-#endif
-
-template<bool isOnNode, class ...Args>
+template<class CoreTensorType>
 class TuckerTensor
 {
   // the slicing info is stored on the host
   using slicing_info_view_t = Kokkos::View<::Tucker::impl::PerModeSliceInfo*, Kokkos::HostSpace>;
 
   // need for the copy/move constr/assign accepting a compatible tensor
-  template <bool, class...> friend class TuckerTensor;
+  template <class> friend class TuckerTensor;
 
 public:
-  using traits = TuckerTensorTraits<void, isOnNode, Args...>;
+  using traits = TuckerTensorTraits<CoreTensorType>;
 
   // ----------------------------------------
   // Regular constructors, destructor, and assignment
   // ----------------------------------------
 
+  // FIXME: constructors should be made private and only allow
+  // the sthosvd functions to construct this class since users
+  // should only rely on the API
   ~TuckerTensor() = default;
 
   TuckerTensor()
@@ -111,16 +70,16 @@ public:
   // copy/move constr, assignment for compatible TuckerTensor
   // ----------------------------------------
 
-  template<bool isOnNodeLocal, class ... LocalArgs>
-  TuckerTensor(const TuckerTensor<isOnNodeLocal, LocalArgs...> & o)
+  template<class LocalArg>
+  TuckerTensor(const TuckerTensor<LocalArg> & o)
     : rank_(o.rank_),
       coreTensor_(o.coreTensor_),
       factors_(o.factors_),
       perModeSlicingInfo_(o.perModeSlicingInfo_)
   {}
 
-  template<bool isOnNodeLocal, class ... LocalArgs>
-  TuckerTensor& operator=(const TuckerTensor<isOnNodeLocal, LocalArgs...> & o){
+  template<class LocalArg>
+  TuckerTensor& operator=(const TuckerTensor<LocalArg> & o){
     rank_ = o.rank_;
     coreTensor_ = o.coreTensor_;
     factors_ = o.factors_;
@@ -128,16 +87,16 @@ public:
     return *this;
   }
 
-  template<bool isOnNodeLocal, class ... LocalArgs>
-  TuckerTensor(TuckerTensor<isOnNodeLocal, LocalArgs...> && o)
+  template<class LocalArg>
+  TuckerTensor(TuckerTensor<LocalArg> && o)
     : rank_(std::move(o.rank_)),
       coreTensor_(std::move(o.coreTensor_)),
       factors_(std::move(o.factors_)),
       perModeSlicingInfo_(std::move(o.perModeSlicingInfo_))
   {}
 
-  template<bool isOnNodeLocal, class ... LocalArgs>
-  TuckerTensor& operator=(TuckerTensor<isOnNodeLocal, LocalArgs...> && o){
+  template<class LocalArg>
+  TuckerTensor& operator=(TuckerTensor<LocalArg> && o){
     rank_ = std::move(o.rank_);
     coreTensor_ = std::move(o.coreTensor_);
     factors_ = std::move(o.factors_);
@@ -185,6 +144,5 @@ private:
   slicing_info_view_t perModeSlicingInfo_ = {};
 };
 
-}//end namespace impl
 }
 #endif

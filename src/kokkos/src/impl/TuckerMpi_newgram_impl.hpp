@@ -9,7 +9,7 @@
 #include "./TuckerOnNode_TensorGramEigenvalues.hpp"
 #include "./Tucker_TuckerTensorSliceHelpers.hpp"
 #include "./TuckerMpi_Matrix.hpp"
-#include "./Tucker_TuckerTensor_impl.hpp"
+#include "Tucker_TuckerTensor.hpp"
 #include "./Tucker_BlasWrapper.hpp"
 #include "./Tucker_ComputeEigValsEigVecs.hpp"
 #include <Kokkos_Core.hpp>

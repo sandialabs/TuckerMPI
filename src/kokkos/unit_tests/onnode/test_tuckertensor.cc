@@ -1,9 +1,6 @@
 #include <gtest/gtest.h>
 #include "TuckerOnNode.hpp"
 
-template<class ...Args>
-using onnode_ttensor_t = Tucker::impl::TuckerTensor<true, Args...>;
-
 using namespace TuckerOnNode;
 
 struct TuckerTensorFixA : public ::testing::Test
@@ -58,7 +55,7 @@ protected:
   using scalar_t = double;
   using core_tensor_t = Tensor<scalar_t>;
   using memory_space = typename core_tensor_t::traits::memory_space;
-  using tt_t = onnode_ttensor_t<core_tensor_t>;
+  using tt_t = Tucker::TuckerTensor<core_tensor_t>;
   using tt_traits = typename tt_t::traits;
   using slicing_info_view_t = Kokkos::View<Tucker::impl::PerModeSliceInfo*, Kokkos::HostSpace>;
   using factors_rank1_view_t = Kokkos::View<scalar_t*, Kokkos::LayoutLeft, memory_space>;
@@ -234,7 +231,11 @@ TEST_F(TuckerTensorFixA, move_assign){
 
 TEST_F(TuckerTensorFixA, copy_cnstr_const_view){
   tt_t T(core_, factors_, perModeSlicingInfo_);
-  onnode_ttensor_t<const scalar_t> b = T;
+
+  using core_const_tensor_t = TuckerOnNode::Tensor<const scalar_t>;
+  using tt_t = Tucker::TuckerTensor<core_const_tensor_t>;
+
+  tt_t b = T;
   auto f = b.factorMatrix(0);
   //f(0,0) = 1; //this MUST fail to compile for the test to be correct
 }
