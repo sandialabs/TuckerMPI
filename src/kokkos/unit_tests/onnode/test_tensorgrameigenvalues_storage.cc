@@ -57,7 +57,7 @@ protected:
 template <class ContType>
 void verifyDefault(ContType T){
   ASSERT_EQ(T.rank(), -1);
-  auto eigvals = T.eigenvalues(0);
+  auto eigvals = T[0];
   ASSERT_EQ(eigvals.extent(0), 0);
 }
 
@@ -66,9 +66,9 @@ void verify1(ContType T)
 {
   ASSERT_EQ(T.rank(), 3);
 
-  auto evals0 = T.eigenvalues(0);
-  auto evals1 = T.eigenvalues(1);
-  auto evals2 = T.eigenvalues(2);
+  auto evals0 = T[0];
+  auto evals1 = T[1];
+  auto evals2 = T[2];
   auto evals0_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), evals0);
   auto evals1_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), evals1);
   auto evals2_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), evals2);
@@ -94,9 +94,9 @@ void verify2(ContType T)
 {
   ASSERT_EQ(T.rank(), 3);
 
-  auto evals0 = T.eigenvalues(0);
-  auto evals1 = T.eigenvalues(1);
-  auto evals2 = T.eigenvalues(2);
+  auto evals0 = T[0];
+  auto evals1 = T[1];
+  auto evals2 = T[2];
 
   auto evals0_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), evals0);
   auto evals1_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), evals1);
@@ -121,7 +121,7 @@ void verify2(ContType T)
 template <class ContType>
 void change2(ContType & T)
 {
-  auto evals0 = T.eigenvalues(0);
+  auto evals0 = T[0];
   auto evals0_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), evals0);
   evals0_h(1) = 20.;
   Kokkos::deep_copy(evals0, evals0_h);
@@ -186,7 +186,7 @@ TEST_F(TensorGramEigvalsFixA, move_assign){
 TEST_F(TensorGramEigvalsFixA, copy_cnstr_const_view){
   tt_t T(eigvals_, perModeSlicingInfo_);
   TensorGramEigenvalues<const scalar_t> b = T;
-  auto f = b.eigenvalues(0);
+  auto f = b[0];
   //f(0) = 1; //this MUST fail to compile for the test to be correct
 }
 

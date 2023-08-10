@@ -72,7 +72,7 @@ void run(const TuckerMpiDistributed::InputParameters<ScalarType> & inputs)
 	std::ofstream ofs(ss.str());
 	std::cout << "Writing singular values to " << ss.str() << std::endl;
 
-	auto eigvals = container.eigenvalues(mode);
+	auto eigvals = container[mode];
 	auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
 	for(int i=0; i<eigvals.extent(0); i++) {
 	  ofs << std::setprecision(16) << eigvals_h(i) << std::endl;

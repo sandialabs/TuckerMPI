@@ -110,7 +110,7 @@ public:
 
   int rank() const{ return rank_; }
 
-  auto eigenvalues(int mode){
+  auto operator[](int mode){
     if (rank_ == -1){
       return Kokkos::subview(eigenvalues_, std::pair{0, 0});
     }
