@@ -16,29 +16,29 @@ namespace Tucker{
 // overloads accepting a TuckerOnNode::Tensor
 //
 template<class ScalarType, class ...Properties>
-auto create_mirror(const TuckerOnNode::Tensor<ScalarType, Properties...> & T)
+auto create_mirror(const TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
 {
   using tensor_type = TuckerOnNode::Tensor<ScalarType, Properties...>;
   using tensor_mirror_type = typename tensor_type::traits::HostMirror;
 
-  auto T_view_h = Kokkos::create_mirror(T.data());
-  auto T_dims_h = T.dimensionsOnHost();
-  auto dims_vec = impl::create_stdvec_from_view(T_dims_h);
-  tensor_mirror_type T_h(dims_vec, T_view_h);
-  return T_h;
+  auto tensor_view_h = Kokkos::create_mirror(tensor.data());
+  auto tensor_dims_h = tensor.dimensionsOnHost();
+  auto dims_vec = impl::create_stdvec_from_view(tensor_dims_h);
+  tensor_mirror_type tensor_h(dims_vec, tensor_view_h);
+  return tensor_h;
 }
 
 template<class SpaceT, class ScalarType, class ...Properties>
 auto create_mirror_and_copy(const SpaceT & space,
-			    const TuckerOnNode::Tensor<ScalarType, Properties...> & Tin)
+			    const TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
 {
   using in_tensor_type = TuckerOnNode::Tensor<ScalarType, Properties...>;
   using out_tensor_type = TuckerOnNode::Tensor<ScalarType, SpaceT>;
 
-  auto T_view = Kokkos::create_mirror_view_and_copy(space, Tin.data());
-  auto T_dims_h = Tin.dimensionsOnHost();
-  auto dims_vec = impl::create_stdvec_from_view(T_dims_h);
-  out_tensor_type Tout(dims_vec, T_view);
+  auto tensor_view = Kokkos::create_mirror_view_and_copy(space, tensor.data());
+  auto tensor_dims_h = tensor.dimensionsOnHost();
+  auto dims_vec = impl::create_stdvec_from_view(tensor_dims_h);
+  out_tensor_type Tout(dims_vec, tensor_view);
   return Tout;
 }
 
@@ -67,24 +67,21 @@ auto create_mirror(TuckerOnNode::MetricData<ScalarType, MemorySpace> d)
 //
 template<class SpaceT, class ScalarType, class ...Properties>
 auto create_mirror_and_copy(const SpaceT & space,
-			    ::TuckerMpi::Tensor<ScalarType, Properties...> Tin)
+			    ::TuckerMpi::Tensor<ScalarType, Properties...> tensor)
 {
   using in_tensor_type  = ::TuckerMpi::Tensor<ScalarType, Properties...>;
   using out_tensor_type = ::TuckerMpi::Tensor<ScalarType, SpaceT>;
 
-  const ::TuckerMpi::Distribution & Tin_dist = Tin.getDistribution();
-  auto Tin_local_tensor = Tin.localTensor();
+  const ::TuckerMpi::Distribution & tensor_dist = tensor.getDistribution();
+  auto tensor_local_tensor = tensor.localTensor();
 
-  out_tensor_type Tout(Tin_dist);
+  out_tensor_type Tout(tensor_dist);
   auto Tout_local_tensor = Tout.localTensor();
-  Tucker::deep_copy(Tout_local_tensor, Tin_local_tensor);
+  Tucker::deep_copy(Tout_local_tensor, tensor_local_tensor);
 
   return Tout;
 }
 #endif
 
-
-
 } // end namespace Tucker
-
 #endif

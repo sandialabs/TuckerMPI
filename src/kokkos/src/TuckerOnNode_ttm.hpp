@@ -13,10 +13,10 @@ template <
   class ScalarType, class ...TensorProperties,
   class ViewDataType, class ...ViewProps
   >
-void ttm(Tensor<ScalarType, TensorProperties...> X,
+void ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
 	 std::size_t mode,
-	 Kokkos::View<ViewDataType, ViewProps ...> U,
-	 Tensor<ScalarType, TensorProperties...> Y,
+	 Kokkos::View<ViewDataType, ViewProps ...> Umatrix,
+	 Tensor<ScalarType, TensorProperties...> Ytensor,
 	 bool Utransp)
 {
 
@@ -28,18 +28,18 @@ void ttm(Tensor<ScalarType, TensorProperties...> X,
 
   // preconditions
   if(Utransp) {
-    assert(U.extent(0) == X.extent(mode));
-    assert(U.extent(1) == Y.extent(mode));
+    assert(Umatrix.extent(0) == Xtensor.extent(mode));
+    assert(Umatrix.extent(1) == Ytensor.extent(mode));
   }
   else {
-    assert(U.extent(1) == X.extent(mode));
-    assert(U.extent(0) == Y.extent(mode));
+    assert(Umatrix.extent(1) == Xtensor.extent(mode));
+    assert(Umatrix.extent(0) == Ytensor.extent(mode));
   }
 
   if(mode == 0) {
-    impl::ttm_kker_mode_zero(X, mode, U, Y, Utransp);
+    impl::ttm_kker_mode_zero(Xtensor, mode, Umatrix, Ytensor, Utransp);
   } else {
-    impl::ttm_kker_mode_greater_than_zero(X, mode, U, Y, Utransp);
+    impl::ttm_kker_mode_greater_than_zero(Xtensor, mode, Umatrix, Ytensor, Utransp);
   }
 }
 
@@ -47,9 +47,9 @@ template <
   class ScalarType, class ...TensorProperties,
   class ViewDataType, class ...ViewProps
   >
-auto ttm(Tensor<ScalarType, TensorProperties...> X,
+auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
 	 std::size_t mode,
-	 Kokkos::View<ViewDataType, ViewProps ...> U,
+	 Kokkos::View<ViewDataType, ViewProps ...> Umatrix,
 	 bool Utransp)
 {
 
@@ -59,14 +59,14 @@ auto ttm(Tensor<ScalarType, TensorProperties...> X,
   static_assert(std::is_same_v<tensor_layout, Kokkos::LayoutLeft>,
 		"TuckerOnNode::ttm: supports tensors with LayoutLeft");
 
-  const std::size_t nrows = Utransp ? U.extent(1) : U.extent(0);
-  std::vector<int> I(X.rank());
+  const std::size_t nrows = Utransp ? Umatrix.extent(1) : Umatrix.extent(0);
+  std::vector<int> I(Xtensor.rank());
   for(std::size_t i=0; i< (std::size_t)I.size(); i++) {
-    I[i] = (i != mode) ? X.extent(i) : nrows;
+    I[i] = (i != mode) ? Xtensor.extent(i) : nrows;
   }
-  tensor_type Y(I);
-  ttm(X, mode, U, Y, Utransp);
-  return Y;
+  tensor_type Ytensor(I);
+  ttm(Xtensor, mode, Umatrix, Ytensor, Utransp);
+  return Ytensor;
 }
 
 }

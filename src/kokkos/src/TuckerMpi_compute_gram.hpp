@@ -7,7 +7,7 @@
 namespace TuckerMpi{
 
 template<class ScalarType, class ...Properties>
-auto compute_gram(Tensor<ScalarType, Properties...> Y,
+auto compute_gram(Tensor<ScalarType, Properties...> tensor,
 		  const std::size_t n)
 {
 
@@ -27,14 +27,14 @@ auto compute_gram(Tensor<ScalarType, Properties...> Y,
   using gram_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space>;
   gram_t localGram;
 
-  const MPI_Comm& comm = Y.getDistribution().getProcessorGrid().getColComm(n, false);
+  const MPI_Comm& comm = tensor.getDistribution().getProcessorGrid().getColComm(n, false);
   int numProcs;
   MPI_Comm_size(comm, &numProcs);
   if(numProcs > 1){
-    impl::local_gram_after_data_redistribution(Y, n, localGram);
+    impl::local_gram_after_data_redistribution(tensor, n, localGram);
   }
   else{
-    impl::local_gram_without_data_redistribution(Y, n, localGram);
+    impl::local_gram_without_data_redistribution(tensor, n, localGram);
   }
 
   //

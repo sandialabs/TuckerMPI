@@ -10,7 +10,7 @@ namespace TuckerMpi{
 
 template <std::size_t n, class ScalarType, class ...Properties>
 auto compute_slice_metrics(const int mpiRank,
-			   Tensor<ScalarType, Properties...> Y,
+			   Tensor<ScalarType, Properties...> tensor,
 			   const int mode,
 			   const std::array<Tucker::Metric, n> & metrics)
 {
@@ -26,11 +26,11 @@ auto compute_slice_metrics(const int mpiRank,
 		   "and floating point scalar");
 
   // preconditions
-  if(Y.localExtent(mode) <= 0) {
+  if(tensor.localExtent(mode) <= 0) {
     std::ostringstream oss;
     oss << "TuckerMpi::compute_slice_metrics: "
         << "for mode = " << mode
-	<< " we have Y.localExtent(mode) = " << Y.localExtent(mode) << " <= 0";
+	<< " we have tensor.localExtent(mode) = " << tensor.localExtent(mode) << " <= 0";
     throw std::runtime_error(oss.str());
   }
 
@@ -39,20 +39,20 @@ auto compute_slice_metrics(const int mpiRank,
   }
 
   // Compute the local result
-  auto localTensor = Y.localTensor();
+  auto localTensor = tensor.localTensor();
   auto result = TuckerOnNode::compute_slice_metrics(localTensor, mode, metrics);
   auto result_h = ::Tucker::create_mirror(result);
   ::Tucker::deep_copy(result_h, result);
 
   // Get the row communicator
-  const MPI_Comm& comm = Y.getDistribution().getProcessorGrid().getRowComm(mode, false);
+  const MPI_Comm& comm = tensor.getDistribution().getProcessorGrid().getRowComm(mode, false);
   int nprocs;
   MPI_Comm_size(comm, &nprocs);
 
   if(nprocs > 1)
   {
     // Compute the global result
-    const int numSlices = Y.localExtent(mode);
+    const int numSlices = tensor.localExtent(mode);
     std::vector<tensor_value_type> sendBuf(numSlices);
     std::vector<tensor_value_type> recvBuf(numSlices);
 
@@ -82,12 +82,12 @@ auto compute_slice_metrics(const int mpiRank,
 	 result_h.contains(Tucker::Metric::VARIANCE) )
     {
       // Compute the size of my local slice
-      const int ndims = Y.rank();
-      auto localSize = Y.localDimensionsOnHost();
+      const int ndims = tensor.rank();
+      auto localSize = tensor.localDimensionsOnHost();
       std::size_t localSliceSize = impl::prod(localSize, 0,mode-1,1) * impl::prod(localSize, mode+1, ndims-1,1);
 
       // Compute the size of the global slice
-      auto globalSize = Y.globalDimensionsOnHost();
+      auto globalSize = tensor.globalDimensionsOnHost();
       std::size_t globalSliceSize = impl::prod(globalSize, 0, mode-1, 1) * impl::prod(globalSize, mode+1, ndims-1, 1);
       auto mean_view_h = result_h.get(Tucker::Metric::MEAN);
       for(int i=0; i<numSlices; i++) {

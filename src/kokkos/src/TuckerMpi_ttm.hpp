@@ -7,9 +7,9 @@
 namespace TuckerMpi{
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
-auto ttm(Tensor<ScalarType, TensorProperties...> X,
+auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
 	 int n,
-	 Kokkos::View<ScalarType**, ViewProperties...> U,
+	 Kokkos::View<ScalarType**, ViewProperties...> Umatrix,
 	 bool Utransp,
 	 std::size_t nnz_limit)
 {
@@ -25,7 +25,7 @@ auto ttm(Tensor<ScalarType, TensorProperties...> X,
   static_assert(std::is_same_v<tensor_memory_space, typename u_view_t::memory_space>,
 		"TuckerMpi::ttm: tensor and matrix arguments must have matching memory spaces");
 
-  return impl::ttm_impl(X, n, U, Utransp, nnz_limit);
+  return impl::ttm_impl(Xtensor, n, Umatrix, Utransp, nnz_limit);
 }
 
 } // end namespace TuckerMpi

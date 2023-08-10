@@ -9,7 +9,7 @@ enum class Method{ NewGram };
 
 template <class ScalarType, class ...Properties, class TruncatorType>
 [[nodiscard]] auto sthosvd(Method method,
-			   ::TuckerMpi::Tensor<ScalarType, Properties...> X,
+			   ::TuckerMpi::Tensor<ScalarType, Properties...> tensor,
 			   TruncatorType && truncator,
 			   const std::vector<int> & modeOrder,
 			   bool flipSign)
@@ -23,11 +23,11 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 		   "and floating point scalar");
 
   // preconditions
-  assert(modeOrder.empty() || modeOrder.size() == (std::size_t) X.rank());
+  assert(modeOrder.empty() || modeOrder.size() == (std::size_t) tensor.rank());
 
   // execute
   if (method == Method::NewGram){
-    return impl::sthosvd_newgram(X, std::forward<TruncatorType>(truncator), modeOrder, flipSign);
+    return impl::sthosvd_newgram(tensor, std::forward<TruncatorType>(truncator), modeOrder, flipSign);
   }
   else{
     throw std::runtime_error("TuckerMpi: sthosvd: invalid or unsupported method");

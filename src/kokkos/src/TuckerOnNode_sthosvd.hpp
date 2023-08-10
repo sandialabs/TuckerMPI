@@ -9,7 +9,7 @@ enum class Method{ Gram };
 
 template <class ScalarType, class ...Properties, class TruncatorType>
 [[nodiscard]] auto sthosvd(Method method,
-			   ::TuckerOnNode::Tensor<ScalarType, Properties...> X,
+			   ::TuckerOnNode::Tensor<ScalarType, Properties...> tensor,
 			   TruncatorType && truncator,
 			   bool flipSign)
 {
@@ -23,7 +23,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 		   "and floating point scalar");
 
   if (method == Method::Gram){
-    return impl::sthosvd_gram(X, std::forward<TruncatorType>(truncator), flipSign);
+    return impl::sthosvd_gram(tensor, std::forward<TruncatorType>(truncator), flipSign);
   }
   else{
     throw std::runtime_error("TuckerOnNode::sthosvd: invalid or unsupported method");

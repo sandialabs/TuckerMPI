@@ -9,13 +9,13 @@
 namespace TuckerOnNode{
 
 template <class ScalarType, class ...Properties>
-void read_tensor_binary(Tensor<ScalarType, Properties...> X,
+void read_tensor_binary(Tensor<ScalarType, Properties...> tensor,
 			const std::string & filename)
 {
   std::cout << " filename = " << filename << '\n';
-  auto X_h = Tucker::create_mirror(X);
-  Tucker::fill_rank1_view_from_binary_file(X_h.data(), filename);
-  Tucker::deep_copy(X, X_h);
+  auto tensor_h = Tucker::create_mirror(tensor);
+  Tucker::fill_rank1_view_from_binary_file(tensor_h.data(), filename);
+  Tucker::deep_copy(tensor, tensor_h);
 }
 
 template <class ScalarType, class ...Properties>
@@ -29,7 +29,7 @@ void read_tensor_binary(Tensor<ScalarType, Properties...> Y,
 }
 
 template <class ScalarType, class mem_space>
-void write_tensor_binary(const Tensor<ScalarType, mem_space> & Y,
+void write_tensor_binary(const Tensor<ScalarType, mem_space> & tensor,
 			 const std::string & filename)
 {
 
@@ -39,9 +39,9 @@ void write_tensor_binary(const Tensor<ScalarType, mem_space> & Y,
 		std::is_same_v<layout, Kokkos::LayoutRight>,
 		"export_tensor_binary: only supports layoutLeft or Right");
 
-  auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), Y.data());
+  auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), tensor.data());
   // const std::streamoff MAX_OFFSET = std::numeric_limits<std::streamoff>::max();
-  size_t numEntries = Y.size();
+  size_t numEntries = tensor.size();
   std::ofstream ofs;
   ofs.open(filename, std::ios::out | std::ios::binary);
   assert(ofs.is_open());
@@ -51,13 +51,13 @@ void write_tensor_binary(const Tensor<ScalarType, mem_space> & Y,
 }
 
 template <class ScalarType, class ...Properties>
-void write_tensor_binary(Tensor<ScalarType, Properties...> Y,
+void write_tensor_binary(Tensor<ScalarType, Properties...> tensor,
 			 const std::vector<std::string> & filenames)
 {
   if(filenames.size() != 1) {
     throw std::runtime_error("TuckerMpi::write_tensor_binary: only supports one file for now");
   }
-  write_tensor_binary(Y, filenames[0]);
+  write_tensor_binary(tensor, filenames[0]);
 }
 
 } // end namespace Tucker

@@ -7,7 +7,7 @@
 namespace TuckerOnNode{
 
 template <std::size_t n, class ScalarType, class ...Properties>
-auto compute_slice_metrics(Tensor<ScalarType, Properties...> Y,
+auto compute_slice_metrics(Tensor<ScalarType, Properties...> tensor,
 			   const int mode,
 			   const std::array<Tucker::Metric, n> & metrics)
 {
@@ -25,10 +25,10 @@ auto compute_slice_metrics(Tensor<ScalarType, Properties...> Y,
 
   //
   // preconditions
-  if(Y.extent(mode) <= 0) {
+  if(tensor.extent(mode) <= 0) {
     std::ostringstream oss;
     oss << "TuckerOnNode::compute_slice_metrics: "
-        << "for mode = " << mode << " we have Y.extent(mode) = " << Y.extent(mode) << " <= 0";
+        << "for mode = " << mode << " we have tensor.extent(mode) = " << tensor.extent(mode) << " <= 0";
     throw std::runtime_error(oss.str());
   }
 
@@ -38,10 +38,10 @@ auto compute_slice_metrics(Tensor<ScalarType, Properties...> Y,
 
   //
   // execute
-  const int numSlices = Y.extent(mode);
+  const int numSlices = tensor.extent(mode);
   auto result = TuckerOnNode::MetricData<ScalarType, tensor_mem_space>(metrics, numSlices);
-  if(Y.size() > 0) {
-    impl::compute_slice_metrics(Y, mode, metrics, result);
+  if(tensor.size() > 0) {
+    impl::compute_slice_metrics(tensor, mode, metrics, result);
   }
 
   return result;

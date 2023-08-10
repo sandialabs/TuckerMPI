@@ -14,22 +14,22 @@
 namespace TuckerMpi{
 
 template <class ScalarType, class ...Properties>
-void read_tensor_binary(Tensor<ScalarType, Properties...> Y,
+void read_tensor_binary(Tensor<ScalarType, Properties...> tensor,
 			const std::string & filename)
 {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-  if(Y.getDistribution().ownNothing()) { return; }
+  if(tensor.getDistribution().ownNothing()) { return; }
 
-  const int ndims = Y.rank();
+  const int ndims = tensor.rank();
   int starts[ndims];
   int lsizes[ndims];
   int gsizes[ndims];
   for(int i=0; i<ndims; i++) {
-    starts[i] = Y.getDistribution().getMap(i,true)->getGlobalIndex(0);
-    lsizes[i] = Y.localExtent(i);
-    gsizes[i] = Y.globalExtent(i);
+    starts[i] = tensor.getDistribution().getMap(i,true)->getGlobalIndex(0);
+    lsizes[i] = tensor.localExtent(i);
+    gsizes[i] = tensor.globalExtent(i);
   }
 
   // Create the datatype associated with this layout
@@ -40,7 +40,7 @@ void read_tensor_binary(Tensor<ScalarType, Properties...> Y,
 
   // Open the file
   MPI_File fh;
-  const MPI_Comm& comm = Y.getDistribution().getComm(true);
+  const MPI_Comm& comm = tensor.getDistribution().getComm(true);
   int ret = MPI_File_open(comm, filename.c_str(), MPI_MODE_RDONLY,
 			  MPI_INFO_NULL, &fh);
   if(ret != MPI_SUCCESS) {
@@ -52,7 +52,7 @@ void read_tensor_binary(Tensor<ScalarType, Properties...> Y,
   MPI_File_set_view_<ScalarType>(fh, disp, view, "native", MPI_INFO_NULL);
 
   // Read the file
-  size_t count = Y.localSize();
+  size_t count = tensor.localSize();
   assert(count <= std::numeric_limits<int>::max());
   if(rank == 0 && sizeof(ScalarType)*count > std::numeric_limits<int>::max()) {
     std::cout << "WARNING: We are attempting to call MPI_File_read_all to read ";
@@ -63,9 +63,8 @@ void read_tensor_binary(Tensor<ScalarType, Properties...> Y,
   }
 
   MPI_Status status;
-  auto localTensorView_d = Y.localTensor().data();
+  auto localTensorView_d = tensor.localTensor().data();
   auto localTensorView_h = Kokkos::create_mirror(localTensorView_d);
-  //auto localTensorView = Y.localTensor().data();
   ret = MPI_File_read_all_(fh, localTensorView_h.data(), (int)count, &status);
   int nread;
   MPI_Get_count_<ScalarType>(&status, &nread);
@@ -78,18 +77,18 @@ void read_tensor_binary(Tensor<ScalarType, Properties...> Y,
 }
 
 template <class ScalarType, class ...Properties>
-void read_tensor_binary(Tensor<ScalarType, Properties...> Y,
+void read_tensor_binary(Tensor<ScalarType, Properties...> tensor,
 			const std::vector<std::string> & filenames)
 {
   if(filenames.size() != 1) {
     throw std::runtime_error("TuckerMpi::read_tensor_binary: only supports one file for now");
   }
-  read_tensor_binary(Y, filenames[0]);
+  read_tensor_binary(tensor, filenames[0]);
 }
 
 template <class ScalarType, class ...Properties>
 void write_tensor_binary(const int mpiRank,
-			 Tensor<ScalarType, Properties...> Y,
+			 Tensor<ScalarType, Properties...> tensor,
 			 const std::string & filename)
 {
 
@@ -98,21 +97,21 @@ void write_tensor_binary(const int mpiRank,
   static_assert(std::is_same_v<layout, Kokkos::LayoutLeft>,
 		"TuckerMpi::write_tensor_binary: only supports layoutLeft");
 
-  if(Y.getDistribution().ownNothing()) { return; }
+  if(tensor.getDistribution().ownNothing()) { return; }
 
-  auto Y_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), Y);
-  auto Y_local_view_h = Y_h.localTensor().data();
+  auto tensor_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), tensor);
+  auto tensor_local_view_h = tensor_h.localTensor().data();
 
-  const int ndims = Y_h.rank();
+  const int ndims = tensor_h.rank();
 
   // Define data layout parameters
   std::vector<int> starts(ndims);
   std::vector<int> lsizes(ndims);
   std::vector<int> gsizes(ndims);
   for(int i=0; i<ndims; i++) {
-    starts[i] = Y_h.getDistribution().getMap(i, true)->getGlobalIndex(0);
-    lsizes[i] = Y_h.localExtent(i);
-    gsizes[i] = Y_h.globalExtent(i);
+    starts[i] = tensor_h.getDistribution().getMap(i, true)->getGlobalIndex(0);
+    lsizes[i] = tensor_h.localExtent(i);
+    gsizes[i] = tensor_h.globalExtent(i);
   }
 
   // Create the datatype associated with this layout
@@ -123,7 +122,7 @@ void write_tensor_binary(const int mpiRank,
 
   // Open the file
   MPI_File fh;
-  const MPI_Comm& comm = Y_h.getDistribution().getComm(true);
+  const MPI_Comm& comm = tensor_h.getDistribution().getComm(true);
   int ret = MPI_File_open(comm, filename.c_str(),
 			  MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
   if(ret != MPI_SUCCESS && mpiRank == 0) {
@@ -135,10 +134,10 @@ void write_tensor_binary(const int mpiRank,
   MPI_File_set_view_<ScalarType>(fh, disp, mpiDt, "native", MPI_INFO_NULL);
 
   // Write the file
-  size_t count = Y_h.localSize();
+  size_t count = tensor_h.localSize();
   assert(count <= std::numeric_limits<int>::max());
   MPI_Status status;
-  ret = MPI_File_write_all_(fh, Y_local_view_h.data(), (int)count, &status);
+  ret = MPI_File_write_all_(fh, tensor_local_view_h.data(), (int)count, &status);
   if(ret != MPI_SUCCESS && mpiRank == 0) {
     std::cerr << "Error: Could not write to file " << filename << std::endl;
   }
@@ -149,13 +148,13 @@ void write_tensor_binary(const int mpiRank,
 
 template <class ScalarType, class ...Properties>
 void write_tensor_binary(const int mpiRank,
-			 Tensor<ScalarType, Properties...> Y,
+			 Tensor<ScalarType, Properties...> tensor,
 			 const std::vector<std::string> & filenames)
 {
   if(filenames.size() != 1) {
     throw std::runtime_error("TuckerMpi::write_tensor_binary: only supports one file for now");
   }
-  write_tensor_binary(mpiRank, Y, filenames[0]);
+  write_tensor_binary(mpiRank, tensor, filenames[0]);
 }
 
 } // end namespace Tucker
