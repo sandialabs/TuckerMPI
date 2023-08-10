@@ -13,7 +13,8 @@ auto normalize_tensor(const TuckerOnNode::Tensor<ScalarType, Props...> & tensor,
 		      const TuckerOnNode::MetricData<ScalarType, MetricMemSpace> & metricsData,
 		      const std::string & scalingType,
 		      const int scaleMode,
-		      const ScalarType stdThresh)
+		      const ScalarType stdThresh,
+		      int mpiRank = 0)
 {
   // preconditions
   impl::check_scaling_type_else_throw(scalingType);
@@ -31,19 +32,40 @@ auto normalize_tensor(const TuckerOnNode::Tensor<ScalarType, Props...> & tensor,
   Kokkos::View<ScalarType*, tensor_mem_space> shifts("shifts", tensor.extent(scaleMode));
   if(scalingType == "Max") {
     impl::NormalizeFunc func(metricsData, scales, shifts);
-    std::cout << "Normalizing the tensor by maximum entry - mode " << scaleMode << std::endl;
+#if defined TUCKER_ENABLE_MPI
+    if (mpiRank == 0){
+#endif
+      std::cout << "Normalizing the tensor by maximum entry - mode " << scaleMode << std::endl;
+#if defined TUCKER_ENABLE_MPI
+    }
+#endif
+
     Kokkos::parallel_for(Kokkos::RangePolicy<impl::UseMax>(0, tensor.extent(scaleMode)), func);
   }
 
   else if(scalingType == "MinMax") {
     impl::NormalizeFunc func(metricsData, scales, shifts);
-    std::cout << "Normalizing the tensor using minmax scaling - mode " << scaleMode << std::endl;
+#if defined TUCKER_ENABLE_MPI
+    if (mpiRank == 0){
+#endif
+      std::cout << "Normalizing the tensor using minmax scaling - mode " << scaleMode << std::endl;
+#if defined TUCKER_ENABLE_MPI
+    }
+#endif
+
     Kokkos::parallel_for(Kokkos::RangePolicy<impl::UseMinMax>(0, tensor.extent(scaleMode)), func);
   }
 
   else if(scalingType == "StandardCentering") {
     impl::NormalizeFunc func(metricsData, scales, shifts, stdThresh);
-    std::cout << "Normalizing the tensor using standard centering - mode " << scaleMode << std::endl;
+#if defined TUCKER_ENABLE_MPI
+    if (mpiRank == 0){
+#endif
+      std::cout << "Normalizing the tensor using standard centering - mode " << scaleMode << std::endl;
+#if defined TUCKER_ENABLE_MPI
+    }
+#endif
+
     Kokkos::parallel_for(Kokkos::RangePolicy<impl::UseStandardCentering>(0, tensor.extent(scaleMode)), func);
   }
 

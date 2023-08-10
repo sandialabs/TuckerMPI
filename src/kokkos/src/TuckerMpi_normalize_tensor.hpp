@@ -27,7 +27,7 @@ auto normalize_tensor(const int mpiRank,
   ::TuckerOnNode::impl::check_metricdata_usable_for_scaling_else_throw(metricData_h, scalingType);
 
   return ::TuckerOnNode::normalize_tensor(tensor.localTensor(), metricData,
-					  scalingType, scaleMode, stdThresh);
+					  scalingType, scaleMode, stdThresh, mpiRank);
 }
 
 }//end namespace TuckerOnNode
