@@ -1,6 +1,7 @@
 #ifndef TUCKER_KOKKOS_TUCKERTENSOR_IMPL_HPP_
 #define TUCKER_KOKKOS_TUCKERTENSOR_IMPL_HPP_
 
+#include "Tucker_fwd.hpp"
 #include "./impl/Tucker_TuckerTensorSliceHelpers.hpp"
 #include <Kokkos_StdAlgorithms.hpp>
 #include <Kokkos_Core.hpp>
@@ -25,17 +26,32 @@ class TuckerTensor
   // need for the copy/move constr/assign accepting a compatible tensor
   template <class> friend class TuckerTensor;
 
+#if !defined TUCKER_ALLOW_PRIVATE_CONSTRUCTORS_TO_BE_PUBLIC_FOR_TESTING
+  template <class ScalarTypeIn, class ...Properties, class TruncatorType>
+  friend auto ::TuckerOnNode::impl::sthosvd_gram(::TuckerOnNode::Tensor<ScalarTypeIn, Properties...> X,
+						 TruncatorType && truncator,
+						 bool flipSign);
+
+#if defined TUCKER_ENABLE_MPI
+  template <class ScalarTypeIn, class ...Properties, class TruncatorType>
+  friend auto ::TuckerMpi::impl::sthosvd_newgram(::TuckerMpi::Tensor<ScalarTypeIn, Properties...> X,
+						 TruncatorType && truncator,
+						 const std::vector<int> & modeOrder,
+						 bool flipSign);
+#endif
+#endif
+
 public:
   using traits = TuckerTensorTraits<CoreTensorType>;
 
   // ----------------------------------------
   // Regular constructors, destructor, and assignment
   // ----------------------------------------
-
-  // FIXME: constructors should be made private and only allow
-  // the sthosvd functions to construct this class since users
-  // should only rely on the API
-  ~TuckerTensor() = default;
+#if defined TUCKER_ALLOW_PRIVATE_CONSTRUCTORS_TO_BE_PUBLIC_FOR_TESTING
+public:
+#else
+private:
+#endif
 
   TuckerTensor()
     : rank_(-1),
@@ -57,6 +73,9 @@ public:
     using exespace = typename FactorsViewType::execution_space;
     KEX::copy(exespace(), factors, factors_);
   }
+
+public:
+  ~TuckerTensor() = default;
 
   TuckerTensor(const TuckerTensor& o) = default;
   TuckerTensor(TuckerTensor&&) = default;
