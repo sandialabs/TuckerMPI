@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_MPI_PERFORM_PREPROCESSING_HPP_
-#define TUCKER_KOKKOS_MPI_PERFORM_PREPROCESSING_HPP_
+#ifndef TUCKERMPI_NORMALIZE_TENSOR_HPP_
+#define TUCKERMPI_NORMALIZE_TENSOR_HPP_
 
 #include "Tucker_fwd.hpp"
 #include "TuckerMpi_compute_slice_metrics.hpp"
@@ -31,4 +31,4 @@ auto normalize_tensor(const int mpiRank,
 }
 
 }//end namespace TuckerOnNode
-#endif
+#endif  // TUCKERMPI_NORMALIZE_TENSOR_HPP_

@@ -1,5 +1,5 @@
-#ifndef TUCKERKOKKOS_COMP_GRAM_HOST_IMPL_HPP_
-#define TUCKERKOKKOS_COMP_GRAM_HOST_IMPL_HPP_
+#ifndef IMPL_TUCKERONNODE_COMPUTE_GRAM_HOST_IMPL_HPP_
+#define IMPL_TUCKERONNODE_COMPUTE_GRAM_HOST_IMPL_HPP_
 
 #include "Tucker_BlasWrapper.hpp"
 
@@ -99,4 +99,4 @@ void compute_gram_host(Tensor<ScalarType, Properties...> Y,
 }
 
 }}
-#endif
+#endif  // IMPL_TUCKERONNODE_COMPUTE_GRAM_HOST_IMPL_HPP_

@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_ONNODE_SINGLE_INCLUDE_HPP_
-#define TUCKER_KOKKOS_ONNODE_SINGLE_INCLUDE_HPP_
+#ifndef TUCKERONNODE_HPP_
+#define TUCKERONNODE_HPP_
 
 // NOTE that below the order of the includes is intentional
 // and based on the actualy dependencies
@@ -31,4 +31,4 @@
 #include "Tucker_create_core_tensor_truncator.hpp"
 #include "TuckerOnNode_sthosvd.hpp"
 
-#endif
+#endif  // TUCKERONNODE_HPP_

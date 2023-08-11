@@ -1,6 +1,6 @@
 
-#ifndef TUCKER_MPI_COMPUTE_SLICE_METRICS_HPP_
-#define TUCKER_MPI_COMPUTE_SLICE_METRICS_HPP_
+#ifndef TUCKERMPI_COMPUTE_SLICE_METRICS_HPP_
+#define TUCKERMPI_COMPUTE_SLICE_METRICS_HPP_
 
 #include "TuckerOnNode_compute_slice_metrics.hpp"
 #include "./impl/TuckerMpi_prod_impl.hpp"
@@ -130,4 +130,4 @@ auto compute_slice_metrics(const int mpiRank,
 }
 
 }
-#endif
+#endif  // TUCKERMPI_COMPUTE_SLICE_METRICS_HPP_

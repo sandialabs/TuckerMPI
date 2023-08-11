@@ -1,5 +1,5 @@
-#ifndef MPIKOKKOS_TUCKER_MAP_HPP_
-#define MPIKOKKOS_TUCKER_MAP_HPP_
+#ifndef TUCKERMPI_MAP_HPP_
+#define TUCKERMPI_MAP_HPP_
 
 #include "./impl/TuckerMpi_MPIWrapper.hpp"
 #include "mpi.h"
@@ -81,4 +81,4 @@ bool operator==(const Map& a, const Map& b);
 bool operator!=(const Map& a, const Map& b);
 
 }
-#endif
+#endif  // TUCKERMPI_MAP_HPP_

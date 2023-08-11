@@ -1,5 +1,5 @@
-#ifndef TTM_TOPLEVEL_HPP_
-#define TTM_TOPLEVEL_HPP_
+#ifndef TUCKERONNODE_TTM_HPP_
+#define TUCKERONNODE_TTM_HPP_
 
 #include "TuckerOnNode_Tensor.hpp"
 #if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
@@ -70,4 +70,4 @@ auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
 }
 
 }
-#endif
+#endif  // TUCKERONNODE_TTM_HPP_

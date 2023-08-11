@@ -1,6 +1,6 @@
 
-#ifndef TUCKER_TUCKERTENSORSLICEHELPERS_HPP_
-#define TUCKER_TUCKERTENSORSLICEHELPERS_HPP_
+#ifndef IMPL_TUCKER_TUCKERTENSORSLICEHELPERS_HPP_
+#define IMPL_TUCKER_TUCKERTENSORSLICEHELPERS_HPP_
 
 #include <Kokkos_StdAlgorithms.hpp>
 #include <Kokkos_Core.hpp>
@@ -89,4 +89,4 @@ void appendFactorsAndUpdateSliceInfo(int mode,
 }
 
 }}
-#endif
+#endif  // IMPL_TUCKER_TUCKERTENSORSLICEHELPERS_HPP_

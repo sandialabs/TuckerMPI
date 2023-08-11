@@ -1,5 +1,5 @@
-#ifndef TUCKER_PERFORM_PREPROCESSING_HPP_
-#define TUCKER_PERFORM_PREPROCESSING_HPP_
+#ifndef TUCKERONNODE_NORMALIZE_TENSOR_HPP_
+#define TUCKERONNODE_NORMALIZE_TENSOR_HPP_
 
 #include "Tucker_fwd.hpp"
 #include "TuckerOnNode_compute_slice_metrics.hpp"
@@ -77,4 +77,4 @@ auto normalize_tensor(const TuckerOnNode::Tensor<ScalarType, Props...> & tensor,
 }
 
 }//end namespace TuckerOnNode
-#endif
+#endif  // TUCKERONNODE_NORMALIZE_TENSOR_HPP_

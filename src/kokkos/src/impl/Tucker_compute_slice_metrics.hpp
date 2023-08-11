@@ -1,6 +1,6 @@
 
-#ifndef TUCKER_KOKKOSONLY_COMPUTE_SLICE_METRICS_IMPL_HPP_
-#define TUCKER_KOKKOSONLY_COMPUTE_SLICE_METRICS_IMPL_HPP_
+#ifndef IMPL_TUCKER_COMPUTE_SLICE_METRICS_HPP_
+#define IMPL_TUCKER_COMPUTE_SLICE_METRICS_HPP_
 
 #include "TuckerOnNode_MetricData.hpp"
 #include <Kokkos_StdAlgorithms.hpp>
@@ -121,4 +121,4 @@ void compute_slice_metrics(::TuckerOnNode::Tensor<ScalarType, Properties...> Y,
 }
 
 }}
-#endif
+#endif  // IMPL_TUCKER_COMPUTE_SLICE_METRICS_HPP_

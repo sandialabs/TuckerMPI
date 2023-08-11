@@ -1,5 +1,5 @@
-#ifndef TUCKER_MPI_TENSOR_IO_HPP_
-#define TUCKER_MPI_TENSOR_IO_HPP_
+#ifndef TUCKERMPI_TENSOR_IO_HPP_
+#define TUCKERMPI_TENSOR_IO_HPP_
 
 #include "./impl/TuckerMpi_MPIWrapper.hpp"
 #include "TuckerMpi_Tensor.hpp"
@@ -158,4 +158,4 @@ void write_tensor_binary(const int mpiRank,
 }
 
 } // end namespace Tucker
-#endif
+#endif  // TUCKERMPI_TENSOR_IO_HPP_

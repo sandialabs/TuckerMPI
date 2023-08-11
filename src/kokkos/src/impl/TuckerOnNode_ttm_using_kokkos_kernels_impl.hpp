@@ -1,5 +1,5 @@
-#ifndef TUCKER_TTM_USING_KOKKOS_KERNELS_HPP_
-#define TUCKER_TTM_USING_KOKKOS_KERNELS_HPP_
+#ifndef IMPL_TUCKERONNODE_TTM_USING_KOKKOS_KERNELS_IMPL_HPP_
+#define IMPL_TUCKERONNODE_TTM_USING_KOKKOS_KERNELS_IMPL_HPP_
 
 #include <KokkosBlas3_gemm.hpp>
 #include <Kokkos_Core.hpp>
@@ -100,4 +100,4 @@ void ttm_kker_mode_greater_than_zero(Tensor<ScalarType, TensorProperties...> B,
 
 }//end namespace impl
 }//end namespace Tucker
-#endif
+#endif  // IMPL_TUCKERONNODE_TTM_USING_KOKKOS_KERNELS_IMPL_HPP_

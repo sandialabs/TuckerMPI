@@ -1,5 +1,5 @@
-#ifndef TUCKERKOKKOS_COMP_GRAM_KOKKOS_IMPL_HPP_
-#define TUCKERKOKKOS_COMP_GRAM_KOKKOS_IMPL_HPP_
+#ifndef IMPL_TUCKERONNODE_COMPUTE_GRAM_KOKKOS_IMPL_HPP_
+#define IMPL_TUCKERONNODE_COMPUTE_GRAM_KOKKOS_IMPL_HPP_
 
 #include "Tucker_syrk_kokkos.hpp"
 
@@ -70,4 +70,4 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
 }
 
 }}
-#endif
+#endif  // IMPL_TUCKERONNODE_COMPUTE_GRAM_KOKKOS_IMPL_HPP_

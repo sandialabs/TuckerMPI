@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_TRANSFORM_SLICES_IMPL_HPP_
-#define TUCKER_KOKKOS_TRANSFORM_SLICES_IMPL_HPP_
+#ifndef IMPL_TUCKERONNODE_TRANSFORM_SLICES_HPP_
+#define IMPL_TUCKERONNODE_TRANSFORM_SLICES_HPP_
 
 #include "TuckerOnNode_Tensor.hpp"
 #include <Kokkos_Core.hpp>
@@ -92,4 +92,4 @@ void transform_slices(TuckerOnNode::Tensor<ScalarType, TensorProps...> tensor,
 
 } // end namespace impl
 } // end namespace TuckerOnNode
-#endif
+#endif  // IMPL_TUCKERONNODE_TRANSFORM_SLICES_HPP_

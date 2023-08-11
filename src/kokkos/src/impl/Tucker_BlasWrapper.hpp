@@ -5,8 +5,8 @@
  *      Author: amklinv
  */
 
-#ifndef SERIAL_TUCKER_BLASWRAPPER_HPP_
-#define SERIAL_TUCKER_BLASWRAPPER_HPP_
+#ifndef IMPL_TUCKER_BLASWRAPPER_HPP_
+#define IMPL_TUCKER_BLASWRAPPER_HPP_
 
 namespace Tucker
 {
@@ -204,4 +204,4 @@ void gelqt(const int* m, const int* n, const int* mb, const float* a, const int*
 
 } // end namespace Tucker
 
-#endif /* SERIAL_TUCKER_BLASWRAPPER_HPP_ */
+#endif  // IMPL_TUCKER_BLASWRAPPER_HPP_

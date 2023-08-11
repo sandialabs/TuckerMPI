@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOSONLY_TENSOR_HPP_
-#define TUCKER_KOKKOSONLY_TENSOR_HPP_
+#ifndef TUCKERONNODE_TENSOR_HPP_
+#define TUCKERONNODE_TENSOR_HPP_
 
 #include "./impl/Tucker_stdvec_view_conversion_helpers.hpp"
 #include "KokkosBlas1_nrm2.hpp"
@@ -216,4 +216,4 @@ private:
 };
 
 } // end namespace TuckerOnNode
-#endif
+#endif  // TUCKERONNODE_TENSOR_HPP_

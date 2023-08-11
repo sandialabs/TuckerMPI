@@ -1,5 +1,5 @@
-#ifndef TTM_IMPL_USING_HOST_BLAS_HPP_
-#define TTM_IMPL_USING_HOST_BLAS_HPP_
+#ifndef IMPL_TUCKERONNODE_TTM_USING_HOST_BLAS_IMPL_HPP_
+#define IMPL_TUCKERONNODE_TTM_USING_HOST_BLAS_IMPL_HPP_
 
 #include "Tucker_BlasWrapper.hpp"
 #include <Kokkos_Core.hpp>
@@ -82,4 +82,4 @@ void ttm_hostblas(Tensor<ScalarType, TensorProperties...> X,
 
 } //end namespace impl
 } //endm namespace Tucker
-#endif
+#endif  // IMPL_TUCKERONNODE_TTM_USING_HOST_BLAS_IMPL_HPP_

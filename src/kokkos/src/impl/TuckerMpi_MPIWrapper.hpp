@@ -5,8 +5,8 @@
  *      Author: ballard
  */
 
-#ifndef MPI_TUCKER_MPIWRAPPER_HPP_
-#define MPI_TUCKER_MPIWRAPPER_HPP_
+#ifndef IMPL_TUCKERMPI_MPIWRAPPER_HPP_
+#define IMPL_TUCKERMPI_MPIWRAPPER_HPP_
 
 #include <iostream>
 #include <memory>
@@ -96,4 +96,4 @@ int MPI_Get_count_(const MPI_Status* status, int *count);
 
 } // end namespace TuckerMPI
 
-#endif /* MPI_TUCKER_MPIWRAPPER_HPP_ */
+#endif  // IMPL_TUCKERMPI_MPIWRAPPER_HPP_

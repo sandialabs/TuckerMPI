@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_MPI_STHOSVD_HPP_
-#define TUCKER_KOKKOS_MPI_STHOSVD_HPP_
+#ifndef TUCKERMPI_STHOSVD_HPP_
+#define TUCKERMPI_STHOSVD_HPP_
 
 #include "./impl/TuckerMpi_sthosvd_newgram_impl.hpp"
 
@@ -35,4 +35,4 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 }
 
 }
-#endif
+#endif  // TUCKERMPI_STHOSVD_HPP_

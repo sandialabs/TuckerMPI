@@ -1,6 +1,6 @@
 
-#ifndef TUCKER_COMPUTE_EIGVALS_AND_EIGVECS_HPP_
-#define TUCKER_COMPUTE_EIGVALS_AND_EIGVECS_HPP_
+#ifndef IMPL_TUCKER_COMPUTEEIGVALSEIGVECS_HPP_
+#define IMPL_TUCKER_COMPUTEEIGVALSEIGVECS_HPP_
 
 #include "Tucker_BlasWrapper.hpp"
 #include <Kokkos_Core.hpp>
@@ -249,4 +249,4 @@ auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<Scalar
 }
 
 }}
-#endif
+#endif  // IMPL_TUCKER_COMPUTEEIGVALSEIGVECS_HPP_

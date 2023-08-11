@@ -84,4 +84,4 @@ auto create_mirror_and_copy(const SpaceT & space,
 #endif
 
 } // end namespace Tucker
-#endif
+#endif  // TUCKER_CREATE_MIRROR_HPP_

@@ -1,6 +1,6 @@
 
-#ifndef MATRIX_MPI_HPP_
-#define MATRIX_MPI_HPP_
+#ifndef IMPL_TUCKERMPI_MATRIX_HPP_
+#define IMPL_TUCKERMPI_MATRIX_HPP_
 
 #include "mpi.h"
 #include <Kokkos_Core.hpp>
@@ -55,4 +55,4 @@ private:
 };
 
 }} // end namespace impl::TuckerMpi
-#endif /* MATRIX_MPI_HPP_ */
+#endif  // IMPL_TUCKERMPI_MATRIX_HPP_

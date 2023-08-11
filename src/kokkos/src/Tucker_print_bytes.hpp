@@ -1,6 +1,6 @@
 
-#ifndef TUCKER_IMPL_PRINT_BYTES_HPP_
-#define TUCKER_IMPL_PRINT_BYTES_HPP_
+#ifndef TUCKER_PRINT_BYTES_HPP_
+#define TUCKER_PRINT_BYTES_HPP_
 
 #include <fstream>
 #include <iomanip>
@@ -35,4 +35,4 @@ void print_bytes_to_stream(std::ostream & out, T bytes)
 }
 
 }
-#endif
+#endif  // TUCKER_PRINT_BYTES_HPP_

@@ -1,5 +1,5 @@
-#ifndef TUCKERKOKKOS_MPI_COMP_GRAM_HPP_
-#define TUCKERKOKKOS_MPI_COMP_GRAM_HPP_
+#ifndef TUCKERMPI_COMPUTE_GRAM_HPP_
+#define TUCKERMPI_COMPUTE_GRAM_HPP_
 
 #include "TuckerMpi_Tensor.hpp"
 #include "./impl/TuckerMpi_newgram_impl.hpp"
@@ -54,4 +54,4 @@ auto compute_gram(Tensor<ScalarType, Properties...> tensor,
 }
 
 }
-#endif
+#endif  // TUCKERMPI_COMPUTE_GRAM_HPP_

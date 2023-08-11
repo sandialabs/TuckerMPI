@@ -1,6 +1,6 @@
 
-#ifndef TUCKER_SYRK_HPP_
-#define TUCKER_SYRK_HPP_
+#ifndef IMPL_TUCKER_SYRK_KOKKOS_HPP_
+#define IMPL_TUCKER_SYRK_KOKKOS_HPP_
 
 #include <Kokkos_Core.hpp>
 #include <Kokkos_StdAlgorithms.hpp>
@@ -116,4 +116,4 @@ void syrk_kokkos(const char uplo[],
 }
 
 }}// end namespace Tucker::impl
-#endif
+#endif  // IMPL_TUCKER_SYRK_KOKKOS_HPP_

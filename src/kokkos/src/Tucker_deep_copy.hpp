@@ -31,4 +31,4 @@ void deep_copy(const TuckerOnNode::MetricData<ScalarType, MemorySpaceDest> & des
 
 }
 
-#endif
+#endif  // TUCKER_DEEP_COPY_HPP_

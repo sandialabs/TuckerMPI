@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_MPI_TTM_IMPL_HPP_
-#define TUCKER_KOKKOS_MPI_TTM_IMPL_HPP_
+#ifndef IMPL_TUCKERMPI_TTM_IMPL_HPP_
+#define IMPL_TUCKERMPI_TTM_IMPL_HPP_
 
 #include "TuckerMpi_prod_impl.hpp"
 #include "TuckerOnNode_ttm.hpp"
@@ -238,4 +238,4 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
 
 }} // end namespace TuckerMpi::impl
 
-#endif /* MPI_TUCKERMPI_TTM_HPP_ */
+#endif  // IMPL_TUCKERMPI_TTM_IMPL_HPP_

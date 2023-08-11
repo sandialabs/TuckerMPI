@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_MPI_NEW_GRAM_IMPL_HPP_
-#define TUCKER_KOKKOS_MPI_NEW_GRAM_IMPL_HPP_
+#ifndef IMPL_TUCKERMPI_NEWGRAM_IMPL_HPP_
+#define IMPL_TUCKERMPI_NEWGRAM_IMPL_HPP_
 
 #include "TuckerMpi_Tensor.hpp"
 #include "TuckerMpi_ttm.hpp"
@@ -441,4 +441,4 @@ void local_gram_without_data_redistribution(Tensor<ScalarType, Properties...> & 
 }
 
 }}
-#endif
+#endif  // IMPL_TUCKERMPI_NEWGRAM_IMPL_HPP_

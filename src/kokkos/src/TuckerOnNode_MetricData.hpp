@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_METRIC_DATA_HPP_
-#define TUCKER_KOKKOS_METRIC_DATA_HPP_
+#ifndef TUCKERONNODE_METRICDATA_HPP_
+#define TUCKERONNODE_METRICDATA_HPP_
 
 #include "Tucker_fwd.hpp"
 #include <Kokkos_StdAlgorithms.hpp>
@@ -92,4 +92,4 @@ private:
 };
 
 }
-#endif
+#endif  // TUCKERONNODE_METRICDATA_HPP_

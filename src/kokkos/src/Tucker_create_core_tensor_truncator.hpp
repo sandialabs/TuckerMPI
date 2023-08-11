@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_CORE_TENSOR_TRUNCATOR_HPP_
-#define TUCKER_KOKKOS_CORE_TENSOR_TRUNCATOR_HPP_
+#ifndef TUCKER_CREATE_CORE_TENSOR_TRUNCATOR_HPP_
+#define TUCKER_CREATE_CORE_TENSOR_TRUNCATOR_HPP_
 
 #include "Kokkos_Core.hpp"
 #include <variant>
@@ -62,4 +62,4 @@ auto create_core_tensor_truncator(TensorType dataTensor,
 
 }//end namespace Tucker
 
-#endif
+#endif  // TUCKER_CREATE_CORE_TENSOR_TRUNCATOR_HPP_

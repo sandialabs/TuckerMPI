@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_MPI_STHOSVD_NEW_GRAM_IMPL_HPP_
-#define TUCKER_KOKKOS_MPI_STHOSVD_NEW_GRAM_IMPL_HPP_
+#ifndef IMPL_TUCKERMPI_STHOSVD_NEWGRAM_IMPL_HPP_
+#define IMPL_TUCKERMPI_STHOSVD_NEWGRAM_IMPL_HPP_
 
 #include "TuckerMpi_compute_gram.hpp"
 #include "Tucker_TuckerTensor.hpp"
@@ -135,4 +135,4 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 }
 
 }}
-#endif
+#endif  // IMPL_TUCKERMPI_STHOSVD_NEWGRAM_IMPL_HPP_

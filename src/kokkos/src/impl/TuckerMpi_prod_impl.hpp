@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_MPI_PROD_IMPL_HPP_
-#define TUCKER_KOKKOS_MPI_PROD_IMPL_HPP_
+#ifndef IMPL_TUCKERMPI_PROD_IMPL_HPP_
+#define IMPL_TUCKERMPI_PROD_IMPL_HPP_
 
 namespace TuckerMpi{
 namespace impl{
@@ -23,4 +23,4 @@ size_t prod(const ViewT & sz,
 }
 
 }}
-#endif
+#endif  // IMPL_TUCKERMPI_PROD_IMPL_HPP_

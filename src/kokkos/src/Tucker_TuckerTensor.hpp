@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_TUCKERTENSOR_IMPL_HPP_
-#define TUCKER_KOKKOS_TUCKERTENSOR_IMPL_HPP_
+#ifndef TUCKER_TUCKERTENSOR_HPP_
+#define TUCKER_TUCKERTENSOR_HPP_
 
 #include "Tucker_fwd.hpp"
 #include "./impl/Tucker_TuckerTensorSliceHelpers.hpp"
@@ -164,4 +164,4 @@ private:
 };
 
 }
-#endif
+#endif  // TUCKER_TUCKERTENSOR_HPP_

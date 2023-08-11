@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOSONLY_STHOSVD_GRAM_IMPL_HPP_
-#define TUCKER_KOKKOSONLY_STHOSVD_GRAM_IMPL_HPP_
+#ifndef IMPL_TUCKERONNODE_STHOSVD_GRAM_IMPL_HPP_
+#define IMPL_TUCKERONNODE_STHOSVD_GRAM_IMPL_HPP_
 
 #include "TuckerOnNode_Tensor.hpp"
 #include "Tucker_ComputeEigValsEigVecs.hpp"
@@ -116,4 +116,4 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
 }
 
 }} //end namespace TuckerOnNode::impl
-#endif
+#endif  // IMPL_TUCKERONNODE_STHOSVD_GRAM_IMPL_HPP_

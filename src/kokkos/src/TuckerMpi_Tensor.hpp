@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_MPI_TENSOR_HPP_
-#define TUCKER_KOKKOS_MPI_TENSOR_HPP_
+#ifndef TUCKERMPI_TENSOR_HPP_
+#define TUCKERMPI_TENSOR_HPP_
 
 #include "./impl/TuckerMpi_MPIWrapper.hpp"
 #include "./impl/Tucker_stdvec_view_conversion_helpers.hpp"
@@ -201,4 +201,4 @@ private:
 };
 
 } // end namespace TuckerMpi
-#endif
+#endif  // TUCKERMPI_TENSOR_HPP_

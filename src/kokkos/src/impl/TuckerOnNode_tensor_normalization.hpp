@@ -1,5 +1,5 @@
-#ifndef TUCKER_TENSOR_NORMALIZATION_HPP_
-#define TUCKER_TENSOR_NORMALIZATION_HPP_
+#ifndef IMPL_TUCKERONNODE_TENSOR_NORMALIZATION_HPP_
+#define IMPL_TUCKERONNODE_TENSOR_NORMALIZATION_HPP_
 
 #include "Tucker_fwd.hpp"
 #include "Kokkos_Core.hpp"
@@ -80,4 +80,4 @@ void check_metricdata_usable_for_scaling_else_throw
 }
 
 }}
-#endif
+#endif  // IMPL_TUCKERONNODE_TENSOR_NORMALIZATION_HPP_

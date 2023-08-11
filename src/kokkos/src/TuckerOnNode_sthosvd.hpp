@@ -1,5 +1,5 @@
-#ifndef TUCKER_ONNODE_KOKKOS_STHOSVD_HPP_
-#define TUCKER_ONNODE_KOKKOS_STHOSVD_HPP_
+#ifndef TUCKERONNODE_STHOSVD_HPP_
+#define TUCKERONNODE_STHOSVD_HPP_
 
 #include "./impl/TuckerOnNode_sthosvd_gram_impl.hpp"
 
@@ -31,4 +31,4 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 }
 
 }
-#endif
+#endif  // TUCKERONNODE_STHOSVD_HPP_

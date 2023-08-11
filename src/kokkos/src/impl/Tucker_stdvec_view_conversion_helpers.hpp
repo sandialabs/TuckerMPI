@@ -1,6 +1,6 @@
 
-#ifndef TUCKER_UTILS_HPP_
-#define TUCKER_UTILS_HPP_
+#ifndef IMPL_TUCKER_STDVEC_VIEW_CONVERSION_HELPERS_HPP_
+#define IMPL_TUCKER_STDVEC_VIEW_CONVERSION_HELPERS_HPP_
 
 #include <Kokkos_Core.hpp>
 #include <vector>
@@ -88,4 +88,4 @@ void copy_view_to_stdvec(const Kokkos::View<T**, Properties...> & from,
 }
 
 }}
-#endif
+#endif  // IMPL_TUCKER_STDVEC_VIEW_CONVERSION_HELPERS_HPP_

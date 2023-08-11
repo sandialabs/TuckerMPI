@@ -1,6 +1,6 @@
 
-#ifndef TUCKER_KOKKOSONLY_COMPUTE_SLICE_METRICS_HPP_
-#define TUCKER_KOKKOSONLY_COMPUTE_SLICE_METRICS_HPP_
+#ifndef TUCKERONNODE_COMPUTE_SLICE_METRICS_HPP_
+#define TUCKERONNODE_COMPUTE_SLICE_METRICS_HPP_
 
 #include "./impl/Tucker_compute_slice_metrics.hpp"
 
@@ -48,4 +48,4 @@ auto compute_slice_metrics(Tensor<ScalarType, Properties...> tensor,
 }
 
 }
-#endif
+#endif  // TUCKERONNODE_COMPUTE_SLICE_METRICS_HPP_

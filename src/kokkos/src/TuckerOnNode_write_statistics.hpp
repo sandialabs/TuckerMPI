@@ -1,5 +1,5 @@
-#ifndef TUCKER_WRITE_STATISTICS_HPP_
-#define TUCKER_WRITE_STATISTICS_HPP_
+#ifndef TUCKERONNODE_WRITE_STATISTICS_HPP_
+#define TUCKERONNODE_WRITE_STATISTICS_HPP_
 
 #include "Tucker_fwd.hpp"
 #include "Tucker_create_mirror.hpp"
@@ -52,4 +52,4 @@ void write_statistics(TuckerOnNode::MetricData<ScalarType, MemSpace> metricData,
 
 }//end namespace Tucker
 
-#endif
+#endif  // TUCKERONNODE_WRITE_STATISTICS_HPP_

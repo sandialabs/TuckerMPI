@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_FWD_DECL_HPP_
-#define TUCKER_KOKKOS_FWD_DECL_HPP_
+#ifndef TUCKER_FWD_HPP_
+#define TUCKER_FWD_HPP_
 
 #include <array>
 #include <vector>
@@ -58,4 +58,4 @@ void deep_copy(const ::TuckerOnNode::MetricData<ScalarType, MemorySpaceDest> & d
 	       const ::TuckerOnNode::MetricData<ScalarType, MemorySpaceFrom> & from);
 }
 
-#endif
+#endif  // TUCKER_FWD_HPP_

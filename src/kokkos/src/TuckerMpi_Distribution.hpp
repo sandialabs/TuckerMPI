@@ -1,5 +1,5 @@
-#ifndef MPIKOKKOS_TUCKER_DISTRIBUTION_HPP_
-#define MPIKOKKOS_TUCKER_DISTRIBUTION_HPP_
+#ifndef TUCKERMPI_DISTRIBUTION_HPP_
+#define TUCKERMPI_DISTRIBUTION_HPP_
 
 #include "TuckerMpi_Map.hpp"
 #include "TuckerMpi_ProcessorGrid.hpp"
@@ -80,4 +80,4 @@ bool operator==(const Distribution& a, const Distribution& b);
 bool operator!=(const Distribution& a, const Distribution& b);
 
 }
-#endif
+#endif  // TUCKERMPI_DISTRIBUTION_HPP_

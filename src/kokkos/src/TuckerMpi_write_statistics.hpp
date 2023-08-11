@@ -1,5 +1,5 @@
-#ifndef TUCKER_MPI_KOKKOS_WRITE_STATISTICS_HPP_
-#define TUCKER_MPI_KOKKOS_WRITE_STATISTICS_HPP_
+#ifndef TUCKERMPI_WRITE_STATISTICS_HPP_
+#define TUCKERMPI_WRITE_STATISTICS_HPP_
 
 #include "Tucker_fwd.hpp"
 #include "Tucker_create_mirror.hpp"
@@ -117,4 +117,4 @@ void write_statistics(const int mpiRank,
 
 }//end namespace Tucker
 
-#endif
+#endif  // TUCKERMPI_WRITE_STATISTICS_HPP_

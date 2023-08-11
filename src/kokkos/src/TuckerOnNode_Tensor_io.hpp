@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOSONLY_TENSOR_IO_HPP_
-#define TUCKER_KOKKOSONLY_TENSOR_IO_HPP_
+#ifndef TUCKERONNODE_TENSOR_IO_HPP_
+#define TUCKERONNODE_TENSOR_IO_HPP_
 
 #include "TuckerOnNode_Tensor.hpp"
 #include "Tucker_create_mirror.hpp"
@@ -61,4 +61,4 @@ void write_tensor_binary(Tensor<ScalarType, Properties...> tensor,
 }
 
 } // end namespace Tucker
-#endif
+#endif  // TUCKERONNODE_TENSOR_IO_HPP_

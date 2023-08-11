@@ -1,5 +1,5 @@
-#ifndef TUCKERKOKKOS_COMP_GRAM_HPP_
-#define TUCKERKOKKOS_COMP_GRAM_HPP_
+#ifndef TUCKERONNODE_COMPUTE_GRAM_HPP_
+#define TUCKERONNODE_COMPUTE_GRAM_HPP_
 
 #include "TuckerOnNode_Tensor.hpp"
 #include "./impl/TuckerOnNode_compute_gram_host_impl.hpp"
@@ -53,4 +53,4 @@ auto compute_gram(Tensor<ScalarType, Properties...> tensor,
 }
 
 }
-#endif
+#endif  // TUCKERONNODE_COMPUTE_GRAM_HPP_

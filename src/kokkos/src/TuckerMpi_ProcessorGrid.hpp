@@ -1,5 +1,5 @@
-#ifndef MPIKOKKOS_TUCKER_PROCESSORGRID_HPP_
-#define MPIKOKKOS_TUCKER_PROCESSORGRID_HPP_
+#ifndef TUCKERMPI_PROCESSORGRID_HPP_
+#define TUCKERMPI_PROCESSORGRID_HPP_
 
 #include "./impl/TuckerMpi_MPIWrapper.hpp"
 #include <vector>
@@ -93,4 +93,4 @@ bool operator==(const ProcessorGrid& a, const ProcessorGrid& b);
 bool operator!=(const ProcessorGrid& a, const ProcessorGrid& b);
 
 }
-#endif
+#endif  // TUCKERMPI_PROCESSORGRID_HPP_

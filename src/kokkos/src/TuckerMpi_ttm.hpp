@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_MPI_TTM_HPP_
-#define TUCKER_KOKKOS_MPI_TTM_HPP_
+#ifndef TUCKERMPI_TTM_HPP_
+#define TUCKERMPI_TTM_HPP_
 
 #include "TuckerMpi_Tensor.hpp"
 #include "./impl/TuckerMpi_ttm_impl.hpp"
@@ -30,4 +30,4 @@ auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
 
 } // end namespace TuckerMpi
 
-#endif /* MPI_TUCKERMPI_TTM_HPP_ */
+#endif  // TUCKERMPI_TTM_HPP_

@@ -1,6 +1,6 @@
 
-#ifndef TUCKER_BOILERPLATE_IO_UTIL_HPP_
-#define TUCKER_BOILERPLATE_IO_UTIL_HPP_
+#ifndef TUCKER_BOILERPLATE_VIEW_IO_HPP_
+#define TUCKER_BOILERPLATE_VIEW_IO_HPP_
 
 #include <Kokkos_Core.hpp>
 #include <Kokkos_StdAlgorithms.hpp>
@@ -110,4 +110,4 @@ void write_view_to_binary_file(const Kokkos::View<DataType, Properties...> & v,
 }
 
 }// end namespace Tucker
-#endif
+#endif  // TUCKER_BOILERPLATE_VIEW_IO_HPP_

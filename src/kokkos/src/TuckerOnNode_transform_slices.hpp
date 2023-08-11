@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOS_TRANSFORM_SLICES_HPP_
-#define TUCKER_KOKKOS_TRANSFORM_SLICES_HPP_
+#ifndef TUCKERONNODE_TRANSFORM_SLICES_HPP_
+#define TUCKERONNODE_TRANSFORM_SLICES_HPP_
 
 #include "./impl/TuckerOnNode_transform_slices.hpp"
 
@@ -44,4 +44,4 @@ void transform_slices(Tensor<ScalarType, TensorProps...> tensor,
 }
 
 } // end of tucker
-#endif
+#endif  // TUCKERONNODE_TRANSFORM_SLICES_HPP_
