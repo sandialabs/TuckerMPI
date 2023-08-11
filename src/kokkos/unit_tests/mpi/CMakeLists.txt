@@ -2,9 +2,11 @@ include(FindUnixCommands)
 
 set(SCRIPT_PY ${CMAKE_CURRENT_SOURCE_DIR}/../../drivers_tests/python_scripts/ascii_to_binary.py)
 
+set(GTEST_MAIN ${CMAKE_CURRENT_SOURCE_DIR}/gtest_main.cc)
+
 macro(add_utest_mpikokkos TESTNAME TESTSRCS nRANKS)
   set(testNameFinal ${TESTNAME}_np${nRANKS})
-  add_executable(${testNameFinal} ${TESTSRCS} gtest_main.cc)
+  add_executable(${testNameFinal} ${TESTSRCS} ${GTEST_MAIN})
 
   target_link_libraries(
     ${testNameFinal}
@@ -69,3 +71,5 @@ foreach(nprocs RANGE 2 8)
   set(T1 test_norm)
   add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc ${nprocs})
 endforeach()
+
+add_subdirectory(test_normalize_3x5x7x11)
