@@ -84,6 +84,6 @@ if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
   target_include_directories(${STHOSVD_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
   target_link_libraries(${STHOSVD_DRIVER_NAME} ${MpiKokkosTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
 
-  #add_subdirectory(unit_tests)
+  add_subdirectory(unit_tests)
   add_subdirectory(drivers_tests)
 endif()
