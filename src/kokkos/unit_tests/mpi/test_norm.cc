@@ -1,6 +1,6 @@
 /**
  * Originally import test here:
- * 
+ * https://gitlab.com/tensors/TuckerMPI/-/blob/master/src/mpi/tests/TuckerMPI_norm_test.cpp
  */
 
 #include <gtest/gtest.h>
