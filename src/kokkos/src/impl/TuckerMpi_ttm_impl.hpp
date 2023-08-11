@@ -175,7 +175,6 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
     // *******************************************************************
     // If the required memory is small, we can do a single reduce_scatter
     // *******************************************************************
-#if 0
     if(nnz_reduce_scatter <= std::max(max_lcl_nnz_x, nnz_limit))
     {
       local_tensor_type localResult;
@@ -231,7 +230,7 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
     }
     else
     {
-#endif
+
       //
       // use a series of reductions
       //
@@ -263,7 +262,6 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
 					Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 	  umv_type Aum(Uptr, layout);
 	  TuckerOnNode::ttm(localX, n, Aum, localResult, Utransp);
-          //OLD: localResult = Tucker::ttm(localX, n, Uptr, uLocalRows, stride, Utransp);
         }
 
         // Combine the local results with a reduce operation
@@ -281,15 +279,15 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
         assert(count <= std::numeric_limits<int>::max());
 
         if(count > 0) {
-	  Kokkos::deep_copy(localYview_h, localY.data());
           MPI_Reduce_(sendBuf.data(), recvBuf, (int)count, MPI_SUM, root, comm);
         }
-	Kokkos::deep_copy(localY.data(), localYview_h);
 
         if(Utransp){ Uptr += (uLocalRows*stride);}
 	else{ Uptr += uLocalRows; }
       } // end for i = 0 .. Pn-1
-      //    }
+
+      Kokkos::deep_copy(localY.data(), localYview_h);
+    }
 
   } // end if Pn != 1
 

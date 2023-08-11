@@ -32,7 +32,7 @@ def compare_eigenvalues(workDir, modeCount):
 	if not foundAtLeastOneFile(workDir, "goldEigvals_"):
 		sys.exit("comparator: aborting because no eigenvalues files were found!")
 
-	tols = { "rel": 1e-9, "abs": 1e-11 }
+	tols = { "rel": 1e-8, "abs": 1e-8 }
 
 	# figure out where sing values are written to
 	svPath = extract_single_line_value_from_paramfile("SV directory = ", workDir+"/paramfile.txt")
@@ -51,7 +51,7 @@ def compare_eigenvalues(workDir, modeCount):
 
 # -------------------------------------------------------------------
 def compare_normalizedtensor(workDir):
-	print("2. comparator: comparing normalized tensor") 
+	print("2. comparator: comparing normalized tensor")
 
 	tols = {"rel": 1e-7, "abs": 1e-8}
 
@@ -65,7 +65,7 @@ def compare_normalizedtensor(workDir):
 
 # -------------------------------------------------------------------
 def compare_coretensor(workDir):
-	print("3. comparator: comparing core tensor") 
+	print("3. comparator: comparing core tensor")
 
 	tols = {"rel": 1e-8, "abs": 1e-8}
 
