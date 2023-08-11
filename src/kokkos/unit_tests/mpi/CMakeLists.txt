@@ -64,3 +64,8 @@ add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 6)
 
 set(T1 test_big_gram_0)
 add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc 8)
+
+foreach(nprocs RANGE 2 8)
+  set(T1 test_norm)
+  add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc ${nprocs})
+endforeach()
