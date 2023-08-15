@@ -2,9 +2,14 @@
 #ifndef IMPL_TUCKER_COMPUTEEIGVALSEIGVECS_HPP_
 #define IMPL_TUCKER_COMPUTEEIGVALSEIGVECS_HPP_
 
+#include "Tucker_boilerplate_view_io.hpp"
 #include "Tucker_BlasWrapper.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_StdAlgorithms.hpp>
+
+#if defined KOKKOS_ENABLE_HIP
+#include <rocsolver/rocsolver.h>
+#endif
 
 namespace Tucker{
 namespace impl{
@@ -170,6 +175,42 @@ void syev_on_host_views(Kokkos::View<ScalarType**, AProperties...> A,
 // {}
 // #endif
 
+  
+#if defined(KOKKOS_ENABLE_HIP)
+template<class ScalarType, class ... AProperties, class ... EigvalProperties>
+void syev_on_device_views(const Kokkos::HIP & exec,
+			  Kokkos::View<ScalarType**, AProperties...> A,
+			  Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
+{
+  std::cout << " syev_on_hip ~!!!!" << std::endl;
+  
+  rocblas_handle handle;
+  rocblas_create_handle(&handle);
+
+  const std::size_t nrows = A.extent(0);
+  std::size_t lwork = (std::size_t) 8*nrows;  
+  Kokkos::View<ScalarType*, Kokkos::LayoutLeft, Kokkos::HIPSpace> work("lwork", lwork);
+  Kokkos::View<int, Kokkos::HIPSpace> info("info");
+
+  rocblas_status status = rocsolver_dsyev(handle,
+					  rocblas_evect::rocblas_evect_original,
+					  rocblas_fill::rocblas_fill_upper,
+					  nrows, A.data(), nrows,
+					  eigenvalues.data(),
+					  work.data(), info.data());
+
+  if(status != rocblas_status_success){
+    throw std::runtime_error("syev: status != rocblas_status_success");
+  }
+
+  auto info_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), info);  
+  if(info_h() != 0){
+    throw std::runtime_error("syev: info != 0");
+  }
+  rocblas_destroy_handle(handle); 
+}
+#endif
+
 // fallback case if no better specialization is found
 template<class ExecutionSpace, class ScalarType, class ... AProperties, class ... EigvalProperties>
 void syev_on_device_views(const ExecutionSpace& exec,
@@ -208,7 +249,6 @@ auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<Scalar
    */
   auto exespace = exe_space();
   Kokkos::View<ScalarType*, Kokkos::LayoutLeft, mem_space> eigenvalues_d("EIG", G.extent(0));
-
   if constexpr( better_off_calling_host_syev_v<exe_space> ){
     syev_on_host_views(G, eigenvalues_d);
   }

@@ -4,6 +4,13 @@ set(TUCKER_SRCDIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 find_package(KokkosKernels REQUIRED)
 set(KOKKOS_TPLS Kokkos::kokkoskernels) # only need this to transitively access core, blas, etc
 
+FIND_PACKAGE(ROCSOLVER)
+if(TARGET roc::rocsolver)
+  message(STATUS "ROCSDFDFDFD")
+ELSE()			  
+  MESSAGE(FATAL_ERROR "Package ROCSPARSE requested but not found")
+ENDIF()
+
 #
 # set some options
 #
@@ -22,7 +29,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/Tucker_cmake_config.h.in Tucker_c
 if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   MESSAGE(STATUS "TUCKER_ENABLE_KOKKOS=${TUCKER_ENABLE_KOKKOS}, building code with Kokkos-only\n")
 
-  set(TUCKER_ALL_TPLS_NEEDED ${KOKKOS_TPLS})
+  set(TUCKER_ALL_TPLS_NEEDED ${KOKKOS_TPLS} roc::rocsolver)
 
   set(KokkosOnlyTuckerLib kokkosonly_tucker)
   set(ONNODE_SOURCES)
