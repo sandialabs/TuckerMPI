@@ -1,6 +1,7 @@
 
 #include <gtest/gtest.h>
 #include "TuckerOnNode.hpp"
+#include <random>
 
 template <class ValueType>
 struct UnifDist;
