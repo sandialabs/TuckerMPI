@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
     std::default_random_engine generator(seed);
     std::normal_distribution<double> distribution;
 
+    // core tensor
     std::cout << "Generating a random core tensor...\n";
     tensor_type G(R_dims);
     auto G_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), G);
@@ -50,11 +51,12 @@ int main(int argc, char* argv[])
     }
     Tucker::deep_copy(G, G_h);
     const std::size_t nnz = G.size();
-    TuckerOnNode::write_tensor_binary(G, "new_G.bin");
 
+    // factor matrices and ttm
     tensor_type Y = G;
     for(int d=0; d<tensorRank; d++)
     {
+      std::cout << "Generating factor matrix " << d << "...\n";
       const int nrows = I_dims[d];
       const int ncols = R_dims[d];
       auto M = factor_view_t("currentFactorMatrix", nrows, ncols);
@@ -66,6 +68,7 @@ int main(int argc, char* argv[])
       }
       Kokkos::deep_copy(M, M_h);
 
+      std::cout << "Performing mode " << d << " TTM...\n";
       auto temp = TuckerOnNode::ttm(Y, d, M, false);
       Y = temp;
     }
