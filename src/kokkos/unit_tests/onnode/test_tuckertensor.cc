@@ -6,7 +6,7 @@ using namespace TuckerOnNode;
 struct TuckerTensorFixA : public ::testing::Test
 {
 protected:
-  virtual void TearDown(){}
+  virtual void TearDown() override{}
 
   virtual void SetUp() override
   {

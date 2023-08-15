@@ -102,7 +102,7 @@ void syrk_kokkos(const char uplo[],
     using alpha_t = typename AViewType::const_value_type;
     using beta_t  = typename CViewType::const_value_type;
     using func_t = impl::SyrkFunctor1<alpha_t, beta_t, AViewType, CViewType>;
-    Kokkos::parallel_for(Kokkos::RangePolicy(0, C.extent(1)),
+    Kokkos::parallel_for(C.extent(1),
 			 func_t(A, C, alpha, beta));
   }
 
@@ -110,7 +110,7 @@ void syrk_kokkos(const char uplo[],
     using alpha_t = typename AViewType::const_value_type;
     using beta_t  = typename CViewType::const_value_type;
     using func_t = impl::SyrkFunctor2<alpha_t, beta_t, AViewType, CViewType>;
-    Kokkos::parallel_for(Kokkos::RangePolicy(0, C.extent(1)),
+    Kokkos::parallel_for(C.extent(1),
 			 func_t(A, C, alpha, beta));
   }
 }
