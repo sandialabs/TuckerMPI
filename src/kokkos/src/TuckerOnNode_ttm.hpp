@@ -4,8 +4,9 @@
 #include "TuckerOnNode_Tensor.hpp"
 #if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
 #include "./impl/TuckerOnNode_ttm_using_host_blas_impl.hpp"
-#endif
+#else
 #include "./impl/TuckerOnNode_ttm_using_kokkos_kernels_impl.hpp"
+#endif
 
 namespace TuckerOnNode{
 
@@ -36,11 +37,18 @@ void ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
     assert(Umatrix.extent(0) == Ytensor.extent(mode));
   }
 
+#if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
+  auto U_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), Umatrix);
+  impl::ttm_hostblas(Xtensor, mode, U_h.data(), Umatrix.extent(0), Ytensor, Utransp);
+
+#else
+
   if(mode == 0) {
     impl::ttm_kker_mode_zero(Xtensor, mode, Umatrix, Ytensor, Utransp);
   } else {
     impl::ttm_kker_mode_greater_than_zero(Xtensor, mode, Umatrix, Ytensor, Utransp);
   }
+#endif
 }
 
 template <
