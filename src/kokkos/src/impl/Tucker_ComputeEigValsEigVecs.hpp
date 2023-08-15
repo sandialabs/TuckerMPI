@@ -2,7 +2,6 @@
 #ifndef IMPL_TUCKER_COMPUTEEIGVALSEIGVECS_HPP_
 #define IMPL_TUCKER_COMPUTEEIGVALSEIGVECS_HPP_
 
-#include "Tucker_boilerplate_view_io.hpp"
 #include "Tucker_BlasWrapper.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_StdAlgorithms.hpp>
@@ -187,18 +186,29 @@ void syev_on_device_views(const Kokkos::HIP & exec,
   rocblas_handle handle;
   rocblas_create_handle(&handle);
 
+  // https://rocsolver.readthedocs.io/en/latest/api/lapack.html#rocsolver-type-syevd
   const std::size_t nrows = A.extent(0);
-  std::size_t lwork = (std::size_t) 8*nrows;  
-  Kokkos::View<ScalarType*, Kokkos::LayoutLeft, Kokkos::HIPSpace> work("lwork", lwork);
+  Kokkos::View<ScalarType*, Kokkos::LayoutLeft, Kokkos::HIPSpace> work("lwork", nrows);
   Kokkos::View<int, Kokkos::HIPSpace> info("info");
 
-  rocblas_status status = rocsolver_dsyev(handle,
-					  rocblas_evect::rocblas_evect_original,
-					  rocblas_fill::rocblas_fill_upper,
-					  nrows, A.data(), nrows,
-					  eigenvalues.data(),
-					  work.data(), info.data());
-
+  rocblas_status status = {};
+  if constexpr(std::is_same_v<ScalarType, double>){
+    status = rocsolver_dsyev(handle,
+			     rocblas_evect::rocblas_evect_original,
+			     rocblas_fill::rocblas_fill_upper,
+			     nrows, A.data(), nrows,
+			     eigenvalues.data(),
+			     work.data(), info.data());
+  }
+  if constexpr(std::is_same_v<ScalarType, float>){
+    status = rocsolver_ssyev(handle,
+			     rocblas_evect::rocblas_evect_original,
+			     rocblas_fill::rocblas_fill_upper,
+			     nrows, A.data(), nrows,
+			     eigenvalues.data(),
+			     work.data(), info.data());
+  }
+    
   if(status != rocblas_status_success){
     throw std::runtime_error("syev: status != rocblas_status_success");
   }
