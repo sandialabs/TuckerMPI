@@ -3,10 +3,10 @@
 
 template<class MetricsDataHost>
 void check(int nSlice,
-	   double true_min[],
-	   double true_max[],
-	   double true_mean[],
-	   double true_var[],
+	   std::vector<double> const & true_min,
+	   std::vector<double> const & true_max,
+	   std::vector<double> const & true_mean,
+	   std::vector<double> const & true_var,
 	   MetricsDataHost metrics_h)
 {
   auto minV = metrics_h.get(Tucker::Metric::MIN);
@@ -43,10 +43,10 @@ TEST(tuckerkokkos, compute_slice_metrics_mode0){
 
   // True results (compute by hand)
   int nslices = 2;
-  scalar_t true_min[nslices]   = {0.0, 1.0};
-  scalar_t true_max[nslices]   = {6.0, 7.0};
-  scalar_t true_mean[nslices]  = {3.0, 4.0};
-  scalar_t true_var[nslices]   = {5.0, 5.0};
+  std::vector<scalar_t> true_min {0.0, 1.0};
+  std::vector<scalar_t> true_max {6.0, 7.0};
+  std::vector<scalar_t> true_mean{3.0, 4.0};
+  std::vector<scalar_t> true_var {5.0, 5.0};
   check(nslices, true_min, true_max, true_mean, true_var, metrics_h);
 }
 
@@ -72,10 +72,10 @@ TEST(tuckerkokkos, compute_slice_metrics_mode1){
 
   // True results (compute by hand)
   int nslices = 2;
-  scalar_t true_min[nslices]   = {0.0, 2.0};
-  scalar_t true_max[nslices]   = {5.0, 7.0};
-  scalar_t true_mean[nslices]  = {2.5, 4.5};
-  scalar_t true_var[nslices]   = {4.25, 4.25};
+  std::vector<scalar_t> true_min = {0.0, 2.0};
+  std::vector<scalar_t> true_max = {5.0, 7.0};
+  std::vector<scalar_t> true_mean= {2.5, 4.5};
+  std::vector<scalar_t> true_var = {4.25, 4.25};
   check(nslices, true_min, true_max, true_mean, true_var, metrics_h);
 }
 
@@ -101,10 +101,10 @@ TEST(tuckerkokkos, compute_slice_metrics_mode2){
 
   // True results (compute by hand)
   int nslices = 2;
-  scalar_t true_min[nslices]  = {0.0, 4.0};
-  scalar_t true_max[nslices]  = {3.0, 7.0};
-  scalar_t true_mean[nslices] = {1.5, 5.5};
-  scalar_t true_var[nslices]  = {1.25, 1.25};
+  std::vector<scalar_t> true_min = {0.0, 4.0};
+  std::vector<scalar_t> true_max = {3.0, 7.0};
+  std::vector<scalar_t> true_mean= {1.5, 5.5};
+  std::vector<scalar_t> true_var = {1.25, 1.25};
   check(nslices, true_min, true_max, true_mean, true_var, metrics_h);
 }
 
