@@ -2,8 +2,7 @@
 set(TUCKER_SRCDIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 find_package(KokkosKernels REQUIRED)
-set(KOKKOS_TPLS
-  Kokkos::BLAS Kokkos::LAPACK Kokkos::kokkos Kokkos::kokkoskernels)
+set(KOKKOS_TPLS Kokkos::kokkoskernels) # only need this to transitively access core, blas, etc
 
 #
 # set some options
