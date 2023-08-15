@@ -1,6 +1,6 @@
 
 #include "CmdLineParse.hpp"
-#include "ParameterFileParser.hpp"
+#include "ParserInputParametersSthosvdDriver.hpp"
 #include "TuckerOnNode.hpp"
 
 int main(int argc, char* argv[])
@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
      */
     const auto paramfn = Tucker::parse_cmdline_or(argc, (const char**)argv,
 						  "--parameter-file", "paramfile.txt");
-    const TuckerOnNode::InputParameters<scalar_t> inputs(paramfn);
+    const InputParametersSthosvdDriver<scalar_t> inputs(paramfn);
     inputs.describe();
     TuckerOnNode::Tensor<scalar_t, memory_space> X(inputs.dimensionsOfDataTensor());
     TuckerOnNode::read_tensor_binary(X, inputs.rawDataFilenames);

@@ -26,26 +26,45 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   set(TUCKER_ALL_TPLS_NEEDED ${KOKKOS_TPLS})
 
   set(KokkosOnlyTuckerLib kokkosonly_tucker)
-  set(SOURCES)
-  LIST(APPEND SOURCES
+  set(ONNODE_SOURCES)
+  LIST(APPEND ONNODE_SOURCES
     ${TUCKER_SRCDIR}/impl/Tucker_BlasWrapper.cpp
   )
-  ADD_LIBRARY(${KokkosOnlyTuckerLib} SHARED ${SOURCES})
+  ADD_LIBRARY(${KokkosOnlyTuckerLib} SHARED ${ONNODE_SOURCES})
   TARGET_LINK_LIBRARIES(${KokkosOnlyTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
-
   include_directories(${CMAKE_CURRENT_BINARY_DIR} ${TUCKER_SRCDIR})
 
-  set(STHOSVD_DRIVER_NAME KokkosTucker_sthosvd)
-  set(STHOSVD_DRIVER_SRCS)
-  LIST(APPEND STHOSVD_DRIVER_SRCS
+  #
+  # driver KokkosTucker_sthosvd
+  #
+  set(ONNODE_STHOSVD_DRIVER_NAME KokkosTucker_sthosvd)
+  set(ONNODE_STHOSVD_DRIVER_SRCS)
+  LIST(APPEND ONNODE_STHOSVD_DRIVER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/CmdLineParse.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/ParameterFileParserUtils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/onnode/TuckerOnNode_sthosvd.cpp
   )
-  add_executable(${STHOSVD_DRIVER_NAME} ${STHOSVD_DRIVER_SRCS})
-  target_include_directories(${STHOSVD_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
-  target_link_libraries(${STHOSVD_DRIVER_NAME} ${KokkosOnlyTuckerLib} ${KOKKOS_TPLS})
+  add_executable(${ONNODE_STHOSVD_DRIVER_NAME} ${ONNODE_STHOSVD_DRIVER_SRCS})
+  target_include_directories(${ONNODE_STHOSVD_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
+  target_link_libraries(${ONNODE_STHOSVD_DRIVER_NAME} ${KokkosOnlyTuckerLib} ${KOKKOS_TPLS})
 
+  #
+  # driver KokkosTucker_generate
+  #
+  set(ONNODE_GENERATE_DRIVER_NAME KokkosTucker_generate)
+  set(ONNODE_GENERATE_DRIVER_SRCS)
+  LIST(APPEND ONNODE_GENERATE_DRIVER_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/CmdLineParse.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/ParameterFileParserUtils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/onnode/TuckerOnNode_generate.cpp
+  )
+  add_executable(${ONNODE_GENERATE_DRIVER_NAME} ${ONNODE_GENERATE_DRIVER_SRCS})
+  target_include_directories(${ONNODE_GENERATE_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
+  target_link_libraries(${ONNODE_GENERATE_DRIVER_NAME} ${KokkosOnlyTuckerLib} ${KOKKOS_TPLS})
+
+  #
+  # add tests
+  #
   add_subdirectory(unit_tests)
   add_subdirectory(drivers_tests)
 endif()
@@ -54,35 +73,35 @@ if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
   MESSAGE(STATUS "TUCKER_ENABLE_KOKKOS=${TUCKER_ENABLE_KOKKOS} and TUCKER_ENABLE_MPI=${TUCKER_ENABLE_MPI}, building code with MPI+Kokkos\n")
 
   set(TUCKER_ENABLE_MPI ON)
-
   find_package(MPI REQUIRED)
-
   set(TUCKER_ALL_TPLS_NEEDED ${KOKKOS_TPLS} ${MPI_CXX_LIBRARIES})
 
   set(MpiKokkosTuckerLib mpikokkos_tucker)
-  set(SOURCES)
-  LIST(APPEND SOURCES
+  set(MPI_SOURCES)
+  LIST(APPEND MPI_SOURCES
     ${TUCKER_SRCDIR}/impl/Tucker_BlasWrapper.cpp
     ${TUCKER_SRCDIR}/impl/TuckerMpi_MPIWrapper.cpp
     ${TUCKER_SRCDIR}/TuckerMpi_Map.cpp
     ${TUCKER_SRCDIR}/TuckerMpi_ProcessorGrid.cpp
     ${TUCKER_SRCDIR}/TuckerMpi_Distribution.cpp
   )
-  ADD_LIBRARY(${MpiKokkosTuckerLib} SHARED ${SOURCES})
+  ADD_LIBRARY(${MpiKokkosTuckerLib} SHARED ${MPI_SOURCES})
   TARGET_LINK_LIBRARIES(${MpiKokkosTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
-
   include_directories(${MPI_CXX_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} ${TUCKER_SRCDIR})
 
-  set(STHOSVD_DRIVER_NAME MpiKokkosTucker_sthosvd)
-  set(STHOSVD_DRIVER_SRCS)
-  LIST(APPEND STHOSVD_DRIVER_SRCS
+  #
+  # driver MpiKokkosTucker_sthosvd
+  #
+  set(DISTRIBUTED_STHOSVD_DRIVER_NAME MpiKokkosTucker_sthosvd)
+  set(DISTRIBUTED_STHOSVD_DRIVER_SRCS)
+  LIST(APPEND DISTRIBUTED_STHOSVD_DRIVER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/CmdLineParse.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/ParameterFileParserUtils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mpi/TuckerMpi_sthosvd.cpp
   )
-  add_executable(${STHOSVD_DRIVER_NAME} ${STHOSVD_DRIVER_SRCS})
-  target_include_directories(${STHOSVD_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
-  target_link_libraries(${STHOSVD_DRIVER_NAME} ${MpiKokkosTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
+  add_executable(${DISTRIBUTED_STHOSVD_DRIVER_NAME} ${DISTRIBUTED_STHOSVD_DRIVER_SRCS})
+  target_include_directories(${DISTRIBUTED_STHOSVD_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
+  target_link_libraries(${DISTRIBUTED_STHOSVD_DRIVER_NAME} ${MpiKokkosTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
 
   add_subdirectory(unit_tests)
   add_subdirectory(drivers_tests)

@@ -1,17 +1,15 @@
 #ifndef TUCKER_KOKKOSONLY_PARAM_FILE_PARSER_HPP_
 #define TUCKER_KOKKOSONLY_PARAM_FILE_PARSER_HPP_
 
-#include "ParameterFileParserUtils.hpp"
+#include "ParserInputParametersGenerateDriver.hpp"
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
 #include <vector>
 #include <optional>
 
-namespace TuckerOnNode{
-
 template<class ScalarType>
-struct InputParameters
+struct InputParametersSthosvdDriver
 {
   int nd;
   bool boolAutoRankDetermination;
@@ -47,7 +45,7 @@ private:
   std::optional<std::vector<int>> coreTensorDims_;
 
 public:
-  InputParameters(const std::string & paramFile)
+  InputParametersSthosvdDriver(const std::string & paramFile)
   {
     const auto fileAsStrings = Tucker::read_file_as_strings(paramFile);
     std::cout << fileAsStrings.size() << " " << fileAsStrings[0] << std::endl;
@@ -189,5 +187,4 @@ private:
   }
 };
 
-} // end namespace TuckerOnNode
 #endif

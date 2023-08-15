@@ -1,5 +1,5 @@
 #include "CmdLineParse.hpp"
-#include "ParameterFileParser.hpp"
+#include "ParserInputParametersSthosvdDriver.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
   #endif
   const auto paramfn = Tucker::parse_cmdline_or(argc, (const char**)argv,
 						"--parameter-file", filename);
-  const TuckerOnNode::InputParameters<double> inputs(paramfn);
+  const InputParametersSthosvdDriver<double> inputs(paramfn);
 
   const auto globdims = inputs.dimensionsOfDataTensor();
   const std::vector<int> goldGlobDims = {3,5,7,11,1,1};
