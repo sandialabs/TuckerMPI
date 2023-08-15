@@ -1,5 +1,7 @@
 configure_file(paramfile_1.txt paramfile_1.txt COPYONLY)
 configure_file(paramfile_2.txt paramfile_2.txt COPYONLY)
+configure_file(myraw.txt myraw.txt COPYONLY)
+configure_file(pre.txt pre.txt COPYONLY)
 
 set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/../../../drivers/CmdLineParse.cpp
