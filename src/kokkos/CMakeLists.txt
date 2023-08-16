@@ -4,6 +4,21 @@ set(TUCKER_SRCDIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 find_package(KokkosKernels REQUIRED)
 set(KOKKOS_TPLS Kokkos::kokkoskernels) # only need this to transitively access core, blas, etc
 
+#TODO needs cleaning up
+IF (TARGET CUDA::cudart)
+  SET(FOUND_CUDART TRUE)
+  # KOKKOS_EXPORT_IMPORTED_TPL(CUDA::cudart)
+ELSE()
+  SET(FOUND_CUDART FALSE)
+ENDIF()
+
+IF (TARGET CUDA::cuda_driver)
+  SET(FOUND_CUDA_DRIVER TRUE)
+  # KOKKOS_EXPORT_IMPORTED_TPL(CUDA::cuda_driver)
+ELSE()
+  SET(FOUND_CUDA_DRIVER FALSE)
+ENDIF()
+
 #
 # set some options
 #
@@ -22,7 +37,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/Tucker_cmake_config.h.in Tucker_c
 if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   MESSAGE(STATUS "TUCKER_ENABLE_KOKKOS=${TUCKER_ENABLE_KOKKOS}, building code with Kokkos-only\n")
 
-  set(TUCKER_ALL_TPLS_NEEDED ${KOKKOS_TPLS})
+  set(TUCKER_ALL_TPLS_NEEDED ${KOKKOS_TPLS} CUDA::cudart CUDA::cuda_driver)
 
   set(KokkosOnlyTuckerLib kokkosonly_tucker)
   set(ONNODE_SOURCES)
