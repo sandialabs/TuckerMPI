@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
     }
     Tucker::deep_copy(Y, Y_h);
 
-    TuckerOnNode::write_tensor_binary(Y, "new_out.bin");
+    TuckerOnNode::write_tensor_binary(Y, inputs.outDataFilenames);
 
   } // local scope to ensure all Kokkos views are destructed appropriately
   Kokkos::finalize();
