@@ -195,10 +195,12 @@ void compute_syev_use_host_lapack(Kokkos::View<ScalarType**, AProperties...> A,
 #if defined(KOKKOS_ENABLE_HIP) && !defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
 
 template<class ScalarType, class ... AProperties, class ... EigvalProperties>
-void syev_on_device_views(const Kokkos::HIP & exec,
+void compute_syev_on_device_views(const Kokkos::HIP & exec,
 			  Kokkos::View<ScalarType**, AProperties...> A,
 			  Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
 {
+  std::cout << "HIP SYEV \n";
+  
   rocblas_handle handle;
   rocblas_create_handle(&handle);
 
@@ -317,7 +319,6 @@ void compute_syev_on_device_views(const Kokkos::Cuda & exec,
 #endif
 
 
-#if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
 // fallback case if no better specialization is found
 template<class ExecutionSpace, class ScalarType, class ... AProperties, class ... EigvalProperties>
 void compute_syev_on_device_views(const ExecutionSpace& exec,
@@ -326,13 +327,11 @@ void compute_syev_on_device_views(const ExecutionSpace& exec,
 {
   auto A_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), A);
   auto eigenvalues_h = Kokkos::create_mirror_view(eigenvalues);
-  syev_on_host_views(A_h, eigenvalues_h);
+  compute_syev_use_host_lapack(A_h, eigenvalues_h);
   Kokkos::deep_copy(exec, eigenvalues, eigenvalues_h);
   Kokkos::deep_copy(exec, A, A_h);
   exec.fence();
 }
-#endif
-
 
 template<class ScalarType, class ... Properties>
 auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<ScalarType**, Properties...> G,
