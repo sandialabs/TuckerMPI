@@ -2,7 +2,7 @@
 #ifndef TUCKERONNODE_COMPUTE_SLICE_METRICS_HPP_
 #define TUCKERONNODE_COMPUTE_SLICE_METRICS_HPP_
 
-#include "./impl/Tucker_compute_slice_metrics.hpp"
+#include "./impl/TuckerOnNode_compute_slice_metrics.hpp"
 
 namespace TuckerOnNode{
 

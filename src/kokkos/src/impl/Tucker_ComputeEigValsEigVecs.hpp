@@ -199,8 +199,6 @@ void syev_on_device_views(const Kokkos::HIP & exec,
 			  Kokkos::View<ScalarType**, AProperties...> A,
 			  Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
 {
-  std::cout << " syev_on_hip ~!!!!" << std::endl;
-
   rocblas_handle handle;
   rocblas_create_handle(&handle);
 
