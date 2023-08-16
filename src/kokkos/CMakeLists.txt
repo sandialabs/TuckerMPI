@@ -4,25 +4,26 @@ set(TUCKER_SRCDIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 find_package(KokkosKernels REQUIRED)
 set(KOKKOS_TPLS Kokkos::kokkoskernels) # only need this to transitively access core, blas, etc
 
-# FIND_PACKAGE(ROCSOLVER)
-# if(TARGET roc::rocsolver)
-#   message(STATUS "ROCSDFDFDFD")
-# ELSE()
-#   MESSAGE(FATAL_ERROR "Package ROCSPARSE requested but not found")
+set(TUCKER_ALL_TPLS_NEEDED ${KOKKOS_TPLS})
 
-#=======
-#TODO needs cleaning up
-#IF (TARGET CUDA::cudart)
-# SET(FOUND_CUDART TRUE)
-# # KOKKOS_EXPORT_IMPORTED_TPL(CUDA::cudart)
-#ELSE()
-# SET(FOUND_CUDART FALSE)
-#ENDIF()
-#IF (TARGET CUDA::cuda_driver)
-# SET(FOUND_CUDA_DRIVER TRUE)
-# # KOKKOS_EXPORT_IMPORTED_TPL(CUDA::cuda_driver)
-#ELSE()
-# SET(FOUND_CUDA_DRIVER FALSE)
+
+# if CUBLAS is ON, we need cusolver too because Kernels does not pick it up
+if (TARGET Kokkos::CUBLAS)
+if (NOT TARGET CUDA::cusolver)
+  find_package(CUDAToolkit)
+  message(STATUS "CUDA::cusolver not found, finding CUDAToolkit")
+  list(APPEND TUCKER_ALL_TPLS_NEEDED CUDA::cusolver)
+endif()
+endif()
+
+# if ROCBLAS is ON, we need rocsolver too because Kernels does not pick it up
+if (TARGET Kokkos::ROCBLAS)
+if (NOT TARGET roc::rocsolver)
+  find_package(ROCSOLVER)
+  message(STATUS "roc::rocsolver not found, finding ROCSOLVER")
+  list(APPEND TUCKER_ALL_TPLS_NEEDED roc::rocsolver)
+endif()
+endif()
 
 #
 # set some options
@@ -36,20 +37,15 @@ endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/Tucker_cmake_config.h.in Tucker_cmake_config.h @ONLY)
 
-#
-# branch if onnode or mpi
-#
+# =========================================
+# handle onnode only case
+# =========================================
 if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   MESSAGE(STATUS "TUCKER_ENABLE_KOKKOS=${TUCKER_ENABLE_KOKKOS}, building code with Kokkos-only\n")
 
-  set(TUCKER_ALL_TPLS_NEEDED ${KOKKOS_TPLS}) #roc::rocsolver)
-  #set(TUCKER_ALL_TPLS_NEEDED ${KOKKOS_TPLS} CUDA::cudart CUDA::cuda_driver)
-
   set(KokkosOnlyTuckerLib kokkosonly_tucker)
   set(ONNODE_SOURCES)
-  LIST(APPEND ONNODE_SOURCES
-    ${TUCKER_SRCDIR}/impl/Tucker_BlasWrapper.cpp
-  )
+  LIST(APPEND ONNODE_SOURCES ${TUCKER_SRCDIR}/impl/Tucker_BlasWrapper.cpp)
   ADD_LIBRARY(${KokkosOnlyTuckerLib} SHARED ${ONNODE_SOURCES})
   TARGET_LINK_LIBRARIES(${KokkosOnlyTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
   include_directories(${CMAKE_CURRENT_BINARY_DIR} ${TUCKER_SRCDIR})
@@ -89,12 +85,16 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   add_subdirectory(drivers_tests)
 endif()
 
+
+# =========================================
+# handle MPI case
+# =========================================
 if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
   MESSAGE(STATUS "TUCKER_ENABLE_KOKKOS=${TUCKER_ENABLE_KOKKOS} and TUCKER_ENABLE_MPI=${TUCKER_ENABLE_MPI}, building code with MPI+Kokkos\n")
 
   set(TUCKER_ENABLE_MPI ON)
   find_package(MPI REQUIRED)
-  set(TUCKER_ALL_TPLS_NEEDED ${KOKKOS_TPLS} ${MPI_CXX_LIBRARIES})
+  list(APPEND TUCKER_ALL_TPLS_NEEDED ${MPI_CXX_LIBRARIES})
 
   set(MpiKokkosTuckerLib mpikokkos_tucker)
   set(MPI_SOURCES)
