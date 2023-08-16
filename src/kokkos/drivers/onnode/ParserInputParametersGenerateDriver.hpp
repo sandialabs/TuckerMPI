@@ -42,11 +42,13 @@ public:
       std::for_each(dataTensorDims_.cbegin(), dataTensorDims_.cend(), [](auto s){ std::cout << s << " "; } );
       std::cout << std::endl;
 
-      // std::cout << "Global dimensions of the desired core tensor\n";
-      // std::cout << "- Ranks = " << *R_dims << std::endl << std::endl;
+      std::cout << "Global dimensions of the desired core tensor\n";
+      std::cout << "- Ranks = ";
+      std::for_each(coreTensorDims_.cbegin(), coreTensorDims_.cend(), [](auto s){ std::cout << s << " "; } );
+      std::cout << std::endl;
 
-      // std::cout << "If true, print the parameters\n";
-      // std::cout << "- Print options = " << (boolPrintOptions ? "true" : "false") << std::endl << std::endl;
+      std::cout << "If true, print the parameters\n";
+      std::cout << "- Print options = " << (boolPrintOptions ? "true" : "false") << std::endl << std::endl;
 
       std::cout << std::endl;
     }
