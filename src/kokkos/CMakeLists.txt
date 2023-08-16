@@ -9,7 +9,19 @@ if(TARGET roc::rocsolver)
   message(STATUS "ROCSDFDFDFD")
 ELSE()			  
   MESSAGE(FATAL_ERROR "Package ROCSPARSE requested but not found")
-ENDIF()
+#=======
+#TODO needs cleaning up
+#IF (TARGET CUDA::cudart)
+# SET(FOUND_CUDART TRUE)
+# # KOKKOS_EXPORT_IMPORTED_TPL(CUDA::cudart)
+#ELSE()
+# SET(FOUND_CUDART FALSE)
+#ENDIF()
+#IF (TARGET CUDA::cuda_driver)
+# SET(FOUND_CUDA_DRIVER TRUE)
+# # KOKKOS_EXPORT_IMPORTED_TPL(CUDA::cuda_driver)
+#ELSE()
+# SET(FOUND_CUDA_DRIVER FALSE)
 
 #
 # set some options
@@ -30,6 +42,7 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   MESSAGE(STATUS "TUCKER_ENABLE_KOKKOS=${TUCKER_ENABLE_KOKKOS}, building code with Kokkos-only\n")
 
   set(TUCKER_ALL_TPLS_NEEDED ${KOKKOS_TPLS} roc::rocsolver)
+  #set(TUCKER_ALL_TPLS_NEEDED ${KOKKOS_TPLS} CUDA::cudart CUDA::cuda_driver)
 
   set(KokkosOnlyTuckerLib kokkosonly_tucker)
   set(ONNODE_SOURCES)
