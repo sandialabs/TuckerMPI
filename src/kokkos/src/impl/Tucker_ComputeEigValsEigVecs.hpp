@@ -6,6 +6,12 @@
 #include <Kokkos_Core.hpp>
 #include <Kokkos_StdAlgorithms.hpp>
 
+#if defined KOKKOS_ENABLE_CUDA
+#include <cuda_runtime.h>
+#include <cusolverDn.h>
+#endif
+
+
 namespace Tucker{
 namespace impl{
 
@@ -162,18 +168,24 @@ void compute_syev_use_host_lapack(Kokkos::View<ScalarType**, AProperties...> A,
   }
 }
 
-// #if defined(KOKKOS_ENABLE_CUDA)
-// template<class ScalarType, class ... AProperties, class ... EigvalProperties>
-// void syev_on_device_views(const Kokkos::Cuda & exec,
-// 			  Kokkos::View<ScalarType**, AProperties...> A,
-// 			  Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
-// {}
-// #endif
 
 #if defined(KOKKOS_ENABLE_CUDA) && !defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
 // enable if cuda
-void compute_syev_on_device_views(Kokkos::View<ScalarType**, Properties...> G, eigenvalues, ...){
+
+template<class ScalarType, class ... AProperties, class ... EigvalProperties>
+void compute_syev_on_device_views(const Kokkos::Cuda & exec,
+      Kokkos::View<ScalarType**, AProperties...> A,
+      Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
+{
+  cusolverDnHandle_t cuDnHandle = nullptr;
+  cudaStream_t stream = nullptr;
+
+  /* step 1: create cusolver handle, bind a stream */
   auto cusolverStatus = cusolverDnCreate(&cuDnHandle);
+  assert(cusolverStatus == CUSOLVER_STATUS_SUCCESS);
+
+  cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);
+  cusolverDnSetStream(cuDnHandle, stream);
   assert(cusolverStatus == CUSOLVER_STATUS_SUCCESS);
 
 // Doc for Reference
@@ -196,12 +208,72 @@ void compute_syev_on_device_views(Kokkos::View<ScalarType**, Properties...> G, e
 //     void *bufferOnHost,
 //     size_t workspaceInBytesOnHost,
 //     int *info)
-  //use CUDA_CHECK() as in doc above?
-  cusolverStatus_t cusolverDnXsyevd(cusolverStatus, NULL, &jobz, &uplo, &nrows, A.data(), &nrows,
-	                                  eigenvalues.data(), work.data(), &lwork, &info)
-  assert(cusolverStatus == CUSOLVER_STATUS_SUCCESS);
 
-  auto cusolverStatus = cusolverDnDestroy(cuDnHandle);
+//TODO use views or direct memory manipulation?
+//     still a mix
+  const std::size_t nrows = A.extent(0);
+  // Kokkos::View<ScalarType*, Kokkos::LayoutLeft, Kokkos::CudaSpace> d_work("d_work", nrows);
+  // auto h_work = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), d_work);
+  // Kokkos::View<int, Kokkos::CudaSpace> info("info");
+  int info =0;
+
+  cusolverEigMode_t jobz = CUSOLVER_EIG_MODE_VECTOR; // compute eigenvalues and eigenvectors.
+  cublasFillMode_t uplo = CUBLAS_FILL_MODE_LOWER;
+
+
+  size_t d_lwork = 0;     /* size of workspace */
+  void *d_work = nullptr; /* device workspace */
+  size_t h_lwork = 0;     /* size of workspace */
+  void *h_work = nullptr; /* host workspace */
+  if constexpr(std::is_same_v<ScalarType, double>){
+    static constexpr cudaDataType cuda_data_type = CUDA_R_64F;
+    //set the size of d_lwork and h_lwork
+    cusolverStatus = cusolverDnXsyevd_bufferSize(cuDnHandle, nullptr, jobz, uplo,
+                                nrows,
+                                cuda_data_type, A.data(), nrows,
+                                cuda_data_type, d_work,
+                                cuda_data_type, &d_lwork, &h_lwork);
+    assert(cusolverStatus == CUSOLVER_STATUS_SUCCESS);
+    cudaMalloc(reinterpret_cast<void **>(&d_work), sizeof(cuda_data_type) * d_lwork);
+    cusolverStatus = cusolverDnXsyevd(cuDnHandle, nullptr, jobz, uplo,
+                                nrows,
+                                cuda_data_type, A.data(), nrows,
+                                cuda_data_type, eigenvalues.data(),
+                                cuda_data_type, d_work, d_lwork,
+                                h_work, h_lwork,
+                                &info);
+    assert(cusolverStatus == CUSOLVER_STATUS_SUCCESS);
+  }
+  if constexpr(std::is_same_v<ScalarType, float>){
+    static constexpr cudaDataType cuda_data_type = CUDA_R_32F;
+    //set the size of d_lwork and h_lwork
+    cusolverStatus = cusolverDnXsyevd_bufferSize(cuDnHandle, nullptr, jobz, uplo,
+                                nrows,
+                                cuda_data_type, A.data(), nrows,
+                                cuda_data_type, d_work,
+                                cuda_data_type, &d_lwork, &h_lwork);
+    assert(cusolverStatus == CUSOLVER_STATUS_SUCCESS);
+    cudaMalloc(reinterpret_cast<void **>(&d_work), sizeof(cuda_data_type) * d_lwork);
+    cusolverStatus = cusolverDnXsyevd(cuDnHandle, nullptr, jobz, uplo,
+                                nrows,
+                                cuda_data_type, A.data(), nrows,
+                                cuda_data_type, eigenvalues.data(),
+                                cuda_data_type, d_work, d_lwork,
+                                h_work, h_lwork,
+                                &info);
+    assert(cusolverStatus == CUSOLVER_STATUS_SUCCESS);
+  }
+
+  auto info_h = info;// Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), info);
+  if(info_h != 0){
+    throw std::runtime_error("syev: info != 0");
+  }
+
+  //clean up memory
+  //delete d_work;
+  //cusolverStatus = cudaDeviceSynchronize();
+  // assert(cusolverStatus == CUSOLVER_STATUS_SUCCESS);
+  cusolverStatus = cusolverDnDestroy(cuDnHandle);
   assert(cusolverStatus == CUSOLVER_STATUS_SUCCESS);
 }
 #endif
