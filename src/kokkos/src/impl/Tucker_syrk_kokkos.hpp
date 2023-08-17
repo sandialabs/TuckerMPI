@@ -113,7 +113,7 @@ void syrk_kokkos(const Kokkos::HIP & /*exec*/,
 
   rocblas_handle handle;
   rocblas_create_handle(&handle);
-  
+
   rocblas_status status = {};
   if (opA[0] == 'N'){
     std::size_t n = A.extent(0);
@@ -125,7 +125,7 @@ void syrk_kokkos(const Kokkos::HIP & /*exec*/,
   }
   else{
     std::size_t n = A.extent(1);
-    std::size_t k = A.extent(0);    
+    std::size_t k = A.extent(0);
     status = rocblas_dsyrk(handle, rocblas_fill::rocblas_fill_upper,
 			   rocblas_operation::rocblas_operation_transpose, n, k,
 			   &alpha_l, A.data(), A.extent(0),
@@ -135,14 +135,14 @@ void syrk_kokkos(const Kokkos::HIP & /*exec*/,
   if(status != rocblas_status_success){
     throw std::runtime_error("syrk: status != rocblas_status_success");
   }
-  
+
   rocblas_destroy_handle(handle);
 }
 #endif
 
-  
 
-  
+
+
 #if defined(KOKKOS_ENABLE_CUDA) && !defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
 template<class AViewType, class CViewType>
 void syrk_kokkos(const Kokkos::Cuda & exec,
@@ -271,6 +271,26 @@ void syrk_kokkos(const ExeSpace & exespace,
     Kokkos::parallel_for(C.extent(1),
 			 func_t(A, C, alpha, beta));
   }
+}
+
+template<class AViewType, class CViewType>
+
+void syrk_kokkos(const char uplo[],
+		 const char opA[],
+		 typename AViewType::const_value_type & alpha,
+		 const AViewType& A,
+		 typename CViewType::const_value_type & beta,
+		 const CViewType& C)
+{
+  static_assert(std::is_same_v<
+		typename AViewType::execution_space,
+		typename CViewType::execution_space>,
+		"syrk_kokkos overload without execution space: current A and C views "
+		"must have matching execution spaces");
+
+  typename AViewType::execution_space exespace;
+  syrk_kokkos(exespace, uplo, opA, alpha, A, beta, C);
+  exespace.fence("syrk kokkos fencing");
 }
 
 }}// end namespace Tucker::impl

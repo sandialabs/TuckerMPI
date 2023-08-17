@@ -54,8 +54,6 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
   using A_umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutLeft,
 				Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
-  typename view_type::execution_space exespace;
-
   // n = 0 is a special case, Y_0 is stored column major
   if(n == 0)
   {
@@ -74,7 +72,7 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
     const ScalarType alpha = 1;
     const ScalarType beta = 0;
     A_umv_type Aview(Y.data().data(), Y.extent(0), ncols);
-    Tucker::impl::syrk_kokkos(exespace, "U", "N", alpha, Aview, beta, C);
+    Tucker::impl::syrk_kokkos("U", "N", alpha, Aview, beta, C);
   }
 
   else
@@ -117,7 +115,7 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
     const ScalarType alpha = 1;
     const ScalarType beta = 0;
     A_umv_type Aview(Y_rawPtr, ncols, nrows);
-    Tucker::impl::syrk_kokkos(exespace, "U", "T", alpha, Aview, beta, C);
+    Tucker::impl::syrk_kokkos("U", "T", alpha, Aview, beta, C);
 
     // step 2.: use parfor to update C
     using C_atom_type = Kokkos::View<ScalarType**, view_layout, Kokkos::MemoryTraits<Kokkos::Atomic> >;
