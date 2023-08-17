@@ -107,8 +107,6 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
     std::cout << "  AutoST-HOSVD::Starting TTM(" << n << ")...\n";
     tensor_type temp = ttm(Y, n, currEigVecs, true);
 
-    Kokkos::fence("onnode gram: fencing after mode" + std::to_string(n));
-
     Y = temp;
     std::cout << "  Tensor size after STHOSVD iteration " << n << ": ";
     const auto sizeInfo = Y.dimensionsOnHost();
