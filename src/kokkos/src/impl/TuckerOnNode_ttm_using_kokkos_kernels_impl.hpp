@@ -74,6 +74,7 @@ void ttm_kker_mode_greater_than_zero(Tensor<ScalarType, TensorProperties...> B,
     Unrows = C.extent(n);
   }
 
+  // FIXME: this needs to be improved potentially simiarly to gram
   const size_t nmats = B.prod(n+1,B.rank()-1,1);
   for(size_t i=0; i<nmats; i++) {
     /**C = beta*C + alpha*op(B)*op(A)

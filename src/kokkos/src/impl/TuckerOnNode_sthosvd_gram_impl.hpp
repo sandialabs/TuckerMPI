@@ -7,6 +7,7 @@
 #include "Tucker_TuckerTensorSliceHelpers.hpp"
 #include "Tucker_TuckerTensor.hpp"
 #include <Kokkos_Core.hpp>
+#include <chrono>
 
 namespace TuckerOnNode{
 namespace impl{
@@ -37,6 +38,8 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
   slicing_info_view_t perModeSlicingInfo_factors("pmsi_factors", X.rank());
   slicing_info_view_t perModeSlicingInfo_eigvals("pmsi_eigvals", X.rank());
 
+  auto start = std::chrono::high_resolution_clock::now();
+  
   tensor_type Y = X;
   for (std::size_t n=0; n<X.rank(); n++)
   {
@@ -113,6 +116,10 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
     std::cout << "\n";
    }
 
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+  std::cout << "STHOSVD time: " << duration.count() << std::endl;
+  
   return std::pair( tucker_tensor_type(Y, factors, perModeSlicingInfo_factors),
 		    gram_eigvals_type(eigvals, perModeSlicingInfo_eigvals) );
 }
