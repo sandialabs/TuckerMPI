@@ -7,6 +7,11 @@
 #include <fstream>
 #include <vector>
 #include <iomanip>
+
+#if defined KOKKOS_ENABLE_HIP
+#include <rocblas/rocblas.h>
+#endif
+
 #if defined KOKKOS_ENABLE_CUDA
 #include <cublas_v2.h>
 #endif
@@ -60,6 +65,84 @@ struct SyrkFunctor2
   }
 };
 
+
+#if defined(KOKKOS_ENABLE_HIP) && !defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
+template<class AViewType, class CViewType>
+void syrk_kokkos(const Kokkos::HIP & /*exec*/,
+		 const char uplo[],
+		 const char opA[],
+		 typename AViewType::const_value_type & alpha,
+		 const AViewType& A,
+		 typename CViewType::const_value_type & beta,
+		 const CViewType& C)
+{
+  static_assert(    std::is_floating_point_v<typename AViewType::const_value_type>
+		 && std::is_floating_point_v<typename CViewType::const_value_type>,
+		 "syrk_kokkos: A and C currently must be floating point matrices");
+
+  static_assert(Kokkos::is_view_v<AViewType>,
+                "syrk_kokkos: AViewType must be a Kokkos::View.");
+  static_assert(Kokkos::is_view_v<CViewType>,
+                "syrk_kokkos: CViewType must be a Kokkos::View.");
+  static_assert(static_cast<int>(AViewType::rank) == 2,
+                "syrk_kokkos: AViewType must have rank 2.");
+  static_assert(static_cast<int>(CViewType::rank) == 2,
+                "syrk_kokkos: CViewType must have rank 2.");
+
+  if (C.extent(0) != C.extent(1)){
+    throw std::runtime_error("syrk_kokkos: C must be symmetric");
+  }
+
+  if (opA[0] != 'N' && opA[0] != 'T'){
+    throw std::runtime_error("syrk_kokkos: opA must be 'N' or 'T'");
+  }
+
+  if (uplo[0] != 'U'){
+    throw std::runtime_error("syrk_kokkos: currently uplo must be 'U'");
+  }
+
+  if (opA[0] == 'N' && C.extent(0) != A.extent(0)){
+    throw std::runtime_error("syrk_kokkos: opA=N : A.extent(0) should equal C.extent(0)");
+  }
+  if (opA[0] == 'T' && C.extent(0) != A.extent(1)){
+    throw std::runtime_error("syrk_kokkos: opA=T : A.extent(1) should equal C.extent(0)");
+  }
+
+  auto alpha_l = alpha;
+  auto beta_l  = beta;
+
+  rocblas_handle handle;
+  rocblas_create_handle(&handle);
+  
+  rocblas_status status = {};
+  if (opA[0] == 'N'){
+    std::size_t n = A.extent(0);
+    std::size_t k = A.extent(1);
+    status = rocblas_dsyrk(handle, rocblas_fill::rocblas_fill_upper,
+			   rocblas_operation::rocblas_operation_none, n, k,
+			   &alpha_l, A.data(), A.extent(0),
+			   &beta_l, C.data(), C.extent(0));
+  }
+  else{
+    std::size_t n = A.extent(1);
+    std::size_t k = A.extent(0);    
+    status = rocblas_dsyrk(handle, rocblas_fill::rocblas_fill_upper,
+			   rocblas_operation::rocblas_operation_transpose, n, k,
+			   &alpha_l, A.data(), A.extent(0),
+			   &beta_l, C.data(), C.extent(0));
+  }
+
+  if(status != rocblas_status_success){
+    throw std::runtime_error("syrk: status != rocblas_status_success");
+  }
+  
+  rocblas_destroy_handle(handle);
+}
+#endif
+
+  
+
+  
 #if defined(KOKKOS_ENABLE_CUDA) && !defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
 template<class AViewType, class CViewType>
 void syrk_kokkos(const Kokkos::Cuda & exec,
