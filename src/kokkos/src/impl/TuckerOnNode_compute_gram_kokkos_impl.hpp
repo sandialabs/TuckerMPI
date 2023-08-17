@@ -2,7 +2,6 @@
 #define IMPL_TUCKERONNODE_COMPUTE_GRAM_KOKKOS_IMPL_HPP_
 
 #include "Tucker_syrk_kokkos.hpp"
-#include <cublas_v2.h>
 
 namespace TuckerOnNode{
 namespace impl{
