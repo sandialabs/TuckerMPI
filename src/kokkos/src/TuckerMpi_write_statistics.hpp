@@ -2,6 +2,7 @@
 #define TUCKERMPI_WRITE_STATISTICS_HPP_
 
 #include "Tucker_fwd.hpp"
+#include "TuckerMpi_Distribution.hpp"
 #include "Tucker_create_mirror.hpp"
 #include "Tucker_deep_copy.hpp"
 #include "./impl/TuckerMpi_MPIWrapper.hpp"

@@ -63,16 +63,17 @@ auto local_rank_k_for_gram(Matrix<ScalarType, MemSpace> Y, int n, int ndims)
   const int nrows = Y.getLocalNumRows();
   const int ncols = Y.getLocalNumCols();
 
+  typename C_view_type::execution_space exespace;
   C_view_type C("C_local_rank_k_for_gram", nrows, nrows);
   auto YlocalMat = Y.getLocalMatrix();
   ScalarType alpha = 1;
   ScalarType beta = 0;
   if(n < ndims-1) {
-    Tucker::impl::syrk_kokkos("U", "N", alpha, YlocalMat, beta, C);
+    Tucker::impl::syrk_kokkos(exespace, "U", "N", alpha, YlocalMat, beta, C);
   }
   else {
     umv_type Aview(YlocalMat.data(), ncols, nrows);
-    Tucker::impl::syrk_kokkos("U", "T", alpha, Aview, beta, C);
+    Tucker::impl::syrk_kokkos(exespace, "U", "T", alpha, Aview, beta, C);
   }
 
   return C;
