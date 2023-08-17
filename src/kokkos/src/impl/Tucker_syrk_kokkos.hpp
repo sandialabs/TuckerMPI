@@ -7,6 +7,9 @@
 #include <fstream>
 #include <vector>
 #include <iomanip>
+#if defined KOKKOS_ENABLE_CUDA
+#include <cublas_v2.h>
+#endif
 
 namespace Tucker{
 namespace impl{
@@ -57,8 +60,80 @@ struct SyrkFunctor2
   }
 };
 
+#if defined(KOKKOS_ENABLE_CUDA) && !defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
 template<class AViewType, class CViewType>
-void syrk_kokkos(const char uplo[],
+void syrk_kokkos(const Kokkos::Cuda & exec,
+		 const char uplo[],
+		 const char opA[],
+		 typename AViewType::const_value_type & alpha,
+		 const AViewType& A,
+		 typename CViewType::const_value_type & beta,
+		 const CViewType& C)
+{
+  static_assert(    std::is_floating_point_v<typename AViewType::const_value_type>
+		 && std::is_floating_point_v<typename CViewType::const_value_type>,
+		 "syrk_kokkos: A and C currently must be floating point matrices");
+
+  static_assert(Kokkos::is_view_v<AViewType>,
+                "syrk_kokkos: AViewType must be a Kokkos::View.");
+  static_assert(Kokkos::is_view_v<CViewType>,
+                "syrk_kokkos: CViewType must be a Kokkos::View.");
+  static_assert(static_cast<int>(AViewType::rank) == 2,
+                "syrk_kokkos: AViewType must have rank 2.");
+  static_assert(static_cast<int>(CViewType::rank) == 2,
+                "syrk_kokkos: CViewType must have rank 2.");
+
+  if (C.extent(0) != C.extent(1)){
+    throw std::runtime_error("syrk_kokkos: C must be symmetric");
+  }
+
+  if (opA[0] != 'N' && opA[0] != 'T'){
+    throw std::runtime_error("syrk_kokkos: opA must be 'N' or 'T'");
+  }
+
+  if (uplo[0] != 'U'){
+    throw std::runtime_error("syrk_kokkos: currently uplo must be 'U'");
+  }
+
+  if (opA[0] == 'N' && C.extent(0) != A.extent(0)){
+    throw std::runtime_error("syrk_kokkos: opA=N : A.extent(0) should equal C.extent(0)");
+  }
+  if (opA[0] == 'T' && C.extent(0) != A.extent(1)){
+    throw std::runtime_error("syrk_kokkos: opA=T : A.extent(1) should equal C.extent(0)");
+  }
+
+  auto alpha_l = alpha;
+  auto beta_l  = beta;
+
+  cublasHandle_t handle;
+  cublasCreate(&handle);
+  cublasFillMode_t uplo_c = CUBLAS_FILL_MODE_UPPER;
+
+  if (opA[0] == 'N'){
+    cublasOperation_t trans = CUBLAS_OP_N;
+    std::size_t n = A.extent(0);
+    std::size_t k = A.extent(1);
+    cublasStatus_t status = cublasDsyrk(handle, uplo_c, trans, n, k,
+					&alpha_l, A.data(), A.extent(0),
+					&beta_l, C.data(), C.extent(0));
+  }
+  else{
+    cublasOperation_t trans = CUBLAS_OP_T;
+    std::size_t n = A.extent(1);
+    std::size_t k = A.extent(0);
+    cublasStatus_t status = cublasDsyrk(handle, uplo_c, trans, n, k,
+					&alpha_l, A.data(), A.extent(0),
+					&beta_l, C.data(), C.extent(0));
+  }
+
+  cublasDestroy(handle);
+}
+#endif
+
+
+template<class ExeSpace, class AViewType, class CViewType>
+void syrk_kokkos(const ExeSpace & exespace,
+		 const char uplo[],
 		 const char opA[],
 		 typename AViewType::const_value_type & alpha,
 		 const AViewType& A,
