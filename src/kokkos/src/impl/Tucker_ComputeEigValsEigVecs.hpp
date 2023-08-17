@@ -195,12 +195,10 @@ void compute_syev_use_host_lapack(Kokkos::View<ScalarType**, AProperties...> A,
 #if defined(KOKKOS_ENABLE_HIP) && !defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
 
 template<class ScalarType, class ... AProperties, class ... EigvalProperties>
-void compute_syev_on_device_views(const Kokkos::HIP & exec,
+void compute_syev_on_device_views(const Kokkos::HIP & /*exec*/,
 			  Kokkos::View<ScalarType**, AProperties...> A,
 			  Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
-{
-  std::cout << "HIP SYEV \n";
-  
+{  
   rocblas_handle handle;
   rocblas_create_handle(&handle);
 
