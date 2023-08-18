@@ -95,14 +95,15 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
 	      bool Utransp,
 	      std::size_t nnz_limit)
 {
-  int _myrank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &_myrank);
+  int mpiRank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
 
   using result_type = Tensor<ScalarType, TensorProperties...>;
   using local_tensor_type = typename result_type::traits::onnode_tensor_type;
 
   using U_view = Kokkos::View<ScalarType**, ViewProperties...>;
   using U_mem_space = typename U_view::memory_space;
+  using umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutStride, U_mem_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   // Compute the number of rows for the resulting "matrix"
   const int nrows = Utransp ? U.extent(1) : U.extent(0);
@@ -123,21 +124,22 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
   int Pn = X.getDistribution().getProcessorGrid().getNumProcs(n,false);
   if(Pn == 1)
   {
-    if (_myrank == 0){ std::cout << "MPITTM: Pn==1 \n"; }
+#if defined(TUCKER_ENABLE_DEBUG_PRINTS)
+    if (mpiRank == 0){ std::cout << "MPITTM: Pn==1 \n"; }
+#endif
+
     if(!X.getDistribution().ownNothing()) {
       TuckerOnNode::ttm(localX, n, U, localY, Utransp);
     }
   }
   else
   {
+#if defined(TUCKER_ENABLE_DEBUG_PRINTS)
+    if (mpiRank == 0){ std::cout << "MPITTM: Pn != 1 \n"; }
+#endif
 
     // Pn != 1
     const MPI_Comm& comm = X.getDistribution().getProcessorGrid().getColComm(n,false);
-
-    // Determine whether we must block the result
-    // If the temporary storage is bigger than the tensor, we block instead
-    //int K = nrows;
-    int Jn = Utransp ? U.extent(0) : U.extent(1);
 
     int uGlobalRows = Y.globalExtent(n);
     int uGlobalCols = X.globalExtent(n);
@@ -177,6 +179,10 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
     // *******************************************************************
     if(nnz_reduce_scatter <= std::max(max_lcl_nnz_x, nnz_limit))
     {
+#if defined(TUCKER_ENABLE_DEBUG_PRINTS)
+      if (mpiRank == 0){ std::cout << "MPITTM: single reduce_scatter \n"; }
+#endif
+
       local_tensor_type localResult;
       if(X.getDistribution().ownNothing()) {
 	std::vector<int> sz(ndims);
@@ -188,14 +194,15 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
       }
       else
       {
-	std::vector<int> I(localX.rank());
-	for(int i=0; i<I.size(); i++) {
-	  I[i] = (i != n) ? localX.extent(i) : uGlobalRows;
-	}
-	localResult = local_tensor_type(I);
-	Kokkos::LayoutStride layout(localX.extent(n), 1, localResult.extent(n), stride);
-	using umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutStride, U_mem_space,
-					 Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+      	std::vector<int> I(localX.rank());
+      	for(int i=0; i<I.size(); i++) {
+      	  I[i] = (i != n) ? localX.extent(i) : uGlobalRows;
+      	}
+      	localResult = local_tensor_type(I);
+
+	const std::size_t Unrows = (Utransp) ? localX.extent(n) : localResult.extent(n);
+	const std::size_t Uncols = (Utransp) ? localResult.extent(n) : localX.extent(n);
+	Kokkos::LayoutStride layout(Unrows, 1, Uncols, stride);
 	umv_type Aum(Uptr, layout);
 	TuckerOnNode::ttm(localX, n, Aum, localResult, Utransp);
       }
@@ -204,14 +211,14 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
 
       std::vector<ScalarType> sendBuf;
       if(localResult.size() > 0){
-	sendBuf.resize(localResult.size());
-	Tucker::impl::copy_view_to_stdvec(localResult.data(), sendBuf);
+      	sendBuf.resize(localResult.size());
+      	Tucker::impl::copy_view_to_stdvec(localResult.data(), sendBuf);
       }
 
       auto localYview_h = Kokkos::create_mirror_view(localY.data());
       ScalarType* recvBuf = nullptr;
       if(localY.size() > 0){
-	recvBuf = localYview_h.data();
+	      recvBuf = localYview_h.data();
       }
 
       int nprocs;
@@ -230,10 +237,10 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
     }
     else
     {
+#if defined(TUCKER_ENABLE_DEBUG_PRINTS)
+      if (mpiRank == 0){ std::cout << "MPITTM: use series of reductions \n"; }
+#endif
 
-      //
-      // use a series of reductions
-      //
       auto localYview_h = Kokkos::create_mirror_view(localY.data());
       for(int root=0; root<Pn; root++)
       {
@@ -241,40 +248,41 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
         if(uLocalRows == 0) { continue; }
 
         // Compute the local TTM
-	local_tensor_type localResult;
-	if(X.getDistribution().ownNothing()) {
-	  std::vector<int> sz(ndims);
-	  for(int i=0; i<ndims; i++) {
-	    sz[i] = X.localExtent(i);
-	  }
-	  sz[n] = uLocalRows;
-	  localResult = local_tensor_type(sz);
-	}
+      	local_tensor_type localResult;
+      	if(X.getDistribution().ownNothing()) {
+      	  std::vector<int> sz(ndims);
+      	  for(int i=0; i<ndims; i++) {
+      	    sz[i] = X.localExtent(i);
+      	  }
+      	  sz[n] = uLocalRows;
+      	  localResult = local_tensor_type(sz);
+      	}
         else
-	{
-	  std::vector<int> I(localX.rank());
-	  for(int i=0; i<I.size(); i++) {
-	    I[i] = (i != n) ? localX.extent(i) : uLocalRows;
-	  }
-	  localResult = local_tensor_type(I);
-	  Kokkos::LayoutStride layout(localX.extent(n), 1, localResult.extent(n), stride);
-	  using umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutStride, U_mem_space,
-					Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+	  {
+	   std::vector<int> I(localX.rank());
+	   for(int i=0; i<I.size(); i++) {
+	     I[i] = (i != n) ? localX.extent(i) : uLocalRows;
+      	  }
+      	  localResult = local_tensor_type(I);
+
+	  const std::size_t Unrows = (Utransp) ? localX.extent(n) : localResult.extent(n);
+	  const std::size_t Uncols = (Utransp) ? localResult.extent(n) : localX.extent(n);
+	  Kokkos::LayoutStride layout(Unrows, 1, Uncols, stride);
 	  umv_type Aum(Uptr, layout);
 	  TuckerOnNode::ttm(localX, n, Aum, localResult, Utransp);
         }
 
         // Combine the local results with a reduce operation
-	std::vector<ScalarType> sendBuf;
-	if(localResult.size() > 0){
-	  sendBuf.resize(localResult.size());
-	  Tucker::impl::copy_view_to_stdvec(localResult.data(), sendBuf);
-	}
+      	std::vector<ScalarType> sendBuf;
+      	if(localResult.size() > 0){
+      	  sendBuf.resize(localResult.size());
+      	  Tucker::impl::copy_view_to_stdvec(localResult.data(), sendBuf);
+      	}
 
-	ScalarType* recvBuf = nullptr;
-	if(localY.size() > 0){
-	  recvBuf = localYview_h.data();
-	}
+      	ScalarType* recvBuf = nullptr;
+      	if(localY.size() > 0){
+      	  recvBuf = localYview_h.data();
+      	}
         size_t count = localResult.size();
         assert(count <= std::numeric_limits<int>::max());
 
@@ -283,8 +291,8 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
         }
 
         if(Utransp){ Uptr += (uLocalRows*stride);}
-	else{ Uptr += uLocalRows; }
-      } // end for i = 0 .. Pn-1
+        else{ Uptr += uLocalRows; }
+      } // end for root
 
       Kokkos::deep_copy(localY.data(), localYview_h);
     }
