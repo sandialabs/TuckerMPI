@@ -57,3 +57,31 @@ TEST(tuckermpi_map, getLocalIndex){
     ASSERT_EQ(m.getLocalIndex(8), 2);
   }
 }
+
+
+TEST(tuckermpi_map, hasGlobalIndex){
+  Map m(10, comm);
+  using v_t = std::vector<int>;
+
+  const auto lambda = [&](int i) -> bool {
+    return m.hasGlobalIndex(i); };
+
+  if (mpi_rank() == 0){
+    v_t has_v = {0,1,2,3};
+    v_t not_v = {4,5,6,7,11,20};
+    ASSERT_TRUE(std::all_of(has_v.begin(), has_v.end(), lambda));
+    ASSERT_TRUE(std::none_of(not_v.begin(), not_v.end(), lambda));
+  }
+  else if (mpi_rank() == 1){
+    v_t has_v = {4,5,6};
+    v_t not_v = {0,1,2,3,7,11,20};
+    ASSERT_TRUE(std::all_of(has_v.begin(), has_v.end(), lambda));
+    ASSERT_TRUE(std::none_of(not_v.begin(), not_v.end(), lambda));
+  }
+  else if (mpi_rank() == 2){
+    v_t has_v = {7,8,9};
+    v_t not_v = {0,1,2,3,4,5,6,10,11,20,120};
+    ASSERT_TRUE(std::all_of(has_v.begin(), has_v.end(), lambda));
+    ASSERT_TRUE(std::none_of(not_v.begin(), not_v.end(), lambda));
+  }
+}

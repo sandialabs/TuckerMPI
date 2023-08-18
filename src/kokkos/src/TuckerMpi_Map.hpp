@@ -14,8 +14,12 @@ public:
   Map() = default;
   Map(int globalNumEntries, const MPI_Comm& comm);
 
+  bool hasGlobalIndex(int globalIndex) const{
+    return (globalIndex >= indexBegin_ && globalIndex <= indexEnd_);
+  }
+
   int getLocalIndex(int globalIndex) const{
-    assert(globalIndex >= indexBegin_ && globalIndex <= indexEnd_);
+    assert(hasGlobalIndex(globalIndex));
     return globalIndex - indexBegin_;
   }
 
