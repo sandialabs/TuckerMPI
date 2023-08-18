@@ -139,11 +139,7 @@ void run(const TuckerMpiDistributed::InputParameters<ScalarType> & inputs)
 
 int main(int argc, char* argv[])
 {
-  #ifdef DRIVER_SINGLE
-    using scalar_t = float;
-  #else
-    using scalar_t = double;
-  #endif
+  using scalar_t = double;
 
   MPI_Init(&argc, &argv);
   Kokkos::initialize(argc, argv);

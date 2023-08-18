@@ -21,9 +21,9 @@ void transform_slices(Tensor<ScalarType, TensorProps...> tensor,
 
   // constraints
   static_assert(   std::is_same_v<tensor_layout, Kokkos::LayoutLeft>
-		&& std::is_floating_point_v<tensor_value_type>,
+		&& std::is_same_v<std::remove_cv_t<tensor_value_type>, double>,
 		   "TuckerOnNode::transform_slices: supports tensors with LayoutLeft" \
-		   "and floating point scalar");
+		   "and double scalar");
 
   // preconditions
   if(tensor.extent(mode) <= 0) {

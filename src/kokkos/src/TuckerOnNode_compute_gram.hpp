@@ -19,9 +19,9 @@ auto compute_gram(Tensor<ScalarType, Properties...> tensor,
 
   // constraints
   static_assert(   std::is_same_v<tensor_layout, Kokkos::LayoutLeft>
-		&& std::is_floating_point_v<tensor_value_type>,
+    && std::is_same_v<std::remove_cv_t<tensor_value_type>, double>,
 		   "TuckerOnNode::compute_gram: supports tensors with LayoutLeft" \
-		   "and floating point scalar");
+		   "and double scalar type");
 
   const std::size_t nrows = tensor.extent(n);
   Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space> S_d("S", nrows, nrows);

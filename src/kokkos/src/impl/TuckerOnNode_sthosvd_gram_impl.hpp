@@ -23,9 +23,9 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
   using tensor_layout     = typename tensor_type::traits::array_layout;
   using tensor_value_type = typename tensor_type::traits::value_type;
   static_assert(   std::is_same_v<tensor_layout, Kokkos::LayoutLeft>
-		&& std::is_floating_point_v<tensor_value_type>,
-		   "TuckerOnNode::impl::sthosvd: supports tensors with LayoutLeft" \
-		   "and floating point scalar");
+    && std::is_same_v<std::remove_cv_t<tensor_value_type>, double>,
+   "TuckerOnNode::impl::sthosvd: supports tensors with LayoutLeft" \
+   "and double scalar");
 
   // aliases needed below
   using tucker_tensor_type  = Tucker::TuckerTensor<tensor_type>;

@@ -76,9 +76,10 @@ void syrk_kokkos(const Kokkos::HIP & /*exec*/,
 		 typename CViewType::const_value_type & beta,
 		 const CViewType& C)
 {
-  static_assert(    std::is_floating_point_v<typename AViewType::const_value_type>
-		 && std::is_floating_point_v<typename CViewType::const_value_type>,
-		 "syrk_kokkos: A and C currently must be floating point matrices");
+  static_assert(
+     std::is_same_v<typename AViewType::non_const_value_type, double>,
+     && std::is_same_v<typename CViewType::non_const_value_type, double>,
+		 "syrk_kokkos: A and C currently must have double scalar type");
 
   static_assert(Kokkos::is_view_v<AViewType>,
                 "syrk_kokkos: AViewType must be a Kokkos::View.");
@@ -153,8 +154,8 @@ void syrk_kokkos(const Kokkos::Cuda & exec,
 		 typename CViewType::const_value_type & beta,
 		 const CViewType& C)
 {
-  static_assert(    std::is_floating_point_v<typename AViewType::const_value_type>
-		 && std::is_floating_point_v<typename CViewType::const_value_type>,
+  static_assert(    std::is_floating_point_v<typename AViewType::non_const_value_type>
+		 && std::is_floating_point_v<typename CViewType::non_const_value_type>,
 		 "syrk_kokkos: A and C currently must be floating point matrices");
 
   static_assert(Kokkos::is_view_v<AViewType>,

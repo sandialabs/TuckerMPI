@@ -5,11 +5,7 @@
 
 int main(int argc, char* argv[])
 {
-  #ifdef DRIVER_SINGLE
-    using scalar_t = float;
-  #else
-    using scalar_t = double;
-  #endif
+  using scalar_t = double;
 
   Kokkos::initialize(argc, argv);
   {

@@ -21,9 +21,9 @@ auto compute_slice_metrics(const int mpiRank,
 
   // constraints
   static_assert(   std::is_same_v<tensor_layout, Kokkos::LayoutLeft>
-		&& std::is_floating_point_v<tensor_value_type>,
+    && std::is_same_v<std::remove_cv_t<tensor_value_type>, double>,
 		   "TuckerMpi::compute_slice_metrics: supports tensors with LayoutLeft" \
-		   "and floating point scalar");
+		   "and double scalar type");
 
   // preconditions
   if(tensor.localExtent(mode) <= 0) {

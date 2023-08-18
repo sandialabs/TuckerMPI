@@ -341,8 +341,8 @@ auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<Scalar
   using exe_space = typename view_type::execution_space;
   using mem_space = typename view_type::memory_space;
   static_assert(std::is_same_v< typename view_type::array_layout, Kokkos::LayoutLeft>
-		&& std::is_floating_point< typename view_type::value_type>::value,
-		"G must have layoutleft and must be real");
+    && std::is_same_v<std::remove_cv_t<ScalarType>, double>,
+		"G must have layoutleft and must have double scalar type");
 
   // preconditions
   if (G.extent(0) != G.extent(1)){

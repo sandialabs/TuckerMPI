@@ -18,9 +18,9 @@ auto compute_gram(Tensor<ScalarType, Properties...> tensor,
 
   // constraints
   static_assert(   std::is_same_v<onnode_layout, Kokkos::LayoutLeft>
-		&& std::is_floating_point_v<tensor_value_type>,
+    && std::is_same_v<std::remove_cv_t<tensor_value_type>, double>,
 		   "TuckerMpi::compute_gram: supports tensors with LayoutLeft" \
-		   "and floating point scalar");
+		   "and double scalar type");
 
   //
   // compute local gram
