@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
     auto Y_local = Y.localTensor();
     auto Yl_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), Y_local);
     auto Y_h_view = Yl_h.data();
-    for(size_t i=0; i<nnz; i++) {
+    for(size_t i=0; i<Y_h_view.extent(0); i++) {
       Y_h_view(i) += alpha*distribution(generator);
     }
     Tucker::deep_copy(Y_local, Yl_h);

@@ -78,14 +78,14 @@ void read_tensor_binary(const int mpiRank,
 
 
 template <class ScalarType, class ...Properties>
-void import_time_series(const int mpiRank,
-      Tensor<ScalarType, Properties...> tensor,
-      const std::vector<std::string> & filenames)
+void read_tensor_binary_multifile(const int mpiRank,
+				  Tensor<ScalarType, Properties...> tensor,
+				  const std::vector<std::string> & filenames)
 {
   using tensor_type = ::TuckerMpi::Tensor<ScalarType, Properties...>;
   using onnode_layout = typename tensor_type::traits::onnode_layout;
   static_assert(   std::is_same_v<onnode_layout, Kokkos::LayoutLeft>,
-       "TuckerMpi::import_time_series: currently only supports tensors with LayoutLeft");
+       "TuckerMpi::read_tensor_binary_multifile: currently only supports tensors with LayoutLeft");
 
   const auto & distrib = tensor.getDistribution();
   if(distrib.ownNothing()) { return; }
@@ -133,7 +133,7 @@ void import_time_series(const int mpiRank,
     }
 
     if (!stepMap->hasGlobalIndex(step)){
-      std::cout << "write_tensor_binary_multifile: skipping for " << step << "\n";
+      std::cout << "read_tensor_binary_multifile: skipping for " << step << "\n";
       continue;
     }
     // int LO = stepMap->getLocalIndex(step);
@@ -164,8 +164,8 @@ void import_time_series(const int mpiRank,
 
 template <class ScalarType, class ...Properties>
 void read_tensor_binary(const int mpiRank,
-      Tensor<ScalarType, Properties...> tensor,
-      const std::vector<std::string> & filenames)
+			Tensor<ScalarType, Properties...> tensor,
+			const std::vector<std::string> & filenames)
 {
   const std::size_t fileCount = filenames.size();
   if (fileCount == 1){
@@ -176,20 +176,20 @@ void read_tensor_binary(const int mpiRank,
     const int tensorRank = tensor.rank();
     if(fileCount != (std::size_t)tensor.globalExtent(tensorRank-1)) {
       if(mpiRank == 0) {
-  std::cerr << "ERROR: The number of filenames you provided is "
-      << filenames.size() << ", but the extent of the tensor's last mode is "
-      << tensor.globalExtent(tensorRank-1) << ".\nCalling MPI_Abort...\n";
+	std::cerr << "ERROR: The number of filenames you provided is "
+		  << filenames.size() << ", but the extent of the tensor's last mode is "
+		  << tensor.globalExtent(tensorRank-1) << ".\nCalling MPI_Abort...\n";
       }
       MPI_Abort(MPI_COMM_WORLD,1);
     }
-    import_time_series(mpiRank, tensor, filenames);
+    read_tensor_binary_multifile(mpiRank, tensor, filenames);
   }
 }
 
 template <class ScalarType, class ...Properties>
 void write_tensor_binary(const int mpiRank,
-       Tensor<ScalarType, Properties...> tensor,
-       const std::string & filename)
+			 Tensor<ScalarType, Properties...> tensor,
+			 const std::string & filename)
 {
 
   using tensor_type = Tensor<ScalarType, Properties...>;
@@ -248,13 +248,13 @@ void write_tensor_binary(const int mpiRank,
 
 template <class ScalarType, class ...Properties>
 void write_tensor_binary_multifile(const int mpiRank,
-           Tensor<ScalarType, Properties...> tensor,
-           const std::vector<std::string> & filenames)
+				   Tensor<ScalarType, Properties...> tensor,
+				   const std::vector<std::string> & filenames)
 {
   using tensor_type = ::TuckerMpi::Tensor<ScalarType, Properties...>;
   using onnode_layout = typename tensor_type::traits::onnode_layout;
   static_assert(   std::is_same_v<onnode_layout, Kokkos::LayoutLeft>,
-       "TuckerMpi::import_time_series: currently only supports tensors with LayoutLeft");
+       "TuckerMpi::write_tensor_binary_multifile: currently only supports tensors with LayoutLeft");
 
   const auto & distrib = tensor.getDistribution();
   if(distrib.ownNothing()) { return; }
@@ -324,8 +324,8 @@ void write_tensor_binary_multifile(const int mpiRank,
 
 template <class ScalarType, class ...Properties>
 void write_tensor_binary(const int mpiRank,
-       Tensor<ScalarType, Properties...> tensor,
-       const std::vector<std::string> & filenames)
+			 Tensor<ScalarType, Properties...> tensor,
+			 const std::vector<std::string> & filenames)
 {
 
   const int fileCount = filenames.size();
@@ -337,9 +337,9 @@ void write_tensor_binary(const int mpiRank,
     const int tensorRank = tensor.rank();
     if(fileCount != tensor.globalExtent(tensorRank-1)) {
       if(mpiRank == 0) {
-  std::cerr << "ERROR: The number of filenames you provided is "
-      << filenames.size() << ", but the extent of the tensor's last mode is "
-      << tensor.globalExtent(tensorRank-1) << ".\nCalling MPI_Abort...\n";
+	std::cerr << "ERROR: The number of filenames you provided is "
+		  << filenames.size() << ", but the extent of the tensor's last mode is "
+		  << tensor.globalExtent(tensorRank-1) << ".\nCalling MPI_Abort...\n";
       }
       MPI_Abort(MPI_COMM_WORLD,1);
     }
