@@ -123,6 +123,20 @@ if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
   target_include_directories(${DISTRIBUTED_STHOSVD_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
   target_link_libraries(${DISTRIBUTED_STHOSVD_DRIVER_NAME} ${MpiKokkosTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
 
+  #
+  # driver MpiKokkosTucker_generate
+  #
+  set(DISTRIBUTED_GENERATE_DRIVER_NAME MpiKokkosTucker_generate)
+  set(DISTRIBUTED_STHOSVD_DRIVER_SRCS)
+  LIST(APPEND DISTRIBUTED_STHOSVD_DRIVER_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/CmdLineParse.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/ParameterFileParserUtils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mpi/TuckerMpi_generate.cpp
+  )
+  add_executable(${DISTRIBUTED_GENERATE_DRIVER_NAME} ${DISTRIBUTED_STHOSVD_DRIVER_SRCS})
+  target_include_directories(${DISTRIBUTED_GENERATE_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
+  target_link_libraries(${DISTRIBUTED_GENERATE_DRIVER_NAME} ${MpiKokkosTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
+
   add_subdirectory(unit_tests)
   add_subdirectory(drivers_tests)
 endif()
