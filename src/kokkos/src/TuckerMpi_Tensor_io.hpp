@@ -14,11 +14,10 @@
 namespace TuckerMpi{
 
 template <class ScalarType, class ...Properties>
-void read_tensor_binary(Tensor<ScalarType, Properties...> tensor,
+void read_tensor_binary(const int mpiRank,
+      Tensor<ScalarType, Properties...> tensor,
 			const std::string & filename)
 {
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
   if(tensor.getDistribution().ownNothing()) { return; }
 
@@ -54,7 +53,7 @@ void read_tensor_binary(Tensor<ScalarType, Properties...> tensor,
   // Read the file
   size_t count = tensor.localSize();
   assert(count <= std::numeric_limits<int>::max());
-  if(rank == 0 && sizeof(ScalarType)*count > std::numeric_limits<int>::max()) {
+  if(mpiRank == 0 && sizeof(ScalarType)*count > std::numeric_limits<int>::max()) {
     std::cout << "WARNING: We are attempting to call MPI_File_read_all to read ";
     Tucker::print_bytes_to_stream(std::cout, sizeof(ScalarType)*count);
     std::cout << "Depending on your MPI implementation, this may fail "
@@ -77,13 +76,14 @@ void read_tensor_binary(Tensor<ScalarType, Properties...> tensor,
 }
 
 template <class ScalarType, class ...Properties>
-void read_tensor_binary(Tensor<ScalarType, Properties...> tensor,
+void read_tensor_binary(const int mpiRank,
+      Tensor<ScalarType, Properties...> tensor,
 			const std::vector<std::string> & filenames)
 {
   if(filenames.size() != 1) {
     throw std::runtime_error("TuckerMpi::read_tensor_binary: only supports one file for now");
   }
-  read_tensor_binary(tensor, filenames[0]);
+  read_tensor_binary(mpiRank, tensor, filenames[0]);
 }
 
 template <class ScalarType, class ...Properties>

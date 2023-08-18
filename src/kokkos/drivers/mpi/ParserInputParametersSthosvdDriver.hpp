@@ -1,5 +1,5 @@
-#ifndef MPIKOKKOS_TUCKER_PARAM_FILE_PARSER_HPP_
-#define MPIKOKKOS_TUCKER_PARAM_FILE_PARSER_HPP_
+#ifndef MPIKOKKOS_TUCKER_PARAM_FILE_PARSER_STHOSVD_HPP_
+#define MPIKOKKOS_TUCKER_PARAM_FILE_PARSER_STHOSVD_HPP_
 
 #include "ParameterFileParserUtils.hpp"
 #include <fstream>
@@ -8,10 +8,8 @@
 #include <optional>
 #include <algorithm>
 
-namespace TuckerMpiDistributed{
-
 template<class ScalarType>
-struct InputParameters
+struct InputParametersSthosvdDriver
 {
   int nd;
   bool boolAutoRankDetermination;
@@ -55,7 +53,7 @@ private:
   std::optional<std::vector<int>> coreTensorDims_;
 
 public:
-  InputParameters(const std::string & paramFile)
+  InputParametersSthosvdDriver(const std::string & paramFile)
   {
     const auto fileAsStrings = Tucker::read_file_as_strings(paramFile);
     parse(fileAsStrings);
@@ -226,5 +224,4 @@ private:
   }
 };
 
-}
 #endif

@@ -149,7 +149,7 @@ TEST(tuckerkokkosmpi, compute_slice_metrics_allmode)
   {
     std::vector<int> dataTensorDim = {3,5,7,11};
     TuckerMpi::Tensor<scalar_t> tensor(dataTensorDim, procGrid);
-    TuckerMpi::read_tensor_binary(tensor, "./tensor_data_files/3x5x7x11.bin");
+    TuckerMpi::read_tensor_binary(rank, tensor, "./tensor_data_files/3x5x7x11.bin");
 
     const std::array<Tucker::Metric,5> metricIDs{Tucker::Metric::MIN,
                 Tucker::Metric::MAX, Tucker::Metric::SUM, Tucker::Metric::MEAN, 

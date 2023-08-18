@@ -51,7 +51,7 @@ bool runSim(std::initializer_list<int> procs)
 
   std::vector<int> dims = {3, 5, 7, 11};
   Tensor<scalar_t> T(dims, procs);
-  read_tensor_binary(T, "./tensor_data_files/3x5x7x11.bin");
+  read_tensor_binary(mpi_rank(), T, "./tensor_data_files/3x5x7x11.bin");
 
   {
     auto matrix = TuckerMpi::compute_gram(T, 0);

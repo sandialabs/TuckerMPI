@@ -1,9 +1,9 @@
 #include "CmdLineParse.hpp"
-#include "ParameterFileParser.hpp"
+#include "ParserInputParametersSthosvdDriver.hpp"
 #include "TuckerMpi.hpp"
 
 template<class ScalarType>
-void run(const TuckerMpiDistributed::InputParameters<ScalarType> & inputs)
+void run(const InputParametersSthosvdDriver<ScalarType> & inputs)
 {
   // ------------------------------------------------------
   // prepare
@@ -20,7 +20,7 @@ void run(const TuckerMpiDistributed::InputParameters<ScalarType> & inputs)
 
   const auto dataTensorDim = inputs.dimensionsOfDataTensor();
   TuckerMpi::Tensor<ScalarType, memory_space> X(dataTensorDim, inputs.proc_grid_dims);
-  TuckerMpi::read_tensor_binary(X, inputs.rawDataFilenames);
+  TuckerMpi::read_tensor_binary(mpiRank, X, inputs.rawDataFilenames);
 
   if(mpiRank == 0) {
     const size_t local_nnz = X.localSize();
@@ -74,7 +74,7 @@ void run(const TuckerMpiDistributed::InputParameters<ScalarType> & inputs)
 
 	auto eigvals = container[mode];
 	auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
-	for(int i=0; i<eigvals.extent(0); i++) {
+	for(std::size_t i=0; i<eigvals.extent(0); i++) {
 	  ofs << std::setprecision(16) << eigvals_h(i) << std::endl;
 	}
 	ofs.close();
@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
   {
     const auto paramfn = Tucker::parse_cmdline_or(argc, (const char**)argv,
 						  "--parameter-file", "paramfile.txt");
-    const TuckerMpiDistributed::InputParameters<scalar_t> inputs(paramfn);
+    const InputParametersSthosvdDriver<scalar_t> inputs(paramfn);
     run(inputs);
   }
   Kokkos::finalize();
