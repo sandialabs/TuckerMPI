@@ -94,8 +94,6 @@ public:
   {
     Tucker::impl::copy_stdvec_to_view(v, dims_h_);
     Kokkos::deep_copy(dims_, dims_h_);
-    const std::size_t numEl = std::accumulate(v.cbegin(), v.cend(), 1,
-					      std::multiplies<std::size_t>());
   }
 
   Tensor(const Tensor& o) = default;
@@ -166,7 +164,7 @@ public:
   dims_host_const_view_type dimensionsOnHost() const{ return dims_h_; }
 
   std::size_t extent(std::size_t mode) const {
-    assert(mode < rank_);
+    assert(mode < (std::size_t)rank_);
     return dims_h_[mode];
   }
 
@@ -210,9 +208,9 @@ private:
 
 private:
   int rank_ = -1;
-  data_view_type data_;
   dims_view_type dims_ = {};
   dims_host_view_type dims_h_ = {};
+  data_view_type data_;
 };
 
 } // end namespace TuckerOnNode

@@ -32,7 +32,6 @@ template<class SpaceT, class ScalarType, class ...Properties>
 auto create_mirror_and_copy(const SpaceT & space,
 			    const TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
 {
-  using in_tensor_type = TuckerOnNode::Tensor<ScalarType, Properties...>;
   using out_tensor_type = TuckerOnNode::Tensor<ScalarType, SpaceT>;
 
   auto tensor_view = Kokkos::create_mirror_view_and_copy(space, tensor.data());
@@ -69,7 +68,6 @@ template<class SpaceT, class ScalarType, class ...Properties>
 auto create_mirror_and_copy(const SpaceT & space,
 			    ::TuckerMpi::Tensor<ScalarType, Properties...> tensor)
 {
-  using in_tensor_type  = ::TuckerMpi::Tensor<ScalarType, Properties...>;
   using out_tensor_type = ::TuckerMpi::Tensor<ScalarType, SpaceT>;
 
   const ::TuckerMpi::Distribution & tensor_dist = tensor.getDistribution();

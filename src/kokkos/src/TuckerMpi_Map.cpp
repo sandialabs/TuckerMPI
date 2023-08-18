@@ -65,7 +65,7 @@ void Map::removeEmptyProcs()
 {
   // Determine which processes are empty
   std::vector<int> emptyProcs;
-  for(int rank=0; rank<numElementsPerProc_.size(); rank++) {
+  for(size_t rank=0; rank<numElementsPerProc_.size(); rank++) {
     if(numElementsPerProc_[rank] == 0) {
       emptyProcs.push_back(rank);
     }
@@ -80,7 +80,7 @@ void Map::removeEmptyProcs()
   size_t newNumProcs = numElementsPerProc_.size() - emptyProcs.size();
   size_t i=0;
   int src=0;
-  assert(newNumProcs <= std::numeric_limits<int>::max());
+  assert(newNumProcs <= std::numeric_limits<size_t>::max());
   std::vector<int> newSize((int)newNumProcs);
   for(int dest=0; dest<(int)newNumProcs; dest++) {
     while(i < emptyProcs.size() && src == emptyProcs[i]) {
@@ -106,7 +106,7 @@ void Map::removeEmptyProcs()
   }
   offsets_ = newOffsets;
 
-  assert(emptyProcs.size() <= std::numeric_limits<int>::max());
+  assert(emptyProcs.size() <= std::numeric_limits<size_t>::max());
 
   // Remove them from the communicator too
   MPI_Group old_group, new_group;

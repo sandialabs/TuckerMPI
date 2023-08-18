@@ -130,7 +130,7 @@ void Distribution::findAndEliminateEmptyProcs(MPI_Comm& newcomm)
     MPI_Group group, newgroup;
     MPI_Comm_group(MPI_COMM_WORLD, &group);
 
-    assert(emptyProcs.size() <= std::numeric_limits<int>::max());
+    assert(emptyProcs.size() <= std::numeric_limits<std::size_t>::max());
 
     // Create a new group without the slacker MPI processors
     MPI_Group_excl(group, (int)emptyProcs.size(),

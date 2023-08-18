@@ -19,9 +19,6 @@ auto normalize_tensor(const int mpiRank,
   // preconditions
   ::TuckerOnNode::impl::check_scaling_type_else_throw(scalingType);
 
-  using tensor_type = ::TuckerMpi::Tensor<ScalarType, Props...>;
-  using tensor_mem_space = typename tensor_type::traits::memory_space;
-
   auto metricData_h = Tucker::create_mirror(metricData);
   Tucker::deep_copy(metricData_h, metricData);
   ::TuckerOnNode::impl::check_metricdata_usable_for_scaling_else_throw(metricData_h, scalingType);

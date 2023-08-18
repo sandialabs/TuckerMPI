@@ -15,7 +15,6 @@ auto compute_slice_metrics(const int mpiRank,
 			   const std::array<Tucker::Metric, n> & metrics)
 {
   using tensor_type = Tensor<ScalarType, Properties...>;
-  using tensor_mem_space = typename tensor_type::traits::memory_space;
   using tensor_layout = typename tensor_type::traits::onnode_layout;
   using tensor_value_type = typename tensor_type::traits::value_type;
 

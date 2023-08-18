@@ -9,7 +9,7 @@ size_t prod(const ViewT & sz,
 	    const int low, const int high,
 	    const int defaultReturnVal = -1)
 {
-  if(low < 0 || high >= sz.extent(0)) {
+  if(low < 0 || high >= (int)sz.extent(0)) {
     // std::cerr << "ERROR: prod(" << low << "," << high
     // 	      << ") is invalid because indices must be in the range [0,"
     // 	      << sz.extent(0) << ").  Returning " << defaultReturnVal << std::endl;

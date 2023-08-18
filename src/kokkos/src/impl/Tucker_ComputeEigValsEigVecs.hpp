@@ -159,12 +159,10 @@ void compute_syev_use_host_lapack(Kokkos::View<ScalarType**, AProperties...> A,
   using A_view_type  = Kokkos::View<ScalarType**, AProperties...>;
   using A_mem_space  = typename A_view_type::memory_space;
   using A_layout     = typename A_view_type::array_layout;
-  using A_value_type = typename A_view_type::non_const_value_type;
 
   using ev_view_type  = Kokkos::View<ScalarType*, EigvalProperties...>;
   using ev_mem_space  = typename ev_view_type::memory_space;
   using ev_layout     = typename ev_view_type::array_layout;
-  using ev_value_type = typename ev_view_type::non_const_value_type;
 
   static_assert(Kokkos::SpaceAccessibility<Kokkos::HostSpace, A_mem_space>::accessible
 		&& Kokkos::SpaceAccessibility<Kokkos::HostSpace, ev_mem_space>::accessible,

@@ -9,10 +9,10 @@ namespace impl{
 template<class AUmvType, class CViewType, class YDataPtr>
 struct GramKokkosAtomicFunctor
 {
-  int Anrows_;
-  int Ancols_;
   CViewType Cview_;
   YDataPtr YPtr_;
+  int Anrows_;
+  int Ancols_;
 
   GramKokkosAtomicFunctor(CViewType Cview, YDataPtr YPtr, int Anrows, int Ancols)
     : Cview_(Cview), YPtr_(YPtr), Anrows_(Anrows), Ancols_(Ancols){}
@@ -50,7 +50,6 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
 
   const int nrows = (int)Y.extent(n);
   auto Y_rawPtr = Y.data().data();
-  auto gramPtr = C.data();
   using A_umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutLeft,
 				Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 

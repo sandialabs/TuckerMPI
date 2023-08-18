@@ -195,7 +195,7 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
       else
       {
       	std::vector<int> I(localX.rank());
-      	for(int i=0; i<I.size(); i++) {
+      	for(int i=0; i<(int)I.size(); i++) {
       	  I[i] = (i != n) ? localX.extent(i) : uGlobalRows;
       	}
       	localResult = local_tensor_type(I);
@@ -260,7 +260,7 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
         else
 	  {
 	   std::vector<int> I(localX.rank());
-	   for(int i=0; i<I.size(); i++) {
+	   for(int i=0; i<(int)I.size(); i++) {
 	     I[i] = (i != n) ? localX.extent(i) : uLocalRows;
       	  }
       	  localResult = local_tensor_type(I);
@@ -284,7 +284,7 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
       	  recvBuf = localYview_h.data();
       	}
         size_t count = localResult.size();
-        assert(count <= std::numeric_limits<int>::max());
+        assert(count <= std::numeric_limits<std::size_t>::max());
 
         if(count > 0) {
           MPI_Reduce_(sendBuf.data(), recvBuf, (int)count, MPI_SUM, root, comm);

@@ -186,7 +186,7 @@ auto pack_for_gram_fallback_copy_host(Tensor<ScalarType, Ps...> & Y,
     auto sz = Y.localDimensionsOnHost();
     size_t numLocalBlocks = impl::prod(sz, n+1,ndims-1);
     size_t ncolsPerLocalBlock = impl::prod(sz, 0,n-1);
-    assert(ncolsPerLocalBlock <= std::numeric_limits<int>::max());
+    assert(ncolsPerLocalBlock <= std::numeric_limits<std::size_t>::max());
 
     const ScalarType* src = localTensorView_h.data();
     // Make local data column major
@@ -247,7 +247,7 @@ std::vector<ScalarType> pack_for_gram(Tensor<ScalarType, Ps...> & Y,
     auto itFrom = KE::begin(localTensorView_h);
     auto itDest = KE::begin(sendDataView);
     std::size_t offset = 0;
-    for(std::size_t b=0; b<nprocs; b++)
+    for(std::size_t b=0; b<(std::size_t)nprocs; b++)
     {
       std::size_t n = redistMap->getNumEntries(b);
       for(int r=0; r<localNumRows; r++)
@@ -269,13 +269,13 @@ std::vector<ScalarType> pack_for_gram(Tensor<ScalarType, Ps...> & Y,
     auto sz = Y.localDimensionsOnHost();
     size_t numLocalBlocks = impl::prod(sz, n+1,ndims-1);
     size_t ncolsPerLocalBlock = impl::prod(sz, 0,n-1);
-    assert(ncolsPerLocalBlock <= std::numeric_limits<int>::max());
+    assert(ncolsPerLocalBlock <= std::numeric_limits<std::size_t>::max());
 
     auto itFrom = KE::begin(localTensorView_h);
     for(size_t b=0; b<numLocalBlocks; b++)
     {
       auto itDest = KE::begin(sendDataView) + b*localNumRows*ncolsPerLocalBlock;
-      for(std::size_t r=0; r<localNumRows; r++)
+      for(std::size_t r=0; r<(std::size_t)localNumRows; r++)
       {
 	policy_t policy(host_exe(), 0, ncolsPerLocalBlock);
 	Kokkos::parallel_for(policy,
@@ -297,7 +297,6 @@ auto redistribute_tensor_for_gram(Tensor<ScalarType, Properties...> & Y, int n)
 {
   using tensor_type       = Tensor<ScalarType, Properties...>;
   using memory_space      = typename tensor_type::traits::memory_space;
-  using onnode_layout     = typename tensor_type::traits::onnode_layout;
   using matrix_result_t = ::TuckerMpi::impl::Matrix<ScalarType, memory_space>;
 
   // Get the original Tensor map
@@ -315,7 +314,7 @@ auto redistribute_tensor_for_gram(Tensor<ScalarType, Properties...> & Y, int n)
   const auto & sz = Y.localDimensionsOnHost();
   const int nrows = Y.globalExtent(n);
   size_t ncols = impl::prod(sz, 0,n-1,1) * impl::prod(sz, n+1,ndims-1,1);
-  assert(ncols <= std::numeric_limits<int>::max());
+  assert(ncols <= std::numeric_limits<std::size_t>::max());
 
   // Create a matrix to store the redistributed Y_n
   // Y_n has a block row distribution

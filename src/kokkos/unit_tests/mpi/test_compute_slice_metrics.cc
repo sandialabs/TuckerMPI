@@ -166,7 +166,7 @@ TEST(tuckerkokkosmpi, compute_slice_metrics_allmode)
       {
         const int globalJ = map->getGlobalIndex(j);
 
-        for (int i=0; i<metricIDs.size(); ++i){
+        for (int i=0; i<(int)metricIDs.size(); ++i){
           auto view = metrics_h.get(metricIDs[i]);
           scalar_t computed = (i<=3) ? view(j) : std::sqrt(view(j));
           scalar_t diff = std::abs( computed - trueData[globalJ][mode][i]);

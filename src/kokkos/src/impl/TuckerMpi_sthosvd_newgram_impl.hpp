@@ -41,7 +41,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   slicing_info_view_t perModeSlicingInfo_eigvals("pmsi_eigvals", X.rank());
 
   tensor_type Y = X;
-  for (std::size_t n=0; n<X.rank(); n++)
+  for (std::size_t n=0; n<(std::size_t)X.rank(); n++)
   {
     const int mode = modeOrder.empty() ? n : modeOrder[n];
 

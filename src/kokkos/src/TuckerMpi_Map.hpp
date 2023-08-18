@@ -33,7 +33,7 @@ public:
 
   int getMaxNumEntries() const{
     int maxNumEntries = 0;
-    for(int i=0; i<numElementsPerProc_.size(); i++) {
+    for(std::size_t i=0; i<numElementsPerProc_.size(); i++) {
       if(numElementsPerProc_[i] > maxNumEntries) {
 	maxNumEntries = numElementsPerProc_[i];
       }

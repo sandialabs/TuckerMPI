@@ -96,7 +96,7 @@ void write_statistics(const int mpiRank,
       const int mean_colInd = metricNameToColIndex[Tucker::Metric::MEAN];
       const int var_colInd  = metricNameToColIndex[Tucker::Metric::VARIANCE];
 
-      for(int i=0; i<M.extent(0); i++){
+      for(int i=0; i<(int)M.extent(0); i++){
 	double stdev = std::sqrt(M(i, var_colInd));
 	if(stdev < stdThresh) {
 	  std::cout << "Slice " << i << " is below the cutoff. True value is: " << stdev << std::endl;

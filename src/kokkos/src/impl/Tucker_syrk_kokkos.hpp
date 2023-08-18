@@ -22,10 +22,11 @@ namespace impl{
 template <class AlphaType, class BetaType, class AViewType, class CViewType>
 struct SyrkFunctor1
 {
-  AlphaType alpha_;
-  BetaType beta_;
   AViewType Aview_;
   CViewType Cview_;
+  AlphaType alpha_;
+  BetaType beta_;
+
   SyrkFunctor1(AViewType Av, CViewType Cv,
 	       AlphaType alpha, BetaType beta)
     : Aview_(Av), Cview_(Cv), alpha_(alpha), beta_(beta){}
@@ -45,10 +46,11 @@ struct SyrkFunctor1
 template <class AlphaType, class BetaType, class AViewType, class CViewType>
 struct SyrkFunctor2
 {
-  AlphaType alpha_;
-  BetaType beta_;
   AViewType Aview_;
   CViewType Cview_;
+  AlphaType alpha_;
+  BetaType beta_;
+
   SyrkFunctor2(AViewType Av, CViewType Cv,
 	       AlphaType alpha, BetaType beta)
     : Aview_(Av), Cview_(Cv), alpha_(alpha), beta_(beta){}
