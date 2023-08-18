@@ -41,7 +41,7 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
   auto start = std::chrono::high_resolution_clock::now();
   
   tensor_type Y = X;
-  for (std::size_t n=0; n<X.rank(); n++)
+  for (std::size_t n=0; n<(std::size_t)X.rank(); n++)
   {
 
     std::cout << "\n---------------------------------------------\n";
@@ -110,7 +110,7 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
     Y = temp;
     std::cout << "  Tensor size after STHOSVD iteration " << n << ": ";
     const auto sizeInfo = Y.dimensionsOnHost();
-    for (int i=0; i<sizeInfo.extent(0); ++i){ std::cout << sizeInfo(i) << " "; }
+    for (std::size_t i=0; i<sizeInfo.extent(0); ++i){ std::cout << sizeInfo(i) << " "; }
     std::cout << "\n";
    }
 

@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
       outStream << scaleMode << std::endl;
       // Set output precision to match ScalarType representation (8 or 16)
       outStream << std::fixed << std::setprecision(std::numeric_limits<scalar_t>::digits);
-      for(int i=0; i<X.extent(scaleMode); i++){
+      for(std::size_t i=0; i<X.extent(scaleMode); i++){
         outStream << scales_h(i) << " " << shifts_h(i) << std::endl;
       }
       outStream.close();
@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
 
 	auto eigvals = container[mode];
 	auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
-	for(int i=0; i<eigvals.extent(0); i++) {
+	for(std::size_t i=0; i<eigvals.extent(0); i++) {
 	  ofs << std::setprecision(16) << eigvals_h(i) << std::endl;
 	}
 	ofs.close();

@@ -123,8 +123,8 @@ public:
 
   template<class ST, class ... PS>
   Tensor(const Tensor<ST,PS...> & o)
-    : rank_(o.rank_), data_(o.data_),
-      dims_(o.dims_), dims_h_(o.dims_h_)
+    : rank_(o.rank_), dims_(o.dims_), 
+      dims_h_(o.dims_h_), data_(o.data_)
   {}
 
   template<class ST, class ... PS>

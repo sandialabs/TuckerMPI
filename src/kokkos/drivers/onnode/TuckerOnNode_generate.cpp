@@ -28,9 +28,8 @@ int main(int argc, char* argv[])
 
     //
     // aliases
-    using tensor_type        = TuckerOnNode::Tensor<scalar_t, memory_space>;
-    using tucker_tensor_type = Tucker::TuckerTensor<tensor_type>;
-    using factor_view_t      = Kokkos::View<scalar_t**, Kokkos::LayoutLeft, memory_space>;
+    using tensor_type   = TuckerOnNode::Tensor<scalar_t, memory_space>;
+    using factor_view_t = Kokkos::View<scalar_t**, Kokkos::LayoutLeft, memory_space>;
 
     //
     // run

@@ -209,7 +209,7 @@ TEST(tuckerkokkos_tensor, create_mirror)
   ASSERT_TRUE(T_h_dims(2) == 5);
 
   auto T_h_data = T_h.data();
-  for (int i=0; i<T_h.size(); ++i){
+  for (std::size_t i=0; i<T_h.size(); ++i){
     ASSERT_TRUE(T_h_data(i) == 0.);
   }
 }
@@ -221,17 +221,17 @@ TEST(tuckerkokkos_tensor, deep_copy)
 
   auto T_h = Tucker::create_mirror(T0);
   auto T_h_data = T_h.data();
-  for (int i=0; i<T_h.size(); ++i){
+  for (std::size_t i=0; i<T_h.size(); ++i){
     ASSERT_TRUE(T_h_data(i) == 0.);
   }
 
-  for (int i=0; i<T_h.size(); ++i){
+  for (std::size_t i=0; i<T_h.size(); ++i){
     T_h_data(i) = (double) i;
   }
   Tucker::deep_copy(T0, T_h);
   auto T0_data = T0.data();
   auto T0_data_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), T0_data);
-  for (int i=0; i<T0.size(); ++i){
+  for (std::size_t i=0; i<T0.size(); ++i){
     ASSERT_TRUE(T0_data_h(i) == (double) i);
   }
 }
@@ -246,7 +246,7 @@ TEST(tuckerkokkos_tensor, create_mirror_and_copy)
   auto T_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), T0);
   auto T_h_data = T_h.data();
 
-  for (int i=0; i<T_h.size(); ++i){
+  for (std::size_t i=0; i<T_h.size(); ++i){
     ASSERT_TRUE(T_h_data(i) == T0_data_h(i));
   }
 }

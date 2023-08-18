@@ -119,7 +119,7 @@ TEST(tuckerkokkos, compute_slice_metrics_2x3x5x7_allmode)
   TuckerOnNode::Tensor<scalar_t> tensor({2, 3, 5, 7});
   auto tensor_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), tensor);
   auto tensor_data = tensor_h.data();
-  for(int i=0; i<tensor.size(); i++){
+  for(std::size_t i=0; i<tensor.size(); i++){
     tensor_data(i) = i+1;
   }
   Tucker::deep_copy(tensor, tensor_h);
@@ -189,7 +189,7 @@ TEST(tuckerkokkos, compute_slice_metrics_2x3x5x7_allmode)
     auto maxV = metrics_h.get(Tucker::Metric::MAX);
     auto minV = metrics_h.get(Tucker::Metric::MIN);
     auto sumV = metrics_h.get(Tucker::Metric::SUM);
-    for(int j=0; j<tensor.extent(mode); j++) {
+    for(std::size_t j=0; j<tensor.extent(mode); j++) {
       // std::cout << "The *computed* maximum of slice " << j << " of mode "
       // 		<< mode << " is " << maxV(j) << std::endl;
       EXPECT_TRUE(maxV[j] == trueData[j][mode][0]);

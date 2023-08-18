@@ -31,7 +31,7 @@ void write_statistics(TuckerOnNode::MetricData<ScalarType, MemSpace> metricData,
   auto view_variance = metricData_h.get(Tucker::Metric::VARIANCE);
   const std::size_t count = view_max.extent(0);
 
-  for(int i=0; i<count; i++) {
+  for(std::size_t i=0; i<count; i++) {
     double stdev = sqrt(view_variance(i));
 
     if(stdev < stdThresh) {
