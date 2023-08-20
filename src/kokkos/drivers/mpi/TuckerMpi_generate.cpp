@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
   {
     const auto paramfn = Tucker::parse_cmdline_or(argc, (const char**)argv,
 						  "--parameter-file", "paramfile.txt");
-    const InputParametersGenerateDriver<scalar_t> inputs(paramfn);
+    const InputParametersGenerateDriver<scalar_t> inputs(paramfn, mpiRank);
     if (mpiRank==0){
       inputs.describe();
     }
@@ -54,6 +54,7 @@ int main(int argc, char* argv[])
 
     // Generate the seeds for each MPI process
     const auto myseed = generate_seed(mpiRank, nprocs, inputs.seed_);
+
 
     //
     // run
@@ -105,6 +106,7 @@ int main(int argc, char* argv[])
     // Compute the norm of the global tensor
     if (mpiRank==0){ std::cout << "Computing the global tensor norm...\n"; }
     const auto normM = std::sqrt(Y.frobeniusNormSquared());
+    if (mpiRank==0){ std::cout << "global tensor norm = " << normM << "\n"; }
 
     ///////////////////////////////////////////////////////////////////
     // Compute the estimated norm of the noise matrix

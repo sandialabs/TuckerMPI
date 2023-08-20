@@ -24,12 +24,13 @@ struct InputParametersGenerateDriver
   std::vector<std::string> outDataFilenames;
 
 public:
-  InputParametersGenerateDriver(const std::string & paramFile)
+  InputParametersGenerateDriver(const std::string & paramFile, int mpiRank)
   {
     const auto fileAsStrings = Tucker::read_file_as_strings(paramFile);
-    std::cout << fileAsStrings.size() << " " << fileAsStrings[0] << std::endl;
     parse(fileAsStrings);
-    check_args();
+    if (mpiRank==0){
+      check_args();
+    }
   }
 
   void describe() const
