@@ -46,13 +46,17 @@ void run(const InputParametersSthosvdDriver<ScalarType> & inputs)
 			      metricsData, inputs.stats_file, inputs.stdThresh);
 
   if (inputs.scaling_type != "None"){
-    std::cout << "Normalizing tensor" << std::endl;
+    if(mpiRank == 0) {
+      std::cout << "Normalizing tensor" << std::endl;
+    }
     auto [scales, shifts] = TuckerMpi::normalize_tensor(mpiRank, X, metricsData, inputs.scaling_type,
 							inputs.scale_mode, inputs.stdThresh);
     //TuckerwriteScalesShifts(scales, shifts);
   }
   else{
-    std::cout << "inputs.scaling_type == None, therefore we are not normalizing the tensor\n";
+    if(mpiRank == 0) {
+      std::cout << "inputs.scaling_type == None, therefore we are not normalizing the tensor\n";
+    }
   }
   if (inputs.boolWriteTensorAfterPreprocessing){
     TuckerMpi::write_tensor_binary(mpiRank, X, inputs.preprocDataFilenames);
