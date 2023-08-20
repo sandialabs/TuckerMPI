@@ -3,6 +3,7 @@
 
 #include "TuckerMpi_compute_gram.hpp"
 #include "Tucker_TuckerTensor.hpp"
+#include <chrono>
 
 namespace TuckerMpi{
 namespace impl{
@@ -19,18 +20,24 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   using gram_eigvals_type   = TuckerOnNode::TensorGramEigenvalues<ScalarType, memory_space>;
   using slicing_info_view_t = Kokkos::View<::Tucker::impl::PerModeSliceInfo*, Kokkos::HostSpace>;
 
+  MPI_Comm myComm = MPI_COMM_WORLD;
+
   // ---------------------
   // prepare
   // ---------------------
   int mpiRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+  int nprocs;
+  MPI_Comm_rank(myComm, &mpiRank);
+  MPI_Comm_size(myComm, &nprocs);
 
   // Compute the nnz of the largest tensor piece being stored by any process
   size_t max_lcl_nnz_x = 1;
   for(int i=0; i<X.rank(); i++) {
     max_lcl_nnz_x *= X.getDistribution().getMap(i,false)->getMaxNumEntries();
   }
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(myComm);
+
+  auto start = std::chrono::high_resolution_clock::now();
 
   // ---------------------
   // core loop
@@ -111,7 +118,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     // is assigning tensors with different distributions
     Y = {};
     Y = temp;
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(myComm);
 
     if(mpiRank == 0) {
       const size_t local_nnz = Y.localSize();
@@ -129,6 +136,17 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     }
 
   }//end loop
+
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
+  const double durationDbl = duration.count() * 1e-9;
+
+  double globalMean = {};
+  MPI_Reduce(&durationDbl, &globalMean, 1, MPI_DOUBLE, MPI_SUM, 0, myComm);
+  globalMean /= (double) nprocs;
+  if (mpiRank == 0){
+    std::cout << "STHOSVD time (sec): " << std::setprecision(6) << globalMean << std::endl;
+  }
 
   return std::pair( tucker_tensor_type(Y, factors, perModeSlicingInfo_factors),
 		    gram_eigvals_type(eigvals, perModeSlicingInfo_eigvals) );
