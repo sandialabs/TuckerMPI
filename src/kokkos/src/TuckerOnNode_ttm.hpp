@@ -44,9 +44,10 @@ void ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
 #else
 
   if(mode == 0) {
-    impl::ttm_kker_mode_zero(Xtensor, mode, Umatrix, Ytensor, Utransp);
+    impl::ttm_mode_zero_use_kkernels_gemm(Xtensor, mode, Umatrix, Ytensor, Utransp);
   } else {
-    impl::ttm_kker_mode_greater_than_zero(Xtensor, mode, Umatrix, Ytensor, Utransp);
+    impl::ttm_nonzero_mode_use_kkernels_team_gemm(Xtensor, mode, Umatrix, Ytensor, Utransp);
+    //impl::ttm_nonzero_mode_sequentially_call_kkernels_gemm(Xtensor, mode, Umatrix, Ytensor, Utransp);
   }
 #endif
 }
