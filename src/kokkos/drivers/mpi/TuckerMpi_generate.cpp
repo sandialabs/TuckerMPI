@@ -99,6 +99,8 @@ int main(int argc, char* argv[])
       if (mpiRank==0){ std::cout << "Performing mode " << d << " TTM...\n"; }
       auto temp = TuckerMpi::ttm(Y, d, M, false, 0);
 
+      // need to do = {} first, otherwise Y=temp throws because Y = temp
+      // is assigning tensors with different distributions
       Y = {};
       Y = temp;
     }
