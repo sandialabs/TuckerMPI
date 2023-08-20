@@ -1,7 +1,6 @@
 #ifndef IMPL_TUCKERONNODE_TTM_USING_KOKKOS_KERNELS_IMPL_HPP_
 #define IMPL_TUCKERONNODE_TTM_USING_KOKKOS_KERNELS_IMPL_HPP_
 
-#include "Tucker_boilerplate_view_io.hpp"
 #include <KokkosBatched_Gemm_Decl.hpp>
 #include <KokkosBatched_Gemm_Team_Impl.hpp>
 #include <KokkosBlas3_gemm.hpp>
