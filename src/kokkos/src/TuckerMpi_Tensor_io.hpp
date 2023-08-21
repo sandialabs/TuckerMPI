@@ -133,11 +133,8 @@ void read_tensor_binary_multifile(const int mpiRank,
     }
 
     if (!stepMap->hasGlobalIndex(step)){
-      std::cout << "read_tensor_binary_multifile: skipping for " << step << "\n";
       continue;
     }
-    // int LO = stepMap->getLocalIndex(step);
-    // if(LO < 0) { continue; }
 
     MPI_File fh;
     int ret = MPI_File_open(stepComm, (char*)stepFilename.c_str(),
@@ -295,11 +292,8 @@ void write_tensor_binary_multifile(const int mpiRank,
     }
 
     if (!stepMap->hasGlobalIndex(step)){
-      std::cout << "write_tensor_binary_multifile: skipping for " << step << "\n";
       continue;
     }
-    // int LO = stepMap->getLocalIndex(step);
-    // if(LO < 0) { continue; }
 
     MPI_File fh;
     int ret = MPI_File_open(stepComm, (char*)stepFilename.c_str(),
