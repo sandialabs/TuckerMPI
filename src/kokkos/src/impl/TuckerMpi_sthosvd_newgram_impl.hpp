@@ -37,7 +37,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   }
   MPI_Barrier(myComm);
 
-  auto start = std::chrono::high_resolution_clock::now();
+  auto outerStart = std::chrono::high_resolution_clock::now();
 
   // ---------------------
   // core loop
@@ -50,6 +50,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   tensor_type Y = X;
   for (std::size_t n=0; n<(std::size_t)X.rank(); n++)
   {
+    auto innerStart = std::chrono::high_resolution_clock::now();
     const int mode = modeOrder.empty() ? n : modeOrder[n];
 
     if(mpiRank == 0) {
@@ -112,7 +113,19 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     if(mpiRank == 0) {
       std::cout << "  AutoST-HOSVD::Starting TTM(" << mode << ")...\n";
     }
+    auto ttmStart = std::chrono::high_resolution_clock::now();
+
     tensor_type temp = ::TuckerMpi::ttm(Y, mode, currEigVecs, true, max_lcl_nnz_x);
+
+    auto ttmStop = std::chrono::high_resolution_clock::now();
+    auto ttmDuration = std::chrono::duration_cast<std::chrono::nanoseconds>(ttmStop - ttmStart);
+    const double ttmDurationDbl = ttmDuration.count() * 1e-9;
+    double ttmGlobalMean = {};
+    MPI_Reduce(&ttmDurationDbl, &ttmGlobalMean, 1, MPI_DOUBLE, MPI_SUM, 0, myComm);
+    ttmGlobalMean /= (double) nprocs;
+    if (mpiRank == 0){
+      std::cout << "  TTM time (sec): " << std::setprecision(6) << ttmGlobalMean << std::endl;
+    }
 
     // need to do = {} first, otherwise Y=temp throws because Y = temp
     // is assigning tensors with different distributions
@@ -135,17 +148,26 @@ template <class ScalarType, class ...Properties, class TruncatorType>
       Tucker::print_bytes_to_stream(std::cout, global_nnz*sizeof(ScalarType));
     }
 
+    auto innerStop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(innerStop - innerStart);
+    const double innerDurationDbl = duration.count() * 1e-9;
+    double innerGlobalMean = {};
+    MPI_Reduce(&innerDurationDbl, &innerGlobalMean, 1, MPI_DOUBLE, MPI_SUM, 0, myComm);
+    innerGlobalMean /= (double) nprocs;
+    if (mpiRank == 0){
+      std::cout << "  STHOSVD time (sec): " << std::setprecision(6) << innerGlobalMean << std::endl;
+    }
+
   }//end loop
 
-  auto stop = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
-  const double durationDbl = duration.count() * 1e-9;
-
-  double globalMean = {};
-  MPI_Reduce(&durationDbl, &globalMean, 1, MPI_DOUBLE, MPI_SUM, 0, myComm);
-  globalMean /= (double) nprocs;
+  auto outerStop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(outerStop - outerStart);
+  const double outerDurationDbl = duration.count() * 1e-9;
+  double outerGlobalMean = {};
+  MPI_Reduce(&outerDurationDbl, &outerGlobalMean, 1, MPI_DOUBLE, MPI_SUM, 0, myComm);
+  outerGlobalMean /= (double) nprocs;
   if (mpiRank == 0){
-    std::cout << "STHOSVD time (sec): " << std::setprecision(6) << globalMean << std::endl;
+    std::cout << "STHOSVD time (sec): " << std::setprecision(6) << outerGlobalMean << std::endl;
   }
 
   return std::pair( tucker_tensor_type(Y, factors, perModeSlicingInfo_factors),
