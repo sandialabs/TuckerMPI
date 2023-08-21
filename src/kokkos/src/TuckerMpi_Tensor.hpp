@@ -169,7 +169,8 @@ public:
   size_t localSize() const{ return localTensor_.size(); }
   size_t globalSize() const{
     auto dims = dist_.getGlobalDims();
-    return std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<std::size_t>());
+    const std::size_t init = 1;
+    return std::accumulate(dims.begin(), dims.end(), init, std::multiplies<std::size_t>());
   }
 
   auto frobeniusNormSquared() const{

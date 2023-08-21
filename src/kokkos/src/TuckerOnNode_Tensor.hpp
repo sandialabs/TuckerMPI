@@ -81,8 +81,8 @@ public:
   {
     Tucker::impl::copy_stdvec_to_view(v, dims_h_);
     Kokkos::deep_copy(dims_, dims_h_);
-    const std::size_t numEl = std::accumulate(v.cbegin(), v.cend(), 1,
-					      std::multiplies<std::size_t>());
+    const std::size_t init = 1;
+    const std::size_t numEl = std::accumulate(v.cbegin(), v.cend(), init, std::multiplies<std::size_t>());
     // allocate for data
     data_ = data_view_type("tensorData", numEl);
   }
@@ -123,7 +123,7 @@ public:
 
   template<class ST, class ... PS>
   Tensor(const Tensor<ST,PS...> & o)
-    : rank_(o.rank_), dims_(o.dims_), 
+    : rank_(o.rank_), dims_(o.dims_),
       dims_h_(o.dims_h_), data_(o.data_)
   {}
 

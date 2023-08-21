@@ -115,8 +115,8 @@ int main(int argc, char* argv[])
     // The average of each element squared is the standard deviation
     // squared, so this quantity should be sqrt(nnz * stdev^2)
     ///////////////////////////////////////////////////////////////////
-    const std::size_t nnz = std::accumulate(std::cbegin(I_dims), std::cend(I_dims), 1,
-					    std::multiplies<int>());
+    const std::size_t init = 1;
+    const std::size_t nnz = std::accumulate(std::cbegin(I_dims), std::cend(I_dims), init, std::multiplies<std::size_t>());
     const scalar_t normN = std::sqrt((scalar_t) nnz);
     const scalar_t alpha = eps*normM/normN;
 
