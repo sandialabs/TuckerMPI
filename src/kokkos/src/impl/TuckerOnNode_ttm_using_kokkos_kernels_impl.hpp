@@ -101,11 +101,6 @@ void ttm_nonzero_mode_use_kkernels_team_gemm(Tensor<ScalarType, TensorProperties
   const int Unrows = (Btransp) ? B.extent(n) : C.extent(n);
   const int Uncols = (Btransp) ? C.extent(n) : B.extent(n);
 
-  const ScalarType alpha = ScalarType(1);
-  const ScalarType beta = ScalarType(0);
-  auto B_ptr_d = B.data().data();
-  auto C_ptr_d = C.data().data();
-
   int m = (int)ncols;       // 1st dim of B and C
   int blas_n = C.extent(n); // 2nd dim of C
   const size_t nmats = B.prod(n+1,B.rank()-1,1);
@@ -114,7 +109,6 @@ void ttm_nonzero_mode_use_kkernels_team_gemm(Tensor<ScalarType, TensorProperties
   using member_type = typename policy_t::member_type;
   using kk_T        = KokkosBatched::Trans::Transpose;
   using kk_NT       = KokkosBatched::Trans::NoTranspose;
-  using algo_flag   = KokkosBatched::Algo::Gemm::Unblocked;
 
   policy_t policy(nmats, Kokkos::AUTO);
   if (Btransp){
