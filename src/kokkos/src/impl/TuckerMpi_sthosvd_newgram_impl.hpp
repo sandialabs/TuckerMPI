@@ -31,7 +31,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   MPI_Comm_size(myComm, &nprocs);
 
   // Compute the nnz of the largest tensor piece being stored by any process
-  size_t max_lcl_nnz_x = 1;
+  std::size_t max_lcl_nnz_x = 1;
   for(int i=0; i<X.rank(); i++) {
     max_lcl_nnz_x *= X.getDistribution().getMap(i,false)->getMaxNumEntries();
   }
@@ -134,8 +134,8 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     MPI_Barrier(myComm);
 
     if(mpiRank == 0) {
-      const size_t local_nnz = Y.localSize();
-      const size_t global_nnz = Y.globalSize();
+      const std::size_t local_nnz = Y.localSize();
+      const std::size_t global_nnz = Y.globalSize();
 
       std::cout << "Local tensor size after STHOSVD iteration  " << mode << ": ";
       Tucker::write_view_to_stream_singleline(std::cout, Y.localDimensionsOnHost());

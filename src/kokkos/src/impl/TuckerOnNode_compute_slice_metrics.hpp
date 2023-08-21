@@ -115,7 +115,7 @@ void compute_slice_metrics(::TuckerOnNode::Tensor<ScalarType, Properties...> Y,
 
   // if variance is present, normalize
   if (std::find(metrics.begin(), metrics.end(), Tucker::Metric::VARIANCE) != metrics.end()){
-    size_t sizeOfSlice = numContig*numSetsContig;
+    std::size_t sizeOfSlice = numContig*numSetsContig;
     normalize_variance(metricsData, numSlices, sizeOfSlice);
   }
 }

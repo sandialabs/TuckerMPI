@@ -166,8 +166,8 @@ public:
   int globalExtent(int n) const{ return dist_.getGlobalDims()[n]; }
   int localExtent(int n) const{ return dist_.getLocalDims()[n]; }
 
-  size_t localSize() const{ return localTensor_.size(); }
-  size_t globalSize() const{
+  std::size_t localSize() const{ return localTensor_.size(); }
+  std::size_t globalSize() const{
     auto dims = dist_.getGlobalDims();
     const std::size_t init = 1;
     return std::accumulate(dims.begin(), dims.end(), init, std::multiplies<std::size_t>());

@@ -39,7 +39,7 @@ public:
   ~Matrix() = default;
 
   auto & getLocalMatrix() { return M_; }
-  size_t localSize() const{ return M_.size(); }
+  std::size_t localSize() const{ return M_.size(); }
   int getGlobalNumRows() const { return globalRows_; }
   int getLocalNumRows() const  { return M_.extent(0); }
   int getGlobalNumCols() const { return globalCols_; }

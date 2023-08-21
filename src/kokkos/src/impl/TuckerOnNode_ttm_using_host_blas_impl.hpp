@@ -39,7 +39,7 @@ void ttm_hostblas(Tensor<ScalarType, TensorProperties...> X,
   // n = 0 is a special case: Y_0 is stored column major
   if(n == 0)
   {
-    size_t ncols = X.prod(1,X.rank()-1);
+    std::size_t ncols = X.prod(1,X.rank()-1);
     char transa = Utransp ? 'T' : 'N';
     char transb = 'N';
     int m =  (int)Y.extent(n);
@@ -55,11 +55,11 @@ void ttm_hostblas(Tensor<ScalarType, TensorProperties...> X,
   }
   else
   {
-    size_t ncols = X.prod(0,n-1);
-    size_t nmats = X.prod(n+1,X.rank()-1,1);
+    std::size_t ncols = X.prod(0,n-1);
+    std::size_t nmats = X.prod(n+1,X.rank()-1,1);
 
     // For each matrix...
-    for(size_t i=0; i<nmats; i++) {
+    for(std::size_t i=0; i<nmats; i++) {
       char transa = 'N';
       char transb = Utransp ? 'N' : 'T';
       int m = (int)ncols;

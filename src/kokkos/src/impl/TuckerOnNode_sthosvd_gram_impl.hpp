@@ -39,7 +39,7 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
   slicing_info_view_t perModeSlicingInfo_eigvals("pmsi_eigvals", X.rank());
 
   auto start = std::chrono::high_resolution_clock::now();
-  
+
   tensor_type Y = X;
   for (std::size_t n=0; n<(std::size_t)X.rank(); n++)
   {
@@ -117,7 +117,7 @@ auto sthosvd_gram(Tensor<ScalarType, Properties...> X,
   auto stop = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
   std::cout << "STHOSVD time: " << duration.count() << std::endl;
-  
+
   return std::pair( tucker_tensor_type(Y, factors, perModeSlicingInfo_factors),
 		    gram_eigvals_type(eigvals, perModeSlicingInfo_eigvals) );
 }

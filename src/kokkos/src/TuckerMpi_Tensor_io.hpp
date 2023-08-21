@@ -52,9 +52,9 @@ void read_tensor_binary(const int mpiRank,
   MPI_File_set_view_<ScalarType>(fh, disp, view, "native", MPI_INFO_NULL);
 
   // Read the file
-  size_t count = tensor.localSize();
-  assert(count <= std::numeric_limits<size_t>::max());
-  if(mpiRank == 0 && sizeof(ScalarType)*count > std::numeric_limits<size_t>::max()) {
+  std::size_t count = tensor.localSize();
+  assert(count <= std::numeric_limits<std::size_t>::max());
+  if(mpiRank == 0 && sizeof(ScalarType)*count > std::numeric_limits<std::size_t>::max()) {
     std::cout << "WARNING: We are attempting to call MPI_File_read_all to read ";
     Tucker::print_bytes_to_stream(std::cout, sizeof(ScalarType)*count);
     std::cout << "Depending on your MPI implementation, this may fail "
@@ -115,9 +115,9 @@ void read_tensor_binary_multifile(const int mpiRank,
   ScalarType * dataPtr   = localTensorView_h.data();
 
   auto sz = tensor.localDimensionsOnHost();
-  const size_t count = impl::prod(sz, 0, ndims-2);
-  assert(count <= std::numeric_limits<size_t>::max());
-  if(mpiRank == 0 && 8*count > std::numeric_limits<size_t>::max()) {
+  const std::size_t count = impl::prod(sz, 0, ndims-2);
+  assert(count <= std::numeric_limits<std::size_t>::max());
+  if(mpiRank == 0 && 8*count > std::numeric_limits<std::size_t>::max()) {
     std::cout << "WARNING: We are attempting to call MPI_File_read_all to read ";
     ::Tucker::print_bytes_to_stream(std::cout, 8*count);
     std::cout << "Depending on your MPI implementation, this may fail "
@@ -231,8 +231,8 @@ void write_tensor_binary(const int mpiRank,
   MPI_File_set_view_<ScalarType>(fh, disp, mpiDt, "native", MPI_INFO_NULL);
 
   // Write the file
-  size_t count = tensor_h.localSize();
-  assert(count <= std::numeric_limits<size_t>::max());
+  std::size_t count = tensor_h.localSize();
+  assert(count <= std::numeric_limits<std::size_t>::max());
   MPI_Status status;
   ret = MPI_File_write_all_(fh, tensor_local_view_h.data(), (int)count, &status);
   if(ret != MPI_SUCCESS && mpiRank == 0) {
@@ -281,8 +281,8 @@ void write_tensor_binary_multifile(const int mpiRank,
   ScalarType * dataPtr   = localTensorView_h.data();
 
   auto sz = tensor.localDimensionsOnHost();
-  const size_t count = impl::prod(sz, 0, ndims-2);
-  assert(count <= std::numeric_limits<size_t>::max());
+  const std::size_t count = impl::prod(sz, 0, ndims-2);
+  assert(count <= std::numeric_limits<std::size_t>::max());
 
   for(int step=0; step<nsteps; step++)
   {

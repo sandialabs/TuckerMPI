@@ -196,7 +196,7 @@ template<class ScalarType, class ... AProperties, class ... EigvalProperties>
 void compute_syev_on_device_views(const Kokkos::HIP & /*exec*/,
 			  Kokkos::View<ScalarType**, AProperties...> A,
 			  Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
-{  
+{
   rocblas_handle handle;
   rocblas_create_handle(&handle);
 
@@ -280,9 +280,9 @@ void compute_syev_on_device_views(const Kokkos::Cuda & exec,
   cusolverEigMode_t jobz = CUSOLVER_EIG_MODE_VECTOR; // compute eigenvalues and eigenvectors.
   cublasFillMode_t uplo  = CUBLAS_FILL_MODE_UPPER;
 
-  size_t d_lwork = 0;     /* size of workspace */
+  std::size_t d_lwork = 0;     /* size of workspace */
   void *d_work = nullptr; /* device workspace */
-  size_t h_lwork = 0;     /* size of workspace */
+  std::size_t h_lwork = 0;     /* size of workspace */
   void *h_work = nullptr; /* host workspace */
 
   static_assert(std::is_floating_point_v<ScalarType>);

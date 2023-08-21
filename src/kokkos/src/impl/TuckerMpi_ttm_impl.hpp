@@ -25,7 +25,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
   if(n == Y.rank()-1) { return; }
 
   // Create empty view
-  size_t numEntries = Y.size();
+  std::size_t numEntries = Y.size();
   Kokkos::View<ScalarType*, mem_space> tempMem("tempMem", numEntries);
 
   const MPI_Comm& comm = map->getComm();
@@ -34,22 +34,22 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
 
   // Get the leading dimension of this tensor unfolding
   auto sa = Y.dimensionsOnHost();
-  size_t leadingDim = impl::prod(sa, 0,n-1,1);
+  std::size_t leadingDim = impl::prod(sa, 0,n-1,1);
 
   // Get the number of global rows of this tensor unfolding
   int nGlobalRows = map->getGlobalNumEntries();
 
   auto y_data_view = Y.data();
 
-  size_t stride = leadingDim*nGlobalRows;
-  size_t tempMemOffset = 0;
+  std::size_t stride = leadingDim*nGlobalRows;
+  std::size_t tempMemOffset = 0;
   const int inc = 1;
   for(int rank=0; rank<nprocs; rank++)
   {
     int nLocalRows = map->getNumEntries(rank);
-    size_t blockSize = leadingDim*nLocalRows;
+    std::size_t blockSize = leadingDim*nLocalRows;
     int rowOffset = map->getOffset(rank);
-    for(size_t tensorOffset = rowOffset*leadingDim;
+    for(std::size_t tensorOffset = rowOffset*leadingDim;
         tensorOffset < numEntries;
         tensorOffset += stride)
     {
@@ -170,10 +170,10 @@ void ttm_impl_use_single_reduce_scatter(Tensor<ScalarType, TensorProperties...> 
   MPI_Comm_size(comm, &nprocs);
   int recvCounts[nprocs];
   auto Ylsz = Y.localDimensionsOnHost();
-  size_t multiplier = impl::prod(Ylsz,0,n-1,1) * impl::prod(Ylsz, n+1,ndims-1,1);
+  std::size_t multiplier = impl::prod(Ylsz,0,n-1,1) * impl::prod(Ylsz, n+1,ndims-1,1);
 
   for(int i=0; i<nprocs; i++) {
-    size_t temp = multiplier*(yMap->getNumEntries(i));
+    std::size_t temp = multiplier*(yMap->getNumEntries(i));
     recvCounts[i] = (int)temp;
   }
   MPI_Reduce_scatter_(sendBuf.data(), recvBuf, recvCounts, MPI_SUM, comm);
@@ -263,7 +263,7 @@ void ttm_impl_use_series_of_reductions(Tensor<ScalarType, TensorProperties...> X
     if(localY.size() > 0){
       recvBuf = localYview_h.data();
     }
-    size_t count = localResult.size();
+    std::size_t count = localResult.size();
     assert(count <= std::numeric_limits<std::size_t>::max());
 
     if(count > 0) {
@@ -350,12 +350,12 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
     // Reduce_scatter tends to be faster, so we try to use it if the
     // memory requirements are not prohibitive.
     // Compute the nnz of the largest tensor piece being stored by any process
-    size_t max_lcl_nnz_x = 1;
+    std::size_t max_lcl_nnz_x = 1;
     for(int i=0; i<ndims; i++) {
       max_lcl_nnz_x *= X.getDistribution().getMap(i,false)->getMaxNumEntries();
     }
     // Compute the nnz required for the reduce_scatter
-    size_t nnz_reduce_scatter = 1;
+    std::size_t nnz_reduce_scatter = 1;
     for(int i=0; i<ndims; i++) {
       if(i == n)
         nnz_reduce_scatter *= Y.globalExtent(n);
@@ -414,10 +414,10 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
       MPI_Comm_size(comm, &nprocs);
       int recvCounts[nprocs];
       auto Ylsz = Y.localDimensionsOnHost();
-      size_t multiplier = impl::prod(Ylsz,0,n-1,1) * impl::prod(Ylsz, n+1,ndims-1,1);
+      std::size_t multiplier = impl::prod(Ylsz,0,n-1,1) * impl::prod(Ylsz, n+1,ndims-1,1);
 
       for(int i=0; i<nprocs; i++) {
-        size_t temp = multiplier*(yMap->getNumEntries(i));
+        std::size_t temp = multiplier*(yMap->getNumEntries(i));
         recvCounts[i] = (int)temp;
       }
       MPI_Reduce_scatter_(sendBuf.data(), recvBuf, recvCounts, MPI_SUM, comm);
@@ -472,7 +472,7 @@ auto ttm_impl(Tensor<ScalarType, TensorProperties...> X,
       	if(localY.size() > 0){
       	  recvBuf = localYview_h.data();
       	}
-        size_t count = localResult.size();
+        std::size_t count = localResult.size();
         assert(count <= std::numeric_limits<std::size_t>::max());
 
         if(count > 0) {

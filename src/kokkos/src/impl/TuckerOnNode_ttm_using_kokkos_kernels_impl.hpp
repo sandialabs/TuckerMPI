@@ -35,7 +35,7 @@ void ttm_mode_zero_use_kkernels_gemm(Tensor<ScalarType, TensorProperties...> B,
    * C is m by blas_n
    * Keep in mind: dimensions are set for a given Mode n
    */
-  const size_t ncols = B.prod(1,B.rank()-1);
+  const std::size_t ncols = B.prod(1,B.rank()-1);
   char transa = Atransp ? 'T' : 'N';
   const char transb = 'N';
   const int m = C.extent(n);                    // 1st dim of A and C
@@ -97,13 +97,13 @@ void ttm_nonzero_mode_use_kkernels_team_gemm(Tensor<ScalarType, TensorProperties
   using umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, tensor_mem_space,
 				Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
-  const size_t ncols = B.prod(0,n-1);
+  const std::size_t ncols = B.prod(0,n-1);
   const int Unrows = (Btransp) ? B.extent(n) : C.extent(n);
   const int Uncols = (Btransp) ? C.extent(n) : B.extent(n);
 
   int m = (int)ncols;       // 1st dim of B and C
   int blas_n = C.extent(n); // 2nd dim of C
-  const size_t nmats = B.prod(n+1,B.rank()-1,1);
+  const std::size_t nmats = B.prod(n+1,B.rank()-1,1);
   using exespace    = typename umv_type::execution_space;
   using policy_t    = Kokkos::TeamPolicy<exespace>;
   using member_type = typename policy_t::member_type;
@@ -147,7 +147,7 @@ void ttm_nonzero_mode_sequentially_call_kkernels_gemm(Tensor<ScalarType, TensorP
   using umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, tensor_mem_space,
 				Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
-  const size_t ncols = B.prod(0,n-1);
+  const std::size_t ncols = B.prod(0,n-1);
   const int Unrows = (Btransp) ? B.extent(n) : C.extent(n);
   const int Uncols = (Btransp) ? C.extent(n) : B.extent(n);
 
@@ -168,8 +168,8 @@ void ttm_nonzero_mode_sequentially_call_kkernels_gemm(Tensor<ScalarType, TensorP
   const int blas_n = C.extent(n);               // 2nd dim of C
   const int k = Btransp ? Unrows : Uncols;      // 2nd dim of B
 
-  const size_t nmats = B.prod(n+1,B.rank()-1,1);
-  for(size_t i=0; i<nmats; i++) {
+  const std::size_t nmats = B.prod(n+1,B.rank()-1,1);
+  for(std::size_t i=0; i<nmats; i++) {
     umv_type Bumv(B_ptr_d+i*k*m, m, k);
     umv_type Cumv(C_ptr_d+i*m*blas_n, m, blas_n);
     KokkosBlas::gemm(&transa, &transb, alpha, Bumv, A, beta, Cumv);

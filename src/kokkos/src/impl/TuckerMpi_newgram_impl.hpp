@@ -184,13 +184,13 @@ auto pack_for_gram_fallback_copy_host(Tensor<ScalarType, Ps...> & Y,
   else{
 
     auto sz = Y.localDimensionsOnHost();
-    size_t numLocalBlocks = impl::prod(sz, n+1,ndims-1);
-    size_t ncolsPerLocalBlock = impl::prod(sz, 0,n-1);
+    std::size_t numLocalBlocks = impl::prod(sz, n+1,ndims-1);
+    std::size_t ncolsPerLocalBlock = impl::prod(sz, 0,n-1);
     assert(ncolsPerLocalBlock <= std::numeric_limits<std::size_t>::max());
 
     const ScalarType* src = localTensorView_h.data();
     // Make local data column major
-    for(size_t b=0; b<numLocalBlocks; b++) {
+    for(std::size_t b=0; b<numLocalBlocks; b++) {
       ScalarType* dest = &sendData[0] + b*localNumRows*ncolsPerLocalBlock;
       // Copy one row at a time
       for(int r=0; r<localNumRows; r++) {
@@ -267,12 +267,12 @@ std::vector<ScalarType> pack_for_gram(Tensor<ScalarType, Ps...> & Y,
     namespace KE = Kokkos::Experimental;
     // FIXME: this loop should be improved
     auto sz = Y.localDimensionsOnHost();
-    size_t numLocalBlocks = impl::prod(sz, n+1,ndims-1);
-    size_t ncolsPerLocalBlock = impl::prod(sz, 0,n-1);
+    std::size_t numLocalBlocks = impl::prod(sz, n+1,ndims-1);
+    std::size_t ncolsPerLocalBlock = impl::prod(sz, 0,n-1);
     assert(ncolsPerLocalBlock <= std::numeric_limits<std::size_t>::max());
 
     auto itFrom = KE::begin(localTensorView_h);
-    for(size_t b=0; b<numLocalBlocks; b++)
+    for(std::size_t b=0; b<numLocalBlocks; b++)
     {
       auto itDest = KE::begin(sendDataView) + b*localNumRows*ncolsPerLocalBlock;
       for(std::size_t r=0; r<(std::size_t)localNumRows; r++)
@@ -313,7 +313,7 @@ auto redistribute_tensor_for_gram(Tensor<ScalarType, Properties...> & Y, int n)
   const int ndims = Y.rank();
   const auto & sz = Y.localDimensionsOnHost();
   const int nrows = Y.globalExtent(n);
-  size_t ncols = impl::prod(sz, 0,n-1,1) * impl::prod(sz, n+1,ndims-1,1);
+  std::size_t ncols = impl::prod(sz, 0,n-1,1) * impl::prod(sz, n+1,ndims-1,1);
   assert(ncols <= std::numeric_limits<std::size_t>::max());
 
   // Create a matrix to store the redistributed Y_n

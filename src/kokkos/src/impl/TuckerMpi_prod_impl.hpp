@@ -5,7 +5,7 @@ namespace TuckerMpi{
 namespace impl{
 
 template<class ViewT>
-size_t prod(const ViewT & sz,
+std::size_t prod(const ViewT & sz,
 	    const int low, const int high,
 	    const int defaultReturnVal = -1)
 {
@@ -17,7 +17,7 @@ size_t prod(const ViewT & sz,
   }
 
   if(low > high) { return defaultReturnVal; }
-  size_t result = 1;
+  std::size_t result = 1;
   for(int j = low; j <= high; j++){ result *= sz[j]; }
   return result;
 }
