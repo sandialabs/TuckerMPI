@@ -49,6 +49,33 @@ void ttm_mode_zero_use_kkernels_gemm(Tensor<ScalarType, TensorProperties...> B,
   KokkosBlas::gemm(&transa, &transb, alpha, A, Bumv, beta, Cumv);
 }
 
+template<class TB, class umv_type, class member_type, class AType, class BViewT, class CViewT>
+struct ttmFunc{
+  int k = {};
+  int m = {};
+  int blas_n = {};
+  AType A;
+  BViewT Bview;
+  CViewT Cview;
+
+  ttmFunc(int kIn, int mIn, int blasN, AType Ain, BViewT bVin, CViewT cVIn)
+    : k(kIn), m(mIn), blas_n(blasN), A(Ain), Bview(bVin), Cview(cVIn){}
+
+  KOKKOS_FUNCTION void operator()(const member_type & member) const{
+    const int i = member.league_rank();
+    auto B_ptr_d = Bview.data();
+    auto C_ptr_d = Cview.data();
+
+    using kk_NT       = KokkosBatched::Trans::NoTranspose;
+    using algo_flag   = KokkosBatched::Algo::Gemm::Unblocked;
+
+    umv_type Bumv(B_ptr_d + i*k*m, m, k);
+    umv_type Cumv(C_ptr_d + i*m*blas_n, m, blas_n);
+    KokkosBatched::TeamVectorGemm<member_type, kk_NT, TB, algo_flag>
+      ::invoke(member, 1., Bumv, A, 0., Cumv);
+  }
+};
+
 template <
   class ScalarType, class ...TensorProperties,
   class ViewDataType, class ...ViewProps>
@@ -66,6 +93,7 @@ void ttm_nonzero_mode_use_kkernels_team_gemm(Tensor<ScalarType, TensorProperties
   static_assert(std::is_same_v<tensor_layout, Kokkos::LayoutLeft>,
 		"tensor must have LayoutLeft");
 
+  using A_type = Kokkos::View<ViewDataType, ViewProps ...>;
   using umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, tensor_mem_space,
 				Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
@@ -91,26 +119,17 @@ void ttm_nonzero_mode_use_kkernels_team_gemm(Tensor<ScalarType, TensorProperties
   policy_t policy(nmats, Kokkos::AUTO);
   if (Btransp){
     const int k = Unrows;
-    Kokkos::parallel_for(policy, KOKKOS_LAMBDA(const member_type & member) {
-	const int i = member.league_rank();
-
-	umv_type Bumv(B_ptr_d+i*k*m, m, k);
-	umv_type Cumv(C_ptr_d+i*m*blas_n, m, blas_n);
-	KokkosBatched::TeamVectorGemm<member_type, kk_NT, kk_NT, algo_flag>
-	  ::invoke(member, alpha, Bumv, A, beta, Cumv);
-    });
+    using Bvt = decltype(B.data());
+    using Cvt = decltype(C.data());
+    using func_t = ttmFunc<kk_NT, umv_type, member_type, A_type, Bvt, Cvt>;
+    Kokkos::parallel_for(policy, func_t(k, m, blas_n, A, B.data(), C.data()));
   }
   else{
-
     const int k = Uncols;
-    Kokkos::parallel_for(policy, KOKKOS_LAMBDA(const member_type & member) {
-	const int i = member.league_rank();
-
-	umv_type Bumv(B_ptr_d+i*k*m, m, k);
-	umv_type Cumv(C_ptr_d+i*m*blas_n, m, blas_n);
-	KokkosBatched::TeamVectorGemm<member_type, kk_NT,kk_T, algo_flag>
-	  ::invoke(member, alpha, Bumv, A, beta, Cumv);
-    });
+    using Bvt = decltype(B.data());
+    using Cvt = decltype(C.data());
+    using func_t = ttmFunc<kk_T, umv_type, member_type, A_type, Bvt, Cvt>;
+    Kokkos::parallel_for(policy, func_t(k, m, blas_n, A, B.data(), C.data()));
   }
 }
 
