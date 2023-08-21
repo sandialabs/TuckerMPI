@@ -42,6 +42,7 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
 {
   using tensor_type   = Tensor<ScalarType, Properties...>;
   using tensor_layout = typename tensor_type::traits::array_layout;
+  using tensor_mem_space = typename tensor_type::traits::memory_space;
   using view_type   = Kokkos::View<DataType, ViewProps...>;
   using view_layout = typename view_type::array_layout;
   static_assert(std::is_same_v<tensor_layout, Kokkos::LayoutLeft>
@@ -50,7 +51,7 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
 
   const int nrows = (int)Y.extent(n);
   auto Y_rawPtr = Y.data().data();
-  using A_umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutLeft,
+  using A_umv_type = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, tensor_mem_space, 
 				Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   // n = 0 is a special case, Y_0 is stored column major
@@ -117,7 +118,8 @@ void compute_gram_kokkos(Tensor<ScalarType, Properties...> Y,
     Tucker::impl::syrk_kokkos("U", "T", alpha, Aview, beta, C);
 
     // step 2.: use parfor to update C
-    using C_atom_type = Kokkos::View<ScalarType**, view_layout, Kokkos::MemoryTraits<Kokkos::Atomic> >;
+    using CViewType = Kokkos::View<DataType, ViewProps...>;
+    using C_atom_type = Kokkos::View<ScalarType**, view_layout, typename CViewType::memory_space, Kokkos::MemoryTraits<Kokkos::Atomic> >;
     C_atom_type myC = C;
     // note that ncols and nrows are intentially passed in this order
     // because the matrix A has extents ncols x nrows in this branch of gram

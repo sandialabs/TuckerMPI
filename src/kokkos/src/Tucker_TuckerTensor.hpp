@@ -139,7 +139,7 @@ public:
     }
 
     using factors_layout = typename traits::factors_store_view_t::array_layout;
-    using umv_type = Kokkos::View<typename traits::value_type**, factors_layout,
+    using umv_type = Kokkos::View<typename traits::value_type**, factors_layout, typename traits::memory_space,
 				  Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
     if (rank_ == -1){
       return umv_type(factors_.data(), 0, 0);
