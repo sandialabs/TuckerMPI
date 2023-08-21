@@ -3,6 +3,7 @@
 
 #include "TuckerOnNode_Tensor.hpp"
 #if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
+#include "./impl/Tucker_view_clone_utils.hpp"
 #include "./impl/TuckerOnNode_ttm_using_host_blas_impl.hpp"
 #else
 #include "./impl/TuckerOnNode_ttm_using_kokkos_kernels_impl.hpp"
@@ -38,11 +39,11 @@ void ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
   }
 
 #if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
-  auto U_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), Umatrix);
+  auto Umatrix_dc = ::Tucker::impl::create_deep_copyable_compatible_clone(Umatrix);
+  auto U_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), Umatrix_dc);
   impl::ttm_hostblas(Xtensor, mode, U_h.data(), Umatrix.extent(0), Ytensor, Utransp);
 
 #else
-
   if(mode == 0) {
     impl::ttm_mode_zero_use_kkernels_gemm(Xtensor, mode, Umatrix, Ytensor, Utransp);
   } else {
