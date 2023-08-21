@@ -38,25 +38,25 @@ struct CopyFunctorRank2 {
   }
 };
 
-template <class ViewType>
+template <class DesiredLayout, class ViewType>
 auto create_deep_copyable_compatible_view_with_same_extent(ViewType view) {
   using view_value_type  = typename ViewType::value_type;
   using view_exespace    = typename ViewType::execution_space;
   const std::size_t ext0 = view.extent(0);
   if constexpr (ViewType::rank == 1) {
-    using view_deep_copyable_t = Kokkos::View<view_value_type*, Kokkos::LayoutLeft, view_exespace>;
+    using view_deep_copyable_t = Kokkos::View<view_value_type*, DesiredLayout, view_exespace>;
     return view_deep_copyable_t{"view_dc", ext0};
   } else {
     static_assert(ViewType::rank == 2, "Only rank 1 or 2 supported.");
-    using view_deep_copyable_t = Kokkos::View<view_value_type**, Kokkos::LayoutLeft, view_exespace>;
+    using view_deep_copyable_t = Kokkos::View<view_value_type**, DesiredLayout, view_exespace>;
     const std::size_t ext1     = view.extent(1);
     return view_deep_copyable_t{"view_dc", ext0, ext1};
   }
 }
 
-template <class ViewType>
+template <class DesiredLayout, class ViewType>
 auto create_deep_copyable_compatible_clone(ViewType view) {
-  auto view_dc    = create_deep_copyable_compatible_view_with_same_extent(view);
+  auto view_dc    = create_deep_copyable_compatible_view_with_same_extent<DesiredLayout>(view);
   using view_dc_t = decltype(view_dc);
   if constexpr (ViewType::rank == 1) {
     CopyFunctor<ViewType, view_dc_t> F1(view, view_dc);

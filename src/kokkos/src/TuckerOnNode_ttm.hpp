@@ -39,7 +39,9 @@ void ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
   }
 
 #if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
-  auto Umatrix_dc = ::Tucker::impl::create_deep_copyable_compatible_clone(Umatrix);
+  // NOTE that here we cannot just do a regular create_mirror because
+  // the matrix U can be strided (see the MPI case) so we need to account for that case too
+  auto Umatrix_dc = ::Tucker::impl::create_deep_copyable_compatible_clone<Kokkos::LayoutLeft>(Umatrix);
   auto U_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), Umatrix_dc);
   impl::ttm_hostblas(Xtensor, mode, U_h.data(), Umatrix.extent(0), Ytensor, Utransp);
 

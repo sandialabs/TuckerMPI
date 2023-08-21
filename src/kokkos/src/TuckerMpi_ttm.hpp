@@ -25,8 +25,6 @@ auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
   static_assert(std::is_same_v<tensor_memory_space, typename u_view_t::memory_space>,
 		"TuckerMpi::ttm: tensor and matrix arguments must have matching memory spaces");
 
-  using result_type = Tensor<ScalarType, TensorProperties...>;
-
   // Compute the number of rows for the resulting "matrix"
   const int nrows = Utransp ? Umatrix.extent(1) : Umatrix.extent(0);
   const int ndims = Xtensor.rank();
@@ -35,7 +33,7 @@ auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
     newSize[i] = (i == n) ? nrows : Xtensor.globalExtent(i);
   }
   Distribution dist(newSize, Xtensor.getDistribution().getProcessorGrid().getSizeArray());
-  result_type result(dist);
+  tensor_type result(dist);
 
   const int Pn = Xtensor.getDistribution().getProcessorGrid().getNumProcs(n, false);
   if(Pn == 1)
@@ -55,12 +53,12 @@ auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
     // FRIZZI: NOTE: reduce scatter has bad performance , needs to improve
     // so always calling the series of reduction
 #if 0
-    size_t max_lcl_nnz_x = 1;
+    std::size_t max_lcl_nnz_x = 1;
     for(int i=0; i<Xtensor.rank(); i++) {
       max_lcl_nnz_x *= Xtensor.getDistribution().getMap(i,false)->getMaxNumEntries();
     }
     // Compute the nnz required for the reduce_scatter
-    size_t nnz_reduce_scatter = 1;
+    std::size_t nnz_reduce_scatter = 1;
     for(int i=0; i<Xtensor.rank(); i++) {
       if(i == n){
         nnz_reduce_scatter *= result.globalExtent(n);
