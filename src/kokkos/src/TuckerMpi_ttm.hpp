@@ -16,7 +16,6 @@ auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
 
   // constraints
   using tensor_type   = Tensor<ScalarType, TensorProperties...>;
-  using local_tensor_type = typename tensor_type::traits::onnode_tensor_type;
   using tensor_layout = typename tensor_type::traits::onnode_layout;
   using tensor_memory_space = typename tensor_type::traits::memory_space;
   static_assert(std::is_same_v<tensor_layout, Kokkos::LayoutLeft>,
