@@ -49,6 +49,7 @@ template <std::size_t n, class ScalarType, class ...Properties>
     {
       // Compute the global result
       const int numSlices = tensor.localExtent(mode);
+
       std::vector<tensor_value_type> sendBuf(numSlices);
       std::vector<tensor_value_type> recvBuf(numSlices);
 
@@ -80,11 +81,14 @@ template <std::size_t n, class ScalarType, class ...Properties>
 	  // Compute the size of my local slice
 	  const int ndims = tensor.rank();
 	  auto localSize = tensor.localDimensionsOnHost();
-	  const std::size_t localSliceSize = impl::prod(localSize, 0,mode-1,1) * impl::prod(localSize, mode+1, ndims-1,1);
+	  const std::size_t localSliceSize = impl::prod(localSize, 0,mode-1,1)
+	    * impl::prod(localSize, mode+1, ndims-1,1);
 
 	  // Compute the size of the global slice
 	  auto globalSize = tensor.globalDimensionsOnHost();
-	  const std::size_t globalSliceSize = impl::prod(globalSize, 0, mode-1, 1) * impl::prod(globalSize, mode+1, ndims-1, 1);
+	  const std::size_t globalSliceSize = impl::prod(globalSize, 0, mode-1, 1)
+	    * impl::prod(globalSize, mode+1, ndims-1, 1);
+
 	  auto mean_view_h = result_h.get(Tucker::Metric::MEAN);
 	  for(int i=0; i<numSlices; i++) {
 	    sendBuf[i] = mean_view_h(i) * (ScalarType)localSliceSize;
@@ -116,7 +120,6 @@ template <std::size_t n, class ScalarType, class ...Properties>
 	      var_view_h(i) = recvBuf[i] / (ScalarType)globalSliceSize;
 	    }
 	  } // end if(metrics & Tucker::VARIANCE)
-
 	} // end if((metrics & Tucker::MEAN) || (metrics & Tucker::VARIANCE))
 
       ::Tucker::deep_copy(result, result_h);
