@@ -32,7 +32,7 @@ void fill_rank1_view_from_binary_file(const Kokkos::View<DataType, Properties...
   ifs.seekg(0, std::ios::end);
   end = ifs.tellg();
   size = end - begin;
-  assert(size == v.extent(0)*sizeof(value_type));
+  assert((std::size_t) size == (std::size_t) v.extent(0)*sizeof(value_type));
 
   // we need to read into std::vector and then copy to view
   // because this has to work for possibly non-contiguous views
