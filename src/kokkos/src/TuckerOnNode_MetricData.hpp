@@ -29,6 +29,8 @@ public:
   using map_t = Kokkos::UnorderedMap<Tucker::Metric, int, MemorySpace>;
   using HostMirror = MetricData<ScalarType, Kokkos::HostSpace>;
 
+  MetricData() = default;
+
 private:
   template<class MapType, class ValuesType>
   MetricData(MapType map, ValuesType values)
@@ -86,9 +88,9 @@ private:
   auto getMap() const { return metricToColumnIndex_; }
 
   // each column contains all values of a given metric computed for all "slices"
-  Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> values_ = {};
+  Kokkos::View<ScalarType**, Kokkos::LayoutLeft, MemorySpace> values_;
 
-  map_t metricToColumnIndex_ = {};
+  map_t metricToColumnIndex_;
 };
 
 }

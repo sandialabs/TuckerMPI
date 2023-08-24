@@ -60,20 +60,25 @@ void check_scaling_type_else_throw(const std::string & scalingType)
   }
 }
 
-template <class ScalarType>
+template <class ScalarType, class MemSpace>
 void check_metricdata_usable_for_scaling_else_throw
-(const TuckerOnNode::MetricData<ScalarType, Kokkos::HostSpace> & metricData,
+(const TuckerOnNode::MetricData<ScalarType, MemSpace> & metricsData,
  const std::string & scalingType)
 {
+  auto metricsData_h = Tucker::create_mirror(metricsData);
+  Tucker::deep_copy(metricsData_h, metricsData);
+
   if(scalingType == "Max" || scalingType == "MinMax")
   {
-    if (!metricData.contains(Tucker::Metric::MAX) || !metricData.contains(Tucker::Metric::MIN) ){
+    if (!metricsData_h.contains(Tucker::Metric::MAX) ||
+	!metricsData_h.contains(Tucker::Metric::MIN) ){
       throw std::runtime_error("Error: for Max or MinMax scaling, metric data must contain Tucker::Metric::MIN, MAX");
     }
   }
 
   else if(scalingType == "StandardCentering"){
-    if (!metricData.contains(Tucker::Metric::MEAN) || !metricData.contains(Tucker::Metric::VARIANCE) ){
+    if (!metricsData_h.contains(Tucker::Metric::MEAN) ||
+	!metricsData_h.contains(Tucker::Metric::VARIANCE) ){
       throw std::runtime_error("Error: for StandardCentering scaling, metric data must contain Tucker::Metric::MEAN, VARIANCE");
     }
   }

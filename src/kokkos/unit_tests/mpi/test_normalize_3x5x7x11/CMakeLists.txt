@@ -29,7 +29,7 @@ foreach(fi bi IN ZIP_LISTS TXT_SOURCE_FILES BIN_OUTPUT_FILES)
 endforeach()
 
 # run test
-foreach(nprocs RANGE 1 3) #1 to 8
+foreach(nprocs RANGE 1 8)
   set(T1 test_normalize)
   add_utest_mpikokkos(${T1} ${CMAKE_CURRENT_SOURCE_DIR}/${T1}.cc ${nprocs})
 endforeach()
