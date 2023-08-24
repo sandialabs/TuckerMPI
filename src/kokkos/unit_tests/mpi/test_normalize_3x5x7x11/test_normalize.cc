@@ -89,19 +89,19 @@ bool runSim(std::initializer_list<int> procs)
     }
   }
 
-  // //  Normalize Tensor with StandardCentering for mode 0, 1, 2 and 3
-  // {
-  //   for(int scaleMode = 0; scaleMode < 4; scaleMode++){
-  //     read_tensor_binary(mpi_rank(), computed_T, "../tensor_data_files/3x5x7x11.bin");
-  //     read_tensor_binary(mpi_rank(), GOLD_TENSOR, "./gold_3x5x7x11_sc"+std::to_string(scaleMode)+".bin");
-  //     auto metricsData = TuckerMpi::compute_slice_metrics(mpi_rank(), computed_T, scaleMode, Tucker::defaultMetrics);
-  //     [[maybe_unused]] auto [r1,r2] = TuckerMpi::normalize_tensor(mpi_rank(), computed_T, metricsData, "StandardCentering", scaleMode, stdThresh);
+  //  Normalize Tensor with StandardCentering for mode 0, 1, 2 and 3
+  {
+    for(int scaleMode = 1; scaleMode < 4; scaleMode++){
+      read_tensor_binary(mpi_rank(), computed_T, "../tensor_data_files/3x5x7x11.bin");
+      read_tensor_binary(mpi_rank(), GOLD_TENSOR, "./gold_3x5x7x11_sc"+std::to_string(scaleMode)+".bin");
+      auto metricsData = TuckerMpi::compute_slice_metrics(mpi_rank(), computed_T, scaleMode, Tucker::defaultMetrics);
+      [[maybe_unused]] auto [r1,r2] = TuckerMpi::normalize_tensor(mpi_rank(), computed_T, metricsData, "StandardCentering", scaleMode, stdThresh);
 
-  //     if (!checks(computed_T, GOLD_TENSOR, tol)){
-  //       return false;
-  //     }
-  //   }
-  // }
+      if (!checks(computed_T, GOLD_TENSOR, tol)){
+        return false;
+      }
+    }
+  }
 
   return true;
 }

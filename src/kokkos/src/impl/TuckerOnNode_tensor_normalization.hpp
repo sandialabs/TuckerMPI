@@ -43,10 +43,9 @@ struct NormalizeFunc{
   KOKKOS_FUNCTION void operator()(const UseStandardCentering /*tag*/, int i) const{
     auto view_var  = metrics_.get(Tucker::Metric::VARIANCE);
     auto view_mean = metrics_.get(Tucker::Metric::MEAN);
+    shifts_(i) = -view_mean(i);
     scales_(i) = Kokkos::sqrt(view_var(i));
-
-    if(scales_(i) < stdThresh_) { scales_(i) = 1; }
-    else{ shifts_(i) = -view_mean(i); }
+    if( Kokkos::abs(scales_(i)) < stdThresh_) { scales_(i) = 1; }
   }
 };
 

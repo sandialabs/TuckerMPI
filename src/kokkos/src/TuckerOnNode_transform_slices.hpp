@@ -26,18 +26,15 @@ void transform_slices(Tensor<ScalarType, TensorProps...> tensor,
 		   "and double scalar");
 
   // preconditions
-  if(tensor.extent(mode) <= 0) {
+  if(mode < 0) { throw std::runtime_error("mode must be non-negative"); }
+
+  if(tensor.extent(mode) == 0) {
     std::ostringstream oss;
     oss << "TuckerOnNode::transform_slices: "
         << "for mode = " << mode << " we have tensor.extent(mode) = " << tensor.extent(mode) << " <= 0";
     throw std::runtime_error(oss.str());
   }
 
-  if(mode < 0) {
-    throw std::runtime_error("mode must be non-negative");
-  }
-
-  // execute
   if(tensor.size() > 0) {
     impl::transform_slices(tensor, mode, dividing_scales, pre_scaling_shifts);
   }

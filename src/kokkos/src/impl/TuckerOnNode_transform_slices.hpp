@@ -79,6 +79,10 @@ void transform_slices(TuckerOnNode::Tensor<ScalarType, TensorProps...> tensor,
   // Distance between sets of contiguous elements
   std::size_t distBetweenSets = tensor.prod(0,mode);
 
+  if (tensor.size() == 0){
+    return;
+  }
+
   auto itBegin = Kokkos::Experimental::begin(tensor.data());
 
   using scaling_view_t = Kokkos::View<ViewDataType1, ViewParams1...>;
