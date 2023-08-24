@@ -16,7 +16,7 @@ namespace Tucker{
 // overloads accepting a TuckerOnNode::Tensor
 //
 template<class ScalarType, class ...Properties>
-auto create_mirror(const TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
+[[nodiscard]] auto create_mirror(const TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
 {
   using tensor_type = TuckerOnNode::Tensor<ScalarType, Properties...>;
   using tensor_mirror_type = typename tensor_type::traits::HostMirror;
@@ -29,7 +29,7 @@ auto create_mirror(const TuckerOnNode::Tensor<ScalarType, Properties...> & tenso
 }
 
 template<class SpaceT, class ScalarType, class ...Properties>
-auto create_mirror_and_copy(const SpaceT & space,
+[[nodiscard]] auto create_mirror_and_copy(const SpaceT & space,
 			    const TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
 {
   using out_tensor_type = TuckerOnNode::Tensor<ScalarType, SpaceT>;
@@ -45,7 +45,7 @@ auto create_mirror_and_copy(const SpaceT & space,
 // overloads accepting a TuckerOnNode::MetricData
 //
 template<class ScalarType, class MemorySpace>
-auto create_mirror(TuckerOnNode::MetricData<ScalarType, MemorySpace> d)
+[[nodiscard]] auto create_mirror(TuckerOnNode::MetricData<ScalarType, MemorySpace> d)
 {
   using T = TuckerOnNode::MetricData<ScalarType, MemorySpace>;
   using T_mirror = typename T::HostMirror;
@@ -65,7 +65,7 @@ auto create_mirror(TuckerOnNode::MetricData<ScalarType, MemorySpace> d)
 // overloads accepting a TuckerMpi::Tensor
 //
 template<class SpaceT, class ScalarType, class ...Properties>
-auto create_mirror_and_copy(const SpaceT & space,
+[[nodiscard]] auto create_mirror_and_copy(const SpaceT & space,
 			    ::TuckerMpi::Tensor<ScalarType, Properties...> tensor)
 {
   using out_tensor_type = ::TuckerMpi::Tensor<ScalarType, SpaceT>;

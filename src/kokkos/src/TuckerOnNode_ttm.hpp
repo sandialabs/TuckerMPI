@@ -59,10 +59,10 @@ template <
   class ScalarType, class ...TensorProperties,
   class ViewDataType, class ...ViewProps
   >
-auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
-	 std::size_t mode,
-	 Kokkos::View<ViewDataType, ViewProps ...> Umatrix,
-	 bool Utransp)
+[[nodiscard]] auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
+		       std::size_t mode,
+		       Kokkos::View<ViewDataType, ViewProps ...> Umatrix,
+		       bool Utransp)
 {
 
   // constraints

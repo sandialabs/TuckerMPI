@@ -7,11 +7,11 @@
 namespace TuckerMpi{
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
-auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
-         int n,
-         Kokkos::View<ScalarType**, ViewProperties...> Umatrix,
-         bool Utransp,
-         std::size_t nnz_limit)
+[[nodiscard]] auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
+		       int n,
+		       Kokkos::View<ScalarType**, ViewProperties...> Umatrix,
+		       bool Utransp,
+		       std::size_t nnz_limit)
 {
 
   // constraints
