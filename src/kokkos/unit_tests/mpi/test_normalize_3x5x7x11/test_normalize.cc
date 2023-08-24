@@ -75,20 +75,20 @@ bool runSim(std::initializer_list<int> procs)
   std::vector<int> dims = {3, 5, 7, 11};
   Tensor<scalar_t> computed_T(dims, procs);
   Tensor<scalar_t> GOLD_TENSOR(dims, procs);
-  
+
   // Normalize Tensor with MinMax for mode 0, 1, 2 and 3
   {
     for(int scaleMode = 0; scaleMode < 4; scaleMode++){
       read_tensor_binary(mpi_rank(), computed_T, "../tensor_data_files/3x5x7x11.bin");
       read_tensor_binary(mpi_rank(), GOLD_TENSOR, "./gold_3x5x7x11_mm"+std::to_string(scaleMode)+".bin");
-      auto metricsData = TuckerMpi::compute_slice_metrics(mpi_rank(), computed_T, scaleMode, Tucker::defaultMetrics);   
-      [[maybe_unused]] auto [r1,r2] = TuckerMpi::normalize_tensor(mpi_rank(), computed_T, metricsData, "MinMax", scaleMode, stdThresh);    
+      auto metricsData = TuckerMpi::compute_slice_metrics(mpi_rank(), computed_T, scaleMode, Tucker::defaultMetrics);
+      [[maybe_unused]] auto [r1,r2] = TuckerMpi::normalize_tensor(mpi_rank(), computed_T, metricsData, "MinMax", scaleMode, stdThresh);
       if (!checks(computed_T, GOLD_TENSOR, tol)){
         return false;
       }
     }
   }
-  
+
   // // Normalize Tensor with StandardCentering for mode 0, 1, 2 and 3
   // {
   //   for(int scaleMode = 0; scaleMode < 4; scaleMode++){
@@ -135,7 +135,7 @@ TEST(tuckermpi, normalize_nprocs3)
 TEST(tuckermpi, normalize_nprocs4)
 {
   if(mpi_size() == 4) {
-    // ASSERT_TRUE(runSim({4,1,1,1}));
+    ASSERT_TRUE(runSim({4,1,1,1}));
     ASSERT_TRUE(runSim({1,4,1,1}));
     ASSERT_TRUE(runSim({1,1,4,1}));
     ASSERT_TRUE(runSim({1,1,1,4}));
