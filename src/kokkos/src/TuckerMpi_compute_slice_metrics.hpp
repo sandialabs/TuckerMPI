@@ -16,6 +16,7 @@ template <std::size_t n, class ScalarType, class ...Properties>
 {
   using tensor_type = Tensor<ScalarType, Properties...>;
   using tensor_layout = typename tensor_type::traits::onnode_layout;
+  using tensor_mem_space = typename tensor_type::traits::memory_space;
   using tensor_value_type = typename tensor_type::traits::value_type;
 
   // constraints

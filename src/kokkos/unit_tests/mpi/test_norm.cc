@@ -11,6 +11,12 @@ using scalar_t = double;
 
 const MPI_Comm comm = MPI_COMM_WORLD;
 
+int mpi_rank(){
+  int rank;
+  MPI_Comm_rank(comm, &rank);
+  return rank;
+}
+
 int mpi_size(){
   int nprocs;
   MPI_Comm_size(comm, &nprocs);
@@ -21,7 +27,7 @@ bool runSim(std::initializer_list<int> procs)
 {
   std::vector<int> dims = {3, 5, 7, 11};
   Tensor<scalar_t> T(dims, procs);
-  read_tensor_binary(T, "./tensor_data_files/3x5x7x11.bin");
+  read_tensor_binary(mpi_rank(), T, "./tensor_data_files/3x5x7x11.bin");
 
   scalar_t computed_norm = sqrt(T.frobeniusNormSquared());
 

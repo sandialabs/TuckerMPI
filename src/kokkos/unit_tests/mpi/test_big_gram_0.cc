@@ -39,7 +39,7 @@ TEST(tuckermpi, big_gram_0)
   std::vector<int> dims = {4, 4, 4};
   std::vector<int> procs = {2, 2, 2};
   Tensor<scalar_t> T(dims, procs);
-  read_tensor_binary(T, "./tensor_data_files/4x4x4.bin");
+  read_tensor_binary(mpi_rank(), T, "./tensor_data_files/4x4x4.bin");
  
   auto matrix = TuckerMpi::compute_gram(T, 0);
   auto m_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), matrix);
