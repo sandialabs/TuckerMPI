@@ -38,7 +38,12 @@ template <std::size_t n, class ScalarType, class ...Properties>
   const int numSlices = tensor.extent(mode);
   TuckerOnNode::MetricData<ScalarType, tensor_mem_space> result(metrics, numSlices);
   if (tensor.size() > 0){
-    impl::compute_slice_metrics(tensor, mode, metrics, result);
+#if 1
+    impl::compute_slice_metrics_use_hierarc_par(tensor, mode, metrics, result);
+#else
+    // the naive impl is a simple porting of the original code
+    impl::compute_slice_metrics_naive(tensor, mode, metrics, result);
+#endif
   }
   return result;
 }
