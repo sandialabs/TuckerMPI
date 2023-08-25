@@ -18,6 +18,7 @@ struct TensorTraits;
 template<class ScalarType>
 struct TensorTraits<void, ScalarType>{
   using array_layout   = Kokkos::LayoutLeft;
+  using execution_space = Kokkos::DefaultExecutionSpace;
   using memory_space   = typename Kokkos::DefaultExecutionSpace::memory_space;
   using data_view_type = Kokkos::View<ScalarType*, array_layout, memory_space>;
   using value_type     = typename data_view_type::value_type;
@@ -30,6 +31,7 @@ struct TensorTraits<
 {
   using array_layout = Kokkos::LayoutLeft;
   using memory_space = MemSpace;
+  using execution_space = typename memory_space::execution_space;
   using data_view_type = Kokkos::View<ScalarType*, array_layout, memory_space>;
   using value_type     = typename data_view_type::value_type;
   using HostMirror = Tensor<ScalarType, Kokkos::HostSpace>;
