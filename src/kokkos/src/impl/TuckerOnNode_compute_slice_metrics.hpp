@@ -8,6 +8,11 @@
 namespace TuckerOnNode {
 namespace impl{
 
+
+//FIXME: FRizzi August 23:
+// using kokkos 4.0.0 this does not work for cuda, we need to use a custom reduction
+// https://kokkos.github.io/kokkos-core-wiki/ProgrammingGuide/Custom-Reductions-Custom-Reducers.html
+#if 0
 template<class ItType, class ScalarType, class MemSpace>
 struct MatricsHiParFunctor{
   using metric_data_t = MetricData<ScalarType, MemSpace>;
@@ -81,6 +86,7 @@ struct MatricsHiParFunctor{
     }
   }
 };
+#endif
 
 template<
   class ItType, class ScalarType, class MemSpace,
@@ -163,6 +169,7 @@ void normalize_variance(MetricData<ScalarType, MemSpace> metricData,
 		       });
 }
 
+#if 0
 template <std::size_t n, class ScalarType, class ...Properties, class MemSpace>
 void compute_slice_metrics_use_hierarc_par(Tensor<ScalarType, Properties...> Y,
 					   const int mode,
@@ -188,6 +195,7 @@ void compute_slice_metrics_use_hierarc_par(Tensor<ScalarType, Properties...> Y,
 		       MatricsHiParFunctor(itBegin, numContig, numSetsContig,
 					   distBetweenSets, metricsData));
 }
+#endif
 
 template <std::size_t n, class ScalarType, class ...Properties, class MemSpace>
 void compute_slice_metrics_naive(Tensor<ScalarType, Properties...> Y,
