@@ -18,6 +18,7 @@ struct TensorTraits;
 
 template<class ScalarType> struct TensorTraits<void, ScalarType>{
   using memory_space       = typename Kokkos::DefaultExecutionSpace::memory_space;
+  using execution_space    = Kokkos::DefaultExecutionSpace;
   using onnode_tensor_type = TuckerOnNode::Tensor<ScalarType, memory_space>;
   using value_type         = typename onnode_tensor_type::traits::data_view_type::value_type;
   using onnode_layout      = typename onnode_tensor_type::traits::array_layout;
@@ -27,9 +28,10 @@ template<class ScalarType, class MemSpace>
 struct TensorTraits<
   std::enable_if_t< Kokkos::is_memory_space_v<MemSpace> >, ScalarType, MemSpace >
 {
-  using memory_space = MemSpace;
+  using memory_space       = MemSpace;
+  using execution_space    = typename memory_space::execution_space;
   using onnode_tensor_type = TuckerOnNode::Tensor<ScalarType, memory_space>;
-  using value_type = typename onnode_tensor_type::traits::data_view_type::value_type;
+  using value_type         = typename onnode_tensor_type::traits::data_view_type::value_type;
   using onnode_layout      = typename onnode_tensor_type::traits::array_layout;
 };
 }//end namespace impl
