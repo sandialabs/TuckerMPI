@@ -13,11 +13,11 @@ namespace TuckerOnNode{
 
 template <
   class ScalarType, class ...TensorProperties,
-  class ViewDataType, class ...ViewProps
+  class ViewDataType, class ...ViewProperties
   >
 void ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
 	 std::size_t mode,
-	 Kokkos::View<ViewDataType, ViewProps ...> Umatrix,
+	 Kokkos::View<ViewDataType, ViewProperties ...> Umatrix,
 	 Tensor<ScalarType, TensorProperties...> Ytensor,
 	 bool Utransp)
 {
@@ -57,11 +57,11 @@ void ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
 
 template <
   class ScalarType, class ...TensorProperties,
-  class ViewDataType, class ...ViewProps
+  class ViewDataType, class ...ViewProperties
   >
 [[nodiscard]] auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
 		       std::size_t mode,
-		       Kokkos::View<ViewDataType, ViewProps ...> Umatrix,
+		       Kokkos::View<ViewDataType, ViewProperties ...> Umatrix,
 		       bool Utransp)
 {
 

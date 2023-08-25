@@ -15,6 +15,7 @@ template<class ScalarType, class ...Properties>
   using memory_space      = typename tensor_type::traits::memory_space;
   using onnode_layout     = typename tensor_type::traits::onnode_layout;
   using tensor_value_type = typename tensor_type::traits::value_type;
+  using gram_type         = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space>;
 
   // constraints
   static_assert(   std::is_same_v<onnode_layout, Kokkos::LayoutLeft>
@@ -24,8 +25,7 @@ template<class ScalarType, class ...Properties>
 
   //
   // compute local gram
-  using gram_t = Kokkos::View<ScalarType**, Kokkos::LayoutLeft, memory_space>;
-  gram_t localGram;
+  gram_type localGram;
 
   const MPI_Comm& comm = tensor.getDistribution().getProcessorGrid().getColComm(n, false);
   int numProcs;
@@ -42,7 +42,7 @@ template<class ScalarType, class ...Properties>
   const std::size_t nrows = localGram.extent(0);
   const std::size_t ncols = localGram.extent(1);
   const std::size_t count = nrows*ncols;
-  gram_t reducedGram("reducedGram", nrows, ncols);
+  gram_type reducedGram("reducedGram", nrows, ncols);
 
   auto reducedGram_h = Kokkos::create_mirror(reducedGram);
   auto localGram_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localGram);
