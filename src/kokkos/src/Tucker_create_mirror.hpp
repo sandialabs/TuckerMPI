@@ -23,21 +23,19 @@ template<class ScalarType, class ...Properties>
 
   auto tensor_view_h = Kokkos::create_mirror(tensor.data());
   auto tensor_dims_h = tensor.dimensionsOnHost();
-  auto dims_vec = impl::create_stdvec_from_view(tensor_dims_h);
-  tensor_mirror_type tensor_h(dims_vec, tensor_view_h);
+  tensor_mirror_type tensor_h(tensor_dims_h, tensor_view_h);
   return tensor_h;
 }
 
 template<class SpaceT, class ScalarType, class ...Properties>
 [[nodiscard]] auto create_mirror_and_copy(const SpaceT & space,
-			    const TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
+					  const TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
 {
   using out_tensor_type = TuckerOnNode::Tensor<ScalarType, SpaceT>;
 
   auto tensor_view = Kokkos::create_mirror_view_and_copy(space, tensor.data());
   auto tensor_dims_h = tensor.dimensionsOnHost();
-  auto dims_vec = impl::create_stdvec_from_view(tensor_dims_h);
-  out_tensor_type Tout(dims_vec, tensor_view);
+  out_tensor_type Tout(tensor_dims_h, tensor_view);
   return Tout;
 }
 
@@ -66,7 +64,7 @@ template<class ScalarType, class MemorySpace>
 //
 template<class SpaceT, class ScalarType, class ...Properties>
 [[nodiscard]] auto create_mirror_and_copy(const SpaceT & space,
-			    ::TuckerMpi::Tensor<ScalarType, Properties...> tensor)
+					  ::TuckerMpi::Tensor<ScalarType, Properties...> tensor)
 {
   using out_tensor_type = ::TuckerMpi::Tensor<ScalarType, SpaceT>;
 

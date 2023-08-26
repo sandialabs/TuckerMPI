@@ -4,6 +4,7 @@
 #include "./impl/Tucker_stdvec_view_conversion_helpers.hpp"
 #include "KokkosBlas1_nrm2.hpp"
 #include <Kokkos_Random.hpp>
+#include <Kokkos_StdAlgorithms.hpp>
 #include <numeric>
 
 namespace TuckerOnNode{
@@ -78,24 +79,70 @@ public:
   explicit Tensor(std::initializer_list<int> list)
     : Tensor(std::vector<int>(list)){}
 
-  explicit Tensor(const std::vector<int> & v)
-    : rank_(v.size()), dims_("dims", rank_), dims_h_("dims_h", rank_)
+  explicit Tensor(const std::vector<int> & dimsIn)
+    : rank_(dimsIn.size()),
+      dims_("dims", rank_),
+      dims_h_("dims_h", rank_)
   {
-    Tucker::impl::copy_stdvec_to_view(v, dims_h_);
+    Tucker::impl::copy_stdvec_to_view(dimsIn, dims_h_);
     Kokkos::deep_copy(dims_, dims_h_);
     const std::size_t init = 1;
-    const std::size_t numEl = std::accumulate(v.cbegin(), v.cend(), init, std::multiplies<std::size_t>());
+    const std::size_t numEl = std::accumulate(dimsIn.cbegin(), dimsIn.cend(),
+					      init, std::multiplies<std::size_t>());
     // allocate for data
     data_ = data_view_type("tensorData", numEl);
   }
 
   template<class DataView>
-  Tensor(const std::vector<int> & v, DataView dataIn)
-    : rank_(v.size()), dims_("dims", rank_),
-      dims_h_("dims_h", rank_), data_(dataIn)
+  Tensor(const std::vector<int> & dimsIn, DataView dataIn)
+    : rank_(dimsIn.size()),
+      dims_("dims", rank_),
+      dims_h_("dims_h", rank_),
+      data_(dataIn)
   {
-    Tucker::impl::copy_stdvec_to_view(v, dims_h_);
+    Tucker::impl::copy_stdvec_to_view(dimsIn, dims_h_);
     Kokkos::deep_copy(dims_, dims_h_);
+
+    // check that the data extent is consistent with the dimsIn
+    const std::size_t init = 1;
+    const std::size_t numEl = std::accumulate(dimsIn.cbegin(), dimsIn.cend(),
+					      init, std::multiplies<std::size_t>());
+    if (data_.extent(0) != numEl){
+      Kokkos::abort("TuckerOnNode:: data.extent(0) is not compatible with the dimensions provided");
+    }
+  }
+
+  explicit Tensor(const dims_host_const_view_type & dimsIn)
+    : rank_(dimsIn.size()),
+      dims_("dims", rank_),
+      dims_h_("dims_h", rank_)
+  {
+    namespace KE = Kokkos::Experimental;
+    KE::copy(Kokkos::DefaultHostExecutionSpace(), dimsIn, dims_h_);
+    Kokkos::deep_copy(dims_, dims_h_);
+    const std::size_t init = 1;
+    const std::size_t numEl = std::accumulate(KE::cbegin(dimsIn), KE::cend(dimsIn),
+					      init, std::multiplies<std::size_t>());
+    data_ = data_view_type("tensorData", numEl);
+  }
+
+  template<class DataView>
+  explicit Tensor(const dims_host_const_view_type & dimsIn,
+		  DataView dataIn)
+    : rank_(dimsIn.size()),
+      dims_("dims", rank_),
+      dims_h_("dims_h", rank_),
+      data_(dataIn)
+  {
+    namespace KE = Kokkos::Experimental;
+    KE::copy(Kokkos::DefaultHostExecutionSpace(), dimsIn, dims_h_);
+    Kokkos::deep_copy(dims_, dims_h_);
+    const std::size_t init = 1;
+    const std::size_t numEl = std::accumulate(KE::cbegin(dimsIn), KE::cend(dimsIn),
+					      init, std::multiplies<std::size_t>());
+    if (data_.extent(0) != numEl){
+      Kokkos::abort("TuckerOnNode:: data.extent(0) is not compatible with the dimensions provided");
+    }
   }
 
   Tensor(const Tensor& o) = default;
