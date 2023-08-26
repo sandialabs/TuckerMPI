@@ -18,6 +18,8 @@ namespace Tucker{
 template<class ScalarType, class ...Properties>
 [[nodiscard]] auto create_mirror(const TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
 {
+  // create_mirror always makes a new allocation
+
   using tensor_type = TuckerOnNode::Tensor<ScalarType, Properties...>;
   using tensor_mirror_type = typename tensor_type::traits::HostMirror;
 
@@ -27,9 +29,16 @@ template<class ScalarType, class ...Properties>
   return tensor_h;
 }
 
-template<class SpaceT, class ScalarType, class ...Properties>
+template<
+  class SpaceT, class ScalarType, class ...Properties,
+  std::enable_if_t<
+     !std::is_same<
+       typename SpaceT::memory_space,
+       typename TuckerOnNode::Tensor<ScalarType, Properties...>::traits::memory_space
+       >::value, int > = 0
+  >
 [[nodiscard]] auto create_mirror_tensor_and_copy(const SpaceT & space,
-					  const TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
+						 const TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
 {
   using out_tensor_type = TuckerOnNode::Tensor<ScalarType, SpaceT>;
 
@@ -37,6 +46,20 @@ template<class SpaceT, class ScalarType, class ...Properties>
   auto tensor_dims_h = tensor.dimensionsOnHost();
   out_tensor_type Tout(tensor_dims_h, tensor_view);
   return Tout;
+}
+
+template<
+  class SpaceT, class ScalarType, class ...Properties,
+  std::enable_if_t<
+    std::is_same<
+      typename SpaceT::memory_space,
+      typename TuckerOnNode::Tensor<ScalarType, Properties...>::traits::memory_space
+      >::value, int > = 0
+  >
+[[nodiscard]] auto create_mirror_tensor_and_copy(const SpaceT & space,
+						 const TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
+{
+  return tensor;
 }
 
 //
@@ -62,20 +85,39 @@ template<class ScalarType, class MemorySpace>
 //
 // overloads accepting a TuckerMpi::Tensor
 //
-template<class SpaceT, class ScalarType, class ...Properties>
+template<
+  class SpaceT, class ScalarType, class ...Properties,
+  std::enable_if_t<
+    !std::is_same<
+      typename SpaceT::memory_space,
+      typename ::TuckerMpi::Tensor<ScalarType, Properties...>::traits::memory_space
+      >::value, int > = 0
+  >
 [[nodiscard]] auto create_mirror_tensor_and_copy(const SpaceT & space,
-					  ::TuckerMpi::Tensor<ScalarType, Properties...> tensor)
+						 ::TuckerMpi::Tensor<ScalarType, Properties...> tensor)
 {
   using out_tensor_type = ::TuckerMpi::Tensor<ScalarType, SpaceT>;
 
   const ::TuckerMpi::Distribution & tensor_dist = tensor.getDistribution();
   auto tensor_local_tensor = tensor.localTensor();
-
   out_tensor_type Tout(tensor_dist);
   auto Tout_local_tensor = Tout.localTensor();
   Tucker::deep_copy(Tout_local_tensor, tensor_local_tensor);
-
   return Tout;
+}
+
+template<
+  class SpaceT, class ScalarType, class ...Properties,
+  std::enable_if_t<
+    std::is_same<
+      typename SpaceT::memory_space,
+      typename ::TuckerMpi::Tensor<ScalarType, Properties...>::traits::memory_space
+      >::value, int > = 0
+  >
+[[nodiscard]] auto create_mirror_tensor_and_copy(const SpaceT & space,
+						 ::TuckerMpi::Tensor<ScalarType, Properties...> tensor)
+{
+  return tensor;
 }
 #endif
 
