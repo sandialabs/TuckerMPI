@@ -196,7 +196,7 @@ void write_tensor_binary(const int mpiRank,
 
   if(tensor.getDistribution().ownNothing()) { return; }
 
-  auto tensor_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), tensor);
+  auto tensor_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), tensor);
   auto tensor_local_view_h = tensor_h.localTensor().data();
 
   const int ndims = tensor_h.rank();

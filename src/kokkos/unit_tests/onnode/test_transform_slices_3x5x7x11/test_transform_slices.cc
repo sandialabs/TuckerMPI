@@ -11,8 +11,8 @@ bool checks(TuckerOnNode::Tensor<ScalarType, Props1...> t1,
             TuckerOnNode::Tensor<ScalarType, Props2...> t2,
             ScalarType tol)
 {
-  auto t1_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), t1);
-  auto t2_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), t2);
+  auto t1_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), t1);
+  auto t2_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), t2);
 
   // 1) Owns any data
   if(t1_h.size() == 0 && t2_h.size() == 0){

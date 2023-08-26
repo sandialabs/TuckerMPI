@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     // core tensor
     std::cout << "Generating a random core tensor...\n";
     tensor_type G(R_dims);
-    auto G_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), G);
+    auto G_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), G);
     auto G_view_h = G_h.data();
     for(size_t i=0; i<G.size(); i++) {
       G_view_h(i) = distribution(generator);
@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
     // Note that this is space-efficient, as we do not store the entire noise tensor
     //////////////////////////////////////////////////////////////////////
     std::cout << "Adding noise...\n";
-    auto Y_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), Y);
+    auto Y_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), Y);
     auto Y_h_view = Y_h.data();
     for(size_t i=0; i<nnz; i++) {
       Y_h_view(i) += alpha*distribution(generator);

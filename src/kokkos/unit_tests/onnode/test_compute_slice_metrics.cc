@@ -29,7 +29,7 @@ TEST(tuckerkokkos, compute_slice_metrics_mode0){
   // Create & fill tensor
   std::vector<int> dims = {2, 2, 2};
   TuckerOnNode::Tensor<scalar_t> tensor(dims);
-  auto tensor_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), tensor);
+  auto tensor_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), tensor);
   auto tensor_data = tensor_h.data();
   for(int i=0; i<8; i++){
     tensor_data(i) = i;
@@ -59,7 +59,7 @@ TEST(tuckerkokkos, compute_slice_metrics_mode1){
   // Create & fill tensor
   std::vector<int> dims = {2, 2, 2};
   TuckerOnNode::Tensor<scalar_t> tensor(dims);
-  auto tensor_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), tensor);
+  auto tensor_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), tensor);
   auto tensor_data = tensor_h.data();
   for(int i=0; i<8; i++){
     tensor_data(i) = i;
@@ -88,7 +88,7 @@ TEST(tuckerkokkos, compute_slice_metrics_mode2){
   // Create & fill tensor
   std::vector<int> dims = {2, 2, 2};
   TuckerOnNode::Tensor<scalar_t> tensor(dims);
-  auto tensor_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), tensor);
+  auto tensor_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), tensor);
   auto tensor_data = tensor_h.data();
   for(int i=0; i<8; i++){
     tensor_data(i) = i;
@@ -118,7 +118,7 @@ TEST(tuckerkokkos, compute_slice_metrics_2x3x5x7_allmode)
 
   // Create tensor
   TuckerOnNode::Tensor<scalar_t> tensor({2, 3, 5, 7});
-  auto tensor_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), tensor);
+  auto tensor_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), tensor);
   auto tensor_data = tensor_h.data();
   for(std::size_t i=0; i<tensor.size(); i++){
     tensor_data(i) = i+1;

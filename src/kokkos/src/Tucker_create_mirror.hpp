@@ -28,7 +28,7 @@ template<class ScalarType, class ...Properties>
 }
 
 template<class SpaceT, class ScalarType, class ...Properties>
-[[nodiscard]] auto create_mirror_and_copy(const SpaceT & space,
+[[nodiscard]] auto create_mirror_tensor_and_copy(const SpaceT & space,
 					  const TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
 {
   using out_tensor_type = TuckerOnNode::Tensor<ScalarType, SpaceT>;
@@ -63,7 +63,7 @@ template<class ScalarType, class MemorySpace>
 // overloads accepting a TuckerMpi::Tensor
 //
 template<class SpaceT, class ScalarType, class ...Properties>
-[[nodiscard]] auto create_mirror_and_copy(const SpaceT & space,
+[[nodiscard]] auto create_mirror_tensor_and_copy(const SpaceT & space,
 					  ::TuckerMpi::Tensor<ScalarType, Properties...> tensor)
 {
   using out_tensor_type = ::TuckerMpi::Tensor<ScalarType, SpaceT>;

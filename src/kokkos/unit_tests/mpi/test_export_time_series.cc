@@ -22,7 +22,7 @@ TEST(tuckermpi_tensor_io, export_time_series_A)
   TuckerMpi::Distribution dist(tensorDims, procGrid);
   tensor_type T(dist);
   auto T_l = T.localTensor();
-  auto Tl_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), T_l);
+  auto Tl_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), T_l);
   auto T_h_view = Tl_h.data();
   for(size_t i=0; i<T_h_view.extent(0); i++) {
     T_h_view(i) = i;

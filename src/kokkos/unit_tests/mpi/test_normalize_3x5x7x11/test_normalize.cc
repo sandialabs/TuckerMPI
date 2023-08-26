@@ -30,8 +30,8 @@ bool checks(const Tensor<scalar_t, Props1...> t1,
             const Tensor<scalar_t, Props2...> t2,
             scalar_t tol)
 {
-  auto t1_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), t1);
-  auto t2_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), t2);
+  auto t1_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), t1);
+  auto t2_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), t2);
 
   // GLOBAL - 1) Same size
   if(t1_h.globalSize() != t2_h.globalSize()) {

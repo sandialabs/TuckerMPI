@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
     tensor_type G(procDist);
 
     auto Gl = G.localTensor();
-    auto Gl_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), Gl);
+    auto Gl_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), Gl);
     auto Gl_view_h = Gl_h.data();
     for(size_t i=0; i<Gl_h.size(); i++) {
       Gl_view_h(i) = distribution(generator);
@@ -126,7 +126,7 @@ int main(int argc, char* argv[])
     //////////////////////////////////////////////////////////////////////
     if (mpiRank==0){ std::cout << "Adding noise...\n"; }
     auto Y_local = Y.localTensor();
-    auto Yl_h = Tucker::create_mirror_and_copy(Kokkos::HostSpace(), Y_local);
+    auto Yl_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), Y_local);
     auto Y_h_view = Yl_h.data();
     for(size_t i=0; i<Y_h_view.extent(0); i++) {
       Y_h_view(i) += alpha*distribution(generator);
