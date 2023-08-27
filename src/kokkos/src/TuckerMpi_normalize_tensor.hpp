@@ -16,11 +16,19 @@ template <class ScalarType, class MetricMemSpace, class ...Props>
 				    const int scaleMode,
 				    const ScalarType stdThresh)
 {
-  // preconditions
-  ::TuckerOnNode::impl::check_scaling_type_else_throw(scalingType);
 
   using tensor_type = ::TuckerMpi::Tensor<ScalarType, Props...>;
+  using onnode_layout = typename tensor_type::traits::onnode_layout;
   using tensor_mem_space = typename tensor_type::traits::memory_space;
+
+  // constraints
+  static_assert(   std::is_same_v<onnode_layout, Kokkos::LayoutLeft>
+    && std::is_same_v<std::remove_cv_t<ScalarType>, double>,
+       "TuckerMpi::normalize_tensor: supports tensors with LayoutLeft" \
+       "and double scalar type");
+
+  // preconditions
+  ::TuckerOnNode::impl::check_scaling_type_else_throw(scalingType);
 
   Kokkos::View<ScalarType*, tensor_mem_space> scales;
   Kokkos::View<ScalarType*, tensor_mem_space> shifts;

@@ -20,7 +20,13 @@ template <class ScalarType, class MetricMemSpace, class ...Props>
   impl::check_metricdata_usable_for_scaling_else_throw(metricsData, scalingType);
 
   using tensor_type = TuckerOnNode::Tensor<ScalarType, Props...>;
+  using tensor_layout     = typename tensor_type::traits::array_layout;
   using tensor_mem_space = typename tensor_type::traits::memory_space;
+  using tensor_value_type = typename tensor_type::traits::value_type;
+  static_assert(std::is_same_v<tensor_layout, Kokkos::LayoutLeft>
+    && std::is_same_v<std::remove_cv_t<tensor_value_type>, double>,
+    "TuckerOnNode::normalize_tensor: currently supports tensors with LayoutLeft" \
+    "and double scalar type");
 
   // 1. use metrics to fill scales and shifts depending on the scalingType
   Kokkos::View<ScalarType*, tensor_mem_space> scales("scales", tensor.extent(scaleMode));
