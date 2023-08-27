@@ -6,7 +6,6 @@
  */
 
 #include "TuckerMPI_ttm.hpp"
-#include <unistd.h>
 
 namespace TuckerMPI
 {
@@ -18,10 +17,6 @@ Tensor<scalar_t>* ttm(const Tensor<scalar_t>* X, const int n,
     Tucker::Timer* reduce_scatter_timer,
     Tucker::Timer* reduce_timer, size_t nnz_limit)
 {
-  int _myrank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &_myrank);
-
-
   // Compute the number of rows for the resulting "matrix"
   int nrows;
   if(Utransp)
@@ -56,10 +51,6 @@ Tensor<scalar_t>* ttm(const Tensor<scalar_t>* X, const int n,
   int Pn = X->getDistribution()->getProcessorGrid()->getNumProcs(n,false);
   if(Pn == 1)
   {
-    if (_myrank == 0){
-      std::cout << "MPITTM: Pn==1 \n";
-    }
-
     if(!X->getDistribution()->ownNothing()) {
       // Compute the TTM
       if(mult_timer) mult_timer->start();
@@ -69,10 +60,6 @@ Tensor<scalar_t>* ttm(const Tensor<scalar_t>* X, const int n,
   }
   else
   {
-    if (_myrank == 0){
-      std::cout << "MPITTM: Pn!=1 \n";
-    }
-
     // Get the local communicator
     const MPI_Comm& comm = X->getDistribution()->getProcessorGrid()->getColComm(n,false);
 
@@ -122,10 +109,6 @@ Tensor<scalar_t>* ttm(const Tensor<scalar_t>* X, const int n,
 
     // If the required memory is small, we can do a single reduce_scatter
     if(nnz_reduce_scatter <= std::max(max_lcl_nnz_x,nnz_limit)) {
-      if (_myrank == 0){
-	std::cout << "MPITTM: single reduct_scatter\n";
-      }
-
       // Compute the TTM
       Tucker::Tensor<scalar_t>* localResult;
       if(X->getDistribution()->ownNothing()) {
@@ -138,38 +121,16 @@ Tensor<scalar_t>* ttm(const Tensor<scalar_t>* X, const int n,
         localResult->initialize();
       }
       else {
-	// // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	// sleep(_myrank*1);
-	// //if (_myrank == 0){
-	// std::cout << "_______BEFORE TTM_________" << _myrank << "\n";
-	// localX->print();
-	// //std::cout << U->prettyPrint() << std::endl;
-	// std::cout << uGlobalRows << " " << stride << "\n";
-	// //}
-	// MPI_Barrier(MPI_COMM_WORLD);
-
         if(mult_timer) mult_timer->start();
-        localResult = Tucker::ttm(localX, n, Uptr, uGlobalRows, stride, Utransp);
+        localResult = Tucker::ttm(localX, n, Uptr,
+                  uGlobalRows, stride, Utransp);
         if(mult_timer) mult_timer->stop();
       }
-
-      // sleep(5);
-      // sleep(_myrank*1);
-      // std::cout << "_______AFTER TTM_________" << _myrank << "\n";
-      // localResult->print(15);
-      // MPI_Barrier(MPI_COMM_WORLD);
-      // sleep(5);
 
       // Pack the data
       if(pack_timer) pack_timer->start();
       packForTTM(localResult,n,yMap);
       if(pack_timer) pack_timer->stop();
-
-      // sleep(_myrank*1);
-      // std::cout << "_______PACK_________" << _myrank << "\n";
-      // localResult->print(14);
-      // MPI_Barrier(MPI_COMM_WORLD);
-      // MPI_Barrier(MPI_COMM_WORLD);
 
       // Perform a reduce-scatter
       const scalar_t* sendBuf;
@@ -181,8 +142,7 @@ Tensor<scalar_t>* ttm(const Tensor<scalar_t>* X, const int n,
       if(localY->getNumElements() > 0)
         recvBuf = localY->data();
       else
-	recvBuf = 0;
-
+        recvBuf = 0;
       int nprocs;
       MPI_Comm_size(comm,&nprocs);
       int* recvCounts = Tucker::MemoryManager::safe_new_array<int>(nprocs);

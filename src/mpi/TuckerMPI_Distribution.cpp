@@ -39,7 +39,6 @@
 #include <algorithm>
 #include "TuckerMPI_Distribution.hpp"
 #include "mpi.h"
-#include <limits>
 
 namespace TuckerMPI {
 

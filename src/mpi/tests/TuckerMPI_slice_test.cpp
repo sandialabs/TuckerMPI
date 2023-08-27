@@ -37,7 +37,6 @@ int main(int argc, char* argv[])
     success = runSim(*procs); if(!success) return EXIT_FAILURE;
   }
   else if(nprocs == 3) {
-
     (*procs)[0] = 3; (*procs)[1] = 1; (*procs)[2] = 1; (*procs)[3] = 1;
     success = runSim(*procs); if(!success) return EXIT_FAILURE;
 
@@ -50,7 +49,6 @@ int main(int argc, char* argv[])
     (*procs)[0] = 1; (*procs)[1] = 1; (*procs)[2] = 1; (*procs)[3] = 3;
     success = runSim(*procs); if(!success) return EXIT_FAILURE;
   }
-
   else if(nprocs == 4) {
     (*procs)[0] = 4; (*procs)[1] = 1; (*procs)[2] = 1; (*procs)[3] = 1;
     success = runSim(*procs); if(!success) return EXIT_FAILURE;

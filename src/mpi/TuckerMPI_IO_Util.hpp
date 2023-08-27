@@ -70,7 +70,7 @@ void printSingularValues(const TuckerTensor<scalar_t>* factorization,
     }
     else{
       for(int i=0; i<nevals; i++) {
-        ofs << std::setprecision(16) << /*sqrt(std::abs(*/factorization->eigenvalues[mode][i]/*))*/ << std::endl;
+        ofs << std::setprecision(16) << sqrt(std::abs(factorization->eigenvalues[mode][i])) << std::endl;
       }
     }
     ofs.close();

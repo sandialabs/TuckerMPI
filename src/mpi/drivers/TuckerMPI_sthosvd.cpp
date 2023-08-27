@@ -14,7 +14,6 @@
 #include <iomanip>
 #include <fstream>
 #include "assert.h"
-#include <unistd.h>
 
 int main(int argc, char* argv[])
 {
@@ -385,7 +384,7 @@ int main(int argc, char* argv[])
   preprocessTimer.start();
   if(scaling_type == "Max") {
     if(rank == 0) {
-      std::cout << "Normalizing the tensor by maximum entry - mode "
+      std::cout << "Normalizing the tensor by maximum entry - mode " 
                 << scale_mode << std::endl;
     }
     normalizeTensorMax(&X, scale_mode);
@@ -421,7 +420,7 @@ int main(int argc, char* argv[])
   if(boolWritePreprocessed) {
     TuckerMPI::writeTensorBinary(pre_fns_file,X);
   }
-
+  
   /////////////////////
   // Perform STHOSVD //
   /////////////////////
@@ -429,14 +428,10 @@ int main(int argc, char* argv[])
     const TuckerMPI::TuckerTensor<scalar_t>* solution;
     bool flipSign = false; // confirm its default as false
     if(boolAuto) {
-      solution = TuckerMPI::STHOSVD(&X, tol, modeOrder->data(),
-				    boolUseOldGram, flipSign,
-				    boolUseLQ, useButterflyTSQR);
+      solution = TuckerMPI::STHOSVD(&X, tol, modeOrder->data(), boolUseOldGram, flipSign, boolUseLQ, useButterflyTSQR);
     }
     else {
-      solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(),
-				    boolUseOldGram, flipSign,
-				    boolUseLQ, useButterflyTSQR);
+      solution = TuckerMPI::STHOSVD(&X, R_dims, modeOrder->data(), boolUseOldGram, flipSign, boolUseLQ, useButterflyTSQR);
     }
 
     // Send the timing information to a CSV
@@ -452,23 +447,17 @@ int main(int argc, char* argv[])
         TuckerMPI::printEigenvectors(solution, filePrefix);
       }
     }
-
-    // MPI_Barrier(MPI_COMM_WORLD);
-    // sleep(rank*1);
-    // auto lT = solution->G->getLocalTensor();
-    // lT->print(15);
-
     MPI_Barrier(MPI_COMM_WORLD);
     scalar_t xnorm2 = X.norm2();
     scalar_t xnorm = std::sqrt(xnorm2);
     scalar_t gnorm = std::sqrt(solution->G->norm2());
     scalar_t errorBound =0;
-
+    
     if(rank == 0) {
       std::cout << "Norm of input tensor: " << xnorm << std::endl;
       std::cout << "Norm of core tensor: " << gnorm << std::endl;
       // Compute the error bound based on the eigenvalues
-
+      
       if(boolUseLQ){
         for(int i=0; i<nd; i++) {
           for(int j=solution->G->getGlobalSize(i); j<X.getGlobalSize(i); j++) {
@@ -484,8 +473,8 @@ int main(int argc, char* argv[])
         }
       }
       std::cout << "Error bound: " << std::sqrt(errorBound)/xnorm << std::endl;
-
-
+    
+      
       // Write dimension of core tensor
       std::string dimFilename = sthosvd_dir + "/" + sthosvd_fn +
           "_ranks.txt";
