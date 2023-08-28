@@ -281,25 +281,39 @@ auto metricsData = TuckerMpi::compute_slice_metrics(mpiRank, T, scaleMode, Tucke
 -----------------
 
 
-### TuckerMpi::normalize_tensor
+## TuckerMpi::normalize_tensor
+
+Normalizes the tensor `tensor` along mode `scaleMode` using the metrics given in `metricData` and according to `scalingType`. If needed, `stdThresh` is used.
+
+### Interface
 
 ```cpp
+namespace TuckerMpi{
+
 template <class ScalarType, class MetricMemSpace, class ...Props>
 [[nodiscard]] auto normalize_tensor(const int mpiRank,
                 				    ::TuckerMpi::Tensor<ScalarType, Props...> & tensor,
                 				    const TuckerOnNode::MetricData<ScalarType, MetricMemSpace> & metricData,
                 				    const std::string & scalingType,
                 				    const int scaleMode,
-                				    const ScalarType stdThresh)
+                				    const ScalarType stdThresh);
+
+}//end namespace TuckerMpi
 ```
 
-Normalizes the tensor `tensor` along mode `scaleMode` using the metrics given in `metricData` and according to `scalingType`. If needed, `stdThresh` is used.
+### Constraints
 
-**Constraints**: `tensor` must have `Kokkos::LayoutLeft` and `double` value type
+Parameter `tensor` must have `Kokkos::LayoutLeft` and `double` value type.
 
-**Returns**: A std::pair containing the scales and shifts used for normalizing. The returned scales and shifts are both Kokkos rank-1 views with the same memory space as the input tensor.
+### Preconditions
 
-#### Example Usage
+Valid choices for the entries in `scalingType` are: "Max", "MinMax" or "StandardCentering".
+
+### Returns
+
+A std::pair containing the scales and shifts used for normalizing. The returned scales and shifts are both Kokkos rank-1 views with the same memory space as the input tensor.
+
+### Example Usage
 
 ```cpp
 // ...
@@ -308,7 +322,7 @@ MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
 
 std::vector<int> extents  = {33,44,65,21};
 std::vector<int> procGrid = {2,1,2,2};
-TuckerMpi::Tensor<double> T(extents, procGrid)
+TuckerMpi::Tensor<double> T(extents, procGrid);
 // read data into tensor or fill somehow
 
 int scaleMode = 0;
