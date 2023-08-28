@@ -50,7 +50,7 @@ template<class SpaceT, class ScalarType, class ...Properties>
 
 - (A): Enable if `SpaceT::memory_space` != `TuckerOnNode::Tensor<ScalarType, Properties...>::traits::memory_space`.
 
-- (B): Enable if `SpaceT::memory_space` ==`TuckerOnNode::Tensor<ScalarType, Properties...>::traits::memory_space`.
+- (B): Enable if `SpaceT::memory_space` == `TuckerOnNode::Tensor<ScalarType, Properties...>::traits::memory_space`.
 
 
 <br>
