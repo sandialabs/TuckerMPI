@@ -186,7 +186,7 @@ namespace TuckerMpi{
 
 template<class ScalarType, class ...Properties>
 [[nodiscard]] auto compute_gram(Tensor<ScalarType, Properties...> tensor,
-                                const std::size_t mode)
+                                const std::size_t mode);
 
 }//end namespace TuckerMpi
 ```
