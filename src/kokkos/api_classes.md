@@ -147,6 +147,16 @@ TuckerMpi::Tensor<const double> T2 = T1;
 ```cpp
 namespace Tucker{
 
+template<class CoreTensorType> class TuckerTensor;
+
+}//end namespace Tucker
+```
+
+#### Traits
+
+```cpp
+namespace Tucker{
+
 template<class CoreTensorType>
 struct TuckerTensorTraits
 {
@@ -155,6 +165,14 @@ struct TuckerTensorTraits
   using memory_space         = typename core_tensor_type::traits::memory_space;
   using factors_store_view_t = Kokkos::View<value_type*, Kokkos::LayoutLeft, memory_space>;
 };
+
+}//end namespace Tucker
+```
+
+#### Class API
+
+```cpp
+namespace Tucker{
 
 template<class CoreTensorType>
 class TuckerTensor
@@ -172,6 +190,9 @@ private:
 	             slicing_info_view_t slicingInfo);
 
 public:
+  // ---------------------------------------------------------
+  // Regular constructors, destructor, and assignment
+  // ---------------------------------------------------------
   ~TuckerTensor() = default;
 
   TuckerTensor(const TuckerTensor& o) = default;
@@ -179,17 +200,17 @@ public:
   TuckerTensor& operator=(const TuckerTensor&) = default;
   TuckerTensor& operator=(TuckerTensor&&) = default;
 
-  // ----------------------------------------
-  // copy/move constr, assignment for compatible TuckerTensor
-  // ----------------------------------------
+  // ---------------------------------------------------------
+  // Copy/move constr, assignment for compatible TuckerTensor
+  // ---------------------------------------------------------
   template<class LocalArg> TuckerTensor(const TuckerTensor<LocalArg> & o);
   template<class LocalArg> TuckerTensor& operator=(const TuckerTensor<LocalArg> & o);
   template<class LocalArg> TuckerTensor(TuckerTensor<LocalArg> && o);
   template<class LocalArg> TuckerTensor& operator=(TuckerTensor<LocalArg> && o);
 
-  //----------------------------------------
-  // methods
-  // ----------------------------------------
+  //----------------------------------------------------------
+  // Methods
+  // ---------------------------------------------------------
   int rank() const;
 
   typename traits::core_tensor_type coreTensor();
@@ -197,13 +218,13 @@ public:
   auto factorMatrix(int mode);
 };
 
-}// end namespace Tucker
+}//end namespace Tucker
 ```
 
-- IMPORTANT: this class has private constructors because a user is not allowed to instantiate this directly.
-Only the function `auto ttensot = TuckerMpi::sthosvd(...)` is allowed to internally construct and return an instance of the TuckerTensor class above. And users can only *use* its public methods.
+- IMPORTANT: This class has private constructors because a user is not allowed to instantiate this directly.
+Only the function `auto [tuckTensor, eigvals] = TuckerMpi::sthosvd(...)` is allowed to internally construct and return an instance of the TuckerTensor class above. And users can only *use* its public methods.
 The reason for this is that while the API for querying the core tensor and factor matrices are clear and solid, users should not know how the actual object is constructed. Originally, this class was fully private so users would only need to know that the return type of calling `sthosvd` is a object that exposes a certain API.
-However, we thought that making it fully private was a bit too much so making the consturctors private was kind of a compromise.
+However, we thought that making it fully private was a bit too much so making the constructors private was kind of a compromise.
 
 #### Example usage
 
@@ -214,7 +235,7 @@ MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
 
 std::vector<int> extents  = {33,44,65,21};
 std::vector<int> procGrid = {2,1,2,2};
-TuckerMpi::Tensor<double> T(extents, procGrid)
+TuckerMpi::Tensor<double> T(extents, procGrid);
 // read data into tensor or fill somehow
 
 const auto method = TuckerMpi::Method::NewGram;
