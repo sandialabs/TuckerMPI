@@ -37,6 +37,8 @@ template<class ScalarType, class MemorySpace>
 
 ## TuckerMpi::sthosvd
 
+### Interface
+
 ```cpp
 namespace TuckerMpi{
 
@@ -47,39 +49,41 @@ template <class ScalarType, class ...Properties, class TruncatorType>
                            const std::vector<int> & modeOrder,
                            bool flipSign);
 
-} // end namespace
+}//end namespace TuckerMpi
 ```
 
-- `method`: specifies which algorithm to use, currently only accepting `TuckerMpi::Method::NewGram`
-- `tensor`: data tensor to operate on
-- `truncator`: function object accepting the mode and a Kokkos view with the gram eigenvalues, and returning the rank along the specify mode. Signature should meet:
+### Parameters
+
+- `method`: Specifies which algorithm to use, currently only accepting `TuckerMpi::Method::NewGram`.
+
+- `tensor`: Data tensor to operate on.
+
+- `truncator`: Function object accepting the mode and a Kokkos view with the gram eigenvalues, and returning the rank along the specify mode. Signature should meet:
 
   ```cpp
   std::size_t truncator(int mode, auto eigenvalues);
   ```
   See `Tucker::create_core_tensor_truncator` for more information on the truncator.
 
-- `modeOrder`: specifies the order of the modes to operate on
+- `modeOrder`: Specifies the order of the modes to operate on.
 
-- `flipSign`: Only applicable to gram. If `true`, the sign of an eigenvector
-is flipped if its max element is negative
+- `flipSign`: Only applicable to gram. If `true`, the sign of an eigenvector is flipped if its max element is negative.
 
-**Constraints**:
+### Constraints
 
-- Tensor layout have to be `Kokkos::LayoutLeft`
-- Tensor value type have to be `double`
+- Tensor layout have to be `Kokkos::LayoutLeft`.
+- Tensor value type have to be `double`.
 
-**Return value**:
+### Return value
 
-- a std::pair containing an instance of the `Tucker::TuckerTensor` class and an instance of the `TuckerOnNode::TensorGramEigenvalues`
+- A std::pair containing an instance of the `Tucker::TuckerTensor` class and an instance of the `TuckerOnNode::TensorGramEigenvalues`.
 
-
-#### Example usage
+### Example usage
 
 ```cpp
 std::vector<int> extents  = {33,44,65,21};
 std::vector<int> procGrid = {2,1,2,2};
-TuckerMpi::Tensor<double> T(extents, procGrid)
+TuckerMpi::Tensor<double> T(extents, procGrid);
 // read data into tensor or fill somehow
 
 const auto method = TuckerMpi::Method::NewGram;
