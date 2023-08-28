@@ -5,7 +5,11 @@
 ### TuckerMpi::Tensor
 
 ```cpp
+namespace TuckerMpi{
+
 template<class ScalarType, class ...Properties> class Tensor;
+
+}//end namespace TuckerMpi
 ```
 
 #### Traits
@@ -27,7 +31,7 @@ template<class ScalarType> struct TensorTraits<void, ScalarType>{
 
 template<class ScalarType, class MemSpace>
 struct TensorTraits<
-  std::enable_if_t< Kokkos::is_memory_space_v<MemSpace> >, ScalarType, MemSpace >
+  std::enable_if_t< Kokkos::is_memory_space_v<MemSpace> >, ScalarType, MemSpace>
 {
   using memory_space       = MemSpace;
   using execution_space    = typename memory_space::execution_space;
@@ -35,12 +39,16 @@ struct TensorTraits<
   using value_type         = typename onnode_tensor_type::traits::data_view_type::value_type;
   using onnode_layout      = typename onnode_tensor_type::traits::array_layout;
 };
+
 }//end namespace impl
+}//end namespace TuckerMpi
 ```
 
 #### Class API
 
 ```cpp
+namespace TuckerMpi{
+  
 template<class ScalarType, class ...Properties>
 class Tensor
 {
@@ -68,7 +76,7 @@ public:
   Tensor& operator=(Tensor&& o);
 
   // ---------------------------------------------------
-  // copy/move constr, assignment for compatible Tensor
+  // Copy/move constr, assignment for compatible Tensor
   // ---------------------------------------------------
   template<class ST, class ... PS> Tensor(const Tensor<ST,PS...> & o);
   template<class ST, class ... PS> Tensor& operator=(const Tensor<ST,PS...> & o);
@@ -76,12 +84,12 @@ public:
   template<class ST, class ... PS> Tensor& operator=(Tensor<ST,PS...> && o);
 
   // ---------------------------------------------------
-  // methods
+  // Methods
   // ---------------------------------------------------
-  int rank() const
+  int rank() const;
   auto localTensor();
   const Distribution & getDistribution() const;
-  dims_const_view_type globalDimensions() const
+  dims_const_view_type globalDimensions() const;
   dims_const_view_type localDimensions() const;
   dims_host_const_view_type globalDimensionsOnHost() const;
   dims_host_const_view_type localDimensionsOnHost() const;
@@ -90,49 +98,54 @@ public:
   size_t localSize() const;
   size_t globalSize() const;
   auto frobeniusNormSquared() const;
-}
-} // end namespace TuckerMpi
+};
+
+}//end namespace TuckerMpi
 ```
+
+**Constraint**:
+
+- Tensor value type have to be a floating-point type
 
 #### Usage and semantics
 
-Another tensor is compatible if (a) it is an empty tensor, or (b) has the same distribution
+Another tensor is compatible if (a) it is an empty tensor, or (b) has the same distribution.
 
 ```cpp
-TuckerMpi::Tensor<double> T(distribution)
+TuckerMpi::Tensor<double> T(distribution);
 // if not space template is provided, it uses the memory space associated with default exe space
 
 TuckerMpi::Tensor<double, Kokkos::HostSpace> T;
 // specify to be on host
 
 TuckerMpi::Tensor<double, Kokkos::CudaSpace> T;
-// specify to be on cuda (must be )
+// specify to be on cuda
 
 TuckerMpi::Tensor<double> T;
 // constructs an empty tensor, no allocations made
 
 std::vector<int> extents  = {33,44,65,21};
 std::vector<int> procGrid = {2,1,2,2};
-TuckerMpi::Tensor<double> T(exts, procs)
+TuckerMpi::Tensor<double> T(exts, procs);
 // creates a rank-4 tensor with extents where procGrid specify the MPI ranks distribution for each axis
 
 TuckerMpi::Tensor<double> T(distribution);
 // allocates according to `ditribution` object
 
 TuckerMpi::Tensor<double> T2 = T;
-/* shallow copy, modifying the values of T2 also modifies the values in T */
+// shallow copy, modifying the values of T2 also modifies the values in T
 
 TuckerMpi::Tensor<double> T1;
 TuckerMpi::Tensor<double> T2(distribution);
-T1 = T2; /* ok: assigning to an empty tensor */
+T1 = T2; // ok: assigning to an empty tensor
 
 TuckerMpi::Tensor<double> T1(d1);
 TuckerMpi::Tensor<double> T2(d2);
-T1 = T2; /* NOT ok, throws because d1 and d2 are different distributions */
+T1 = T2; // NOT ok, throws because d1 and d2 are different distributions
 
 TuckerMpi::Tensor<double> T1(d1);
 TuckerMpi::Tensor<const double> T2 = T1;
-/* ok: CANNOT modify T2*/
+// ok: CANNOT modify T2
 ```
 
 
