@@ -279,21 +279,33 @@ The *type* of the returned tensor is the same as the input tensor.
 -----------------
 
 
-### TuckerMpi::compute_slice_metrics
+## TuckerMpi::compute_slice_metrics
+
+Computes the metrics specified in `metrics` for the tensor `tensor` along the mode `mode`.
+
+### Interface
 
 ```cpp
+namespace TuckerMpi{
+
 template <std::size_t n, class ScalarType, class ...Properties>
 [[nodiscard]] auto compute_slice_metrics(const int mpiRank,
 					                     Tensor<ScalarType, Properties...> tensor,
 					                     const int mode,
-					                     const std::array<Tucker::Metric, n> & metrics)
+					                     const std::array<Tucker::Metric, n> & metrics);
+
+}//end namespace TuckerMpi                              
 ```           
 
-Computes the metrics specified in `metrics` for the tensor `tensor` along the mode `mode`.
+### Constraints
 
-**Constraints**: `tensor` must have `Kokkos::LayoutLeft` and `double` value type
+Parameter `tensor` must have `Kokkos::LayoutLeft` and `double` value type.
 
-**Preconditions**: Valid choices for the entries in `metrics` are
+### Preconditions
+
+- Parameter `mode` must be non-negative.
+
+- Valid choices for the entries in `metrics` are
 
   ```cpp
   namespace Tucker{
@@ -303,10 +315,11 @@ Computes the metrics specified in `metrics` for the tensor `tensor` along the mo
   }
   ```
 
-**Returns**: A instance of `TuckerOnNode::MetricData` with the target metrics computed.
+### Returns
 
+A instance of `TuckerOnNode::MetricData` with the target metrics computed.
 
-#### Example Usage
+### Example Usage
 
 ```cpp
 // ...
@@ -315,7 +328,7 @@ MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
 
 std::vector<int> extents  = {33,44,65,21};
 std::vector<int> procGrid = {2,1,2,2};
-TuckerMpi::Tensor<double> T(extents, procGrid)
+TuckerMpi::Tensor<double> T(extents, procGrid);
 // read data into tensor or fill somehow
 
 int scaleMode = 0;
