@@ -1,34 +1,57 @@
 # Tucker Public API
 
+Header File: `<Tucker_create_mirror.hpp>`
 
 ```cpp
 namespace Tucker{
 
+// ------------------------------------------
+// Overloads accepting a TuckerOnNode::Tensor
+// ------------------------------------------
+
 template<class ScalarType, class ...Properties>
-[[nodiscard]] auto create_mirror(const ::TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
+[[nodiscard]] auto create_mirror(const ::TuckerOnNode::Tensor<ScalarType, Properties...> & tensor);
 
-
+// (A)
+template<class SpaceT, class ScalarType, class ...Properties>
 [[nodiscard]] auto create_mirror_tensor_and_copy(const SpaceT & space,
-						                         const ::TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
+						                         const ::TuckerOnNode::Tensor<ScalarType, Properties...> & tensor);
 
-
+// (B)
+template<class SpaceT, class ScalarType, class ...Properties>
 [[nodiscard]] auto create_mirror_tensor_and_copy(const SpaceT & space,
-						                         const ::TuckerOnNode::Tensor<ScalarType, Properties...> & tensor)
+						                         const ::TuckerOnNode::Tensor<ScalarType, Properties...> & tensor);
 
+
+// ----------------------------------------------
+// Overloads accepting a TuckerOnNode::MetricData
+// ----------------------------------------------
 
 template<class ScalarType, class MemorySpace>
-[[nodiscard]] auto create_mirror(::TuckerOnNode::MetricData<ScalarType, MemorySpace> d)
+[[nodiscard]] auto create_mirror(::TuckerOnNode::MetricData<ScalarType, MemorySpace> d);
 
 
+// -----------------------------------------------------------------------
+// Overloads accepting a TuckerMpi::Tensor (must define TUCKER_ENABLE_MPI)
+// -----------------------------------------------------------------------
+
+// (A)
+template<class SpaceT, class ScalarType, class ...Properties>
 [[nodiscard]] auto create_mirror_tensor_and_copy(const SpaceT & space,
-						                         ::TuckerMpi::Tensor<ScalarType, Properties...> tensor)
+						                         ::TuckerMpi::Tensor<ScalarType, Properties...> tensor);
 
-
+// (B)
+template<class SpaceT, class ScalarType, class ...Properties>
 [[nodiscard]] auto create_mirror_tensor_and_copy(const SpaceT & space,
-						                         ::TuckerMpi::Tensor<ScalarType, Properties...> tensor)
+						                         ::TuckerMpi::Tensor<ScalarType, Properties...> tensor);
 
-// end namespace Tucker
+}//end namespace Tucker
 ```
+
+- (A): Enable if `SpaceT::memory_space` != `TuckerOnNode::Tensor<ScalarType, Properties...>::traits::memory_space`.
+
+- (B): Enable if `SpaceT::memory_space` == `TuckerOnNode::Tensor<ScalarType, Properties...>::traits::memory_space`.
+
 
 <br>
 
