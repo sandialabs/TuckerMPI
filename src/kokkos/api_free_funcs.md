@@ -130,7 +130,14 @@ auto v0 = eigvals[0];
 -----------------
 
 
-### Tucker::create_core_tensor_truncator
+## Tucker::create_core_tensor_truncator
+
+The function `create_core_tensor_truncator` is used to create a functor that knows how to "truncate" the core tensor when doing sthosvd either operating on eigenvalues via a tolerance or using a fixed core tensor extents.
+If `fixedCoreTensorRanks` is provided then it is used and `tol` is disregarded.
+
+- Note that this work for both on-node (kokkos only) and distributed (MPI+Kokkos).
+
+### Description 
 
 ```cpp
 namespace Tucker{
@@ -163,15 +170,10 @@ template <class TensorType, class ScalarType>
   };
 }
 
-} // end namespace Tucker
+}//end namespace Tucker
 ```
 
-The function `create_core_tensor_truncator` is used to create a functor that knows how to "truncate" the core tensor when doing sthosvd either operating on eigenvalues via a tolerance or using a fixed core tensor extents.
-If `fixedCoreTensorRanks` is provided then it is used and `tol` is disregarded.
-
-- Note that this work for both on-node (kokkos only) and distributed (MPI+Kokkos).
-
-#### Usage
+### Usage
 
 ```cpp
 // ...
@@ -180,7 +182,7 @@ MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
 
 std::vector<int> extents  = {33,44,65,21};
 std::vector<int> procGrid = {2,1,2,2};
-TuckerMpi::Tensor<double> T(extents, procGrid)
+TuckerMpi::Tensor<double> T(extents, procGrid);
 // read data into tensor or fill somehow
 
 // 1. let's create a truncator that computes the truncation for the core tensor that is based on a tolerance (1e-2)
