@@ -244,7 +244,11 @@ The input `tensor` is unmodified.
 
 -----------------
 
-### TuckerMpi::ttm
+## TuckerMpi::ttm
+
+Compute the ttm of `tensor` and `Umatrix` for mode `n`.
+
+### Interface
 
 ```cpp
 namespace TuckerMpi{
@@ -254,17 +258,20 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
         		       int n,
         		       Kokkos::View<ScalarType**, ViewProperties...> Umatrix,
         		       bool Utransp,
-        		       std::size_t nnz_limit)
+        		       std::size_t nnz_limit);
+
+}//end namespace TuckerMpi
 ```
 
-Compute the ttm of `tensor` and `Umatrix` for mode `n`.
+### Constraints
 
-**Constraints**:
+- Parameter `tensor` must have `Kokkos::LayoutLeft`.
+- Parameter  `tensor` and `Umatrix` must have the same memory space.
 
-- `tensor` must have `Kokkos::LayoutLeft` and `double` value type
-- `tensor` and `Umatrix` must have the same memory space
+### Returns
 
-**Returns**: A new tensor with the result. The *type* of the returned tensor is the same as the input tensor.
+A new tensor with the result.
+The *type* of the returned tensor is the same as the input tensor.
 
 
 <br>
