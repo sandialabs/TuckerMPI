@@ -275,6 +275,17 @@ auto coreT = tuckTensor.coreTensor(); // get the core tensor
 ```cpp
 namespace TuckerOnNode{
 
+template<class ScalarType, class MemorySpace = Kokkos::DefaultExecutionSpace::memory_space>
+class TensorGramEigenvalues;
+
+}//end namespace TuckerOnNode
+```
+
+#### Class API
+
+```cpp
+namespace TuckerOnNode{
+
 template<
   class ScalarType,
   class MemorySpace = Kokkos::DefaultExecutionSpace::memory_space
@@ -286,11 +297,12 @@ class TensorGramEigenvalues
 
 private:
   template<class EigvalsViewType>
-  TensorGramEigenvalues(EigvalsViewType eigvals,
-			            slicing_info_view_t slicingInfo);
+  TensorGramEigenvalues(EigvalsViewType eigvals, slicing_info_view_t slicingInfo);
 
 public:
-  TensorGramEigenvalues();
+  // -------------------------------------------------------------------
+  // Regular constructors, destructor, and assignment
+  // -------------------------------------------------------------------
   ~TensorGramEigenvalues() = default;
 
   TensorGramEigenvalues(const TensorGramEigenvalues& o) = default;
@@ -299,38 +311,38 @@ public:
   TensorGramEigenvalues& operator=(TensorGramEigenvalues&&) = default;
 
   // -------------------------------------------------------------------
-  // copy/move constr, assignment for compatible TensorGramEigenvalues
+  // Copy/move constr, assignment for compatible TensorGramEigenvalues
   // -------------------------------------------------------------------
   template<class ... LocalArgs> TensorGramEigenvalues(const TensorGramEigenvalues<LocalArgs...> & o);
   template<class ... LocalArgs> TensorGramEigenvalues& operator=(const TensorGramEigenvalues<LocalArgs...> & o);
   template<class ... LocalArgs> TensorGramEigenvalues(TensorGramEigenvalues<LocalArgs...> && o);
   template<class ... LocalArgs> TensorGramEigenvalues& operator=(TensorGramEigenvalues<LocalArgs...> && o);
 
-  //----------------------------------------
-  // methods
-  // ----------------------------------------
+  // -------------------------------------------------------------------
+  // Methods
+  // -------------------------------------------------------------------
   int rank() const;
   auto operator[](int mode);
 };
 
-} // end namespace TuckerOnNode
+}//end namespace TuckerOnNode
 ```
 
-- The class `TensorGramEigenvalues` was not present in the original code, and has been introduced to store the eigenvalues when doing sthosvd via Gram. Why are we doing this?
-Because the original code, when doing sthosvd, was storing the core tensor, factors and eigenvalues from the Gram *all* inside the TuckerTensor class. However, when using QR instead of Gram, there are no eigenvalues so the methods inside Tucker are not applicable.
-Therefore, we decided to separate things: in our new code, the TuckerTensor class (see above) stores only the core tensor and the factor matrices, and the `TensorGramEigenvalues` stores the eigenvalues.
+- The class `TensorGramEigenvalues` was not present in the original code, and has been introduced to store the eigenvalues when doing **sthosvd** via Gram. Why are we doing this?
+Because the original code, when doing **sthosvd**, was storing the core tensor, factors and eigenvalues from the Gram *all* inside the `TuckerTensor` class. However, when using QR instead of Gram, there are no eigenvalues so the methods inside Tucker are not applicable.
+Therefore, we decided to separate things: in our new code, the `TuckerTensor` class (see above) stores only the core tensor and the factor matrices, and the `TensorGramEigenvalues` stores the eigenvalues.
 
 
 - Note that it has private constructors because users are not allowed to instantiate this directly. The reason is similar to the one provided for the `TuckerTensor` class above.
 
-- subscript operator gives you a rank-1 "view" of the eigenvalues for a specific mode. Note that users don't need to know *how* we store the eigenvalues, just how to query them. In practice, the eigenvalues are stored in a single 1D Kokkos view and what we call "slicing info" is what is used to know how to "slice" the view to only get the part needed.
+- Subscript operator gives you a rank-1 "view" of the eigenvalues for a specific mode. Note that users don't need to know *how* we store the eigenvalues, just how to query them. In practice, the eigenvalues are stored in a single 1D Kokkos view and what we call "slicing info" is what is used to know how to "slice" the view to only get the part needed.
 
 #### Example usage
 
 ```cpp
 std::vector<int> extents  = {33,44,65,21};
 std::vector<int> procGrid = {2,1,2,2};
-TuckerMpi::Tensor<double> T(extents, procGrid)
+TuckerMpi::Tensor<double> T(extents, procGrid);
 // read data into tensor or fill somehow
 
 const auto method = TuckerMpi::Method::NewGram;
