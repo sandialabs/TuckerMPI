@@ -204,30 +204,41 @@ auto [tuckTensor, eigvals] = TuckerMpi::sthosvd(method, T truncator, {}, false /
 -----------------
 
 
-### TuckerMpi::compute_gram
+## TuckerMpi::compute_gram
+
+Computes the gram matrix (https://en.wikipedia.org/wiki/Gram_matrix) of `tensor` along the mode `mode`.
+
+### Interface
 
 ```cpp
 namespace TuckerMpi{
 
 template<class ScalarType, class ...Properties>
 [[nodiscard]] auto compute_gram(Tensor<ScalarType, Properties...> tensor,
-                                const std::size_t mode)
+                                const std::size_t mode);
 
-} // end namespace
+}//end namespace TuckerMpi
 ```
 
-Computes the gram matrix (https://en.wikipedia.org/wiki/Gram_matrix) of `tensor` along the mode `mode`
+### Constraints
 
-**Constraints**: `tensor` must have `Kokkos::LayoutLeft` and `double` value type
+Parameter `tensor` must have `Kokkos::LayoutLeft` and `double` value type.
 
-**Preconditions**: The tensor must be non-empty.
+### Preconditions
 
-**Returns**: A rank-2 Kokkos::View with LayoutLeft, same scalar type and memory_space as the input tensor
+The tensor must be non-empty.
 
-**Side effects**: If the tensor is non-trivially distributed (i.e. multiple MPI processes), the implementation uses these MPI collectives: `MPI_Alltoallv` and `MPI_Allreduce`.
+### Returns
 
-**Post-conditions**: The input `tensor` is unmodified.
+A rank-2 Kokkos::View with LayoutLeft, same scalar type and memory_space as the input tensor.
 
+### Side effects
+
+If the tensor is non-trivially distributed (i.e. multiple MPI processes), the implementation uses these MPI collectives: `MPI_Alltoallv` and `MPI_Allreduce`.
+
+### Post-conditions
+
+The input `tensor` is unmodified.
 
 <br>
 
