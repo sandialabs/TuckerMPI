@@ -365,6 +365,19 @@ auto v = eigvals[0];
 ### TuckerOnNode::MetricData
 
 ```cpp
+namespace TuckerOnNode {
+
+template<class ScalarType, class MemorySpace = Kokkos::DefaultExecutionSpace::memory_space>
+class MetricData;
+
+}//end namespace TuckerOnNode
+```
+
+#### Class API
+
+```cpp
+namespace TuckerOnNode {
+
 template<
   class ScalarType,
   class MemorySpace = Kokkos::DefaultExecutionSpace::memory_space>
@@ -389,6 +402,10 @@ public:
   KOKKOS_FUNCTION bool contains(Tucker::Metric key) const;
   KOKKOS_FUNCTION auto get(Tucker::Metric key) const;
 };
+
+}//end namespace TuckerOnNode
 ```
 
 A class for storing metrics.
+
+Only used in drivers during the "Compute statistics" step.
