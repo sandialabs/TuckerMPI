@@ -105,15 +105,15 @@ public:
 
 **Constraint**:
 
-- Tensor value type have to be a floating-point type
+- Tensor value type has to be a floating-point type.
 
 #### Usage and semantics
 
-Another tensor is compatible if (a) it is an empty tensor, or (b) has the same distribution.
+Another tensor is compatible if (a) it is an empty tensor, or (b) it has the same distribution.
 
 ```cpp
 TuckerMpi::Tensor<double> T(distribution);
-// if not space template is provided, it uses the memory space associated with default exe space
+// if no space template is provided, it uses the memory space associated with the default exe space
 
 TuckerMpi::Tensor<double, Kokkos::HostSpace> T;
 // specify to be on host
@@ -127,7 +127,7 @@ TuckerMpi::Tensor<double> T;
 std::vector<int> extents  = {33,44,65,21};
 std::vector<int> procGrid = {2,1,2,2};
 TuckerMpi::Tensor<double> T(exts, procs);
-// creates a rank-4 tensor with extents where procGrid specify the MPI ranks distribution for each axis
+// creates a rank-4 tensor with extents where procGrid specifies the distribution of MPI ranks for each axis
 
 TuckerMpi::Tensor<double> T(distribution);
 // allocates according to `ditribution` object
@@ -141,11 +141,10 @@ T1 = T2; // ok: assigning to an empty tensor
 
 TuckerMpi::Tensor<double> T1(d1);
 TuckerMpi::Tensor<double> T2(d2);
-T1 = T2; // NOT ok, throws because d1 and d2 are different distributions
+T1 = T2; // NOT ok: throws because d1 and d2 are different distributions
 
 TuckerMpi::Tensor<double> T1(d1);
-TuckerMpi::Tensor<const double> T2 = T1;
-// ok: CANNOT modify T2
+TuckerMpi::Tensor<const double> T2 = T1; // ok: CANNOT modify T2
 ```
 
 
@@ -236,8 +235,8 @@ public:
 
 - IMPORTANT: This class has private constructors because a user is not allowed to instantiate this directly.
 Only the function `auto [tuckTensor, eigvals] = TuckerMpi::sthosvd(...)` is allowed to internally construct and return an instance of the TuckerTensor class above. And users can only *use* its public methods.
-The reason for this is that while the API for querying the core tensor and factor matrices are clear and solid, users should not know how the actual object is constructed. Originally, this class was fully private so users would only need to know that the return type of calling `sthosvd` is a object that exposes a certain API.
-However, we thought that making it fully private was a bit too much so making the constructors private was kind of a compromise.
+The reason for this is that while the API for querying the core tensor and factor matrices is clear and solid, users should not know how the actual object is constructed. Originally, this class was fully private so users would only need to know that the return type of calling `sthosvd` is a object that exposes a certain API.
+However, we thought that making it fully private was a bit too much; so making the constructors private was kind of a compromise.
 
 #### Example usage
 
@@ -329,7 +328,7 @@ public:
 ```
 
 - The class `TensorGramEigenvalues` was not present in the original code, and has been introduced to store the eigenvalues when doing **sthosvd** via Gram. Why are we doing this?
-Because the original code, when doing **sthosvd**, was storing the core tensor, factors and eigenvalues from the Gram *all* inside the `TuckerTensor` class. However, when using QR instead of Gram, there are no eigenvalues so the methods inside Tucker are not applicable.
+Because the original code, when doing **sthosvd**, was storing the core tensor, factors and eigenvalues from the Gram *all* inside the `TuckerTensor` class. However, when using QR instead of Gram, there are no eigenvalues, so the methods inside Tucker are not applicable.
 Therefore, we decided to separate things: in our new code, the `TuckerTensor` class (see above) stores only the core tensor and the factor matrices, and the `TensorGramEigenvalues` stores the eigenvalues.
 
 
