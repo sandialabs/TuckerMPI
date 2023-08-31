@@ -193,7 +193,6 @@ if [[ ! -d ${TUCKERWORKDIR} ]]; then
 
     # sometimes kernels installation gets a lib64 instead of lib
     if [[ -d ${KOKKOSKERPFX}/lib ]]; then
-	echo "GIGI"
 	export KKERDIR=${KOKKOSKERPFX}/lib/cmake/KokkosKernels
     else
 	export KKERDIR=${KOKKOSKERPFX}/lib64/cmake/KokkosKernels
