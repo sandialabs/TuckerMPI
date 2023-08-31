@@ -277,7 +277,6 @@ void syrk_kokkos(const ExeSpace & exespace,
 }
 
 template<class AViewType, class CViewType>
-
 void syrk_kokkos(const char uplo[],
 		 const char opA[],
 		 typename AViewType::const_value_type & alpha,
