@@ -49,7 +49,7 @@ cmake \
 Use the build bash script provided inside `src/kokkos/basic_build.sh`.
 This is hardwired to use Kokkos with OpenMP backend.
 
-Example usage:
+Example usage for building with Kokkos+MPI:
 
 ```bash
 export CXX=<fullpath-to-mpic++-compiler>
@@ -58,6 +58,13 @@ export MYWORKDIR=/home/mytuckertest
 bash ${PWD}/TuckerMPI/src/kokkos/basic_build.sh ${MYWORKDIR} $PWD/TuckerMPI
 ```
 
+Example usage for building with Kokkos only:
+
+```bash
+export CXX=<fullpath-to-c++-compiler>
+export MYWORKDIR=/home/mytuckertest
+bash ${PWD}/TuckerMPI/src/kokkos/basic_build.sh ${MYWORKDIR} $PWD/TuckerMPI
+```
 
 # Verifying tests
 
