@@ -15,12 +15,12 @@ template<class ScalarType, class ...Properties>
 // (A)
 template<class SpaceT, class ScalarType, class ...Properties>
 [[nodiscard]] auto create_mirror_tensor_and_copy(const SpaceT & space,
-						                         const ::TuckerOnNode::Tensor<ScalarType, Properties...> & tensor);
+                                                 const ::TuckerOnNode::Tensor<ScalarType, Properties...> & tensor);
 
 // (B)
 template<class SpaceT, class ScalarType, class ...Properties>
 [[nodiscard]] auto create_mirror_tensor_and_copy(const SpaceT & space,
-						                         const ::TuckerOnNode::Tensor<ScalarType, Properties...> & tensor);
+                                                 const ::TuckerOnNode::Tensor<ScalarType, Properties...> & tensor);
 
 
 // ----------------------------------------------
@@ -38,12 +38,12 @@ template<class ScalarType, class MemorySpace>
 // (A)
 template<class SpaceT, class ScalarType, class ...Properties>
 [[nodiscard]] auto create_mirror_tensor_and_copy(const SpaceT & space,
-						                         ::TuckerMpi::Tensor<ScalarType, Properties...> tensor);
+                                                 ::TuckerMpi::Tensor<ScalarType, Properties...> tensor);
 
 // (B)
 template<class SpaceT, class ScalarType, class ...Properties>
 [[nodiscard]] auto create_mirror_tensor_and_copy(const SpaceT & space,
-						                         ::TuckerMpi::Tensor<ScalarType, Properties...> tensor);
+                                                 ::TuckerMpi::Tensor<ScalarType, Properties...> tensor);
 
 }//end namespace Tucker
 ```
@@ -77,7 +77,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 
 ### Parameters
 
-- `method`: Specifies which algorithm to use, currently only accepting `TuckerMpi::Method::NewGram`.
+- `method`: Specifies which algorithm to use; currently only accepting `TuckerMpi::Method::NewGram`.
 
 - `tensor`: Data tensor to operate on.
 
@@ -94,12 +94,12 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 
 ### Constraints
 
-- Tensor layout have to be `Kokkos::LayoutLeft`.
-- Tensor value type have to be `double`.
+- Tensor layout has to be `Kokkos::LayoutLeft`.
+- Tensor value type has to be `double`.
 
 ### Return value
 
-- A std::pair containing an instance of the `Tucker::TuckerTensor` class and an instance of the `TuckerOnNode::TensorGramEigenvalues`.
+- A std::pair containing an instance of the `Tucker::TuckerTensor` class and an instance of the `TuckerOnNode::TensorGramEigenvalues` class.
 
 ### Example usage
 
@@ -135,7 +135,7 @@ auto v0 = eigvals[0];
 The function `create_core_tensor_truncator` is used to create a functor that knows how to "truncate" the core tensor when doing sthosvd either operating on eigenvalues via a tolerance or using a fixed core tensor extents.
 If `fixedCoreTensorRanks` is provided then it is used and `tol` is disregarded.
 
-- Note that this work for both on-node (kokkos only) and distributed (MPI+Kokkos).
+- Note that this works for both on-node (Kokkos only) and distributed (MPI+Kokkos).
 
 ### Description 
 
@@ -144,9 +144,9 @@ namespace Tucker{
 
 template <class TensorType, class ScalarType>
 [[nodiscard]] auto create_core_tensor_truncator(TensorType dataTensor,
-						                        const std::optional<std::vector<int>> & fixedCoreTensorRanks,
-						                        ScalarType tol,
-						                        int mpiRank = 0)
+                                                const std::optional<std::vector<int>> & fixedCoreTensorRanks,
+                                                ScalarType tol,
+                                                int mpiRank = 0)
 {
   return [=](std::size_t mode, auto eigenValues) -> std::size_t
   {
@@ -255,10 +255,10 @@ namespace TuckerMpi{
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
 [[nodiscard]] auto ttm(Tensor<ScalarType, TensorProperties...> tensor,
-        		       int n,
-        		       Kokkos::View<ScalarType**, ViewProperties...> Umatrix,
-        		       bool Utransp,
-        		       std::size_t nnz_limit);
+                       int n,
+                       Kokkos::View<ScalarType**, ViewProperties...> Umatrix,
+                       bool Utransp,
+                       std::size_t nnz_limit);
 
 }//end namespace TuckerMpi
 ```
@@ -290,9 +290,9 @@ namespace TuckerMpi{
 
 template <std::size_t n, class ScalarType, class ...Properties>
 [[nodiscard]] auto compute_slice_metrics(const int mpiRank,
-					                     Tensor<ScalarType, Properties...> tensor,
-					                     const int mode,
-					                     const std::array<Tucker::Metric, n> & metrics);
+                                         Tensor<ScalarType, Properties...> tensor,
+                                         const int mode,
+                                         const std::array<Tucker::Metric, n> & metrics);
 
 }//end namespace TuckerMpi                              
 ```           
@@ -352,11 +352,11 @@ namespace TuckerMpi{
 
 template <class ScalarType, class MetricMemSpace, class ...Props>
 [[nodiscard]] auto normalize_tensor(const int mpiRank,
-                				    ::TuckerMpi::Tensor<ScalarType, Props...> & tensor,
-                				    const TuckerOnNode::MetricData<ScalarType, MetricMemSpace> & metricData,
-                				    const std::string & scalingType,
-                				    const int scaleMode,
-                				    const ScalarType stdThresh);
+                                    ::TuckerMpi::Tensor<ScalarType, Props...> & tensor,
+                                    const TuckerOnNode::MetricData<ScalarType, MetricMemSpace> & metricData,
+                                    const std::string & scalingType,
+                                    const int scaleMode,
+                                    const ScalarType stdThresh);
 
 }//end namespace TuckerMpi
 ```
