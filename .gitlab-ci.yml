@@ -1,8 +1,8 @@
-image: ubuntu:latest 
+image: owitzia/tucker
 
-before_script:
-- apt-get update && apt-get install -y build-essential cmake libopenmpi-dev openmpi-bin liblapack-dev libblas-dev liblapacke doxygen libjs-mathjax
-
+variables:
+  OMPI_ALLOW_RUN_AS_ROOT: 1
+  OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
 
 build:
   stage: build
@@ -15,11 +15,11 @@ build:
     paths:
     - build/
        
+
 test:
   stage: test
   script:
   - cd build
-  - export OMP_NUM_THREADS=1
   - ctest --output-on-failure
   dependencies:
   - build
@@ -31,3 +31,4 @@ pages:
   artifacts:
     paths:
     - public
+
