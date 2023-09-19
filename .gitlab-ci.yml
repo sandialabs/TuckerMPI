@@ -1,7 +1,7 @@
-image: gcc:12
+image: ubuntu:latest 
 
 before_script:
-- apt-get update && apt-get install -y cmake gfortran libopenmpi-dev openmpi-bin liblapack-dev libblas-dev liblapacke doxygen libjs-mathjax
+- apt-get update && apt-get install -y cmake libopenmpi-dev openmpi-bin liblapack-dev libblas-dev liblapacke doxygen libjs-mathjax
 
 
 build:
