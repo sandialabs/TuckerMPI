@@ -1,4 +1,4 @@
-image: gcc:6.3
+image: gcc:11.4.0
 
 before_script:
 - apt-get update && apt-get install -y cmake libopenmpi-dev openmpi-bin liblapack-dev libblas-dev liblapacke doxygen libjs-mathjax
