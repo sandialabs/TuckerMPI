@@ -1,4 +1,3 @@
-
 #ifndef TUCKER_BOILERPLATE_VIEW_IO_HPP_
 #define TUCKER_BOILERPLATE_VIEW_IO_HPP_
 
@@ -96,6 +95,7 @@ void write_view_to_binary_file(const Kokkos::View<DataType, Properties...> & v,
   using value_type = typename view_type::non_const_value_type;
 
   const size_t numEntries = v.size();
+
   std::ofstream ofs;
   ofs.open(filename, std::ios::out | std::ios::binary);
   assert(ofs.is_open());
@@ -107,6 +107,21 @@ void write_view_to_binary_file(const Kokkos::View<DataType, Properties...> & v,
   else{
     throw std::runtime_error("write_view_to_binary_file: currently only supports contiguous Views");
   }
+}
+
+template <class DataType, class ...Properties>
+void write_view_to_file(const Kokkos::View<DataType, Properties...> & v,
+                        const std::string & filename)
+{
+  using view_type = Kokkos::View<DataType, Properties...>;
+  using value_type = typename view_type::non_const_value_type;
+
+  const size_t numEntries = v.size();
+  std::ofstream ofs;
+  ofs.open(filename, std::ios::out);
+  assert(ofs.is_open());
+  write_view_to_stream(ofs, v);
+  ofs.close();
 }
 
 }// end namespace Tucker

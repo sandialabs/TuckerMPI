@@ -49,7 +49,7 @@ struct NormalizeFunc{
   }
 };
 
-void check_scaling_type_else_throw(const std::string & scalingType)
+inline void check_scaling_type_else_throw(const std::string & scalingType)
 {
   if(scalingType != "Max" &&
      scalingType != "MinMax" &&

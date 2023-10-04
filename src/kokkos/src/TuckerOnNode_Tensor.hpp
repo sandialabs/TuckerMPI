@@ -58,12 +58,12 @@ class Tensor
   // need for the copy/move constr/assign accepting a compatible tensor
   template <class, class...> friend class Tensor;
 
+public:
   using dims_view_type            = Kokkos::View<int*>;
   using dims_host_view_type       = typename dims_view_type::HostMirror;
   using dims_const_view_type      = typename dims_view_type::const_type;
   using dims_host_const_view_type = typename dims_host_view_type::const_type;
 
-public:
   // ----------------------------------------
   // Type aliases
 

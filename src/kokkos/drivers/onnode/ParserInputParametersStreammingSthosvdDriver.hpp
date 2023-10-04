@@ -1,5 +1,5 @@
-#ifndef TUCKER_KOKKOSONLY_PARAM_FILE_PARSER_HPP_
-#define TUCKER_KOKKOSONLY_PARAM_FILE_PARSER_HPP_
+#ifndef TUCKER_KOKKOSONLY_STREAMING_PARAM_FILE_PARSER_HPP_
+#define TUCKER_KOKKOSONLY_STREAMING_PARAM_FILE_PARSER_HPP_
 
 #include "ParserInputParametersGenerateDriver.hpp"
 #include <algorithm>
@@ -9,7 +9,7 @@
 #include <optional>
 
 template<class ScalarType>
-class InputParametersSthosvdDriver {
+class InputParametersStreamingSthosvdDriver {
 public:
   int nd;
   bool boolAutoRankDetermination;
@@ -40,7 +40,10 @@ public:
   std::string stats_file;
   int scale_mode;
 
-  InputParametersSthosvdDriver(const std::string & paramFile)
+  std::string streaming_fns_file;
+  std::string streaming_stats_file;
+
+  InputParametersStreamingSthosvdDriver(const std::string & paramFile)
   {
     const auto fileAsStrings = Tucker::read_file_as_strings(paramFile);
     std::cout << fileAsStrings.size() << " " << fileAsStrings[0] << std::endl;
@@ -114,7 +117,7 @@ protected:
   std::vector<int> dataTensorDims_;
   std::optional<std::vector<int>> coreTensorDims_;
 
-  void parse(const std::vector<std::string>& fileAsStrings)
+  virtual void parse(const std::vector<std::string>& fileAsStrings)
   {
     using namespace Tucker;
     dataTensorDims_ = parse_multivalued_field<int>(fileAsStrings, "Global dims");
@@ -142,7 +145,7 @@ protected:
     sv_dir                = string_parse<std::string>(fileAsStrings, "SV directory", ".");
     sv_fn                 = string_parse<std::string>(fileAsStrings, "SV file prefix", "sv");
 
-    in_fns_file           = string_parse<std::string>(fileAsStrings, "Input file list", "raw.txt");
+    in_fns_file           = string_parse<std::string>(fileAsStrings, "Initial input file list", "raw.txt");
     rawDataFilenames      = read_file_as_strings(in_fns_file);
 
     preproc_fns_file      = string_parse<std::string>(fileAsStrings, "Preprocessed output file list", "pre.txt");
@@ -150,6 +153,8 @@ protected:
 
     stats_file            = string_parse<std::string>(fileAsStrings, "Stats file", "stats.txt");
     scale_mode            = string_parse<int>(fileAsStrings, "Scale mode", nd-1);
+    streaming_fns_file   = Tucker::string_parse<std::string>(fileAsStrings, "Streaming input file list", "stream_files.txt");
+    streaming_stats_file = Tucker::string_parse<std::string>(fileAsStrings, "Streaming statistics output file", "stream_stats.txt");
   }
 
   void check_args()

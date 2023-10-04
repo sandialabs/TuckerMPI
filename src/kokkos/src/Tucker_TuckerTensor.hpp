@@ -75,6 +75,45 @@ private:
   }
 
 public:
+  template<class FactorViewType>
+  TuckerTensor(CoreTensorType core,
+               std::vector<FactorViewType> factors) :
+    rank_(core.rank()), coreTensor_(core)
+  {
+    static_assert(unsigned(FactorViewType::rank) == 2);
+
+    using scalar = typename traits::value_type;
+    using layout = typename FactorViewType::array_layout;
+    using mem_space = typename traits::memory_space;
+
+    // Compute slicing info and total size
+    perModeSlicingInfo_ = slicing_info_view_t("pmsi", rank_);
+    std::size_t tsz = 0;
+    for (int n=0; n<rank_; ++n) {
+      std::size_t sz = factors[n].span();
+      auto& pmsi = perModeSlicingInfo_[n];
+      pmsi.extent0 = factors[n].extent(0);
+      pmsi.extent1 = factors[n].extent(1);
+      if (n == 0)
+        pmsi.startIndex = 0;
+      else
+        pmsi.startIndex = perModeSlicingInfo_[n-1].endIndexExclusive;
+      pmsi.endIndexExclusive = pmsi.startIndex + sz;
+      tsz += sz;
+    }
+
+    // Copy factors into each portion of factors_
+    factors_ = typename traits::factors_store_view_t("factors_", tsz);
+    for (int n=0; n<rank_; ++n) {
+      auto pmsi = perModeSlicingInfo_[n];
+      auto sub1 = Kokkos::subview(
+        factors_, std::pair(pmsi.startIndex, pmsi.endIndexExclusive));
+      auto sub2 = Kokkos::View<scalar**, layout, mem_space>(
+        sub1.data(), pmsi.extent0, pmsi.extent1);
+      Kokkos::deep_copy(sub2, factors[n]);
+    }
+  }
+
   ~TuckerTensor() = default;
 
   TuckerTensor(const TuckerTensor& o) = default;
@@ -129,9 +168,9 @@ public:
 
   int rank() const{ return rank_; }
 
-  typename traits::core_tensor_type coreTensor(){ return coreTensor_; }
+  typename traits::core_tensor_type coreTensor() const { return coreTensor_; }
 
-  auto factorMatrix(int mode)
+  auto factorMatrix(int mode) const
   {
     //FIXME: adapt this to support striding
     if (!factors_.span_is_contiguous()){
@@ -151,16 +190,16 @@ public:
   }
 
 private:
-  int rank_ = {};
+  int rank_;
 
   /** core tensor */
-  typename traits::core_tensor_type coreTensor_ = {};
+  typename traits::core_tensor_type coreTensor_;
 
   /** Factors matrices: factor matrices in "linearized" form for each mode */
-  typename traits::factors_store_view_t factors_ = {};
+  typename traits::factors_store_view_t factors_;
 
   /** Slicing info: info needed to access mode-specific factors */
-  slicing_info_view_t perModeSlicingInfo_ = {};
+  slicing_info_view_t perModeSlicingInfo_;
 };
 
 }

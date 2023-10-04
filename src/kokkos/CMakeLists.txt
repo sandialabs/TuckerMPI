@@ -46,6 +46,8 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   set(KokkosOnlyTuckerLib kokkosonly_tucker)
   set(ONNODE_SOURCES)
   LIST(APPEND ONNODE_SOURCES ${TUCKER_SRCDIR}/impl/Tucker_BlasWrapper.cpp)
+  LIST(APPEND ONNODE_SOURCES ${TUCKER_SRCDIR}/TuckerOnNode_ISVD.cpp)
+  LIST(APPEND ONNODE_SOURCES ${TUCKER_SRCDIR}/TuckerOnNode_StreamingTuckerTensor.cpp)
   ADD_LIBRARY(${KokkosOnlyTuckerLib} SHARED ${ONNODE_SOURCES})
   TARGET_LINK_LIBRARIES(${KokkosOnlyTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
   include_directories(${CMAKE_CURRENT_BINARY_DIR} ${TUCKER_SRCDIR})
@@ -77,6 +79,20 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   add_executable(${ONNODE_GENERATE_DRIVER_NAME} ${ONNODE_GENERATE_DRIVER_SRCS})
   target_include_directories(${ONNODE_GENERATE_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
   target_link_libraries(${ONNODE_GENERATE_DRIVER_NAME} ${KokkosOnlyTuckerLib} ${KOKKOS_TPLS})
+
+  #
+  # driver KokkosTucker_streaming_sthosvd
+  #
+  set(ONNODE_STREAMING_STHOSVD_DRIVER_NAME KokkosTucker_streaming_sthosvd)
+  set(ONNODE_STREAMING_STHOSVD_DRIVER_SRCS)
+  LIST(APPEND ONNODE_STREAMING_STHOSVD_DRIVER_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/CmdLineParse.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/ParameterFileParserUtils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/onnode/TuckerOnNode_streaming_sthosvd.cpp
+  )
+  add_executable(${ONNODE_STREAMING_STHOSVD_DRIVER_NAME} ${ONNODE_STREAMING_STHOSVD_DRIVER_SRCS})
+  target_include_directories(${ONNODE_STREAMING_STHOSVD_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
+  target_link_libraries(${ONNODE_STREAMING_STHOSVD_DRIVER_NAME} ${KokkosOnlyTuckerLib} ${KOKKOS_TPLS})
 
   #
   # add tests

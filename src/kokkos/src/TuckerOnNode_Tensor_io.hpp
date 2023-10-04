@@ -9,23 +9,33 @@
 namespace TuckerOnNode{
 
 template <class ScalarType, class ...Properties>
-void read_tensor_binary(Tensor<ScalarType, Properties...> tensor,
+void read_tensor_binary(const Tensor<ScalarType, Properties...>& tensor,
 			const std::string & filename)
 {
-  std::cout << " filename = " << filename << '\n';
   auto tensor_h = Tucker::create_mirror(tensor);
   Tucker::fill_rank1_view_from_binary_file(tensor_h.data(), filename);
   Tucker::deep_copy(tensor, tensor_h);
 }
 
 template <class ScalarType, class ...Properties>
-void read_tensor_binary(Tensor<ScalarType, Properties...> Y,
+void read_tensor_binary(const Tensor<ScalarType, Properties...>& Y,
 			const std::vector<std::string> & filenames)
 {
-  if(filenames.size() != 1) {
-    throw std::runtime_error("TuckerOnNode::read_tensor_binary: only supports one file for now");
+  if (filenames.size() == 1)
+    read_tensor_binary(Y, filenames[0]);
+  else {
+    const int N = Y.rank();
+    const std::size_t count = Y.prod(0,N-2);
+    auto Y_h = Tucker::create_mirror(Y);
+    assert(Y.extent(N-1) == filenames.size());
+    for (int i=0; i<filenames.size(); ++i) {
+      std::size_t beg = count*i;
+      std::size_t end = beg + count;
+      auto sub = Kokkos::subview(Y_h.data(), std::make_pair(beg,end));
+      Tucker::fill_rank1_view_from_binary_file(sub, filenames[i]);
+    }
+    Tucker::deep_copy(Y, Y_h);
   }
-  read_tensor_binary(Y, filenames[0]);
 }
 
 template <class ScalarType, class mem_space>
@@ -51,13 +61,45 @@ void write_tensor_binary(const Tensor<ScalarType, mem_space> & tensor,
 }
 
 template <class ScalarType, class ...Properties>
-void write_tensor_binary(Tensor<ScalarType, Properties...> tensor,
+void write_tensor_binary(const Tensor<ScalarType, Properties...>& tensor,
 			 const std::vector<std::string> & filenames)
 {
   if(filenames.size() != 1) {
     throw std::runtime_error("TuckerMpi::write_tensor_binary: only supports one file for now");
   }
   write_tensor_binary(tensor, filenames[0]);
+}
+
+template <class ScalarType, class ...Properties>
+void exportTensor(const Tensor<ScalarType, Properties...>& Y,
+                  const std::string& filename)
+{
+  // Open the file
+  std::ofstream ofs;
+  ofs.open(filename);
+
+  // Write the type of object
+  ofs << "tensor\n";
+
+  // Write the number of dimensions of the tensor
+  int ndims = Y.rank();
+  ofs << ndims << std::endl;
+
+  // Write the size of each dimension
+  for(int i=0; i<ndims; i++) {
+    ofs << Y.extent(i) << " ";
+  }
+  ofs << std::endl;
+
+  // Write the elements of the tensor
+  size_t numEntries = Y.size();
+  const auto data = Y.data();
+  for(size_t i=0; i<numEntries; i++) {
+    ofs << data[i] << std::endl;
+  }
+
+  // Close the file
+  ofs.close();
 }
 
 } // end namespace Tucker
