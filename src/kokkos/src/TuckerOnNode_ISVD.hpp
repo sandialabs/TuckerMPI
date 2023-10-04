@@ -192,7 +192,8 @@ public:
   tensor_t concatenateTensorsAlongMode(const tensor_t& X, const tensor_t& Y,
                                        int n);
 
-private:
+  // These can't be private on Cuda because they contain device lambdas
+//private:
   /**
    * @brief Check if ISVD object is initialized
    */

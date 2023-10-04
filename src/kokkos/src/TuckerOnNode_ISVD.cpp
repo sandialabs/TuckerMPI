@@ -94,8 +94,6 @@ svd(const matrix_t& A, matrix_t& U, vector_t& s, matrix_t& V)
   const std::int64_t m = A.extent(0);
   const std::int64_t n = A.extent(1);
   const std::int64_t k = std::min(m, n);
-  int lwork;
-  int info;
 
   // create a copy of input data
   matrix_t A_copy("A_copy", m, n);
@@ -106,9 +104,9 @@ svd(const matrix_t& A, matrix_t& U, vector_t& s, matrix_t& V)
   s = vector_t("s", k);
   V = matrix_t("V", k, n);
 
-  const std::int64_t lda = std::max(m, A_copy.stride(1));
-  const std::int64_t ldu = std::max(m, U.stride(1));
-  const std::int64_t ldv = std::max(k, V.stride(1));
+  const std::int64_t lda = std::max(m, std::int64_t(A_copy.stride(1)));
+  const std::int64_t ldu = std::max(m, std::int64_t(U.stride(1)));
+  const std::int64_t ldv = std::max(k, std::int64_t(V.stride(1)));
 
   cusolverDnHandle_t cuDnHandle = nullptr;
   cusolverDnCreate(&cuDnHandle);
@@ -138,20 +136,21 @@ svd(const matrix_t& A, matrix_t& U, vector_t& s, matrix_t& V)
   Kokkos::View<int,mem_space_t> d_info("d_info");
   {
     cusolverStatus_t err =
-      ccusolverDnXgesvd(cuDnHandle, nullptr, jobu, jobvt, m, n,
-                        cuda_data_type, A_copy.data(), lda,
-                        cuda_data_type, s.data(),
-                        cuda_data_type, U.data(), ldu,
-                        cuda_data_type, V.data(), ldv,
-                        cuda_data_type,
-                        reinterpret_cast<void*>(d_work.data()), &d_lwork,
-                        reinterpret_cast<void*>(h_work.data()), &h_lwork,
-                        d_info.data());
+      cusolverDnXgesvd(cuDnHandle, nullptr, jobu, jobvt, m, n,
+                       cuda_data_type, A_copy.data(), lda,
+                       cuda_data_type, s.data(),
+                       cuda_data_type, U.data(), ldu,
+                       cuda_data_type, V.data(), ldv,
+                       cuda_data_type,
+                       reinterpret_cast<void*>(d_work.data()), d_lwork,
+                       reinterpret_cast<void*>(h_work.data()), h_lwork,
+                       d_info.data());
     if (err != CUSOLVER_STATUS_SUCCESS)
       throw std::runtime_error("cusolverDnXgesvd_bufferSize() error");
   }
-  auto info_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), info);
-  if (info_h() != 0)
+  auto h_info =
+    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), d_info);
+  if (h_info() != 0)
     throw std::runtime_error("gesvd computation did not exit successfully");
 }
 
@@ -352,11 +351,13 @@ initializeFactors(const matrix_t& U,
   }
 
   // Y = -1 * X + Y
+  auto Yd = Y.data();
+  auto Xd = X.data();
   Kokkos::parallel_for("Y = -1 * X + Y",
                        Kokkos::RangePolicy<exec_space>(0,X.size()),
                        KOKKOS_LAMBDA(const int i)
   {
-    Y.data()[i] -= X.data()[i];
+    Yd[i] -= Xd[i];
   });
 
   // compute norms -------------------------------------------------------------
@@ -392,11 +393,12 @@ initializeFactors(const ttensor_t& X, const eigval_t& eig)
   Kokkos::deep_copy(U_, U_d);
 
   s_ = vector_t("s_", R_d);
+  auto s = s_; // avoid implicit capture of this pointer
   Kokkos::parallel_for("compute_singular_values",
                        Kokkos::RangePolicy<exec_space>(0,R_d),
                        KOKKOS_LAMBDA(const int i)
   {
-    s_[i] = std::sqrt(eig_d[i]);
+    s[i] = std::sqrt(eig_d[i]);
   });
 
   V_ = tensor_t(size);
@@ -481,10 +483,11 @@ addSingleRowNaive(const vector_t& c, scalar_t tolerance)
   //                            [ J[1xr] L[1x1] ]
   // here S = diag(s) and we rely on the constructor for S1 initializing to 0
   matrix_t S1("S1", r + 1, r + 1);
+  auto s = s_; // avoid implicit capture of this pointer
   Kokkos::parallel_for("Assemble S1", Kokkos::RangePolicy<exec_space>(0,r),
                        KOKKOS_LAMBDA(const int i)
   {
-    S1(i,i) = s_[i];
+    S1(i,i) = s[i];
     S1(r,i) = j[i];
   });
   Kokkos::deep_copy(Kokkos::subview(S1, std::make_pair(r,r+1), std::make_pair(r,r+1)), l);

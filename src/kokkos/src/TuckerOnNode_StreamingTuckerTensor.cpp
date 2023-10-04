@@ -263,7 +263,8 @@ StreamingSTHOSVD(
 
     // Lines 17 of streaming STHOSVD update algorithm
     // Retrieve updated left singular vectors from ISVD factorization
-    matrix_t U_new = Kokkos::create_mirror(factorization.isvd.getLeftSingularVectors());
+    matrix_t U_new =
+      Kokkos::create_mirror(mem_space_t(), factorization.isvd.getLeftSingularVectors());
     Kokkos::deep_copy(U_new, factorization.isvd.getLeftSingularVectors());
 
     // Line 22 of StreamingTuckerUpdate algorithm

@@ -9,19 +9,17 @@ namespace Tucker{
 namespace impl{
 
 template <class ScalarType, class ...Properties>
-std::size_t count_eigvals_using_threshold(Kokkos::View<ScalarType*, Properties...> eigvals,
-					  const ScalarType thresh)
+std::size_t count_eigvals_using_threshold(
+  Kokkos::View<ScalarType*, Properties...> eigvals,
+  const ScalarType thresh)
 {
-  using eigvals_view_type = Kokkos::View<ScalarType*, Properties...>;
-  using mem_space = typename eigvals_view_type::memory_space;
-  static_assert(Kokkos::SpaceAccessibility<Kokkos::HostSpace, mem_space>::accessible,
-		"count_eigvals_using_threshold: view must be accessible on host");
-
+  auto eigvals_h =
+    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
   std::size_t nrows = eigvals.extent(0);
   std::size_t numEvecs = nrows;
   ScalarType sum = 0;
   for(int i=nrows-1; i>=0; i--) {
-    sum += std::abs(eigvals[i]);
+    sum += std::abs(eigvals_h[i]);
     if(sum > thresh) {
       break;
     }
@@ -33,10 +31,11 @@ std::size_t count_eigvals_using_threshold(Kokkos::View<ScalarType*, Properties..
 } //end namespace impl
 
 template <class TensorType, class ScalarType>
-[[nodiscard]] auto create_core_tensor_truncator(TensorType dataTensor,
-						const std::optional<std::vector<int>> & fixedCoreTensorRanks,
-						ScalarType tol,
-						int mpiRank = 0)
+[[nodiscard]] auto create_core_tensor_truncator(
+  TensorType dataTensor,
+  const std::optional<std::vector<int>> & fixedCoreTensorRanks,
+  ScalarType tol,
+  int mpiRank = 0)
 {
   return [=](std::size_t mode, auto eigenValues) -> std::size_t
   {
@@ -51,11 +50,12 @@ template <class TensorType, class ScalarType>
       const ScalarType norm = dataTensor.frobeniusNormSquared();
       const ScalarType threshold  = tol*tol*norm/rank;
       if (mpiRank==0){
-	std::cout << "  AutoST-HOSVD::Tensor Norm: " << std::sqrt(norm) << "...\n";
-	std::cout << "  AutoST-HOSVD::Relative Threshold: " << threshold << "...\n";
+        std::cout << "  AutoST-HOSVD::Tensor Norm: " << std::sqrt(norm)
+                  << "...\n";
+        std::cout << "  AutoST-HOSVD::Relative Threshold: " << threshold
+                  << "...\n";
       }
-      auto eigVals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigenValues);
-      return impl::count_eigvals_using_threshold(eigVals_h, threshold);
+      return impl::count_eigvals_using_threshold(eigenValues, threshold);
     }
   };
 }
