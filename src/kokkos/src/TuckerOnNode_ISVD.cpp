@@ -151,6 +151,62 @@ svd(const matrix_t& A, matrix_t& U, vector_t& s, matrix_t& V)
 
 #endif
 
+#if defined(KOKKOS_ENABLE_HIP)
+
+template <class matrix_t, class vector_t>
+std::enable_if_t<
+  std::is_same_v<typename matrix_t::memory_space, Kokkos::HIPSpace> &&
+  std::is_same_v<typename vector_t::memory_space, Kokkos::HIPSpace> >
+svd(const matrix_t& A, matrix_t& U, vector_t& s, matrix_t& V)
+{
+  using scalar_t = typename matrix_t::non_const_value_type;
+  using mem_space_t = typename matrix_t::memory_space;
+
+  // LAPACK SVD related variables
+  const std::int64_t m = A.extent(0);
+  const std::int64_t n = A.extent(1);
+  const std::int64_t k = std::min(m, n);
+
+  // create a copy of input data
+  matrix_t A_copy("A_copy", m, n);
+  Kokkos::deep_copy(A_copy, A);
+
+  // allocate memory for U, s, V
+  U = matrix_t("U", m, k);
+  s = vector_t("s", k);
+  V = matrix_t("V", k, n);
+
+  // leading dimensions (handles layout left and right)
+  const std::int64_t lda = std::max(m, std::int64_t(A_copy.stride(1)));
+  const std::int64_t ldu = std::max(m, std::int64_t(U.stride(1)));
+  const std::int64_t ldv = std::max(k, std::int64_t(V.stride(1)));
+
+  // initialize solver library
+  rocblas_handle handle = Tucker::impl::RocblasHandle::get();
+
+  // actual factorization
+  Kokkos::View<scalar_t*,mem_space_t> d_work("d_work", k-1);
+  Kokkos::View<int,mem_space_t> d_info("d_info");
+  if constexpr(std::is_same_v<scalar_t, double>)
+    ROCBLAS_CHECK( rocsolver_dgesvd(
+                     handle, rocblas_svect_singular, rocblas_svect_singular,
+                     m, n, A_copy.data(), lda, s.data(), U.data(), ldu,
+                     V.data(), ldv, d_work.data(), rocblas_outofplace,
+                     d_info.data()) );
+  if constexpr(std::is_same_v<scalar_t, float>)
+    ROCBLAS_CHECK( rocsolver_sgesvd(
+                     handle, rocblas_svect_singular, rocblas_svect_singular,
+                     m, n, A_copy.data(), lda, s.data(), U.data(), ldu,
+                     V.data(), ldv, d_work.data(), rocblas_outofplace,
+                     d_info.data()) );
+  auto h_info =
+    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), d_info);
+  if (h_info() != 0)
+    throw std::runtime_error("gesvd computation did not exit successfully");
+}
+
+#endif
+
 template <class scalar_t, class matrix_t, class vector_t>
 void
 truncatedSvd(const matrix_t& A, scalar_t absolute_tolerance,

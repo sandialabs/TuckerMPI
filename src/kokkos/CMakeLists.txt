@@ -17,7 +17,12 @@ endif()
 endif()
 
 # if ROCBLAS is ON, we need rocsolver too because Kernels does not pick it up
-if (TARGET Kokkos::ROCBLAS)
+if (Kokkos_ENABLE_HIP)
+if (NOT TARGET roc::rocblas)
+  find_package(ROCBLAS)
+  message(STATUS "roc::rocblas not found, finding ROCBLAS")
+  list(APPEND TUCKER_ALL_TPLS_NEEDED roc::rocblas)
+endif()
 if (NOT TARGET roc::rocsolver)
   find_package(ROCSOLVER)
   message(STATUS "roc::rocsolver not found, finding ROCSOLVER")

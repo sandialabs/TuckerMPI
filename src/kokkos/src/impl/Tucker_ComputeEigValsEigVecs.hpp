@@ -173,45 +173,37 @@ void compute_syev_use_host_lapack(Kokkos::View<ScalarType**, AProperties...> A,
 #if defined(KOKKOS_ENABLE_HIP) && !defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
 
 template<class ScalarType, class ... AProperties, class ... EigvalProperties>
-void compute_syev_on_device_views(const Kokkos::HIP & /*exec*/,
-			  Kokkos::View<ScalarType**, AProperties...> A,
-			  Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
+void compute_syev_on_device_views(
+  const Kokkos::HIP & /*exec*/,
+  Kokkos::View<ScalarType**, AProperties...> A,
+  Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
 {
-  rocblas_handle handle;
-  rocblas_create_handle(&handle);
+  rocblas_handle handle = Tucker::impl::RocblasHandle::get();
 
   // https://rocsolver.readthedocs.io/en/latest/api/lapack.html#rocsolver-type-syevd
   const std::size_t nrows = A.extent(0);
   Kokkos::View<ScalarType*, Kokkos::LayoutLeft, Kokkos::HIPSpace> work("lwork", nrows);
   Kokkos::View<int, Kokkos::HIPSpace> info("info");
 
-  rocblas_status status = {};
   if constexpr(std::is_same_v<ScalarType, double>){
-    status = rocsolver_dsyev(handle,
-			     rocblas_evect::rocblas_evect_original,
-			     rocblas_fill::rocblas_fill_upper,
-			     nrows, A.data(), nrows,
-			     eigenvalues.data(),
-			     work.data(), info.data());
+    ROCBLAS_CHECK( rocsolver_dsyev(handle,
+                                   rocblas_evect::rocblas_evect_original,
+                                   rocblas_fill::rocblas_fill_upper,
+                                   nrows, A.data(), nrows,
+                                   eigenvalues.data(),
+                                   work.data(), info.data()) );
   }
   if constexpr(std::is_same_v<ScalarType, float>){
-    status = rocsolver_ssyev(handle,
-			     rocblas_evect::rocblas_evect_original,
-			     rocblas_fill::rocblas_fill_upper,
-			     nrows, A.data(), nrows,
-			     eigenvalues.data(),
-			     work.data(), info.data());
+    ROCBLAS_CHECK( rocsolver_ssyev(handle,
+                                   rocblas_evect::rocblas_evect_original,
+                                   rocblas_fill::rocblas_fill_upper,
+                                   nrows, A.data(), nrows,
+                                   eigenvalues.data(),
+                                   work.data(), info.data()) );
   }
-
-  if(status != rocblas_status_success){
-    throw std::runtime_error("syev: status != rocblas_status_success");
-  }
-
   auto info_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), info);
-  if(info_h() != 0){
+  if(info_h() != 0)
     throw std::runtime_error("syev: info != 0");
-  }
-  rocblas_destroy_handle(handle);
 }
 #endif
 

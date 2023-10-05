@@ -1,4 +1,3 @@
-
 #ifndef IMPL_TUCKER_SYRK_KOKKOS_HPP_
 #define IMPL_TUCKER_SYRK_KOKKOS_HPP_
 
@@ -16,6 +15,8 @@
 #include <cublas_v2.h>
 #endif
 
+#include "Tucker_SolverUtils.hpp"
+
 namespace Tucker{
 namespace impl{
 
@@ -28,7 +29,7 @@ struct SyrkFunctor1
   BetaType beta_;
 
   SyrkFunctor1(AViewType Av, CViewType Cv,
-	       AlphaType alpha, BetaType beta)
+               AlphaType alpha, BetaType beta)
     : Aview_(Av), Cview_(Cv), alpha_(alpha), beta_(beta){}
 
   KOKKOS_FUNCTION void operator()(const std::size_t j) const
@@ -36,7 +37,7 @@ struct SyrkFunctor1
     for (std::size_t i = 0; i <= j; ++i) {
       typename CViewType::non_const_value_type sum = {};
       for (std::size_t k = 0; k < Aview_.extent(1); ++k) {
-	sum += Aview_(i,k) * Aview_(j,k);
+        sum += Aview_(i,k) * Aview_(j,k);
       }
       Cview_(i,j) = beta_*Cview_(i,j) + alpha_*sum;
     }
@@ -52,7 +53,7 @@ struct SyrkFunctor2
   BetaType beta_;
 
   SyrkFunctor2(AViewType Av, CViewType Cv,
-	       AlphaType alpha, BetaType beta)
+               AlphaType alpha, BetaType beta)
     : Aview_(Av), Cview_(Cv), alpha_(alpha), beta_(beta){}
 
   KOKKOS_FUNCTION void operator()(const std::size_t j) const
@@ -60,7 +61,7 @@ struct SyrkFunctor2
     for (std::size_t i = 0; i <= j; ++i) {
       typename CViewType::non_const_value_type sum = {};
       for (std::size_t k = 0; k < Aview_.extent(0); ++k) {
-	sum += Aview_(k,i) * Aview_(k,j);
+        sum += Aview_(k,i) * Aview_(k,j);
       }
       Cview_(i,j) = beta_*Cview_(i,j) + alpha_*sum;
     }
@@ -71,17 +72,17 @@ struct SyrkFunctor2
 #if defined(KOKKOS_ENABLE_HIP) && !defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
 template<class AViewType, class CViewType>
 void syrk_kokkos(const Kokkos::HIP & /*exec*/,
-		 const char uplo[],
-		 const char opA[],
-		 typename AViewType::const_value_type & alpha,
-		 const AViewType& A,
-		 typename CViewType::const_value_type & beta,
-		 const CViewType& C)
+                 const char uplo[],
+                 const char opA[],
+                 typename AViewType::const_value_type & alpha,
+                 const AViewType& A,
+                 typename CViewType::const_value_type & beta,
+                 const CViewType& C)
 {
   static_assert(
-     std::is_same_v<typename AViewType::non_const_value_type, double>,
-     && std::is_same_v<typename CViewType::non_const_value_type, double>,
-		 "syrk_kokkos: A and C currently must have double scalar type");
+     std::is_same_v<typename AViewType::non_const_value_type, double> &&
+     std::is_same_v<typename CViewType::non_const_value_type, double>,
+     "syrk_kokkos: A and C currently must have double scalar type");
 
   static_assert(Kokkos::is_view_v<AViewType>,
                 "syrk_kokkos: AViewType must be a Kokkos::View.");
@@ -114,32 +115,27 @@ void syrk_kokkos(const Kokkos::HIP & /*exec*/,
   auto alpha_l = alpha;
   auto beta_l  = beta;
 
-  rocblas_handle handle;
-  rocblas_create_handle(&handle);
+  rocblas_handle handle = Tucker::impl::RocblasHandle::get();
 
   rocblas_status status = {};
   if (opA[0] == 'N'){
     std::size_t n = A.extent(0);
     std::size_t k = A.extent(1);
-    status = rocblas_dsyrk(handle, rocblas_fill::rocblas_fill_upper,
-			   rocblas_operation::rocblas_operation_none, n, k,
-			   &alpha_l, A.data(), A.extent(0),
-			   &beta_l, C.data(), C.extent(0));
+    ROCBLAS_CHECK( rocblas_dsyrk(
+                     handle, rocblas_fill::rocblas_fill_upper,
+                     rocblas_operation::rocblas_operation_none, n, k,
+                     &alpha_l, A.data(), A.extent(0),
+                     &beta_l, C.data(), C.extent(0)) );
   }
   else{
     std::size_t n = A.extent(1);
     std::size_t k = A.extent(0);
-    status = rocblas_dsyrk(handle, rocblas_fill::rocblas_fill_upper,
-			   rocblas_operation::rocblas_operation_transpose, n, k,
-			   &alpha_l, A.data(), A.extent(0),
-			   &beta_l, C.data(), C.extent(0));
+    ROCBLAS_CHECK( rocblas_dsyrk(
+                     handle, rocblas_fill::rocblas_fill_upper,
+                     rocblas_operation::rocblas_operation_transpose, n, k,
+                     &alpha_l, A.data(), A.extent(0),
+                     &beta_l, C.data(), C.extent(0)) );
   }
-
-  if(status != rocblas_status_success){
-    throw std::runtime_error("syrk: status != rocblas_status_success");
-  }
-
-  rocblas_destroy_handle(handle);
 }
 #endif
 
@@ -149,16 +145,16 @@ void syrk_kokkos(const Kokkos::HIP & /*exec*/,
 #if defined(KOKKOS_ENABLE_CUDA) && !defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
 template<class AViewType, class CViewType>
 void syrk_kokkos(const Kokkos::Cuda & exec,
-		 const char uplo[],
-		 const char opA[],
-		 typename AViewType::const_value_type & alpha,
-		 const AViewType& A,
-		 typename CViewType::const_value_type & beta,
-		 const CViewType& C)
+                 const char uplo[],
+                 const char opA[],
+                 typename AViewType::const_value_type & alpha,
+                 const AViewType& A,
+                 typename CViewType::const_value_type & beta,
+                 const CViewType& C)
 {
-  static_assert(    std::is_floating_point_v<typename AViewType::non_const_value_type>
-		 && std::is_floating_point_v<typename CViewType::non_const_value_type>,
-		 "syrk_kokkos: A and C currently must be floating point matrices");
+  static_assert(std::is_floating_point_v<typename AViewType::non_const_value_type> &&
+                std::is_floating_point_v<typename CViewType::non_const_value_type>,
+                "syrk_kokkos: A and C currently must be floating point matrices");
 
   static_assert(Kokkos::is_view_v<AViewType>,
                 "syrk_kokkos: AViewType must be a Kokkos::View.");
@@ -191,44 +187,41 @@ void syrk_kokkos(const Kokkos::Cuda & exec,
   auto alpha_l = alpha;
   auto beta_l  = beta;
 
-  cublasHandle_t handle;
-  cublasCreate(&handle);
+  cublasHandle_t handle = Tucker::impl::CublasHandle::get();
   cublasFillMode_t uplo_c = CUBLAS_FILL_MODE_UPPER;
 
   if (opA[0] == 'N'){
     cublasOperation_t trans = CUBLAS_OP_N;
     std::size_t n = A.extent(0);
     std::size_t k = A.extent(1);
-    cublasStatus_t status = cublasDsyrk(handle, uplo_c, trans, n, k,
-					&alpha_l, A.data(), A.extent(0),
-					&beta_l, C.data(), C.extent(0));
+    CUBLAS_CHECK( cublasDsyrk(handle, uplo_c, trans, n, k,
+                              &alpha_l, A.data(), A.extent(0),
+                              &beta_l, C.data(), C.extent(0)) );
   }
   else{
     cublasOperation_t trans = CUBLAS_OP_T;
     std::size_t n = A.extent(1);
     std::size_t k = A.extent(0);
-    cublasStatus_t status = cublasDsyrk(handle, uplo_c, trans, n, k,
-					&alpha_l, A.data(), A.extent(0),
-					&beta_l, C.data(), C.extent(0));
+    CUBLAS_CHECK( cublasDsyrk(handle, uplo_c, trans, n, k,
+                              &alpha_l, A.data(), A.extent(0),
+                              &beta_l, C.data(), C.extent(0)) );
   }
-
-  cublasDestroy(handle);
 }
 #endif
 
 
 template<class ExeSpace, class AViewType, class CViewType>
 void syrk_kokkos(const ExeSpace & exespace,
-		 const char uplo[],
-		 const char opA[],
-		 typename AViewType::const_value_type & alpha,
-		 const AViewType& A,
-		 typename CViewType::const_value_type & beta,
-		 const CViewType& C)
+                 const char uplo[],
+                 const char opA[],
+                 typename AViewType::const_value_type & alpha,
+                 const AViewType& A,
+                 typename CViewType::const_value_type & beta,
+                 const CViewType& C)
 {
   static_assert(    std::is_floating_point_v<typename AViewType::const_value_type>
-		 && std::is_floating_point_v<typename CViewType::const_value_type>,
-		 "syrk_kokkos: A and C currently must be floating point matrices");
+                 && std::is_floating_point_v<typename CViewType::const_value_type>,
+                 "syrk_kokkos: A and C currently must be floating point matrices");
 
   static_assert(Kokkos::is_view_v<AViewType>,
                 "syrk_kokkos: AViewType must be a Kokkos::View.");
@@ -264,7 +257,7 @@ void syrk_kokkos(const ExeSpace & exespace,
     using beta_t  = typename CViewType::const_value_type;
     using func_t = impl::SyrkFunctor1<alpha_t, beta_t, AViewType, CViewType>;
     Kokkos::parallel_for(C.extent(1),
-			 func_t(A, C, alpha, beta));
+                         func_t(A, C, alpha, beta));
   }
 
   else if (opA[0] == 'T'){
@@ -272,23 +265,23 @@ void syrk_kokkos(const ExeSpace & exespace,
     using beta_t  = typename CViewType::const_value_type;
     using func_t = impl::SyrkFunctor2<alpha_t, beta_t, AViewType, CViewType>;
     Kokkos::parallel_for(C.extent(1),
-			 func_t(A, C, alpha, beta));
+                         func_t(A, C, alpha, beta));
   }
 }
 
 template<class AViewType, class CViewType>
 void syrk_kokkos(const char uplo[],
-		 const char opA[],
-		 typename AViewType::const_value_type & alpha,
-		 const AViewType& A,
-		 typename CViewType::const_value_type & beta,
-		 const CViewType& C)
+                 const char opA[],
+                 typename AViewType::const_value_type & alpha,
+                 const AViewType& A,
+                 typename CViewType::const_value_type & beta,
+                 const CViewType& C)
 {
   static_assert(std::is_same_v<
-		typename AViewType::execution_space,
-		typename CViewType::execution_space>,
-		"syrk_kokkos overload without execution space: current A and C views "
-		"must have matching execution spaces");
+                typename AViewType::execution_space,
+                typename CViewType::execution_space>,
+                "syrk_kokkos overload without execution space: current A and C views "
+                "must have matching execution spaces");
 
   typename AViewType::execution_space exespace;
   syrk_kokkos(exespace, uplo, opA, alpha, A, beta, C);
