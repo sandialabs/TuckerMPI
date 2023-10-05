@@ -1,0 +1,105 @@
+#!/bin/bash
+
+#SBATCH --job-name=sine_wave
+#SBATCH --output=sine_wave_%j.txt
+
+#SBATCH --nodes=1
+#SBATCH --tasks-per-node=1
+#SBATCH --cpus-per-task=64
+#SBATCH --time=24:00:00
+
+#SBATCH --account=FY140200
+#SBATCH --partition=hpc
+
+#SBATCH --export=ALL
+
+#
+# location of executables **w.r.t. this script**; modify as needed
+#
+export STHOSVD_BATCH_EXE=../../../build/serial/drivers/bin/Tucker_sthosvd
+export STHOSVD_STREAM_EXE=../../../build/serial/drivers/bin/Tucker_streaming_sthosvd
+export RECONSTRUCT_EXE=../../../build/serial/drivers/bin/Tucker_reconstruct
+
+echo "(( Begin Output )) ============================================================="
+echo ""
+
+if [[ ! -z "${SLURM_JOB_NODELIST}" ]]; then
+    echo "(( Node List )) ================================================================"
+    echo ""
+
+    scontrol show hostnames $SLURM_JOB_NODELIST
+    echo ""
+
+    echo "(( CPU Config )) ==============================================================="
+    echo ""
+
+    lscpu
+    echo ""
+
+    echo "(( Available RAM )) ============================================================"
+    echo ""
+
+    free -g
+    echo ""
+
+    echo "(( OpenMP Threads )) ==========================================================="
+    echo ""
+
+    export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
+    echo ${OMP_NUM_THREADS}
+    echo ""
+
+    echo "(( Modules )) =================================================================="
+    echo ""
+
+    module list
+    echo ""
+fi
+
+for noise in 9e-4 7e-4 5e-4; do
+#   echo "(( Noise = ${noise}; Data Generation )) ============================================"
+#   echo ""
+
+#   python3 sine_wave/generate_data.py \
+#           --mode_sizes 100 100 5000 \
+#           --maximum_frequencies 5 5 5 \
+#           --noise_to_signal_ratio ${noise} \
+#           --data_dir sine_wave/noise_${noise}_data
+#   echo ""
+
+    for tolerance in 1e-3 2e-3; do
+        echo "(( Noise = ${noise}; Tolerance = ${tolerance}; Batch ST-HOSVD )) ==========================="
+        echo ""
+
+        python3 sine_wave/generate_conf.py \
+                --mode_sizes 100 100 5000 \
+                --num_initial 5000 \
+                --tolerance ${tolerance} \
+                --data_dir sine_wave/noise_${noise}_data \
+                --config_dir sine_wave/noise_${noise}_tol_${tolerance}_batch
+        cd sine_wave/noise_${noise}_tol_${tolerance}_batch
+        ../../${STHOSVD_BATCH_EXE} --parameter-file compress.txt
+        ../../${RECONSTRUCT_EXE} --parameter-file reconstruct.txt
+        cd ../..
+        python3 sine_wave/compute_errors.py --config_dir sine_wave/noise_${noise}_tol_${tolerance}_batch
+        echo ""
+
+        echo "(( Noise = ${noise}; Tolerance = ${tolerance}; Streaming ST-HOSVD )) ======================="
+        echo ""
+
+        python3 sine_wave/generate_conf.py \
+                --mode_sizes 100 100 5000 \
+                --num_initial 200 \
+                --tolerance ${tolerance} \
+                --data_dir sine_wave/noise_${noise}_data \
+                --config_dir sine_wave/noise_${noise}_tol_${tolerance}_stream
+        cd sine_wave/noise_${noise}_tol_${tolerance}_stream
+        ../../${STHOSVD_STREAM_EXE} --parameter-file compress.txt
+        ../../${RECONSTRUCT_EXE} --parameter-file reconstruct.txt
+        cd ../..
+        python3 sine_wave/compute_errors.py --config_dir sine_wave/noise_${noise}_tol_${tolerance}_stream
+        echo ""
+    done
+done
+
+echo "(( End Output )) =============================================================="
