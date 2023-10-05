@@ -99,7 +99,7 @@ StreamingSTHOSVD(
   // Compute errors
   for (int n = 0; n < ndims - 1; ++n) {
     factorization.squared_errors[n] = 0;
-    auto eigs = initial_eigenvalues[n];
+    auto eigs = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), initial_eigenvalues[n]);
     for (int i = G.extent(n); i < U[n].extent(0); ++i) {
       if (eigs[i]) {
         factorization.squared_errors[n] += std::abs(eigs[i]);

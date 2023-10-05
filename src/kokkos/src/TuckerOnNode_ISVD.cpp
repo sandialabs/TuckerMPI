@@ -79,6 +79,28 @@ svd(const matrix_t& A, matrix_t& U, vector_t& s, matrix_t& V)
 
 #if defined(KOKKOS_ENABLE_CUDA)
 
+class CusolverHandle {
+public:
+  CusolverHandle(const CusolverHandle&) = delete;
+  CusolverHandle(CusolverHandle&&) = delete;
+  CusolverHandle& operator=(const CusolverHandle&) = delete;
+  CusolverHandle& operator=(CusolverHandle&&) = delete;
+
+  ~CusolverHandle() { cusolverDnDestroy(handle); }
+  static cusolverDnHandle_t get() {
+    static CusolverHandle h;
+    return h.handle;
+  }
+
+private:
+  CusolverHandle() {
+    cusolverStatus_t err = cusolverDnCreate(&handle);
+    if (err != CUSOLVER_STATUS_SUCCESS)
+      throw std::runtime_error("cusolverDnCreate() error ("+std::to_string(err)+")");
+  }
+  cusolverDnHandle_t handle;
+};
+
 template <class matrix_t, class vector_t>
 std::enable_if_t<
   std::is_same_v<typename matrix_t::memory_space, Kokkos::CudaSpace> &&
@@ -104,16 +126,18 @@ svd(const matrix_t& A, matrix_t& U, vector_t& s, matrix_t& V)
   s = vector_t("s", k);
   V = matrix_t("V", k, n);
 
+  // leading dimensions (handles layout left and right)
   const std::int64_t lda = std::max(m, std::int64_t(A_copy.stride(1)));
   const std::int64_t ldu = std::max(m, std::int64_t(U.stride(1)));
   const std::int64_t ldv = std::max(k, std::int64_t(V.stride(1)));
 
-  cusolverDnHandle_t cuDnHandle = nullptr;
-  cusolverDnCreate(&cuDnHandle);
-
+  // cuda data type
   static_assert(std::is_floating_point_v<scalar_t>);
   constexpr cudaDataType cuda_data_type =
     std::is_same_v<scalar_t, double> ? CUDA_R_64F : CUDA_R_32F;
+
+  // initialize solver library
+  cusolverDnHandle_t cuDnHandle = CusolverHandle::get();
 
   // workspace size query
   std::size_t d_lwork = 0; /* size of workspace */
@@ -127,7 +151,7 @@ svd(const matrix_t& A, matrix_t& U, vector_t& s, matrix_t& V)
                                   cuda_data_type, V.data(), ldv,
                                   cuda_data_type, &d_lwork, &h_lwork);
     if (err != CUSOLVER_STATUS_SUCCESS)
-      throw std::runtime_error("cusolverDnXgesvd_bufferSize() error");
+      throw std::runtime_error("cusolverDnXgesvd_bufferSize() error ("+std::to_string(err)+")");
   }
 
   // actual factorization
@@ -146,7 +170,7 @@ svd(const matrix_t& A, matrix_t& U, vector_t& s, matrix_t& V)
                        reinterpret_cast<void*>(h_work.data()), h_lwork,
                        d_info.data());
     if (err != CUSOLVER_STATUS_SUCCESS)
-      throw std::runtime_error("cusolverDnXgesvd_bufferSize() error");
+      throw std::runtime_error("cusolverDnXgesvd_bufferSize() error ("+std::to_string(err)+")");
   }
   auto h_info =
     Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), d_info);
