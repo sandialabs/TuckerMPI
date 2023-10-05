@@ -1,8 +1,9 @@
-
 #ifndef IMPL_TUCKER_COMPUTEEIGVALSEIGVECS_HPP_
 #define IMPL_TUCKER_COMPUTEEIGVALSEIGVECS_HPP_
 
 #include "Tucker_BlasWrapper.hpp"
+#include "Tucker_SolverUtils.hpp"
+
 #include <Kokkos_Core.hpp>
 #include <Kokkos_StdAlgorithms.hpp>
 
@@ -16,27 +17,6 @@
 
 namespace Tucker{
 namespace impl{
-
-#if defined KOKKOS_ENABLE_CUDA
-#define CUDA_CHECK(err)                                                                            \
-    do {                                                                                           \
-        cudaError_t err_ = (err);                                                                  \
-        if (err_ != cudaSuccess) {                                                                 \
-            printf("CUDA error %d at %s:%d\n", err_, __FILE__, __LINE__);                          \
-            throw std::runtime_error("CUDA error");                                                \
-        }                                                                                          \
-    } while (0)
-
-#define CUSOLVER_CHECK(err)                                                                        \
-    do {                                                                                           \
-        cusolverStatus_t err_ = (err);                                                             \
-        if (err_ != CUSOLVER_STATUS_SUCCESS) {                                                     \
-            printf("cusolver error %d at %s:%d\n", err_, __FILE__, __LINE__);                      \
-            throw std::runtime_error("cusolver error");                                            \
-        }                                                                                          \
-    } while (0)
-
-#endif
 
 template<class HostViewType, class DevViewType>
 void flip_sign_eigenvecs_columns_on_host(HostViewType G_h, DevViewType G)
@@ -243,11 +223,8 @@ void compute_syev_on_device_views(const Kokkos::Cuda & exec,
       Kokkos::View<ScalarType**, AProperties...> A,
       Kokkos::View<ScalarType*, EigvalProperties...> eigenvalues)
 {
-  cusolverDnHandle_t cuDnHandle = nullptr;
-
-
   /* step 1: create cusolver handle, bind a stream */
-  CUSOLVER_CHECK( cusolverDnCreate(&cuDnHandle) );
+  cusolverDnHandle_t cuDnHandle = Tucker::impl::CusolverHandle::get();
 
   auto stream = exec.cuda_stream();
   CUDA_CHECK( cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking) );
@@ -310,7 +287,6 @@ void compute_syev_on_device_views(const Kokkos::Cuda & exec,
   free(h_work);
 
   CUDA_CHECK(cudaStreamSynchronize(stream));
-  CUSOLVER_CHECK( cusolverDnDestroy(cuDnHandle) );
 }
 #endif
 

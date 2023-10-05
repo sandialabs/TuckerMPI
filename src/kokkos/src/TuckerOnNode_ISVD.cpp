@@ -15,6 +15,7 @@
 #include <KokkosBlas1_scal.hpp>
 
 #include "TuckerOnNode.hpp"
+#include "impl/Tucker_SolverUtils.hpp"
 
 #if defined KOKKOS_ENABLE_HIP
 #include <rocsolver/rocsolver.h>
@@ -79,28 +80,6 @@ svd(const matrix_t& A, matrix_t& U, vector_t& s, matrix_t& V)
 
 #if defined(KOKKOS_ENABLE_CUDA)
 
-class CusolverHandle {
-public:
-  CusolverHandle(const CusolverHandle&) = delete;
-  CusolverHandle(CusolverHandle&&) = delete;
-  CusolverHandle& operator=(const CusolverHandle&) = delete;
-  CusolverHandle& operator=(CusolverHandle&&) = delete;
-
-  ~CusolverHandle() { cusolverDnDestroy(handle); }
-  static cusolverDnHandle_t get() {
-    static CusolverHandle h;
-    return h.handle;
-  }
-
-private:
-  CusolverHandle() {
-    cusolverStatus_t err = cusolverDnCreate(&handle);
-    if (err != CUSOLVER_STATUS_SUCCESS)
-      throw std::runtime_error("cusolverDnCreate() error ("+std::to_string(err)+")");
-  }
-  cusolverDnHandle_t handle;
-};
-
 template <class matrix_t, class vector_t>
 std::enable_if_t<
   std::is_same_v<typename matrix_t::memory_space, Kokkos::CudaSpace> &&
@@ -137,41 +116,33 @@ svd(const matrix_t& A, matrix_t& U, vector_t& s, matrix_t& V)
     std::is_same_v<scalar_t, double> ? CUDA_R_64F : CUDA_R_32F;
 
   // initialize solver library
-  cusolverDnHandle_t cuDnHandle = CusolverHandle::get();
+  cusolverDnHandle_t cuDnHandle = Tucker::impl::CusolverHandle::get();
 
   // workspace size query
   std::size_t d_lwork = 0; /* size of workspace */
   std::size_t h_lwork = 0; /* size of workspace */
-  {
-    cusolverStatus_t err =
-      cusolverDnXgesvd_bufferSize(cuDnHandle, nullptr, jobu, jobvt, m, n,
-                                  cuda_data_type, A_copy.data(), lda,
-                                  cuda_data_type, s.data(),
-                                  cuda_data_type, U.data(), ldu,
-                                  cuda_data_type, V.data(), ldv,
-                                  cuda_data_type, &d_lwork, &h_lwork);
-    if (err != CUSOLVER_STATUS_SUCCESS)
-      throw std::runtime_error("cusolverDnXgesvd_bufferSize() error ("+std::to_string(err)+")");
-  }
+  CUSOLVER_CHECK( cusolverDnXgesvd_bufferSize(
+                    cuDnHandle, nullptr, jobu, jobvt, m, n,
+                    cuda_data_type, A_copy.data(), lda,
+                    cuda_data_type, s.data(),
+                    cuda_data_type, U.data(), ldu,
+                    cuda_data_type, V.data(), ldv,
+                    cuda_data_type, &d_lwork, &h_lwork) );
 
   // actual factorization
   Kokkos::View<char*,mem_space_t> d_work("d_work", d_lwork);
   Kokkos::View<char*,Kokkos::HostSpace> h_work("h_work", h_lwork);
   Kokkos::View<int,mem_space_t> d_info("d_info");
-  {
-    cusolverStatus_t err =
-      cusolverDnXgesvd(cuDnHandle, nullptr, jobu, jobvt, m, n,
-                       cuda_data_type, A_copy.data(), lda,
-                       cuda_data_type, s.data(),
-                       cuda_data_type, U.data(), ldu,
-                       cuda_data_type, V.data(), ldv,
-                       cuda_data_type,
-                       reinterpret_cast<void*>(d_work.data()), d_lwork,
-                       reinterpret_cast<void*>(h_work.data()), h_lwork,
-                       d_info.data());
-    if (err != CUSOLVER_STATUS_SUCCESS)
-      throw std::runtime_error("cusolverDnXgesvd_bufferSize() error ("+std::to_string(err)+")");
-  }
+  CUSOLVER_CHECK( cusolverDnXgesvd(
+                    cuDnHandle, nullptr, jobu, jobvt, m, n,
+                    cuda_data_type, A_copy.data(), lda,
+                    cuda_data_type, s.data(),
+                    cuda_data_type, U.data(), ldu,
+                    cuda_data_type, V.data(), ldv,
+                    cuda_data_type,
+                    reinterpret_cast<void*>(d_work.data()), d_lwork,
+                    reinterpret_cast<void*>(h_work.data()), h_lwork,
+                    d_info.data()) );
   auto h_info =
     Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), d_info);
   if (h_info() != 0)
