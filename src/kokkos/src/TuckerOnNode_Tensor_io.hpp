@@ -40,14 +40,14 @@ void read_tensor_binary(const Tensor<ScalarType, Properties...>& Y,
 
 template <class ScalarType, class mem_space>
 void write_tensor_binary(const Tensor<ScalarType, mem_space> & tensor,
-			 const std::string & filename)
+                         const std::string & filename)
 {
 
   using tensor_type = Tensor<ScalarType, mem_space>;
   using layout      = typename tensor_type::traits::array_layout;
   static_assert(std::is_same_v<layout, Kokkos::LayoutLeft> ||
-		std::is_same_v<layout, Kokkos::LayoutRight>,
-		"export_tensor_binary: only supports layoutLeft or Right");
+                std::is_same_v<layout, Kokkos::LayoutRight>,
+                "export_tensor_binary: only supports layoutLeft or Right");
 
   auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), tensor.data());
   // const std::streamoff MAX_OFFSET = std::numeric_limits<std::streamoff>::max();
@@ -61,13 +61,26 @@ void write_tensor_binary(const Tensor<ScalarType, mem_space> & tensor,
 }
 
 template <class ScalarType, class ...Properties>
-void write_tensor_binary(const Tensor<ScalarType, Properties...>& tensor,
-			 const std::vector<std::string> & filenames)
+void write_tensor_binary(const Tensor<ScalarType, Properties...>& Y,
+                         const std::vector<std::string> & filenames)
 {
-  if(filenames.size() != 1) {
-    throw std::runtime_error("TuckerMpi::write_tensor_binary: only supports one file for now");
+  if (filenames.size() == 1)
+    write_tensor_binary(Y, filenames[0]);
+  else {
+    const int N = Y.rank();
+    const std::size_t count = Y.prod(0,N-2);
+    assert(Y.extent(N-1) == filenames.size());
+    auto v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), Y.data());
+    for (int i=0; i<filenames.size(); ++i) {
+      std::cout << "Writing reconstruction file " << filenames[i] << " with " << count << " entries" << std::endl;
+      std::ofstream ofs;
+      ofs.open(filenames[i], std::ios::out | std::ios::binary);
+      assert(ofs.is_open());
+      const ScalarType* data = v_h.data() + count*i;
+      ofs.write((char*)data, count*sizeof(ScalarType));
+      ofs.close();
+    }
   }
-  write_tensor_binary(tensor, filenames[0]);
 }
 
 template <class ScalarType, class ...Properties>

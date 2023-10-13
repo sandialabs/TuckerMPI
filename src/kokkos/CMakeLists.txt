@@ -86,6 +86,20 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY)
   target_link_libraries(${ONNODE_GENERATE_DRIVER_NAME} ${KokkosOnlyTuckerLib} ${KOKKOS_TPLS})
 
   #
+  # driver KokkosTucker_reconstruct
+  #
+  set(ONNODE_RECONSTRUCT_DRIVER_NAME KokkosTucker_reconstruct)
+  set(ONNODE_RECONSTRUCT_DRIVER_SRCS)
+  LIST(APPEND ONNODE_RECONSTRUCT_DRIVER_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/CmdLineParse.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/ParameterFileParserUtils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/onnode/TuckerOnNode_reconstruct.cpp
+  )
+  add_executable(${ONNODE_RECONSTRUCT_DRIVER_NAME} ${ONNODE_RECONSTRUCT_DRIVER_SRCS})
+  target_include_directories(${ONNODE_RECONSTRUCT_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
+  target_link_libraries(${ONNODE_RECONSTRUCT_DRIVER_NAME} ${KokkosOnlyTuckerLib} ${KOKKOS_TPLS})
+
+  #
   # driver KokkosTucker_streaming_sthosvd
   #
   set(ONNODE_STREAMING_STHOSVD_DRIVER_NAME KokkosTucker_streaming_sthosvd)
