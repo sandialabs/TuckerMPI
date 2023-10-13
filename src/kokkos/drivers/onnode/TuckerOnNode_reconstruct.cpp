@@ -209,8 +209,8 @@ int main(int argc, char* argv[])
         return std::accumulate(vec.begin(), vec.end(), 1, std::multiplies<int>());
       };
 
-      size_t min_flops = -1;
-      size_t min_mem = -1;
+      size_t min_flops = static_cast<size_t>(-1);
+      size_t min_mem = static_cast<size_t>(-1);
       std::vector<int> current_dims(nd);
       do {
         // Initialize current dimensions
@@ -226,7 +226,7 @@ int main(int argc, char* argv[])
             current_dims[temp_order[i]] = rec_size[temp_order[i]];
           }
 
-          if(min_flops == -1 || flops < min_flops) {
+          if(min_flops == static_cast<size_t>(-1) || flops < min_flops) {
             min_flops = flops;
             for(int i=0; i<nd; i++) {
               rec_order[i] = temp_order[i];
@@ -246,7 +246,7 @@ int main(int argc, char* argv[])
             max_mem = std::max(mem,max_mem);
           }
 
-          if(min_mem == -1 || max_mem < min_mem) {
+          if(min_mem == static_cast<size_t>(-1) || max_mem < min_mem) {
             min_mem = max_mem;
             for (int i=0; i<nd; i++) {
               rec_order[i] = temp_order[i];
@@ -315,7 +315,9 @@ int main(int argc, char* argv[])
       ss << sthosvd_dir << "/" << sthosvd_fn << "_mat_" << mode << ".mpi";
       factors[mode] =
         factor_1d_view_type("fac", I_dims[mode]*coreSize[mode]);
-      Tucker::fill_rank1_view_from_binary_file(factors[mode], ss.str());
+      auto f_h = Kokkos::create_mirror_view(factors[mode]);
+      Tucker::fill_rank1_view_from_binary_file(f_h, ss.str());
+      Kokkos::deep_copy(factors[mode], f_h);
     }
     // readTimer->stop();
     // std::cout << "Time spent reading: " << readTimer->duration() << "s\n";
