@@ -11,6 +11,9 @@ int main(int argc, char* argv[])
   {
     using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
+    Tucker::Timer totalTimer;
+    totalTimer.start();
+
     /*
      * read data and create tensor
      */
@@ -18,12 +21,24 @@ int main(int argc, char* argv[])
 						  "--parameter-file", "paramfile.txt");
     const InputParametersSthosvdDriver<scalar_t> inputs(paramfn);
     inputs.describe();
+    Tucker::Timer readTimer;
+    readTimer.start();
     TuckerOnNode::Tensor<scalar_t, memory_space> X(inputs.dimensionsOfDataTensor());
     TuckerOnNode::read_tensor_binary(X, inputs.rawDataFilenames);
+    readTimer.stop();
+
+    size_t nnz = X.size();
+    std::cout << "Input tensor size: ";
+    for (int i=0; i<X.rank(); ++i)
+      std::cout << X.extent(i) << " ";
+    std::cout << ", or ";
+    Tucker::print_bytes_to_stream(std::cout, nnz*sizeof(double));
 
     /*
      * preprocessing
      */
+    Tucker::Timer preprocessTimer;
+    preprocessTimer.start();
     const int scaleMode = inputs.scale_mode;
 
     auto writeScalesShifts = [=](auto scales, auto shifts){
@@ -53,6 +68,7 @@ int main(int argc, char* argv[])
     else{
       std::cout << "inputs.scaling_type == None, therefore we are not normalizing the tensor\n";
     }
+    preprocessTimer.stop();
     if (inputs.boolWriteTensorAfterPreprocessing){
       TuckerOnNode::write_tensor_binary(X, inputs.preprocDataFilenames);
     }
@@ -132,25 +148,39 @@ int main(int argc, char* argv[])
     auto truncator =
       Tucker::create_core_tensor_truncator(X, inputs.dimensionsOfCoreTensor(), inputs.tol);
 
-    auto sthosvdGram = [=](auto truncator){
+    Tucker::Timer sthosvdTimer, writeTimer;
+    auto sthosvdGram = [&](auto truncator){
+      sthosvdTimer.start();
       const auto method = TuckerOnNode::Method::Gram;
       auto [tt, eigvals] = TuckerOnNode::sthosvd(method, X, truncator, false /*flipSign*/);
+      sthosvdTimer.stop();
       std::cout<< "\n";
       writeEigenvaluesToFiles(eigvals);
       printNorms(tt);
 
+      writeTimer.start();
       if(inputs.boolWriteResultsOfSTHOSVD){
         writeExtentsOfCoreTensor(tt);
         writeExtentsOfGlobalTensor();
         writeCoreTensorToFile(tt);
         writeEachFactor(tt);
       }
+      writeTimer.stop();
     };
 
     /* run for real */
     if(inputs.boolSTHOSVD){
       sthosvdGram(truncator);
     }
+
+    Tucker::print_max_mem_usage_to_stream(std::cout);
+
+    totalTimer.stop();
+    std::cout << "Read time: " << readTimer.duration() << std::endl;
+    std::cout << "Preprocessing time: " << preprocessTimer.duration() << std::endl;
+    std::cout << "STHOSVD time: " << sthosvdTimer.duration() << std::endl;
+    std::cout << "Write time: " << writeTimer.duration() << std::endl;
+    std::cout << "Total time: " << totalTimer.duration() << std::endl;
 
   } // local scope to ensure all Kokkos views are destructed appropriately
   Kokkos::finalize();

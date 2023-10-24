@@ -14,13 +14,14 @@
 
 int main(int argc, char* argv[])
 {
-  typedef double scalar_t;  // specify precision
-
   using scalar_t = double;
 
   Kokkos::initialize(argc, argv);
   {
     using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
+
+    Tucker::Timer totalTimer;
+    totalTimer.start();
 
     /*
      * read data and create tensor
@@ -29,8 +30,18 @@ int main(int argc, char* argv[])
       argc, (const char**)argv, "--parameter-file", "paramfile.txt");
     const InputParametersStreamingSthosvdDriver<scalar_t> inputs(paramfn);
     inputs.describe();
+    Tucker::Timer readTimer;
+    readTimer.start();
     TuckerOnNode::Tensor<scalar_t, memory_space> X(inputs.dimensionsOfDataTensor());
     TuckerOnNode::read_tensor_binary(X, inputs.rawDataFilenames);
+    readTimer.stop();
+
+    size_t nnz = X.size();
+    std::cout << "Initial input tensor size: ";
+    for (int i=0; i<X.rank(); ++i)
+      std::cout << X.extent(i) << " ";
+    std::cout << ", or ";
+    Tucker::print_bytes_to_stream(std::cout, nnz*sizeof(double));
 
     /*
      * preprocessing
@@ -140,6 +151,7 @@ int main(int argc, char* argv[])
       std::cout << "Norm of core tensor: " << std::setprecision(7) << gnorm << std::endl;
     };
 
+    Tucker::Timer sthosvdTimer, streamingSthosvdTimer, streamingReadTimer, writeTimer;
     if(inputs.boolSTHOSVD) {
       /////////////////////////////
       // Perform Initial STHOSVD //
@@ -148,18 +160,23 @@ int main(int argc, char* argv[])
         Tucker::create_core_tensor_truncator(X, inputs.dimensionsOfCoreTensor(), inputs.tol);
 
       const auto method = TuckerOnNode::Method::Gram;
+      sthosvdTimer.start();
       auto [initial_solution, initial_eigvals] = TuckerOnNode::sthosvd(method, X, truncator, false /*flipSign*/);
+      sthosvdTimer.stop();
+
       std::cout<< "\n";
       writeEigenvaluesToFiles(initial_eigvals);
 
       /////////////////////////////
       // Perform Streaming HOSVD //
       /////////////////////////////
+      streamingSthosvdTimer.start();
       TuckerOnNode::StreamingTuckerTensor<scalar_t> solution =
         TuckerOnNode::StreamingSTHOSVD(
           X, initial_solution, initial_eigvals,
           inputs.streaming_fns_file.c_str(),
-          inputs.tol, inputs.streaming_stats_file);
+          inputs.tol, streamingReadTimer, inputs.streaming_stats_file);
+      streamingSthosvdTimer.stop();
 
       /////////////////////////
       // Compute Error Bound //
@@ -184,13 +201,25 @@ int main(int argc, char* argv[])
       }
       std::cout << std::endl;
 
+      writeTimer.start();
       if(inputs.boolWriteResultsOfSTHOSVD) {
         writeExtentsOfCoreTensor(solution.factorization);
         writeExtentsOfGlobalTensor(solution.factorization);
         writeCoreTensorToFile(solution.factorization);
         writeEachFactor(solution.factorization);
       }
+      writeTimer.stop();
     }
+
+    Tucker::print_max_mem_usage_to_stream(std::cout);
+
+    totalTimer.stop();
+    std::cout << "Initial read time: " << readTimer.duration() << std::endl;
+    std::cout << "Initial STHOSVD time: " << sthosvdTimer.duration() << std::endl;
+    std::cout << "Streaming read time: " << streamingReadTimer.duration() << std::endl;
+    std::cout << "Streaming STHOSVD time: " << streamingSthosvdTimer.duration() - streamingReadTimer.duration() << std::endl;
+    std::cout << "Write time: " << writeTimer.duration() << std::endl;
+    std::cout << "Total time: " << totalTimer.duration() << std::endl;
 
   } // local scope to ensure all Kokkos views are destructed appropriately
   Kokkos::finalize();

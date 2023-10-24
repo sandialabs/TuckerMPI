@@ -6,6 +6,8 @@
 
 // first include headers that only depende on TPLs
 #include "Tucker_boilerplate_view_io.hpp"
+#include "Tucker_Timer.hpp"
+#include "Tucker_print_bytes.hpp"
 
 // then include cmake-based config
 #include "Tucker_cmake_config.h"
@@ -23,6 +25,7 @@
 #include "TuckerOnNode_write_statistics.hpp"
 #include "TuckerOnNode_transform_slices.hpp"
 #include "TuckerOnNode_normalize_tensor.hpp"
+#include "Tucker_print_max_mem_usage.hpp"
 
 // finally functions related/needed by sthosvd
 #include "TuckerOnNode_TensorGramEigenvalues.hpp"

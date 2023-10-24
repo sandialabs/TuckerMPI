@@ -65,6 +65,7 @@ StreamingSTHOSVD(
   const TensorGramEigenvalues<scalar_t,mem_space_t>& initial_eigenvalues,
   const char* filename,
   const scalar_t epsilon,
+  Tucker::Timer &readTimer,
   const std::string &streaming_stats_file,
   bool useQR,
   bool flipSign)
@@ -165,9 +166,11 @@ StreamingSTHOSVD(
   while(inStream >> snapshot_file) {
     // Read the new tensor slice
     std::cout<< "Reading snapshot " << snapshot_file << std::endl;
+    readTimer.start();
     Tensor<scalar_t, Kokkos::HostSpace> Yh(slice_dims);
     read_tensor_binary(Yh, snapshot_file);
     tensor_t Y = Tucker::create_mirror_tensor_and_copy(mem_space_t(), Yh);
+    readTimer.stop();
 
     // compute/update data norms
     const scalar_t Ynorm2 = Y.frobeniusNormSquared();
@@ -344,6 +347,7 @@ template class StreamingTuckerTensor<double>;
 //                  const TensorGramEigenvalues<float,Kokkos::DefaultExecutionSpace::memory_space>& initial_eigenvalues,
 //                  const char* filename,
 //                  const float epsilon,
+//                  Tucker::Timer &,
 //                  const std::string &streaming_stats_file,
 //                  bool useQR,
 //                  bool flipSign);
@@ -355,6 +359,7 @@ StreamingSTHOSVD(const Tensor<double,Kokkos::DefaultExecutionSpace::memory_space
                  const TensorGramEigenvalues<double,Kokkos::DefaultExecutionSpace::memory_space>& initial_eigenvalues,
                  const char* filename,
                  const double epsilon,
+                 Tucker::Timer &,
                  const std::string &streaming_stats_file,
                  bool useQR,
                  bool flipSign);

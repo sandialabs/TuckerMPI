@@ -45,6 +45,7 @@
 
 #include <vector>
 
+#include "Tucker_Timer.hpp"
 #include "Tucker_TuckerTensor.hpp"
 #include "TuckerOnNode_ISVD.hpp"
 
@@ -112,6 +113,7 @@ StreamingSTHOSVD(const Tensor<scalar_t,mem_space_t>& X,
                  const TensorGramEigenvalues<scalar_t,mem_space_t>& initial_eigenvalues,
                  const char* filename,
                  const scalar_t epsilon,
+                 Tucker::Timer &readTimer,
                  const std::string &streaming_stats_file,
                  bool useQR=false,
                  bool flipSign=false);

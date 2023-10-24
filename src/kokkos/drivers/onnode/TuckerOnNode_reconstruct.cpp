@@ -186,8 +186,8 @@ int main(int argc, char* argv[])
     // Create the optimal reconstruction order if unspecified //
     ////////////////////////////////////////////////////////////
     if (rec_order.size() == 0) {
-      // Tucker::Timer orderTimer;
-      // orderTimer.start();
+      Tucker::Timer orderTimer;
+      orderTimer.start();
 
       // Compute the size of the final tensor
       std::vector<int> rec_size(nd);
@@ -259,8 +259,8 @@ int main(int argc, char* argv[])
       print_vec(rec_order);
       std::cout << std::endl;
 
-      // orderTimer.stop();
-      // std::cout << "Computing the optimal reconstruction order: " << orderTimer.duration() << " s\n";
+      orderTimer.stop();
+      std::cout << "Computing the optimal reconstruction order: " << orderTimer.duration() << " s\n";
     }
 
     //////////////////////////////////////////////////////////
@@ -291,15 +291,18 @@ int main(int argc, char* argv[])
     ///////////////////////////
     // Read core tensor data //
     ///////////////////////////
-    // Tucker::Timer* readTimer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
-    // readTimer->start();
+    Tucker::Timer readTimer;
+    readTimer.start();
     std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn + "_core.mpi";
     using tensor_type = TuckerOnNode::Tensor<scalar_t, memory_space>;
     tensor_type G(coreSize);
     TuckerOnNode::read_tensor_binary(G, coreFilename);
-    // size_t nnz = G.size();
-    // std::cout << "Core tensor size: " << fact->G->size() << ", or ";
-    // Tucker::printBytes(nnz*sizeof(double));
+    size_t nnz = G.size();
+    std::cout << "Core tensor size: ";
+    for (int i=0; i<G.rank(); ++i)
+      std::cout << G.extent(i) << " ";
+    std::cout << ", or ";
+    Tucker::print_bytes_to_stream(std::cout, nnz*sizeof(double));
 
     //////////////////////////
     // Read factor matrices //
@@ -319,14 +322,14 @@ int main(int argc, char* argv[])
       Tucker::fill_rank1_view_from_binary_file(f_h, ss.str());
       Kokkos::deep_copy(factors[mode], f_h);
     }
-    // readTimer->stop();
-    // std::cout << "Time spent reading: " << readTimer->duration() << "s\n";
+    readTimer.stop();
+    std::cout << "Time spent reading: " << readTimer.duration() << "s\n";
 
     ////////////////////////////////////////////////////
     // Reconstruct the requested pieces of the tensor //
     ////////////////////////////////////////////////////
-    // Tucker::Timer* reconstructTimer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
-    // reconstructTimer->start();
+    Tucker::Timer reconstructTimer;
+    reconstructTimer.start();
     for (int i=0; i<nd; i++)
     {
       int mode = rec_order[i];
@@ -338,20 +341,23 @@ int main(int argc, char* argv[])
         Kokkos::subview(fac, std::make_pair(start_subs, end_subs), Kokkos::ALL);
       G = TuckerOnNode::ttm(G, mode, factMat, false);
 
-      // size_t nnz = result->getNumElements();
-      // std::cout << "Tensor size after reconstruction iteration "
-      //           << i << ": " << result->size() << ", or ";
-      // Tucker::printBytes(nnz*sizeof(double));
+      size_t nnz = G.size();
+      std::cout << "Tensor size after reconstruction iteration "
+                << i << ": ";
+      for (int i=0; i<G.rank(); ++i)
+        std::cout << G.extent(i) << " ";
+      std::cout << ", or ";
+      Tucker::print_bytes_to_stream(std::cout, nnz*sizeof(double));
     }
-    // reconstructTimer->stop();
-    // std::cout << "Time spent reconstructing: " << reconstructTimer->duration() << "s\n";
+    reconstructTimer.stop();
+    std::cout << "Time spent reconstructing: " << reconstructTimer.duration() << "s\n";
 
     ///////////////////////////////////////////////////////
     // Scale and shift if necessary                      //
     // This step only happens if the scaling file exists //
     ///////////////////////////////////////////////////////
-    // Tucker::Timer* scaleTimer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
-    // scaleTimer->start();
+    Tucker::Timer scaleTimer;
+    scaleTimer.start();
     std::string scaleFilename = sthosvd_dir + "/" + sthosvd_fn + "_scale.txt";
     ifs.open(scaleFilename);
 
@@ -386,17 +392,17 @@ int main(int argc, char* argv[])
       std::cout << "Failed to open scaling and shifting file: " << scaleFilename
                 << "\nAssuming no scaling and shifting was performed\n";
     }
-    // scaleTimer->stop();
-    // std::cout << "Time spent shifting and scaling: " << scaleTimer->duration() << "s\n";
+    scaleTimer.stop();
+    std::cout << "Time spent shifting and scaling: " << scaleTimer.duration() << "s\n";
 
     ////////////////////////////////////////////
     // Write the reconstructed tensor to disk //
     ////////////////////////////////////////////
-    // Tucker::Timer* writeTimer = Tucker::MemoryManager::safe_new<Tucker::Timer>();
-    // writeTimer->start();
+    Tucker::Timer writeTimer;
+    writeTimer.start();
     TuckerOnNode::write_tensor_binary(G, outputFilenames);
-    // writeTimer->stop();
-    // std::cout << "Time spent writing: " << writeTimer->duration() << "s\n";
+    writeTimer.stop();
+    std::cout << "Time spent writing: " << writeTimer.duration() << "s\n";
 
     ret = 0;
   }
