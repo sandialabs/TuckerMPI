@@ -449,7 +449,7 @@ initializeFactors(const ttensor_t& X, const eigval_t& eig)
                        Kokkos::RangePolicy<exec_space>(0,R_d),
                        KOKKOS_LAMBDA(const int i)
   {
-    s[i] = std::sqrt(eig_d[i]);
+    s[i] = std::sqrt(std::abs(eig_d[i])); // eigenvalues should be positive, but very small eigenvalues may be negative due to roundoff error
   });
 
   V_ = tensor_t(size);
@@ -468,9 +468,9 @@ initializeFactors(const ttensor_t& X, const eigval_t& eig)
                           Kokkos::RangePolicy<exec_space>(0,I_d),
                           KOKKOS_LAMBDA(const int i, scalar_t& t1, scalar_t& t2)
   {
-    t1 += eig_d[i];
+    t1 += std::abs(eig_d[i]);
     if (i >= R_d)
-      t2 += eig_d[i];
+      t2 += std::abs(eig_d[i]);
   }, squared_frobenius_norm_data_, squared_frobenius_norm_error_);
 }
 
