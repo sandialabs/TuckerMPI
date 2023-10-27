@@ -25,22 +25,87 @@ bool operator!=(const Distribution& a, const Distribution& b){
 }
 
 Distribution::Distribution(const std::vector<int>& dims,
-			   const std::vector<int>& procs)
+                           const std::vector<int>& procs)
   : localDims_(dims.size()),
     globalDims_(dims),
     grid_(procs, MPI_COMM_WORLD),
     empty_(false)
 {
-  const int ndims = dims.size();
   createMaps();
+
   // Copy local dimensions to localDims_
+  const int ndims = dims.size();
   for(int d=0; d<ndims; d++) {
     localDims_[d] = maps_[d].getLocalNumEntries();
   }
 
+  createSqueezedMaps();
+}
+
+Distribution Distribution::growAlongMode(int mode, int p) const
+{
+  Distribution new_dist;
+
+  // We use the same processor grid
+  new_dist.grid_ = ProcessorGrid(grid_.getSizeArray(), grid_.getComm(false));
+
+  // Check p is the same for all processors in the given slice
+  int p_tot_row = 0;
+  int n_row_procs = 0;
+  const MPI_Comm& row_comm = grid_.getRowComm(mode,false);
+  MPI_Allreduce(&p, &p_tot_row, 1, MPI_INT, MPI_SUM, row_comm);
+  MPI_Comm_size(row_comm, &n_row_procs);
+  if (p_tot_row != p*n_row_procs) {
+    throw std::logic_error(
+      "number of new slices must be the same on each row processor!");
+  }
+
+  // Compute total number of new slices
+  int p_tot_col = 0;
+  const MPI_Comm& col_comm = grid_.getColComm(mode,false);
+  MPI_Allreduce(&p, &p_tot_col, 1, MPI_INT, MPI_SUM, col_comm);
+
+  // New global dims
+  new_dist.globalDims_ = globalDims_;
+  new_dist.globalDims_[mode] += p_tot_col;
+
+  // New local dims
+  new_dist.localDims_ = localDims_;
+  new_dist.localDims_[mode] += p;
+
+  // New maps
+  int ndims = globalDims_.size();
+  new_dist.maps_ = std::vector<Map>(ndims);
+  for (int d=0; d<ndims; d++) {
+    const MPI_Comm& comm = new_dist.grid_.getColComm(d,false);
+    new_dist.maps_[d] = TuckerMpi::Map(globalDims_[d], localDims_[d], comm);
+  }
+
+  // New squeezed maps
+  new_dist.createSqueezedMaps();
+
+  return new_dist;
+}
+
+void Distribution::createMaps()
+{
+  int ndims = globalDims_.size();
+
+  // Create a map for each dimension
+  maps_ = std::vector<Map>(ndims);
+  for(int d=0; d<ndims; d++) {
+    const MPI_Comm& comm = grid_.getColComm(d,false);
+    maps_[d] = TuckerMpi::Map(globalDims_[d], comm);
+  }
+}
+
+void Distribution::createSqueezedMaps()
+{
   MPI_Comm comm;
   findAndEliminateEmptyProcs(comm);
   if(squeezed_) {
+    const int ndims = globalDims_.size();
+
     // Create a map for each dimension
     maps_squeezed_ = std::vector<Map>(ndims);
     for(int d=0; d<ndims; d++) {
@@ -70,19 +135,6 @@ Distribution::Distribution(const std::vector<int>& dims,
 
   if(comm != MPI_COMM_WORLD && !ownNothing()) {
     MPI_Comm_free(&comm);
-  }
-}
-
-
-void Distribution::createMaps()
-{
-  int ndims = globalDims_.size();
-
-  // Create a map for each dimension
-  maps_ = std::vector<Map>(ndims);
-  for(int d=0; d<ndims; d++) {
-    const MPI_Comm& comm = grid_.getColComm(d,false);
-    maps_[d] = TuckerMpi::Map(globalDims_[d], comm);
   }
 }
 

@@ -61,6 +61,39 @@ Map::Map(int globalNumEntries, const MPI_Comm& comm) :
   localNumEntries_ = 1 + indexEnd_ - indexBegin_;
 }
 
+Map::Map(int globalNumEntries, int localNumEntries, const MPI_Comm& comm) :
+  comm_(new MPI_Comm(comm)),
+  localNumEntries_(localNumEntries),
+  globalNumEntries_(globalNumEntries),
+  removedEmptyProcs_(false)
+{
+  // Get the number of MPI processes
+  int myRank, nprocs;
+  MPI_Comm_rank(comm,&myRank);
+  MPI_Comm_size(comm,&nprocs);
+
+  // Assert that the global number of entries is bigger
+  // than the number of MPI processes
+  // assert(globalNumEntries > nprocs);
+
+  // Determine the number of entries owned by each process
+  numElementsPerProc_.resize(nprocs);
+  MPI_Allgather(
+    &localNumEntries_, 1, MPI_INT, numElementsPerProc_.data(), 1, MPI_INT, comm);
+
+  // Determine the row offsets for each process
+  offsets_.resize(nprocs+1);
+
+  offsets_[0] = 0;
+  for(int rank=1; rank<=nprocs; rank++) {
+    offsets_[rank] = offsets_[rank-1] + numElementsPerProc_[rank-1];
+  }
+
+  // Determine the starting and ending indices for THIS process
+  indexBegin_ = offsets_[myRank];
+  indexEnd_ = offsets_[myRank+1]-1;
+}
+
 void Map::removeEmptyProcs()
 {
   // Determine which processes are empty

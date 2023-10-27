@@ -13,6 +13,7 @@ class Map {
 public:
   Map() = default;
   Map(int globalNumEntries, const MPI_Comm& comm);
+  Map(int globalNumEntries, int localNumEntries, const MPI_Comm& comm);
 
   bool hasGlobalIndex(int globalIndex) const{
     return (globalIndex >= indexBegin_ && globalIndex <= indexEnd_);

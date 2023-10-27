@@ -11,7 +11,7 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
 		       int n,
 		       Kokkos::View<ScalarType**, ViewProperties...> Umatrix,
 		       bool Utransp,
-		       std::size_t nnz_limit)
+		       std::size_t nnz_limit = 0)
 {
 
   // constraints
@@ -41,13 +41,17 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
   Distribution resultDist(newSize, Xtensor.getDistribution().getProcessorGrid().getSizeArray());
   tensor_type result(resultDist);
 
-  auto preferSingleReduceScatter = [=]() -> bool
+  auto preferSingleReduceScatter = [&]() -> bool
   {
     auto & Xdist = Xtensor.getDistribution();
     std::size_t max_lcl_nnz_x = 1;
     for(int i=0; i<Xtensor.rank(); i++) {
       max_lcl_nnz_x *= Xdist.getMap(i,false)->getMaxNumEntries();
     }
+
+    if (nnz_limit == 0)
+      nnz_limit = max_lcl_nnz_x;
+
     // Compute the nnz required for the reduce_scatter
     std::size_t nnz_reduce_scatter = 1;
     for(int i=0; i<Xtensor.rank(); i++) {

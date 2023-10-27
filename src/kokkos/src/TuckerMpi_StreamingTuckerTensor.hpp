@@ -40,16 +40,16 @@
  * \author Hemanth Kolla
  */
 
-#ifndef TUCKER_ON_NODE_STREAMING_TUCKER_TENSOR_HPP_
-#define TUCKER_ON_NODE_STREAMING_TUCKER_TENSOR_HPP_
+#ifndef TUCKER_MPI_STREAMING_TUCKER_TENSOR_HPP_
+#define TUCKER_MPI_STREAMING_TUCKER_TENSOR_HPP_
 
 #include <vector>
 
 #include "Tucker_Timer.hpp"
 #include "Tucker_TuckerTensor.hpp"
-#include "TuckerOnNode_ISVD.hpp"
+#include "TuckerMpi_ISVD.hpp"
 
-namespace TuckerOnNode {
+namespace TuckerMpi {
 
 /** \brief A structure for storing a streaming %Tucker decomposition
  *
@@ -110,7 +110,7 @@ template <class scalar_t, class mem_space_t = Kokkos::DefaultExecutionSpace::mem
 StreamingTuckerTensor<scalar_t,mem_space_t>
 StreamingSTHOSVD(const Tensor<scalar_t,mem_space_t>& X,
                  const Tucker::TuckerTensor< Tensor<scalar_t,mem_space_t> >& initial_factorization,
-                 const TensorGramEigenvalues<scalar_t,mem_space_t>& initial_eigenvalues,
+                 const TuckerOnNode::TensorGramEigenvalues<scalar_t,mem_space_t>& initial_eigenvalues,
                  const char* filename,
                  const scalar_t epsilon,
                  Tucker::Timer &readTimer,
@@ -118,6 +118,6 @@ StreamingSTHOSVD(const Tensor<scalar_t,mem_space_t>& X,
                  bool useQR=false,
                  bool flipSign=false);
 
-} // end namespace TuckerOnNode
+} // end namespace TuckerMpi
 
 #endif /* STREAMINGTUCKERTENSOR_HPP_ */

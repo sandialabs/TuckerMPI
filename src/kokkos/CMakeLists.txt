@@ -140,6 +140,9 @@ if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
     ${TUCKER_SRCDIR}/TuckerMpi_Map.cpp
     ${TUCKER_SRCDIR}/TuckerMpi_ProcessorGrid.cpp
     ${TUCKER_SRCDIR}/TuckerMpi_Distribution.cpp
+    ${TUCKER_SRCDIR}/TuckerMpi_ISVD.cpp
+    ${TUCKER_SRCDIR}/TuckerMpi_StreamingTuckerTensor.cpp
+    ${TUCKER_SRCDIR}/Tucker_Timer.cpp
   )
   ADD_LIBRARY(${MpiKokkosTuckerLib} SHARED ${MPI_SOURCES})
   TARGET_LINK_LIBRARIES(${MpiKokkosTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
@@ -172,6 +175,34 @@ if(TUCKER_IMPL_ENABLE_MPIKOKKOS)
   add_executable(${DISTRIBUTED_GENERATE_DRIVER_NAME} ${DISTRIBUTED_GENERATE_DRIVER_SRCS})
   target_include_directories(${DISTRIBUTED_GENERATE_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
   target_link_libraries(${DISTRIBUTED_GENERATE_DRIVER_NAME} ${MpiKokkosTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
+
+  #
+  # driver MpiKokkosTucker_streaming_sthosvd
+  #
+  set(DISTRIBUTED_STREAMING_STHOSVD_DRIVER_NAME MpiKokkosTucker_streaming_sthosvd)
+  set(DISTRIBUTED_STREAMING_STHOSVD_DRIVER_SRCS)
+  LIST(APPEND DISTRIBUTED_STREAMING_STHOSVD_DRIVER_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/CmdLineParse.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/ParameterFileParserUtils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mpi/TuckerMpi_streaming_sthosvd.cpp
+  )
+  add_executable(${DISTRIBUTED_STREAMING_STHOSVD_DRIVER_NAME} ${DISTRIBUTED_STREAMING_STHOSVD_DRIVER_SRCS})
+  target_include_directories(${DISTRIBUTED_STREAMING_STHOSVD_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
+  target_link_libraries(${DISTRIBUTED_STREAMING_STHOSVD_DRIVER_NAME} ${MpiKokkosTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
+
+  #
+  # driver MpiKokkosTucker_reconstruct
+  #
+  set(DISTRIBUTED_RECONSTRUCT_DRIVER_NAME MpiKokkosTucker_reconstruct)
+  set(DISTRIBUTED_RECONSTRUCT_DRIVER_SRCS)
+  LIST(APPEND DISTRIBUTED_RECONSTRUCT_DRIVER_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/CmdLineParse.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/ParameterFileParserUtils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mpi/TuckerMpi_reconstruct.cpp
+  )
+  add_executable(${DISTRIBUTED_RECONSTRUCT_DRIVER_NAME} ${DISTRIBUTED_RECONSTRUCT_DRIVER_SRCS})
+  target_include_directories(${DISTRIBUTED_RECONSTRUCT_DRIVER_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/drivers)
+  target_link_libraries(${DISTRIBUTED_RECONSTRUCT_DRIVER_NAME} ${MpiKokkosTuckerLib} ${TUCKER_ALL_TPLS_NEEDED})
 
   add_subdirectory(unit_tests)
   add_subdirectory(drivers_tests)

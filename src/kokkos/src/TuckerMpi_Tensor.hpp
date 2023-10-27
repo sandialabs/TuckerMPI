@@ -157,7 +157,7 @@ public:
 
 public:
   int rank() const{ return localTensor_.rank(); }
-  auto localTensor(){ return localTensor_; }
+  auto localTensor() const { return localTensor_; }
   const Distribution & getDistribution() const{ return dist_; }
 
   dims_const_view_type globalDimensions() const{ return globalDims_; }
@@ -188,9 +188,13 @@ private:
   template<class ST, class ... PS>
   void is_assignable_else_throw(const Tensor<ST,PS...> & o)
   {
-    if (!dist_.empty() && !o.dist_.empty() && (dist_ != o.dist_)){
-      throw std::runtime_error("TuckerMpi::Tensor: mismatching distributions for copy assignemnt");
-    }
+    // This check is highly impractical as it doesn't allow you to overwrite
+    // an existing tensor with another one, which is required in the streaming
+    // st-hosvd algorithm, so it is disabled
+
+    // if (!dist_.empty() && !o.dist_.empty() && (dist_ != o.dist_)){
+    //   throw std::runtime_error("TuckerMpi::Tensor: mismatching distributions for copy assignemnt");
+    // }
   }
 
 private:

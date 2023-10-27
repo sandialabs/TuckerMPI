@@ -43,6 +43,12 @@ public:
 
   bool empty() const { return empty_; }
 
+  // Returns a new distribution by adding `p` slices along mode `mode` on each
+  // processor, where p may be different on each processor.  The resulting map
+  // on each processor is a superset of the prior map so that the resulting
+  // tensor is a superset of the prior tensor on each processor
+  Distribution growAlongMode(int mode, int p) const;
+
   /*
    * operators overloading
    */
@@ -51,11 +57,11 @@ public:
 
 private:
   void createMaps();
+  void createSqueezedMaps();
   //! Finds and eliminates processes that don't have work
   void findAndEliminateEmptyProcs(MPI_Comm& comm);
   //! Creates new processor grid without the processes that don't have work
   void updateProcessorGrid(const MPI_Comm& comm);
-
 
 private:
   //! Size of the local grid; number of entries owned in each dimension.

@@ -4,13 +4,13 @@
  * @author Saibal De
  */
 
-#ifndef TUCKER_ON_NODE_ISVD_HPP_
-#define TUCKER_ON_NODE_ISVD_HPP_
+#ifndef TUCKER_MPI_ISVD_HPP_
+#define TUCKER_MPI_ISVD_HPP_
 
-#include "TuckerOnNode_Tensor.hpp"
+#include "TuckerMpi_Tensor.hpp"
 #include "Tucker_TuckerTensor.hpp"
 
-namespace TuckerOnNode {
+namespace TuckerMpi {
 
 /**
  * @brief Incremental singular value decomposition
@@ -22,7 +22,7 @@ public:
   using matrix_t = Kokkos::View<scalar_t**, Kokkos::LayoutLeft, mem_space_t>;
   using tensor_t = Tensor<scalar_t, mem_space_t>;
   using ttensor_t = Tucker::TuckerTensor<tensor_t>;
-  using eigval_t = TensorGramEigenvalues<scalar_t,mem_space_t>;
+  using eigval_t = TuckerOnNode::TensorGramEigenvalues<scalar_t,mem_space_t>;
   /**
    * @brief Default constructor
    */
@@ -55,7 +55,7 @@ public:
    */
   int ncols() const {
     checkIsAllocated();
-    return V_.size() / rank();
+    return V_.localTensor().size() / rank();
   }
 
   /**
@@ -208,9 +208,9 @@ private:
   using exec_space = typename mem_space_t::execution_space;
 
   bool is_allocated_;   /**< Flag specifying if memory is allocated */
-  matrix_t U_; /**< Pointer to left singular vectors */
-  vector_t s_; /**< Pointer to singular values */
-  tensor_t V_; /**< Pointer to right singular vectors */
+  matrix_t U_; /**< Pointer to left singular vectors (replicated) */
+  vector_t s_; /**< Pointer to singular values (replicated) */
+  tensor_t V_; /**< Pointer to right singular vectors (distributed) */
   scalar_t squared_frobenius_norm_data_;  /**< Frobenius norm of data */
   scalar_t squared_frobenius_norm_error_; /**< Frobenius norm of error */
 };

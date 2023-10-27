@@ -9,6 +9,8 @@
 
 // then include cmake-based config
 #include "Tucker_cmake_config.h"
+#include "Tucker_Timer.hpp"
+#include "Tucker_print_bytes.hpp"
 
 // then actualy library headers, starting from
 // fwd decl and tensor class and operations on it
@@ -25,6 +27,8 @@
 #include "TuckerMpi_compute_slice_metrics.hpp"
 #include "TuckerMpi_write_statistics.hpp"
 #include "TuckerMpi_normalize_tensor.hpp"
+#include "Tucker_print_max_mem_usage.hpp"
+#include "./impl/TuckerMpi_MPIWrapper.hpp"
 
 // finally functions related/needed by sthosvd
 #include "TuckerMpi_compute_gram.hpp"

@@ -78,6 +78,7 @@ auto local_rank_k_for_gram(Matrix<ScalarType, MemSpace> Y, int n, int ndims)
   return C;
 }
 
+inline
 bool is_unpack_for_gram_necessary(int n, int ndims,
 				  const Map* origMap,
 				  const Map* redistMap)
@@ -96,6 +97,7 @@ bool is_unpack_for_gram_necessary(int n, int ndims,
   return true;
 }
 
+inline
 bool is_pack_for_gram_necessary(int n,
 				const Map* origMap,
 				const Map* redistMap)

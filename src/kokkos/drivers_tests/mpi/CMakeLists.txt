@@ -14,8 +14,11 @@ ENDMACRO()
 set(exename ${CMAKE_CURRENT_BINARY_DIR}/../../${DISTRIBUTED_STHOSVD_DRIVER_NAME})
 
 SUBDIRLIST(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
+list(REMOVE_ITEM SUBDIRS test_streaming_sthosvd_n1)
+list(REMOVE_ITEM SUBDIRS test_streaming_sthosvd_n4)
+
 FOREACH(subdir ${SUBDIRS})
-  message(STATUS "Preparing test for = ${subdir}")
+  message(STATUS "Preparing test for ${subdir}")
   set(TEST_RUN_DIR ${CMAKE_CURRENT_BINARY_DIR}/${subdir})
   set(TEST_NAME ${subdir})
 
@@ -42,3 +45,6 @@ FOREACH(subdir ${SUBDIRS})
     -P ${CMAKE_CURRENT_SOURCE_DIR}/../test.cmake
   )
 ENDFOREACH()
+
+add_subdirectory(test_streaming_sthosvd_n1)
+add_subdirectory(test_streaming_sthosvd_n4)
