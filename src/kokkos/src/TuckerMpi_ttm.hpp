@@ -38,7 +38,9 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
     newSize[i] = (i == n) ? nrows : Xtensor.globalExtent(i);
   }
 
-  Distribution resultDist(newSize, Xtensor.getDistribution().getProcessorGrid().getSizeArray());
+  // Reuse the processor grid so a new one isn't created each TTM (which becomes
+  // a problem for the streaming algorithm)
+  Distribution resultDist(newSize, Xtensor.getDistribution().getProcessorGrid());
   tensor_type result(resultDist);
 
   auto preferSingleReduceScatter = [&]() -> bool

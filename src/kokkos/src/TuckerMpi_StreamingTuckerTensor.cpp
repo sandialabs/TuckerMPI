@@ -164,6 +164,10 @@ StreamingSTHOSVD(
   slice_dims.pop_back();
   slice_procs.pop_back();
 
+  // Create distribution to reuse for each slice, so we don't create a new
+  // one each step
+  Distribution slice_dist(slice_dims, slice_procs);
+
   //Open the file containing names of stream of snapshot files
   //Loop over, read each snapshot, update the Tucker model
   std::ifstream inStream(filename);
@@ -174,7 +178,7 @@ StreamingSTHOSVD(
     if (globalRank == 0)
       std::cout<< "Reading snapshot " << snapshot_file << std::endl;
     readTimer.start();
-    tensor_t Y(slice_dims, slice_procs);
+    tensor_t Y(slice_dist);
     read_tensor_binary(globalRank, Y, snapshot_file);
     readTimer.stop();
 

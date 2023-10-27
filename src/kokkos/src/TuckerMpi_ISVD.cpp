@@ -555,10 +555,10 @@ addSingleRowNaive(const vector_t& c, scalar_t tolerance)
   // note:  we don't need to worry about updating the processor grid because
   // there is no parallelism over the streaming mode
   std::vector<int> global_dims = V_.getDistribution().getGlobalDims();
-  std::vector<int> procs = V_.getDistribution().getProcessorGrid().getSizeArray();
   const int ndims = V_.rank();
   global_dims[ndims-1] += 1;
-  tensor_t V1(global_dims, procs);
+  Distribution V1_dist(global_dims, V_.getDistribution().getProcessorGrid());
+  tensor_t V1(V1_dist);
   auto V1d = V1.localTensor().data();
   Kokkos::deep_copy(Kokkos::subview(V1d, std::make_pair(0,n*r)), Vl.data());
   Kokkos::deep_copy(Kokkos::subview(V1d, std::make_pair(n*r,n*(r+1))), q);

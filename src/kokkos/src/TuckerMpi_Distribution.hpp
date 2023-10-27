@@ -14,7 +14,10 @@ public:
   Distribution() = default;
 
   Distribution(const std::vector<int>& dims,
-	       const std::vector<int>& procs);
+               const std::vector<int>& procs);
+
+  Distribution(const std::vector<int>& dims,
+               const ProcessorGrid& grid);
 
   //! Returns the dimensions of the locally owned portion of the N-dimensional grid
   const std::vector<int>& getLocalDims() const{ return localDims_; }

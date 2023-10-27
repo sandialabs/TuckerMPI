@@ -42,12 +42,30 @@ Distribution::Distribution(const std::vector<int>& dims,
   createSqueezedMaps();
 }
 
+Distribution::Distribution(const std::vector<int>& dims,
+                           const ProcessorGrid& grid)
+  : localDims_(dims.size()),
+    globalDims_(dims),
+    grid_(grid),
+    empty_(false)
+{
+  createMaps();
+
+  // Copy local dimensions to localDims_
+  const int ndims = dims.size();
+  for(int d=0; d<ndims; d++) {
+    localDims_[d] = maps_[d].getLocalNumEntries();
+  }
+
+  createSqueezedMaps();
+}
+
 Distribution Distribution::growAlongMode(int mode, int p) const
 {
   Distribution new_dist;
 
   // We use the same processor grid
-  new_dist.grid_ = ProcessorGrid(grid_.getSizeArray(), grid_.getComm(false));
+  new_dist.grid_ = grid_;
 
   // Check p is the same for all processors in the given slice
   int p_tot_row = 0;
