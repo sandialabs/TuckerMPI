@@ -33,9 +33,9 @@ int main(int argc, char* argv[])
      */
     const auto paramfn = Tucker::parse_cmdline_or(
       argc, (const char**)argv, "--parameter-file", "paramfile.txt");
-    const InputParametersStreamingSthosvdDriver<scalar_t> inputs(paramfn);
-    if (mpiRank == 0)
-      inputs.describe();
+    const InputParametersStreamingSthosvdDriver<scalar_t> inputs(
+      paramfn, mpiRank);
+    inputs.describe();
     Tucker::Timer readTimer;
     readTimer.start();
     const auto dataTensorDim = inputs.dimensionsOfDataTensor();
@@ -156,7 +156,8 @@ int main(int argc, char* argv[])
     auto writeCoreTensorToFile = [=](auto factorization)
     {
       const std::string coreFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_core.mpi";
-      std::cout << "Writing core tensor to " << coreFilename << std::endl;
+      if (mpiRank==0)
+        std::cout << "Writing core tensor to " << coreFilename << std::endl;
       TuckerMpi::write_tensor_binary(mpiRank, factorization.coreTensor(), coreFilename);
     };
 
@@ -263,12 +264,12 @@ int main(int argc, char* argv[])
     double write_time = 0;
     double total_time = 0;
 
-    TuckerMpi::MPI_Reduce_(&read_time,&read_time_l,1,MPI_MAX,0,comm);
-    TuckerMpi::MPI_Reduce_(&sthosvd_time,&sthosvd_time_l,1,MPI_MAX,0,comm);
-    TuckerMpi::MPI_Reduce_(&streaming_read_time,&streaming_read_time_l,1,MPI_MAX,0,comm);
-    TuckerMpi::MPI_Reduce_(&streaming_sthosvd_time,&streaming_sthosvd_time_l,1,MPI_MAX,0,comm);
-    TuckerMpi::MPI_Reduce_(&write_time,&write_time_l,1,MPI_MAX,0,comm);
-    TuckerMpi::MPI_Reduce_(&total_time,&total_time_l,1,MPI_MAX,0,comm);
+    TuckerMpi::MPI_Reduce_(&read_time_l,&read_time,1,MPI_MAX,0,comm);
+    TuckerMpi::MPI_Reduce_(&sthosvd_time_l,&sthosvd_time,1,MPI_MAX,0,comm);
+    TuckerMpi::MPI_Reduce_(&streaming_read_time_l,&streaming_read_time,1,MPI_MAX,0,comm);
+    TuckerMpi::MPI_Reduce_(&streaming_sthosvd_time_l,&streaming_sthosvd_time,1,MPI_MAX,0,comm);
+    TuckerMpi::MPI_Reduce_(&write_time_l,&write_time,1,MPI_MAX,0,comm);
+    TuckerMpi::MPI_Reduce_(&total_time_l,&total_time,1,MPI_MAX,0,comm);
 
     if (mpiRank==0) {
       std::cout << "Initial read time: " << read_time << std::endl;

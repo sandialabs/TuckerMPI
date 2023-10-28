@@ -48,10 +48,13 @@ public:
   std::string streaming_fns_file;
   std::string streaming_stats_file;
 
-  InputParametersStreamingSthosvdDriver(const std::string & paramFile)
+  int mpiRank;
+
+  InputParametersStreamingSthosvdDriver(const std::string & paramFile,
+                                        const int mpi_rank) :
+    mpiRank(mpi_rank)
   {
     const auto fileAsStrings = Tucker::read_file_as_strings(paramFile);
-    std::cout << fileAsStrings.size() << " " << fileAsStrings[0] << std::endl;
     parse(fileAsStrings);
     check_args();
   }
@@ -61,24 +64,24 @@ public:
 
   virtual void describe() const
   {
-    if (boolPrintOptions) {
+    if (boolPrintOptions && mpiRank == 0) {
       std::cout << "The global dimensions of the tensor to be scaled or compressed\n";
       std::cout << "- Global dims = ";
       std::for_each(dataTensorDims_.cbegin(), dataTensorDims_.cend(),
                     [=](int v){ std::cout << v << " "; });
-      std::cout << std::endl;
+      std::cout << std::endl << std::endl;
 
       std::cout << "The global dimensions of the processor grid\n";
       std::cout << "- Grid dims = ";
       std::for_each(proc_grid_dims.cbegin(), proc_grid_dims.cend(),
                     [=](int v){ std::cout << v << " "; });
-      std::cout << std::endl;
+      std::cout << std::endl << std::endl;
 
       std::cout << "Mode order for decomposition\n";
       std::cout << "- Decompose mode order ";
       std::for_each(modeOrder.cbegin(), modeOrder.cend(),
                     [=](int v){ std::cout << v << " "; });
-      std::cout << std::endl;
+      std::cout << std::endl << std::endl;
 
       std::cout << "If true, automatically determine rank; otherwise, use the user-defined ranks\n";
       std::cout << "- Automatic rank determination = " << (boolAutoRankDetermination ? "true" : "false") << std::endl << std::endl;
@@ -152,11 +155,14 @@ protected:
     boolAutoRankDetermination = string_parse<bool>(fileAsStrings, "Automatic rank determination", false);
     if (!boolAutoRankDetermination) {
       coreTensorDims_ = parse_multivalued_field<int>(fileAsStrings, "Ranks");
-      std::cout << "Global dimensions of the core tensor is fixed:\n";
+      if (mpiRank == 0) {
+        std::cout << "Global dimensions of the core tensor is fixed:\n";
 
-      const auto & vec = coreTensorDims_.value();
-      std::cout << "- Ranks = ";
-      std::for_each(vec.cbegin(), vec.cend(), [=](int v){ std::cout << v << " "; });
+        const auto & vec = coreTensorDims_.value();
+        std::cout << "- Ranks = ";
+        std::for_each(vec.cbegin(), vec.cend(), [=](int v){ std::cout << v << " "; });
+        std::cout << std::endl << std::endl;
+      }
     }
 
     boolSTHOSVD           = string_parse<bool>(fileAsStrings, "Perform STHOSVD", false);
