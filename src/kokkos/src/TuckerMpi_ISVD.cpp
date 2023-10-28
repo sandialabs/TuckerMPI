@@ -564,7 +564,11 @@ addSingleRowNaive(const vector_t& c, scalar_t tolerance)
   Kokkos::deep_copy(Kokkos::subview(V1d, std::make_pair(n*r,n*(r+1))), q);
 
   // SVD: S1 = U2 * diag(s2) * V2
-  const scalar_t c_norm = KokkosBlas::nrm2(c);
+  scalar_t c_norm_l = KokkosBlas::nrm2(c);
+  c_norm_l = c_norm_l * c_norm_l;
+  scalar_t c_norm = 0;
+  MPI_Allreduce_(&c_norm_l, &c_norm, 1, MPI_SUM, comm);
+  c_norm = std::sqrt(c_norm);
 
   matrix_t U2;
   vector_t s2;
