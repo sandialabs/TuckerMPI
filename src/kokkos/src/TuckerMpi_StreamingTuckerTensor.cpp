@@ -262,8 +262,32 @@ StreamingSTHOSVD(
         const int N = U[n].extent(0);
         const int R = U[n].extent(1);
         matrix_t U_new("U_new", N, R+R_new);
-        Kokkos::deep_copy(Kokkos::subview(U_new, Kokkos::ALL, std::make_pair(0,R)), U[n]);
-        Kokkos::deep_copy(Kokkos::subview(U_new, Kokkos::ALL, std::make_pair(R,R+R_new)), V);
+        const MPI_Comm& comm = slice_dist.getProcessorGrid().getColComm(n,false);
+        const int num_proc = slice_dist.getProcessorGrid().getNumProcs(n,false);
+        std::vector<int> R_proc(num_proc), R_new_proc(num_proc);
+        MPI_Allgather(
+          &R,     1, MPI_INT, R_proc.data(),     num_proc, MPI_INT, comm);
+        MPI_Allgather(
+          &R_new, 1, MPI_INT, R_new_proc.data(), num_proc, MPI_INT, comm);
+        int offset_U = 0;
+        int offset_V = 0;
+        int offset_U_new = 0;
+        for (int k=0; k<num_proc; ++k) {
+          auto U1 = Kokkos::subview(
+            U[n], Kokkos::ALL, std::make_pair(offset_U,offset_U+R_proc[k]));
+          auto U2 = Kokkos::subview(
+            U_new, Kokkos::ALL, std::make_pair(offset_U_new,offset_U_new+R_proc[k]));
+          Kokkos::deep_copy(U2, U1);
+          offset_U += R_proc[k];
+          offset_U_new += R_proc[k];
+          U2 = Kokkos::subview(
+            U_new, Kokkos::ALL, std::make_pair(offset_U_new,offset_U_new+R_new_proc[k]));
+          auto V1 = Kokkos::subview(
+            V, Kokkos::ALL, std::make_pair(offset_V,offset_V+R_new_proc[k]));
+          Kokkos::deep_copy(U1, V1);
+          offset_V += R_new_proc[k];
+          offset_U_new += R_new_proc[k];
+        }
         U[n] = U_new;
       }
     }
