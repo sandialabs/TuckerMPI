@@ -59,6 +59,8 @@ int main(int argc, char* argv[])
     /*
      * preprocessing
      */
+    Tucker::Timer preprocessTimer;
+    preprocessTimer.start();
     const int scaleMode = inputs.scale_mode;
 
     // auto writeScalesShifts = [=](auto scales, auto shifts){
@@ -94,6 +96,7 @@ int main(int argc, char* argv[])
       if(mpiRank == 0)
         std::cout << "inputs.scaling_type == None, therefore we are not normalizing the tensor\n";
     }
+    preprocessTimer.stop();
     if (inputs.boolWriteTensorAfterPreprocessing){
       TuckerMpi::write_tensor_binary(mpiRank, X, inputs.preprocDataFilenames);
     }
@@ -251,6 +254,7 @@ int main(int argc, char* argv[])
     totalTimer.stop();
 
     double read_time_l = readTimer.duration();
+    double preprocess_time_l = preprocessTimer.duration();
     double sthosvd_time_l = sthosvdTimer.duration();
     double streaming_read_time_l = streamingReadTimer.duration();
     double streaming_sthosvd_time_l = streamingSthosvdTimer.duration() - streamingReadTimer.duration();
@@ -258,6 +262,7 @@ int main(int argc, char* argv[])
     double total_time_l = totalTimer.duration();
 
     double read_time = 0;
+    double preprocess_time = 0;
     double sthosvd_time = 0;
     double streaming_read_time = 0;
     double streaming_sthosvd_time = 0;
@@ -265,6 +270,7 @@ int main(int argc, char* argv[])
     double total_time = 0;
 
     TuckerMpi::MPI_Reduce_(&read_time_l,&read_time,1,MPI_MAX,0,comm);
+    TuckerMpi::MPI_Reduce_(&preprocess_time_l,&preprocess_time,1,MPI_MAX,0,comm);
     TuckerMpi::MPI_Reduce_(&sthosvd_time_l,&sthosvd_time,1,MPI_MAX,0,comm);
     TuckerMpi::MPI_Reduce_(&streaming_read_time_l,&streaming_read_time,1,MPI_MAX,0,comm);
     TuckerMpi::MPI_Reduce_(&streaming_sthosvd_time_l,&streaming_sthosvd_time,1,MPI_MAX,0,comm);
@@ -273,6 +279,7 @@ int main(int argc, char* argv[])
 
     if (mpiRank==0) {
       std::cout << "Initial read time: " << read_time << std::endl;
+      std::cout << "Preprocessing time: " << preprocess_time << std::endl;
       std::cout << "Initial STHOSVD time: " << sthosvd_time << std::endl;
       std::cout << "Streaming read time: " << streaming_read_time << std::endl;
       std::cout << "Streaming STHOSVD time: " << streaming_sthosvd_time << std::endl;

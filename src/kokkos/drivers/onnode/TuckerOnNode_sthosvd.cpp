@@ -61,8 +61,9 @@ int main(int argc, char* argv[])
 
     if (inputs.scaling_type != "None"){
       std::cout << "Normalizing tensor" << std::endl;
-      auto [scales, shifts] = TuckerOnNode::normalize_tensor(X, metricsData, inputs.scaling_type,
-							     inputs.scale_mode, inputs.stdThresh);
+      auto [scales, shifts] = TuckerOnNode::normalize_tensor(
+        X, metricsData, inputs.scaling_type, inputs.scale_mode,
+        inputs.stdThresh);
       writeScalesShifts(scales, shifts);
     }
     else{
@@ -83,17 +84,17 @@ int main(int argc, char* argv[])
 
       const int nmodes = container.rank();
       for(int mode=0; mode<nmodes; mode++){
-	std::ostringstream ss;
-	ss << filePrefix << mode << ".txt";
-	std::ofstream ofs(ss.str());
-	std::cout << "Writing singular values to " << ss.str() << std::endl;
+        std::ostringstream ss;
+        ss << filePrefix << mode << ".txt";
+        std::ofstream ofs(ss.str());
+        std::cout << "Writing singular values to " << ss.str() << std::endl;
 
-	auto eigvals = container[mode];
-	auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
-	for(std::size_t i=0; i<eigvals.extent(0); i++) {
-	  ofs << std::setprecision(16) << eigvals_h(i) << std::endl;
-	}
-	ofs.close();
+        auto eigvals = container[mode];
+        auto eigvals_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigvals);
+        for(std::size_t i=0; i<eigvals.extent(0); i++) {
+          ofs << std::setprecision(16) << eigvals_h(i) << std::endl;
+        }
+        ofs.close();
       }
     };
 
@@ -152,7 +153,8 @@ int main(int argc, char* argv[])
     auto sthosvdGram = [&](auto truncator){
       sthosvdTimer.start();
       const auto method = TuckerOnNode::Method::Gram;
-      auto [tt, eigvals] = TuckerOnNode::sthosvd(method, X, truncator, false /*flipSign*/);
+      auto [tt, eigvals] = TuckerOnNode::sthosvd
+        (method, X, truncator, false /*flipSign*/);
       sthosvdTimer.stop();
       std::cout<< "\n";
       writeEigenvaluesToFiles(eigvals);
