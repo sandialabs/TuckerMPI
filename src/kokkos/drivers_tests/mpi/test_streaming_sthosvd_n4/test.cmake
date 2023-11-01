@@ -3,7 +3,7 @@ include(FindUnixCommands)
 #
 # run streaming driver
 #
-set(CMD "${MPIEXEC} -n 2 ${TEST_EXE_DIR}/MpiKokkosTucker_streaming_sthosvd --parameter-file compress.txt")
+set(CMD "${MPIEXEC} -n 4 ${TEST_EXE_DIR}/MpiKokkosTucker_streaming_sthosvd --parameter-file compress.txt")
 message(STATUS ${CMD})
 execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
 if(RES)
@@ -13,7 +13,7 @@ endif()
 #
 # compute reconstruction
 #
-set(CMD "${MPIEXEC} -n 2 ${TEST_EXE_DIR}/MpiKokkosTucker_reconstruct --parameter-file reconstruct.txt")
+set(CMD "${MPIEXEC} -n 4 ${TEST_EXE_DIR}/MpiKokkosTucker_reconstruct --parameter-file reconstruct.txt")
 message(STATUS ${CMD})
 execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
 if(RES)

@@ -25,7 +25,7 @@ public:
   }
 
   int getGlobalIndex(int localIndex) const{
-    assert(localIndex >= 0 && localIndex < localNumEntries_);
+    assert(localIndex >= 0 && (localIndex < localNumEntries_ || localNumEntries_ == 0));
     return indexBegin_+localIndex;
   }
 

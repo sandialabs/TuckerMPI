@@ -510,7 +510,7 @@ addSingleRowNaive(const vector_t& c, scalar_t tolerance)
   const int r = rank();
 
   auto Vl = V_.localTensor();
-  const MPI_Comm& comm = V_.getDistribution().getComm(true);
+  const MPI_Comm& comm = V_.getDistribution().getComm(false);
 
   // projection: j[r] = V[nxr].T * c[n]
   vector_t jl("jl", r);

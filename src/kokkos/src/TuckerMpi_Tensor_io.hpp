@@ -274,8 +274,8 @@ void write_tensor_binary_multifile(const int mpiRank,
   MPI_Type_commit(&mpiDataType);
 
   const int nsteps = tensor.globalExtent(ndims-1);
-  const auto stepMap = distrib.getMap(ndims-1,true);
-  const auto & stepComm  = distrib.getProcessorGrid().getRowComm(ndims-1,true);
+  const auto stepMap = distrib.getMap(ndims-1,false);
+  const auto & stepComm  = distrib.getProcessorGrid().getRowComm(ndims-1,false);
   auto localTensorView_d = tensor.localTensor().data();
   auto localTensorView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localTensorView_d);
   ScalarType * dataPtr   = localTensorView_h.data();

@@ -22,7 +22,7 @@ set(CMD "python3 ${CMAKE_CURRENT_SOURCE_DIR}/generate_conf.py \
                 --mode_sizes 10 10 50 \
                 --num_initial 10 \
                 --tolerance 1e-3 \
-                --num_proc 2 \
+                --num_proc 4 \
                 --data_dir ${CMAKE_CURRENT_BINARY_DIR}/data \
                 --config_dir ${CMAKE_CURRENT_BINARY_DIR}")
 execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
