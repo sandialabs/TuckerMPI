@@ -1,6 +1,8 @@
 
 # try to find Gtest
-find_package(GTest QUIET)
+if (NOT TUCKER_FETCH_GTEST)
+  find_package(GTest QUIET)
+endif()
 if (GTEST_FOUND)
   message(STATUS "\nGTest was found.")
   message(STATUS "GTEST_INCLUDE_DIRS = ${GTEST_INCLUDE_DIRS}")
