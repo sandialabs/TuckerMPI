@@ -18,7 +18,7 @@ endif()
 # 2. run driver
 #
 if(DEFINED NUMPROC)
-  set(CMD "${MPIEXEC} -n ${NUMPROC} ${EXENAME}")
+  set(CMD "${MPIEXEC} -n ${NUMPROC} ${MPIEXEC_PREFLAGS} ${EXENAME}")
   message(STATUS ${CMD})
   execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
   if(RES)
