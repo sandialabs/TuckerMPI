@@ -175,7 +175,7 @@ int main(int argc, char* argv[])
       sthosvdGram(truncator);
     }
 
-    Tucker::print_max_mem_usage_to_stream(std::cout);
+    TuckerOnNode::print_max_mem_usage_to_stream(std::cout);
 
     totalTimer.stop();
     std::cout << "Read time: " << readTimer.duration() << std::endl;

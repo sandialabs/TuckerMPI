@@ -25,7 +25,7 @@
 #include "TuckerOnNode_write_statistics.hpp"
 #include "TuckerOnNode_transform_slices.hpp"
 #include "TuckerOnNode_normalize_tensor.hpp"
-#include "Tucker_print_max_mem_usage.hpp"
+#include "TuckerOnNode_print_max_mem_usage.hpp"
 
 // finally functions related/needed by sthosvd
 #include "TuckerOnNode_TensorGramEigenvalues.hpp"

@@ -156,6 +156,8 @@ void run(const InputParametersSthosvdDriver<ScalarType> & inputs)
     sthosvdNewGram(truncator);
   }
 
+  TuckerMpi::print_max_mem_usage_to_stream(comm, std::cout);
+
   totalTimer.stop();
   double read_time_l = readTimer.duration();
   double preprocess_time_l = preprocessTimer.duration();

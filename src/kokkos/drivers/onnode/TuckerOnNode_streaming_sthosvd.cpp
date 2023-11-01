@@ -211,7 +211,7 @@ int main(int argc, char* argv[])
       writeTimer.stop();
     }
 
-    Tucker::print_max_mem_usage_to_stream(std::cout);
+    TuckerOnNode::print_max_mem_usage_to_stream(std::cout);
 
     totalTimer.stop();
     std::cout << "Initial read time: " << readTimer.duration() << std::endl;

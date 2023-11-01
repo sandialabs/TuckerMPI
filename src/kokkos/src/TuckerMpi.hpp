@@ -27,7 +27,7 @@
 #include "TuckerMpi_compute_slice_metrics.hpp"
 #include "TuckerMpi_write_statistics.hpp"
 #include "TuckerMpi_normalize_tensor.hpp"
-#include "Tucker_print_max_mem_usage.hpp"
+#include "TuckerMpi_print_max_mem_usage.hpp"
 #include "./impl/TuckerMpi_MPIWrapper.hpp"
 
 // finally functions related/needed by sthosvd

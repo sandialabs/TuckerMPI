@@ -248,8 +248,7 @@ int main(int argc, char* argv[])
       writeTimer.stop();
     }
 
-    if (mpiRank==0)
-      Tucker::print_max_mem_usage_to_stream(std::cout);
+    TuckerMpi::print_max_mem_usage_to_stream(comm, std::cout);
 
     totalTimer.stop();
 
