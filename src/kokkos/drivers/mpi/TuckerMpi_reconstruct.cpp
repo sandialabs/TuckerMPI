@@ -437,14 +437,14 @@ int main(int argc, char* argv[])
         size_t global_nnz = G.globalSize();
         std::cout << "Local tensor size after reconstruction iteration "
                   << i << ": ";
-        for (int i=0; i<G.rank(); ++i)
-          std::cout << G.localExtent(i) << " ";
+        for (int j=0; j<G.rank(); ++j)
+          std::cout << G.localExtent(j) << " ";
         std::cout << ", or ";
         Tucker::print_bytes_to_stream(std::cout, local_nnz*sizeof(double));
         std::cout << "Local tensor size after reconstruction iteration "
                   << i << ": ";
-        for (int i=0; i<G.rank(); ++i)
-          std::cout << G.globalExtent(i) << " ";
+        for (int j=0; j<G.rank(); ++j)
+          std::cout << G.globalExtent(j) << " ";
         std::cout << ", or ";
         Tucker::print_bytes_to_stream(std::cout, global_nnz*sizeof(double));
       }

@@ -344,8 +344,8 @@ int main(int argc, char* argv[])
       size_t nnz = G.size();
       std::cout << "Tensor size after reconstruction iteration "
                 << i << ": ";
-      for (int i=0; i<G.rank(); ++i)
-        std::cout << G.extent(i) << " ";
+      for (int j=0; j<G.rank(); ++j)
+        std::cout << G.extent(j) << " ";
       std::cout << ", or ";
       Tucker::print_bytes_to_stream(std::cout, nnz*sizeof(double));
     }
