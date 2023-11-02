@@ -15,9 +15,7 @@ set(exename ${CMAKE_CURRENT_BINARY_DIR}/../../${ONNODE_STHOSVD_DRIVER_NAME})
 SUBDIRLIST(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
 list(REMOVE_ITEM SUBDIRS test_parameterfileparser_1)
-list(REMOVE_ITEM SUBDIRS test_streaming_sthosvd)
 add_subdirectory(test_parameterfileparser_1)
-add_subdirectory(test_streaming_sthosvd)
 
 FOREACH(subdir ${SUBDIRS})
   message(STATUS "Preparing test for ${subdir}")

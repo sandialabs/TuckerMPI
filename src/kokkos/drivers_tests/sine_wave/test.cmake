@@ -1,9 +1,17 @@
 include(FindUnixCommands)
 
+if(MPIEXEC)
+  set(MPICMD "${MPIEXEC} -n ${NUMPROCS} ${MPIEXEC_PREFLAGS}")
+  set(IMPL "MpiKokkosTucker")
+else()
+  set(MPICMD "")
+  set(IMPL "KokkosTucker")
+endif()
+
 #
 # run streaming driver
 #
-set(CMD "${TEST_EXE_DIR}/KokkosTucker_streaming_sthosvd --parameter-file compress.txt")
+set(CMD "${MPICMD} ${TEST_EXE_DIR}/${IMPL}_streaming_sthosvd --parameter-file compress.txt")
 message(STATUS ${CMD})
 execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
 if(RES)
@@ -13,7 +21,7 @@ endif()
 #
 # compute reconstruction
 #
-set(CMD "${TEST_EXE_DIR}/KokkosTucker_reconstruct --parameter-file reconstruct.txt")
+set(CMD "${MPICMD} ${TEST_EXE_DIR}/${IMPL}_reconstruct --parameter-file reconstruct.txt")
 message(STATUS ${CMD})
 execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
 if(RES)

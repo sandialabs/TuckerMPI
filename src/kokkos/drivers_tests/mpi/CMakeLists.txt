@@ -1,22 +1,21 @@
+include(FindUnixCommands)
 
-MACRO(SUBDIRLIST result curdir)
-  FILE(GLOB children RELATIVE ${curdir} ${curdir}/*)
+FUNCTION(SUBDIRLIST result curdir pattern)
+  FILE(GLOB children RELATIVE ${curdir} ${curdir}/${pattern})
   SET(dirlist "")
   FOREACH(child ${children})
     IF(IS_DIRECTORY ${curdir}/${child})
       LIST(APPEND dirlist ${child})
     ENDIF()
   ENDFOREACH()
-  SET(${result} ${dirlist})
-ENDMACRO()
+  SET(${result} ${dirlist} PARENT_SCOPE)
+ENDFUNCTION()
 
-
+#
+# sthosvd tests
+#
 set(exename ${CMAKE_CURRENT_BINARY_DIR}/../../${DISTRIBUTED_STHOSVD_DRIVER_NAME})
-
-SUBDIRLIST(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
-list(REMOVE_ITEM SUBDIRS test_streaming_sthosvd_n1)
-list(REMOVE_ITEM SUBDIRS test_streaming_sthosvd_n4)
-
+SUBDIRLIST(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR} "test_sthosvd_*")
 FOREACH(subdir ${SUBDIRS})
   message(STATUS "Preparing test for ${subdir}")
   set(TEST_RUN_DIR ${CMAKE_CURRENT_BINARY_DIR}/${subdir})
@@ -46,6 +45,3 @@ FOREACH(subdir ${SUBDIRS})
     -P ${CMAKE_CURRENT_SOURCE_DIR}/../test.cmake
   )
 ENDFOREACH()
-
-add_subdirectory(test_streaming_sthosvd_n1)
-add_subdirectory(test_streaming_sthosvd_n4)
