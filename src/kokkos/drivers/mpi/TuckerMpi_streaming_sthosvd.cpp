@@ -122,6 +122,10 @@ int main(int argc, char* argv[])
     Kokkos::View<scalar_t*, memory_space> scales;
     Kokkos::View<scalar_t*, memory_space> shifts;
     if (inputs.scaling_type != "None"){
+      // Check for valid scale mode (we don't support scaling the streaming
+      // mode)
+      if (inputs.scale_mode == X.rank()-1)
+        throw std::logic_error("Scale mode must not be the streaming (i.e., last) mode");
       if(mpiRank == 0)
         std::cout << "Normalizing tensor" << std::endl;
       std::tie(scales, shifts) = TuckerMpi::normalize_tensor(
