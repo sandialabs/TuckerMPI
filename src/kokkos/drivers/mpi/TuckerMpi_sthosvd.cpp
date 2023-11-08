@@ -47,6 +47,56 @@ void run(const InputParametersSthosvdDriver<ScalarType> & inputs)
   Tucker::Timer preprocessTimer;
   preprocessTimer.start();
   const int scaleMode = inputs.scale_mode;
+
+  auto writeScalesShifts = [=](auto scales, auto shifts) {
+    // Import scales and shifts to proc 0 in the column communicator
+    // (so they are replicated across the row communicator)
+    const auto& dist = X.getDistribution();
+    const auto& grid = dist.getProcessorGrid();
+    const MPI_Comm& col_comm = grid.getColComm(scaleMode, false);
+    int col_mpi_rank = 0;
+    MPI_Comm_rank(col_comm, &col_mpi_rank);
+    using scales_type = decltype(scales);
+    using shifts_type = decltype(scales);
+    scales_type scales_all;
+    shifts_type shifts_all;
+    if (col_mpi_rank == 0) {
+      scales_all = scales_type("scales_all", X.globalExtent(scaleMode));
+      shifts_all = shifts_type("shifts_all", X.globalExtent(scaleMode));
+    }
+    const auto& recvcounts =
+      dist.getMap(scaleMode, false)->getNumElementsPerProc();
+    const auto& displs =
+      dist.getMap(scaleMode, false)->getOffsets();
+    TuckerMpi::MPI_Gatherv_(
+      scales.data(), X.localExtent(scaleMode), scales_all.data(),
+      recvcounts.data(), displs.data(), 0, col_comm);
+    TuckerMpi::MPI_Gatherv_(
+      shifts.data(), X.localExtent(scaleMode), shifts_all.data(),
+      recvcounts.data(), displs.data(), 0, col_comm);
+
+    // Copy to host
+    auto scales_h =
+      Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), scales_all);
+    auto shifts_h =
+      Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), shifts_all);
+
+    // Write file using only (global) proc 0
+    if (mpiRank == 0) {
+      const std::string scale_file =
+      inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_scale.txt";
+      std::ofstream outStream(scale_file);
+      outStream << scaleMode << std::endl;
+      // Set output precision to match ScalarType representation (8 or 16)
+      outStream << std::fixed
+                << std::setprecision(std::numeric_limits<ScalarType>::digits);
+      for (std::size_t i=0; i<X.globalExtent(scaleMode); ++i){
+        outStream << scales_h(i) << " " << shifts_h(i) << std::endl;
+      }
+      outStream.close();
+    }
+  };
+
   if(mpiRank == 0) {
     std::cout << "Compute statistics" << std::endl;
   }
@@ -61,7 +111,7 @@ void run(const InputParametersSthosvdDriver<ScalarType> & inputs)
     auto [scales, shifts] = TuckerMpi::normalize_tensor(
       mpiRank, X, metricsData, inputs.scaling_type,
       inputs.scale_mode, inputs.stdThresh);
-    //TuckerwriteScalesShifts(scales, shifts);
+    writeScalesShifts(scales, shifts);
   }
   else{
     if(mpiRank == 0) {

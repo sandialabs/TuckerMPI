@@ -37,6 +37,11 @@ void ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
     assert(Umatrix.extent(1) == Xtensor.extent(mode));
     assert(Umatrix.extent(0) == Ytensor.extent(mode));
   }
+  assert(Xtensor.rank() == Ytensor.rank());
+  for (int i=0; i<Xtensor.rank(); ++i) {
+    if (i != static_cast<int>(mode))
+      assert(Xtensor.extent(i) == Ytensor.extent(i));
+  }
 
 #if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
   // NOTE that here we cannot just do a regular create_mirror because

@@ -8,10 +8,11 @@ namespace TuckerMpi{
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
 [[nodiscard]] auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
-		       int n,
-		       Kokkos::View<ScalarType**, ViewProperties...> Umatrix,
-		       bool Utransp,
-		       std::size_t nnz_limit = 0)
+                       int n,
+                       Kokkos::View<ScalarType**, ViewProperties...> Umatrix,
+                       bool Utransp,
+                       const Distribution& resultDist,
+                       std::size_t nnz_limit = 0)
 {
 
   // constraints
@@ -19,35 +20,22 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
   using tensor_layout = typename tensor_type::traits::onnode_layout;
   using tensor_memory_space = typename tensor_type::traits::memory_space;
   static_assert(std::is_same_v<tensor_layout, Kokkos::LayoutLeft>,
-		"TuckerMpi::ttm: currently supports tensors with LayoutLeft");
+                "TuckerMpi::ttm: currently supports tensors with LayoutLeft");
 
   using u_view_t = Kokkos::View<ScalarType**, ViewProperties...>;
   static_assert(std::is_same_v<tensor_memory_space, typename u_view_t::memory_space>,
-		"TuckerMpi::ttm: tensor and matrix arguments must have matching memory spaces");
+                "TuckerMpi::ttm: tensor and matrix arguments must have matching memory spaces");
 
   int mpiRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
 
-  // Compute the number of rows for the resulting "matrix"
-  const int nrows = Utransp ? Umatrix.extent(1) : Umatrix.extent(0);
-
-  // Get the size of the new tensor
-  const int ndims = Xtensor.rank();
-  std::vector<int> newSize(ndims);
-  for(int i=0; i<ndims; i++) {
-    newSize[i] = (i == n) ? nrows : Xtensor.globalExtent(i);
-  }
-
-  // Reuse the processor grid so a new one isn't created each TTM (which becomes
-  // a problem for the streaming algorithm)
-  Distribution resultDist(newSize, Xtensor.getDistribution().getProcessorGrid());
   tensor_type result(resultDist);
 
   auto preferSingleReduceScatter = [&]() -> bool
   {
     auto & Xdist = Xtensor.getDistribution();
     std::size_t max_lcl_nnz_x = 1;
-    for(int i=0; i<Xtensor.rank(); i++) {
+    for (int i=0; i<Xtensor.rank(); i++) {
       max_lcl_nnz_x *= Xdist.getMap(i,false)->getMaxNumEntries();
     }
 
@@ -56,7 +44,7 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
 
     // Compute the nnz required for the reduce_scatter
     std::size_t nnz_reduce_scatter = 1;
-    for(int i=0; i<Xtensor.rank(); i++) {
+    for (int i=0; i<Xtensor.rank(); i++) {
       if(i == n){
         nnz_reduce_scatter *= result.globalExtent(n);
       }
@@ -92,6 +80,24 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
     //}
   }
   return result;
+}
+
+template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
+[[nodiscard]] auto ttm(Tensor<ScalarType, TensorProperties...> Xtensor,
+                       int n,
+                       Kokkos::View<ScalarType**, ViewProperties...> Umatrix,
+                       bool Utransp,
+                       std::size_t nnz_limit = 0)
+{
+  // Compute the number of rows for the resulting "matrix"
+  const int nrows = Utransp ? Umatrix.extent(1) : Umatrix.extent(0);
+
+  // Create distribution for result, keeping distribution across non-TTM modes
+  // fixed.
+  Distribution resultDist =
+    Xtensor.getDistribution().replaceModeWithGlobalSize(n, nrows);
+
+  return ttm(Xtensor, n, Umatrix, Utransp, resultDist, nnz_limit);
 }
 
 } // end namespace TuckerMpi

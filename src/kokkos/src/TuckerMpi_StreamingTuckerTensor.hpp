@@ -106,17 +106,22 @@ public:
 
 };
 
-template <class scalar_t, class mem_space_t = Kokkos::DefaultExecutionSpace::memory_space>
+template <class scalar_t,
+          class mem_space_t = Kokkos::DefaultExecutionSpace::memory_space>
 StreamingTuckerTensor<scalar_t,mem_space_t>
-StreamingSTHOSVD(const Tensor<scalar_t,mem_space_t>& X,
-                 const Tucker::TuckerTensor< Tensor<scalar_t,mem_space_t> >& initial_factorization,
-                 const TuckerOnNode::TensorGramEigenvalues<scalar_t,mem_space_t>& initial_eigenvalues,
-                 const char* filename,
-                 const scalar_t epsilon,
-                 Tucker::Timer &readTimer,
-                 const std::string &streaming_stats_file,
-                 bool useQR=false,
-                 bool flipSign=false);
+StreamingSTHOSVD(
+  const Tensor<scalar_t,mem_space_t>& X,
+  const Tucker::TuckerTensor< Tensor<scalar_t,mem_space_t> >& init_fact,
+  const TuckerOnNode::TensorGramEigenvalues<scalar_t,mem_space_t>& init_eigvals,
+  const int scale_mode,
+  const Kokkos::View<scalar_t*, mem_space_t>& scales,
+  const Kokkos::View<scalar_t*, mem_space_t>& shifts,
+  const char* filename,
+  const scalar_t epsilon,
+  Tucker::Timer &readTimer,
+  const std::string &streaming_stats_file,
+  bool useQR=false,
+  bool flipSign=false);
 
 } // end namespace TuckerMpi
 

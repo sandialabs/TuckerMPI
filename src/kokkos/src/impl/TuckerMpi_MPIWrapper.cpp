@@ -18,7 +18,7 @@ bool comms_equal(const MPI_Comm & a, const MPI_Comm & b)
   if ((a != MPI_COMM_NULL) && (b != MPI_COMM_NULL)){
     int commIdent = {};
     MPI_Comm_compare(a, b, &commIdent);
-    if (commIdent != MPI_IDENT){ return false; }
+    if (commIdent != MPI_IDENT && commIdent != MPI_CONGRUENT){ return false; }
     else{ return true; }
   }
   else if ((a != MPI_COMM_NULL) && (b == MPI_COMM_NULL)){
@@ -39,7 +39,7 @@ bool comms_equal(std::shared_ptr<MPI_Comm> a, std::shared_ptr<MPI_Comm> b)
     if ((*a != MPI_COMM_NULL) && (*b != MPI_COMM_NULL)){
       int commIdent = {};
       MPI_Comm_compare(*a, *b, &commIdent);
-      if (commIdent != MPI_IDENT){ return false; }
+      if (commIdent != MPI_IDENT && commIdent != MPI_CONGRUENT){ return false; }
       else{ return true; }
     }
     else if ((*a != MPI_COMM_NULL) && (*b == MPI_COMM_NULL)){

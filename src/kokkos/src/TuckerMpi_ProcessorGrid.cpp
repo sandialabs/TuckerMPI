@@ -5,14 +5,14 @@ namespace TuckerMpi {
 
 bool operator==(const ProcessorGrid& a, const ProcessorGrid& b)
 {
-  if (a.squeezed_ != b.squeezed_){ return false; }
+  //if (a.squeezed_ != b.squeezed_){ return false; }
   if (a.size_ != b.size_){ return false; }
   if (!impl::comms_equal(a.cartComm_,b.cartComm_)){ return false; }
   if (!impl::stdvectors_of_comms_equal(a.rowcomms_, b.rowcomms_)){ return false; }
   if (!impl::stdvectors_of_comms_equal(a.colcomms_, b.colcomms_)){ return false; }
-  if (!impl::comms_equal(a.cartComm_squeezed_, b.cartComm_squeezed_)){ return false; }
-  if (!impl::stdvectors_of_comms_equal(a.rowcomms_squeezed_, b.rowcomms_squeezed_)){ return false; }
-  if (!impl::stdvectors_of_comms_equal(a.colcomms_squeezed_, b.colcomms_squeezed_)){ return false; }
+  //if (!impl::comms_equal(a.cartComm_squeezed_, b.cartComm_squeezed_)){ return false; }
+  //if (!impl::stdvectors_of_comms_equal(a.rowcomms_squeezed_, b.rowcomms_squeezed_)){ return false; }
+  //if (!impl::stdvectors_of_comms_equal(a.colcomms_squeezed_, b.colcomms_squeezed_)){ return false; }
 
   return true;
 }
@@ -92,8 +92,7 @@ void ProcessorGrid::squeeze(const std::vector<int>& sz, const MPI_Comm& comm)
     nprocsRequested *= sz[i];
   }
   if(nprocsRequested != nprocs) {
-    std::cerr << "ERROR in ProcessorGrid::squeeze: the processor grid "
-	      << "supplied is inconsistent with the total number of processes\n";
+    throw std::runtime_error("ERROR in ProcessorGrid::squeeze: the processor grid supplied is inconsistent with the total number of processes");
   }
 
   // Create a virtual topology MPI communicator

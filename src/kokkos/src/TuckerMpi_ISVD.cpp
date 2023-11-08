@@ -400,6 +400,7 @@ initializeFactors(const matrix_t& U,
   }
 
   // Y = -1 * X + Y
+  assert(Y.getDistribution() == X.getDistribution());
   auto Yd = Y.localTensor().data();
   auto Xd = X.localTensor().data();
   Kokkos::parallel_for("Y = -1 * X + Y",
@@ -486,6 +487,11 @@ ISVD<scalar_t,mem_space_t>::
 updateFactorsWithNewSlice(const tensor_t& Y,
                           scalar_t tolerance)
 {
+  // Distributions are not the same for Y and V_ because Y has one less mode
+  // but the other parallel maps should be the same
+  assert(Y.rank()+1 == V_.rank());
+  for (int i=0; i<Y.rank(); ++i)
+    assert(*Y.getDistribution().getMap(i,false) == *V_.getDistribution().getMap(i,false));
   addSingleRowNaive(Y.localTensor().data(), tolerance);
 }
 
@@ -554,10 +560,9 @@ addSingleRowNaive(const vector_t& c, scalar_t tolerance)
   // assemble V1[nx(r+1)] = [ V[nxr] q[nx1] ] as a tensor
   // note:  we don't need to worry about updating the processor grid because
   // there is no parallelism over the streaming mode
-  std::vector<int> global_dims = V_.getDistribution().getGlobalDims();
   const int ndims = V_.rank();
-  global_dims[ndims-1] += 1;
-  Distribution V1_dist(global_dims, V_.getDistribution().getProcessorGrid());
+  Distribution V1_dist = V_.getDistribution().replaceModeWithGlobalSize(
+    ndims-1, V_.globalExtent(ndims-1)+1);
   tensor_t V1(V1_dist);
   auto V1d = V1.localTensor().data();
   Kokkos::deep_copy(Kokkos::subview(V1d, std::make_pair(0,n*r)), Vl.data());
@@ -611,15 +616,15 @@ padTensorAlongMode(const Tensor<scalar_t,mem_space_t>& X, int n, int p)
     throw std::invalid_argument(str.str());
   }
 
-  if (p <= 0) {
+  if (p < 0) {
     std::ostringstream str;
-    str << method_signature << ": number of additional zero slices p must be positive";
+    str << method_signature << ": number of additional zero slices p must be non-negative";
     throw std::invalid_argument(str.str());
   }
 
   auto Xl = X.localTensor();
   const int nrow1 = Xl.prod(0, n);
-  const int nrow2 = Xl.prod(0, n - 1) * p;
+  const int nrow2 = Xl.prod(0, n - 1, 1) * p;
   const int nrow = nrow1 + nrow2;
   const int ncol = Xl.prod(n + 1, d - 1);
 

@@ -43,6 +43,8 @@
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <vector>
+#include <numeric>
 
 #include <KokkosBlas1_axpby.hpp>
 #include <KokkosBlas3_gemm.hpp>
@@ -50,6 +52,7 @@
 #include "TuckerMpi.hpp"
 #include "TuckerMpi_StreamingTuckerTensor.hpp"
 #include "Tucker_create_mirror.hpp"
+#include "TuckerOnNode_transform_slices.hpp"
 
 /** \namespace Tucker \brief Contains the data structures and functions
  * necessary for a sequential tucker decomposition
@@ -62,6 +65,9 @@ StreamingSTHOSVD(
   const Tensor<scalar_t,mem_space_t>& X,
   const Tucker::TuckerTensor< Tensor<scalar_t,mem_space_t> >& initial_factorization,
   const TuckerOnNode::TensorGramEigenvalues<scalar_t,mem_space_t>& initial_eigenvalues,
+  const int scale_mode,
+  const Kokkos::View<scalar_t*, mem_space_t>& scales,
+  const Kokkos::View<scalar_t*, mem_space_t>& shifts,
   const char* filename,
   const scalar_t epsilon,
   Tucker::Timer &readTimer,
@@ -182,6 +188,11 @@ StreamingSTHOSVD(
     read_tensor_binary(globalRank, Y, snapshot_file);
     readTimer.stop();
 
+    // apply normalization if provided
+    if (scales.extent(0) > 0 && shifts.extent(0) > 0)
+      TuckerOnNode::transform_slices(
+        Y.localTensor(), scale_mode, scales, shifts);
+
     // compute/update data norms
     const scalar_t Ynorm2 = Y.frobeniusNormSquared();
     factorization.Xnorm2 += Ynorm2;
@@ -201,11 +212,16 @@ StreamingSTHOSVD(
 
     // Loop over non-streaming modes
     for(int n=0; n<ndims-1; n++) {
-
       // Line 2 of streaming STHOSVD update
       // compute projection of new slice onto existing basis
       // D = Y x_n U[n].T
-      tensor_t D = ttm(Y, n, U[n], true);
+      // D must have a compatible distribution with V_
+      tensor_t V_ = factorization.isvd.getRightSingularVectors();
+      assert(U[n].extent(1) == V_.globalExtent(n));
+      Distribution D_dist =
+        Y.getDistribution().replaceModeWithSizes(n, U[n].extent(1),
+                                                 V_.localExtent(n));
+      tensor_t D = ttm(Y, n, U[n], true, D_dist);
 
       // Line 3 of streaming STHOSVD update
       // compute orthogonal complement of new slice w.r.t. existing basis
@@ -213,6 +229,7 @@ StreamingSTHOSVD(
       tensor_t E = ttm(D, n, U[n], false);
 
       // E = Y-E
+      assert(E.getDistribution() == Y.getDistribution());
       KokkosBlas::axpby(scalar_t(1.0), Y.localTensor().data(), scalar_t(-1.0),
                         E.localTensor().data());
 
@@ -245,13 +262,17 @@ StreamingSTHOSVD(
         // K = E x_n V.T
         tensor_t K = ttm(E, n, V, true);
 
+        // Number of rows to add on my proc
+        const int my_R = D.localExtent(n);
+        const int my_R_new = K.localExtent(n);
+
         // Line 10 of streaming STHOSVD update
         // pad core with zeros
-        G = factorization.isvd.padTensorAlongMode(G, n, R_new);
+        G = factorization.isvd.padTensorAlongMode(G, n, my_R_new);
 
         // Line 11 of streaming STHOSVD update
         // pad ISVD right singular vectors with zeros
-        factorization.isvd.padRightSingularVectorsAlongMode(n, R_new);
+        factorization.isvd.padRightSingularVectorsAlongMode(n, my_R_new);
 
         // Line 12 of streaming STHOSVD algorithm
         // prepare slice for next mode
@@ -266,9 +287,11 @@ StreamingSTHOSVD(
         const int num_proc = slice_dist.getProcessorGrid().getNumProcs(n,false);
         std::vector<int> R_proc(num_proc), R_new_proc(num_proc);
         MPI_Allgather(
-          &R,     1, MPI_INT, R_proc.data(),     num_proc, MPI_INT, comm);
+          &my_R,     1, MPI_INT, R_proc.data(),     1, MPI_INT, comm);
         MPI_Allgather(
-          &R_new, 1, MPI_INT, R_new_proc.data(), num_proc, MPI_INT, comm);
+          &my_R_new, 1, MPI_INT, R_new_proc.data(), 1, MPI_INT, comm);
+        assert(std::accumulate(R_proc.begin(), R_proc.end(), 0) == R);
+        assert(std::accumulate(R_new_proc.begin(), R_new_proc.end(), 0) == R_new);
         int offset_U = 0;
         int offset_V = 0;
         int offset_U_new = 0;
@@ -284,10 +307,13 @@ StreamingSTHOSVD(
             U_new, Kokkos::ALL, std::make_pair(offset_U_new,offset_U_new+R_new_proc[k]));
           auto V1 = Kokkos::subview(
             V, Kokkos::ALL, std::make_pair(offset_V,offset_V+R_new_proc[k]));
-          Kokkos::deep_copy(U1, V1);
+          Kokkos::deep_copy(U2, V1);
           offset_V += R_new_proc[k];
           offset_U_new += R_new_proc[k];
         }
+        assert(offset_U == R);
+        assert(offset_V == R_new);
+        assert(offset_U_new == R+R_new);
         U[n] = U_new;
       }
     }
@@ -384,6 +410,9 @@ template class StreamingTuckerTensor<double>;
 // StreamingSTHOSVD(const Tensor<float,Kokkos::DefaultExecutionSpace::memory_space>& X,
 //                  const Tucker::TuckerTensor< Tensor<float,Kokkos::DefaultExecutionSpace::memory_space> >& initial_factorization,
 //                  const TensorGramEigenvalues<float,Kokkos::DefaultExecutionSpace::memory_space>& initial_eigenvalues,
+//                  const int scale_mode,
+//                  const Kokkos::View<float*, Kokkos::DefaultExecutionSpace::memory_space>& scales,
+//                  const Kokkos::View<float*, Kokkos::DefaultExecutionSpace::memory_space>& shifts,
 //                  const char* filename,
 //                  const float epsilon,
 //                  Tucker::Timer &,
@@ -396,6 +425,9 @@ StreamingTuckerTensor<double,Kokkos::DefaultExecutionSpace::memory_space>
 StreamingSTHOSVD(const Tensor<double,Kokkos::DefaultExecutionSpace::memory_space>& X,
                  const Tucker::TuckerTensor< Tensor<double,Kokkos::DefaultExecutionSpace::memory_space> >& initial_factorization,
                  const TuckerOnNode::TensorGramEigenvalues<double,Kokkos::DefaultExecutionSpace::memory_space>& initial_eigenvalues,
+                 const int scale_mode,
+                 const Kokkos::View<double*, Kokkos::DefaultExecutionSpace::memory_space>& scales,
+                 const Kokkos::View<double*, Kokkos::DefaultExecutionSpace::memory_space>& shifts,
                  const char* filename,
                  const double epsilon,
                  Tucker::Timer &,

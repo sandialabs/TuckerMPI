@@ -52,6 +52,16 @@ public:
   // tensor is a superset of the prior tensor on each processor
   Distribution growAlongMode(int mode, int p) const;
 
+  // Returns a new distribution by replacing the global dimension of mode
+  // `mode` with `R`.  All other dimensions are kept the same and the
+  // distribution across mode `mode` uses the default algorithm
+  Distribution replaceModeWithGlobalSize(int mode, int R) const;
+
+  // Returns a new distribution by replacing the global dimension of mode
+  // `mode` with `R_global` and local dimension with `R_local'.  All other
+  // dimensions are kept the same
+  Distribution replaceModeWithSizes(int mode, int R_global, int R_local) const;
+
   /*
    * operators overloading
    */

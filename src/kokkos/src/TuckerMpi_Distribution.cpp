@@ -12,9 +12,9 @@ bool operator==(const Distribution& a, const Distribution& b)
   if (a.globalDims_    != b.globalDims_){ return false; }
   if (a.grid_          != b.grid_){ return false; }
   if (a.maps_          != b.maps_){ return false; }
-  if (a.maps_squeezed_ != b.maps_squeezed_){ return false; }
-  if (a.ownNothing_    != b.ownNothing_){ return false; }
-  if (a.squeezed_      != b.squeezed_){ return false; }
+  //if (a.maps_squeezed_ != b.maps_squeezed_){ return false; }
+  //if (a.ownNothing_    != b.ownNothing_){ return false; }
+  //if (a.squeezed_      != b.squeezed_){ return false; }
   if (a.empty_         != b.empty_){ return false; }
 
   return true;
@@ -63,6 +63,7 @@ Distribution::Distribution(const std::vector<int>& dims,
 Distribution Distribution::growAlongMode(int mode, int p) const
 {
   Distribution new_dist;
+  new_dist.empty_ = empty_;
 
   // We use the same processor grid
   new_dist.grid_ = grid_;
@@ -96,7 +97,76 @@ Distribution Distribution::growAlongMode(int mode, int p) const
   new_dist.maps_ = std::vector<Map>(ndims);
   for (int d=0; d<ndims; d++) {
     const MPI_Comm& comm = new_dist.grid_.getColComm(d,false);
-    new_dist.maps_[d] = TuckerMpi::Map(globalDims_[d], localDims_[d], comm);
+    new_dist.maps_[d] = TuckerMpi::Map(
+      new_dist.globalDims_[d], new_dist.localDims_[d], comm);
+  }
+
+  // New squeezed maps
+  new_dist.createSqueezedMaps();
+
+  return new_dist;
+}
+
+Distribution Distribution::replaceModeWithGlobalSize(int mode, int R) const
+{
+  Distribution new_dist;
+  new_dist.empty_ = empty_;
+
+  // We use the same processor grid
+  new_dist.grid_ = grid_;
+
+  // New global dims, only changing mode `mode`
+  new_dist.globalDims_ = globalDims_;
+  new_dist.globalDims_[mode] = R;
+
+  // New local dims (we'll overwrite localDims_[mode] later)
+  new_dist.localDims_ = localDims_;
+
+  // New maps, use prescribed local/global dims for all modes except mode `mode`
+  int ndims = globalDims_.size();
+  new_dist.maps_ = std::vector<Map>(ndims);
+  for (int d=0; d<ndims; d++) {
+    const MPI_Comm& comm = new_dist.grid_.getColComm(d,false);
+    if (d == mode)
+       new_dist.maps_[d] = TuckerMpi::Map(R, comm);
+    else
+      new_dist.maps_[d] = TuckerMpi::Map(
+        new_dist.globalDims_[d], new_dist.localDims_[d], comm);
+  }
+
+  // Update localDims_
+  new_dist.localDims_[mode] = new_dist.maps_[mode].getLocalNumEntries();
+
+  // New squeezed maps
+  new_dist.createSqueezedMaps();
+
+  return new_dist;
+}
+
+Distribution Distribution::replaceModeWithSizes(int mode, int R_global,
+                                                int R_local) const
+{
+  Distribution new_dist;
+  new_dist.empty_ = empty_;
+
+  // We use the same processor grid
+  new_dist.grid_ = grid_;
+
+  // New global dims, only changing mode `mode`
+  new_dist.globalDims_ = globalDims_;
+  new_dist.globalDims_[mode] = R_global;
+
+  // New local dims
+  new_dist.localDims_ = localDims_;
+  new_dist.localDims_[mode] = R_local;
+
+  // New maps, use prescribed local/global dims for all modes except mode `mode`
+  int ndims = globalDims_.size();
+  new_dist.maps_ = std::vector<Map>(ndims);
+  for (int d=0; d<ndims; d++) {
+    const MPI_Comm& comm = new_dist.grid_.getColComm(d,false);
+    new_dist.maps_[d] = TuckerMpi::Map(
+      new_dist.globalDims_[d], new_dist.localDims_[d], comm);
   }
 
   // New squeezed maps
@@ -127,8 +197,9 @@ void Distribution::createSqueezedMaps()
     // Create a map for each dimension
     maps_squeezed_ = std::vector<Map>(ndims);
     for(int d=0; d<ndims; d++) {
-      const MPI_Comm& comm = grid_.getColComm(d,false);
-      maps_squeezed_[d] = TuckerMpi::Map(globalDims_[d], comm);
+      const MPI_Comm& col_comm = grid_.getColComm(d,false);
+      maps_squeezed_[d] =
+        TuckerMpi::Map(globalDims_[d], localDims_[d], col_comm);
     }
 
     // Remove the empty processes from the map communicators
