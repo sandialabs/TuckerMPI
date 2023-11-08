@@ -361,11 +361,6 @@ int main(int argc, char* argv[])
       }
     }
 
-    /////////////////////////////////////////////
-    // Set up distribution object for the core //
-    /////////////////////////////////////////////
-    TuckerMpi::Distribution dist(coreSize, proc_grid_dims);
-
     ///////////////////////////
     // Read core tensor data //
     ///////////////////////////
@@ -374,7 +369,7 @@ int main(int argc, char* argv[])
     readTimer.start();
     std::string coreFilename = sthosvd_dir + "/" + sthosvd_fn + "_core.mpi";
     using tensor_type = TuckerMpi::Tensor<scalar_t, memory_space>;
-    tensor_type G(dist);
+    tensor_type G(coreSize, proc_grid_dims);
     TuckerMpi::read_tensor_binary(mpiRank, G, coreFilename);
     if (mpiRank == 0) {
       size_t local_nnz = G.localSize();
@@ -497,7 +492,7 @@ int main(int argc, char* argv[])
       TuckerMpi::MPI_Bcast_(scales.data(),scale_size,0,MPI_COMM_WORLD);
       TuckerMpi::MPI_Bcast_(shifts.data(),scale_size,0,MPI_COMM_WORLD);
 
-      int row_begin = dist.getMap(scale_mode)->getGlobalIndex(0);
+      int row_begin = G.getDistribution().getMap(scale_mode)->getGlobalIndex(0);
       if(row_begin >= 0) {
         Kokkos::View<double*,Kokkos::HostSpace> scales_h(
           scales.data()+row_begin, scale_size-row_begin);
