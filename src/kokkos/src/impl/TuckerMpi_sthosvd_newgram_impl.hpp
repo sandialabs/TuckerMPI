@@ -10,9 +10,9 @@ namespace impl{
 
 template <class ScalarType, class ...Properties, class TruncatorType>
 [[nodiscard]] auto sthosvd_newgram(Tensor<ScalarType, Properties...> X,
-				   TruncatorType && truncator,
-				   const std::vector<int> & modeOrder,
-				   bool flipSign)
+                                   TruncatorType && truncator,
+                                   const std::vector<int> & modeOrder,
+                                   bool flipSign)
 {
   using tensor_type         = Tensor<ScalarType, Properties...>;
   using memory_space        = typename tensor_type::traits::memory_space;
@@ -33,7 +33,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   // Compute the nnz of the largest tensor piece being stored by any process
   std::size_t max_lcl_nnz_x = 1;
   for(int i=0; i<X.rank(); i++) {
-    max_lcl_nnz_x *= X.getDistribution().getMap(i,false)->getMaxNumEntries();
+    max_lcl_nnz_x *= X.getDistribution().getMap(i)->getMaxNumEntries();
   }
   MPI_Barrier(myComm);
 
@@ -171,7 +171,7 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   }
 
   return std::pair( tucker_tensor_type(Y, factors, perModeSlicingInfo_factors),
-		    gram_eigvals_type(eigvals, perModeSlicingInfo_eigvals) );
+                    gram_eigvals_type(eigvals, perModeSlicingInfo_eigvals) );
 }
 
 }}

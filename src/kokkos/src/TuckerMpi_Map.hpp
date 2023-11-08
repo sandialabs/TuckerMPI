@@ -59,7 +59,6 @@ public:
   }
 
   const MPI_Comm& getComm() const{ return *comm_; }
-  void removeEmptyProcs();
 
   friend bool operator==(const Map&, const Map&);
   friend bool operator!=(const Map&, const Map&);
@@ -79,7 +78,6 @@ private:
   int localNumEntries_ = {};
   //! Total number of entries
   int globalNumEntries_ = {};
-  bool removedEmptyProcs_ = {};
 };
 
 bool operator==(const Map& a, const Map& b);

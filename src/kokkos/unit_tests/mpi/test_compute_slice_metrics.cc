@@ -152,17 +152,17 @@ TEST(tuckerkokkosmpi, compute_slice_metrics_allmode)
     TuckerMpi::read_tensor_binary(rank, tensor, "./tensor_data_files/3x5x7x11.bin");
 
     const std::array<Tucker::Metric,5> metricIDs{Tucker::Metric::MIN,
-                Tucker::Metric::MAX, Tucker::Metric::SUM, Tucker::Metric::MEAN, 
+                Tucker::Metric::MAX, Tucker::Metric::SUM, Tucker::Metric::MEAN,
                 Tucker::Metric::VARIANCE};
 
-    for(int mode=0; mode<tensor.rank(); ++mode) 
+    for(int mode=0; mode<tensor.rank(); ++mode)
     {
       auto metrics = TuckerMpi::compute_slice_metrics(rank, tensor, mode, metricIDs);
       auto metrics_h = Tucker::create_mirror(metrics);
       Tucker::deep_copy(metrics_h, metrics);
 
-      auto map = tensor.getDistribution().getMap(mode, false);
-      for(int j=0; j<tensor.localExtent(mode); j++) 
+      auto map = tensor.getDistribution().getMap(mode);
+      for(int j=0; j<tensor.localExtent(mode); j++)
       {
         const int globalJ = map->getGlobalIndex(j);
 
@@ -173,13 +173,13 @@ TEST(tuckerkokkosmpi, compute_slice_metrics_allmode)
           ASSERT_TRUE(diff < 100 * std::numeric_limits<scalar_t>::epsilon() );
 
           // if (rank==0){
-          //   std::cout << mode 
-          //    << " " << i 
-          //    << " " << j 
+          //   std::cout << mode
+          //    << " " << i
+          //    << " " << j
           //    << " "
-          //    << std::setprecision(13) << view(j) 
-          //    << " " << trueData[globalJ][mode][i] 
-          //    << " " << diff 
+          //    << std::setprecision(13) << view(j)
+          //    << " " << trueData[globalJ][mode][i]
+          //    << " " << diff
           //    << '\n';
           // }
         }

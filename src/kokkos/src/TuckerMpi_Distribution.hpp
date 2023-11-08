@@ -29,16 +29,9 @@ public:
   const ProcessorGrid& getProcessorGrid() const{ return grid_; }
 
   //! Returns the map of a given dimension
-  const Map* getMap(int dimension, bool squeezed) const{
-    if(squeezed && squeezed_) {
-      return &maps_squeezed_[dimension];
-    }
-    return &maps_[dimension];
-  }
+  const Map* getMap(int dimension) const{ return &maps_[dimension]; }
 
-  const MPI_Comm& getComm(bool squeezed) const{
-    return grid_.getComm(squeezed);
-  }
+  const MPI_Comm& getComm() const{ return grid_.getComm(); }
 
   bool ownNothing() const{
     return ownNothing_;
@@ -70,11 +63,6 @@ public:
 
 private:
   void createMaps();
-  void createSqueezedMaps();
-  //! Finds and eliminates processes that don't have work
-  void findAndEliminateEmptyProcs(MPI_Comm& comm);
-  //! Creates new processor grid without the processes that don't have work
-  void updateProcessorGrid(const MPI_Comm& comm);
 
 private:
   //! Size of the local grid; number of entries owned in each dimension.
@@ -88,10 +76,8 @@ private:
 
   //! The maps describing the parallel distribution in each dimension
   std::vector<Map> maps_ = {};
-  std::vector<Map> maps_squeezed_ = {};
 
   bool ownNothing_ = false;
-  bool squeezed_ = false;
   bool empty_ = true;
 };
 

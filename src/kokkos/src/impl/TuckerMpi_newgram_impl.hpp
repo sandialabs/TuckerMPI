@@ -154,12 +154,12 @@ auto pack_for_gram_fallback_copy_host(Tensor<ScalarType, Ps...> & Y,
 				      const Map* redistMap)
 {
   const int ONE = 1;
-  assert(is_pack_for_gram_necessary(n, Y.getDistribution().getMap(n,true), redistMap));
+  assert(is_pack_for_gram_necessary(n, Y.getDistribution().getMap(n), redistMap));
 
   int localNumRows = Y.localExtent(n);
   int globalNumCols = redistMap->getGlobalNumEntries();
   int ndims = Y.rank();
-  int nprocs = Y.getDistribution().getProcessorGrid().getNumProcs(n,true);
+  int nprocs = Y.getDistribution().getProcessorGrid().getNumProcs(n);
 
   auto localTensorView_d = Y.localTensor().data();
   auto localTensorView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localTensorView_d);
@@ -212,12 +212,12 @@ std::vector<ScalarType> pack_for_gram(Tensor<ScalarType, Ps...> & Y,
 				      int n,
 				      const Map* redistMap)
 {
-  assert(is_pack_for_gram_necessary(n, Y.getDistribution().getMap(n,true), redistMap));
+  assert(is_pack_for_gram_necessary(n, Y.getDistribution().getMap(n), redistMap));
 
   int localNumRows = Y.localExtent(n);
   int globalNumCols = redistMap->getGlobalNumEntries();
   int ndims = Y.rank();
-  int nprocs = Y.getDistribution().getProcessorGrid().getNumProcs(n,true);
+  int nprocs = Y.getDistribution().getProcessorGrid().getNumProcs(n);
 
   auto localTensorView_d = Y.localTensor().data();
   auto localTensorView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localTensorView_d);
@@ -302,8 +302,8 @@ auto redistribute_tensor_for_gram(Tensor<ScalarType, Properties...> & Y, int n)
   using matrix_result_t = ::TuckerMpi::impl::Matrix<ScalarType, memory_space>;
 
   // Get the original Tensor map
-  const Map* oldMap = Y.getDistribution().getMap(n,false);
-  const MPI_Comm& comm = Y.getDistribution().getProcessorGrid().getColComm(n,false);
+  const Map* oldMap = Y.getDistribution().getMap(n);
+  const MPI_Comm& comm = Y.getDistribution().getProcessorGrid().getColComm(n);
 
   // Get the number of MPI processes in this communicator
   int numProcs;

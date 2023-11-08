@@ -93,9 +93,9 @@ void ttm_impl_use_single_reduce_scatter(const int mpiRank,
                                 U_mem_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   auto & Xdist = X.getDistribution();
-  const MPI_Comm& comm = Xdist.getProcessorGrid().getColComm(n,false);
-  const Map* xMap = Xdist.getMap(n,false);
-  const Map* yMap = Y.getDistribution().getMap(n,false);
+  const MPI_Comm& comm = Xdist.getProcessorGrid().getColComm(n);
+  const Map* xMap = Xdist.getMap(n);
+  const Map* yMap = Y.getDistribution().getMap(n);
 
   int uGlobalRows = Y.globalExtent(n);
   int uGlobalCols = X.globalExtent(n);
@@ -190,8 +190,8 @@ void ttm_impl_use_series_of_reductions(const int mpiRank,
                                 U_mem_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   auto & Xdist = X.getDistribution();
-  const MPI_Comm& comm = Xdist.getProcessorGrid().getColComm(n,false);
-  const Map* xMap = Xdist.getMap(n,false);
+  const MPI_Comm& comm = Xdist.getProcessorGrid().getColComm(n);
+  const Map* xMap = Xdist.getMap(n);
 
   int uGlobalRows = Y.globalExtent(n);
   int uGlobalCols = X.globalExtent(n);
@@ -209,8 +209,8 @@ void ttm_impl_use_series_of_reductions(const int mpiRank,
   auto localX = X.localTensor();
   auto localY = Y.localTensor();
   auto localYview_h = Kokkos::create_mirror_view(localY.data());
-  const Map* yMap = Y.getDistribution().getMap(n,false);
-  const int Pn = Xdist.getProcessorGrid().getNumProcs(n, false);
+  const Map* yMap = Y.getDistribution().getMap(n);
+  const int Pn = Xdist.getProcessorGrid().getNumProcs(n);
   for(int root=0; root<Pn; root++)
   {
     int uLocalRows = yMap->getNumEntries(root);

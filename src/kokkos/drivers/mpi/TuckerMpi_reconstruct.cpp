@@ -497,7 +497,7 @@ int main(int argc, char* argv[])
       TuckerMpi::MPI_Bcast_(scales.data(),scale_size,0,MPI_COMM_WORLD);
       TuckerMpi::MPI_Bcast_(shifts.data(),scale_size,0,MPI_COMM_WORLD);
 
-      int row_begin = dist.getMap(scale_mode,false)->getGlobalIndex(0);
+      int row_begin = dist.getMap(scale_mode)->getGlobalIndex(0);
       if(row_begin >= 0) {
         Kokkos::View<double*,Kokkos::HostSpace> scales_h(
           scales.data()+row_begin, scale_size-row_begin);

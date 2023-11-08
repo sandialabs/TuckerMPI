@@ -36,7 +36,7 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
     auto & Xdist = Xtensor.getDistribution();
     std::size_t max_lcl_nnz_x = 1;
     for (int i=0; i<Xtensor.rank(); i++) {
-      max_lcl_nnz_x *= Xdist.getMap(i,false)->getMaxNumEntries();
+      max_lcl_nnz_x *= Xdist.getMap(i)->getMaxNumEntries();
     }
 
     if (nnz_limit == 0)
@@ -49,14 +49,14 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
         nnz_reduce_scatter *= result.globalExtent(n);
       }
       else{
-        nnz_reduce_scatter *= Xdist.getMap(i,false)->getMaxNumEntries();
+        nnz_reduce_scatter *= Xdist.getMap(i)->getMaxNumEntries();
       }
     }
 
     return (nnz_reduce_scatter <= std::max(max_lcl_nnz_x, nnz_limit));
   };
 
-  const int Pn = Xtensor.getDistribution().getProcessorGrid().getNumProcs(n, false);
+  const int Pn = Xtensor.getDistribution().getProcessorGrid().getNumProcs(n);
   if(Pn == 1)
   {
 #if defined(TUCKER_ENABLE_DEBUG_PRINTS)

@@ -116,7 +116,7 @@ StreamingSTHOSVD(
   }
   factorization.squared_errors[ndims - 1] = std::pow(factorization.isvd.getErrorNorm(), 2);
 
-  const MPI_Comm& comm = G.getDistribution().getComm(true);
+  const MPI_Comm& comm = G.getDistribution().getComm();
   int globalRank;
   MPI_Comm_rank(comm, &globalRank);
 
@@ -283,8 +283,8 @@ StreamingSTHOSVD(
         const int N = U[n].extent(0);
         const int R = U[n].extent(1);
         matrix_t U_new("U_new", N, R+R_new);
-        const MPI_Comm& comm = slice_dist.getProcessorGrid().getColComm(n,false);
-        const int num_proc = slice_dist.getProcessorGrid().getNumProcs(n,false);
+        const MPI_Comm& comm = slice_dist.getProcessorGrid().getColComm(n);
+        const int num_proc = slice_dist.getProcessorGrid().getNumProcs(n);
         std::vector<int> R_proc(num_proc), R_new_proc(num_proc);
         MPI_Allgather(
           &my_R,     1, MPI_INT, R_proc.data(),     1, MPI_INT, comm);

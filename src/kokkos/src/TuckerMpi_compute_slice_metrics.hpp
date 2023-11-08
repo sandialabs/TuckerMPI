@@ -41,7 +41,7 @@ template <std::size_t n, class ScalarType, class ...Properties>
     ::Tucker::deep_copy(result_h, result);
 
     // Get the row communicator
-    const MPI_Comm& comm = tensor.getDistribution().getProcessorGrid().getRowComm(mode, false);
+    const MPI_Comm& comm = tensor.getDistribution().getProcessorGrid().getRowComm(mode);
     int nprocs;
     MPI_Comm_size(comm, &nprocs);
 

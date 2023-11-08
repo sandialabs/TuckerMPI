@@ -491,7 +491,7 @@ updateFactorsWithNewSlice(const tensor_t& Y,
   // but the other parallel maps should be the same
   assert(Y.rank()+1 == V_.rank());
   for (int i=0; i<Y.rank(); ++i)
-    assert(*Y.getDistribution().getMap(i,false) == *V_.getDistribution().getMap(i,false));
+    assert(*Y.getDistribution().getMap(i) == *V_.getDistribution().getMap(i));
   addSingleRowNaive(Y.localTensor().data(), tolerance);
 }
 
@@ -516,7 +516,7 @@ addSingleRowNaive(const vector_t& c, scalar_t tolerance)
   const int r = rank();
 
   auto Vl = V_.localTensor();
-  const MPI_Comm& comm = V_.getDistribution().getComm(false);
+  const MPI_Comm& comm = V_.getDistribution().getComm();
 
   // projection: j[r] = V[nxr].T * c[n]
   vector_t jl("jl", r);

@@ -15,19 +15,60 @@
 
 namespace TuckerMpi{
 
+// Create a global communicator excluding processors that don't own any
+// entries of the tensor
+template <class ScalarType, class ...Properties>
+MPI_Comm create_comm_excl_empty(Tensor<ScalarType, Properties...> tensor)
+{
+  const MPI_Comm& comm = tensor.getDistribution().getComm();
+
+  // Create list of processors that own nothing
+  int num_procs;
+  MPI_Comm_size(comm, &num_procs);
+  std::vector<int> procIsEmpty(num_procs);
+  int empty = tensor.getDistribution().ownNothing();
+  MPI_Allgather(&empty, 1, MPI_INT, procIsEmpty.data(), 1, MPI_INT, comm);
+  std::vector<int> emptyProcs;
+  for (int i=0; i<num_procs; ++i) {
+    if (procIsEmpty[i] == 1)
+      emptyProcs.push_back(i);
+  }
+
+  // Create process group excluding these processors
+  MPI_Group group, group_excl_empty;
+  MPI_Comm_group(comm, &group);
+  MPI_Group_excl(group, (int)emptyProcs.size(), emptyProcs.data(),
+                 &group_excl_empty);
+
+  // Create communicator excluding these processors
+  MPI_Comm comm_excl_empty;
+  MPI_Comm_create(comm, group_excl_empty, &comm_excl_empty);
+
+  return comm_excl_empty;
+}
+
 template <class ScalarType, class ...Properties>
 void read_tensor_binary(const int mpiRank,
       Tensor<ScalarType, Properties...> tensor,
       const std::string & filename)
 {
-  if(tensor.getDistribution().ownNothing()) { return; }
+  // Create communicator excluding empty processors
+  const MPI_Comm& comm = tensor.getDistribution().getComm();
+  MPI_Comm comm_excl_empty = create_comm_excl_empty(tensor);
+
+  // Only non-empty processors participate in the read (this is necessary
+  // because MPI_Type_create_subarray requires nonzero local sizes
+  // Note:  Calling MPI_Comm_free on comm_excl_empty on empty processors
+  // appears to not be valid, so we don't do that in this case
+  if (tensor.getDistribution().ownNothing())
+    return;
 
   const int ndims = tensor.rank();
   int starts[ndims];
   int lsizes[ndims];
   int gsizes[ndims];
   for(int i=0; i<ndims; i++) {
-    starts[i] = tensor.getDistribution().getMap(i,true)->getGlobalIndex(0);
+    starts[i] = tensor.getDistribution().getMap(i)->getGlobalIndex(0);
     lsizes[i] = tensor.localExtent(i);
     gsizes[i] = tensor.globalExtent(i);
   }
@@ -35,16 +76,15 @@ void read_tensor_binary(const int mpiRank,
   // Create the datatype associated with this layout
   MPI_Datatype view;
   MPI_Type_create_subarray_<ScalarType>(ndims, gsizes, lsizes,
-              starts, MPI_ORDER_FORTRAN, &view);
+                                        starts, MPI_ORDER_FORTRAN, &view);
   MPI_Type_commit(&view);
 
   // Open the file
   MPI_File fh;
-  const MPI_Comm& comm = tensor.getDistribution().getComm(true);
-  int ret = MPI_File_open(comm, filename.c_str(), MPI_MODE_RDONLY,
-        MPI_INFO_NULL, &fh);
+  int ret = MPI_File_open(comm_excl_empty, filename.c_str(), MPI_MODE_RDONLY,
+                          MPI_INFO_NULL, &fh);
   if(ret != MPI_SUCCESS) {
-    std::cerr << "Error: Could not open file " << filename << std::endl;
+    throw std::runtime_error("Error: Could not open file " + filename);
   }
 
   // Set the view
@@ -69,18 +109,19 @@ void read_tensor_binary(const int mpiRank,
   int nread;
   MPI_Get_count_<ScalarType>(&status, &nread);
   if(ret != MPI_SUCCESS) {
-    std::cerr << "Error: Could not read file " << filename << std::endl;
+    throw std::runtime_error("Error: Could not read file " + filename);
   }
   MPI_File_close(&fh);
   Kokkos::deep_copy(localTensorView_d, localTensorView_h);
   MPI_Type_free(&view);
+  MPI_Comm_free(&comm_excl_empty);
 }
 
 
 template <class ScalarType, class ...Properties>
 void read_tensor_binary_multifile(const int mpiRank,
-				  Tensor<ScalarType, Properties...> tensor,
-				  const std::vector<std::string> & filenames)
+                                  Tensor<ScalarType, Properties...> tensor,
+                                  const std::vector<std::string> & filenames)
 {
   using tensor_type = ::TuckerMpi::Tensor<ScalarType, Properties...>;
   using onnode_layout = typename tensor_type::traits::onnode_layout;
@@ -95,7 +136,7 @@ void read_tensor_binary_multifile(const int mpiRank,
   std::vector<int> lsizes(ndims-1);
   std::vector<int> gsizes(ndims-1);
   for(int i=0; i<ndims-1; i++) {
-    starts[i] = distrib.getMap(i, true)->getGlobalIndex(0);
+    starts[i] = distrib.getMap(i)->getGlobalIndex(0);
     lsizes[i] = tensor.localExtent(i);
     gsizes[i] = tensor.globalExtent(i);
   }
@@ -108,8 +149,8 @@ void read_tensor_binary_multifile(const int mpiRank,
   MPI_Type_commit(&mpiDataType);
 
   const int nsteps = tensor.globalExtent(ndims-1);
-  const auto stepMap = distrib.getMap(ndims-1,true);
-  const auto & stepComm  = distrib.getProcessorGrid().getRowComm(ndims-1,true);
+  const auto stepMap = distrib.getMap(ndims-1);
+  const auto & stepComm  = distrib.getProcessorGrid().getRowComm(ndims-1);
   auto localTensorView_d = tensor.localTensor().data();
   auto localTensorView_h = Kokkos::create_mirror(localTensorView_d);
   ScalarType * dataPtr   = localTensorView_h.data();
@@ -161,8 +202,8 @@ void read_tensor_binary_multifile(const int mpiRank,
 
 template <class ScalarType, class ...Properties>
 void read_tensor_binary(const int mpiRank,
-			Tensor<ScalarType, Properties...> tensor,
-			const std::vector<std::string> & filenames)
+                        Tensor<ScalarType, Properties...> tensor,
+                        const std::vector<std::string> & filenames)
 {
   const std::size_t fileCount = filenames.size();
   if (fileCount == 1){
@@ -173,9 +214,9 @@ void read_tensor_binary(const int mpiRank,
     const int tensorRank = tensor.rank();
     if(fileCount != (std::size_t)tensor.globalExtent(tensorRank-1)) {
       if(mpiRank == 0) {
-	std::cerr << "ERROR: The number of filenames you provided is "
-		  << filenames.size() << ", but the extent of the tensor's last mode is "
-		  << tensor.globalExtent(tensorRank-1) << ".\nCalling MPI_Abort...\n";
+        std::cerr << "ERROR: The number of filenames you provided is "
+                  << filenames.size() << ", but the extent of the tensor's last mode is "
+                  << tensor.globalExtent(tensorRank-1) << ".\nCalling MPI_Abort...\n";
       }
       MPI_Abort(MPI_COMM_WORLD,1);
     }
@@ -185,8 +226,8 @@ void read_tensor_binary(const int mpiRank,
 
 template <class ScalarType, class ...Properties>
 void write_tensor_binary(const int mpiRank,
-			 Tensor<ScalarType, Properties...> tensor,
-			 const std::string & filename)
+                         Tensor<ScalarType, Properties...> tensor,
+                         const std::string & filename)
 {
 
   using tensor_type = Tensor<ScalarType, Properties...>;
@@ -194,7 +235,16 @@ void write_tensor_binary(const int mpiRank,
   static_assert(std::is_same_v<layout, Kokkos::LayoutLeft>,
     "TuckerMpi::write_tensor_binary: only supports layoutLeft");
 
-  if(tensor.getDistribution().ownNothing()) { return; }
+  // Create communicator excluding empty processors
+  const MPI_Comm& comm = tensor.getDistribution().getComm();
+  MPI_Comm comm_excl_empty = create_comm_excl_empty(tensor);
+
+  // Only non-empty processors participate in the read (this is necessary
+  // because MPI_Type_create_subarray requires nonzero local sizes
+  // Note:  Calling MPI_Comm_free on comm_excl_empty on empty processors
+  // appears to not be valid, so we don't do that in this case
+  if (tensor.getDistribution().ownNothing())
+    return;
 
   auto tensor_h = Tucker::create_mirror_tensor_and_copy(Kokkos::HostSpace(), tensor);
   auto tensor_local_view_h = tensor_h.localTensor().data();
@@ -206,7 +256,7 @@ void write_tensor_binary(const int mpiRank,
   std::vector<int> lsizes(ndims);
   std::vector<int> gsizes(ndims);
   for(int i=0; i<ndims; i++) {
-    starts[i] = tensor_h.getDistribution().getMap(i, true)->getGlobalIndex(0);
+    starts[i] = tensor_h.getDistribution().getMap(i)->getGlobalIndex(0);
     lsizes[i] = tensor_h.localExtent(i);
     gsizes[i] = tensor_h.globalExtent(i);
   }
@@ -219,8 +269,7 @@ void write_tensor_binary(const int mpiRank,
 
   // Open the file
   MPI_File fh;
-  const MPI_Comm& comm = tensor_h.getDistribution().getComm(true);
-  int ret = MPI_File_open(comm, filename.c_str(),
+  int ret = MPI_File_open(comm_excl_empty, filename.c_str(),
         MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
   if(ret != MPI_SUCCESS && mpiRank == 0) {
     std::cerr << "Error: Could not open file " << filename << std::endl;
@@ -240,13 +289,13 @@ void write_tensor_binary(const int mpiRank,
   }
   MPI_File_close(&fh);
   MPI_Type_free(&mpiDt);
-
+  MPI_Comm_free(&comm_excl_empty);
 }
 
 template <class ScalarType, class ...Properties>
 void write_tensor_binary_multifile(const int mpiRank,
-				   Tensor<ScalarType, Properties...> tensor,
-				   const std::vector<std::string> & filenames)
+                                   Tensor<ScalarType, Properties...> tensor,
+                                   const std::vector<std::string> & filenames)
 {
   using tensor_type = ::TuckerMpi::Tensor<ScalarType, Properties...>;
   using onnode_layout = typename tensor_type::traits::onnode_layout;
@@ -261,7 +310,7 @@ void write_tensor_binary_multifile(const int mpiRank,
   std::vector<int> lsizes(ndims-1);
   std::vector<int> gsizes(ndims-1);
   for(int i=0; i<ndims-1; i++) {
-    starts[i] = distrib.getMap(i, true)->getGlobalIndex(0);
+    starts[i] = distrib.getMap(i)->getGlobalIndex(0);
     lsizes[i] = tensor.localExtent(i);
     gsizes[i] = tensor.globalExtent(i);
   }
@@ -274,8 +323,8 @@ void write_tensor_binary_multifile(const int mpiRank,
   MPI_Type_commit(&mpiDataType);
 
   const int nsteps = tensor.globalExtent(ndims-1);
-  const auto stepMap = distrib.getMap(ndims-1,false);
-  const auto & stepComm  = distrib.getProcessorGrid().getRowComm(ndims-1,false);
+  const auto stepMap = distrib.getMap(ndims-1);
+  const auto & stepComm  = distrib.getProcessorGrid().getRowComm(ndims-1);
   auto localTensorView_d = tensor.localTensor().data();
   auto localTensorView_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localTensorView_d);
   ScalarType * dataPtr   = localTensorView_h.data();
@@ -318,8 +367,8 @@ void write_tensor_binary_multifile(const int mpiRank,
 
 template <class ScalarType, class ...Properties>
 void write_tensor_binary(const int mpiRank,
-			 Tensor<ScalarType, Properties...> tensor,
-			 const std::vector<std::string> & filenames)
+                         Tensor<ScalarType, Properties...> tensor,
+                         const std::vector<std::string> & filenames)
 {
 
   const int fileCount = filenames.size();
@@ -331,9 +380,9 @@ void write_tensor_binary(const int mpiRank,
     const int tensorRank = tensor.rank();
     if(fileCount != tensor.globalExtent(tensorRank-1)) {
       if(mpiRank == 0) {
-	std::cerr << "ERROR: The number of filenames you provided is "
-		  << filenames.size() << ", but the extent of the tensor's last mode is "
-		  << tensor.globalExtent(tensorRank-1) << ".\nCalling MPI_Abort...\n";
+        std::cerr << "ERROR: The number of filenames you provided is "
+                  << filenames.size() << ", but the extent of the tensor's last mode is "
+                  << tensor.globalExtent(tensorRank-1) << ".\nCalling MPI_Abort...\n";
       }
       MPI_Abort(MPI_COMM_WORLD,1);
     }

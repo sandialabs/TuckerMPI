@@ -27,7 +27,7 @@ template<class ScalarType, class ...Properties>
   // compute local gram
   gram_type localGram;
 
-  const MPI_Comm& comm = tensor.getDistribution().getProcessorGrid().getColComm(n, false);
+  const MPI_Comm& comm = tensor.getDistribution().getProcessorGrid().getColComm(n);
   int numProcs;
   MPI_Comm_size(comm, &numProcs);
   if(numProcs > 1){
