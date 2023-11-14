@@ -38,19 +38,15 @@ template<class ScalarType, class ...Properties>
   }
 
   //
-  // now create a new view and do reduction across mpi ranks
+  // now do reduction across mpi ranks
   const std::size_t nrows = localGram.extent(0);
   const std::size_t ncols = localGram.extent(1);
   const std::size_t count = nrows*ncols;
-  gram_type reducedGram("reducedGram", nrows, ncols);
 
-  auto reducedGram_h = Kokkos::create_mirror(reducedGram);
-  auto localGram_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localGram);
   // FIXME: why we must use MPI_COMM_WORLD or all tests fails?
-  MPI_Allreduce_(localGram_h.data(), reducedGram_h.data(), count, MPI_SUM, MPI_COMM_WORLD);
-  Kokkos::deep_copy(reducedGram, reducedGram_h);
+  MPI_Allreduce_(localGram.data(), count, MPI_SUM, MPI_COMM_WORLD);
 
-  return reducedGram;
+  return localGram;
 }
 
 }

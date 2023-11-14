@@ -163,6 +163,16 @@ void MPI_Allreduce_(const double* sendbuf, double* recvbuf, int count,
   MPI_Allreduce(sendbuf, recvbuf, count, MPI_DOUBLE, op, comm);
 }
 
+void MPI_Allreduce_(float* recvbuf, int count, MPI_Op op, MPI_Comm comm)
+{
+  MPI_Allreduce(MPI_IN_PLACE, recvbuf, count, MPI_FLOAT, op, comm);
+}
+
+void MPI_Allreduce_(double* recvbuf, int count, MPI_Op op, MPI_Comm comm)
+{
+  MPI_Allreduce(MPI_IN_PLACE, recvbuf, count, MPI_DOUBLE, op, comm);
+}
+
 void MPI_Gather_(const float* sendbuf, int sendcount, float* recvbuf,
      int recvcount, int root, MPI_Comm comm)
 {

@@ -48,6 +48,8 @@ void MPI_Reduce_(const double*, double*, int, MPI_Op, int, MPI_Comm);
 
 void MPI_Allreduce_(const float*, float*, int, MPI_Op, MPI_Comm);
 void MPI_Allreduce_(const double*, double*, int, MPI_Op, MPI_Comm);
+void MPI_Allreduce_(float*, int, MPI_Op, MPI_Comm);
+void MPI_Allreduce_(double*, int, MPI_Op, MPI_Comm);
 
 void MPI_Gather_(const float*, int, float*, int, int, MPI_Comm);
 void MPI_Gather_(const double*, int, double*, int, int, MPI_Comm);
