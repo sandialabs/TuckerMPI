@@ -139,19 +139,13 @@ void ttm_impl_use_single_reduce_scatter(const int mpiRank,
 
   packForTTM(localResult, n, yMap);
 
-  Kokkos::View<ScalarType*, Kokkos::LayoutRight, Kokkos::HostSpace> sendBuf;
-  if(localResult.size() > 0){
-    Kokkos::realloc(sendBuf, localResult.size());
-    auto localResult_v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localResult.data());
-    namespace KE = Kokkos::Experimental;
-    KE::copy(Kokkos::DefaultHostExecutionSpace(), localResult_v_h, sendBuf);
-  }
+  ScalarType *sendBuf = nullptr;
+  if (localResult.size() > 0)
+    sendBuf = localResult.data().data();
 
-  auto localYview_h = Kokkos::create_mirror_view(localY.data());
   ScalarType* recvBuf = nullptr;
-  if(localY.size() > 0){
-    recvBuf = localYview_h.data();
-  }
+  if (localY.size() > 0)
+    recvBuf = localY.data().data();
 
   int nprocs;
   MPI_Comm_size(comm, &nprocs);
@@ -163,8 +157,7 @@ void ttm_impl_use_single_reduce_scatter(const int mpiRank,
     size_t temp = multiplier*(yMap->getNumEntries(i));
     recvCounts[i] = (int)temp;
   }
-  MPI_Reduce_scatter_(sendBuf.data(), recvBuf, recvCounts, MPI_SUM, comm);
-  Kokkos::deep_copy(localY.data(), localYview_h);
+  MPI_Reduce_scatter_(sendBuf, recvBuf, recvCounts, MPI_SUM, comm);
 }
 
 
