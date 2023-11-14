@@ -73,11 +73,11 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
   {
     // FRIZZI: NOTE: reduce scatter has bad performance, needs to figure out why
     // so always calling the series of reduction
-    // if (preferSingleReduceScatter()){
-    //   impl::ttm_impl_use_single_reduce_scatter(mpiRank, Xtensor, result, n, Umatrix, Utransp);
-    //} else{
-    impl::ttm_impl_use_series_of_reductions(mpiRank, Xtensor, result, n, Umatrix, Utransp);
-    //}
+    if (preferSingleReduceScatter()){
+      impl::ttm_impl_use_single_reduce_scatter(mpiRank, Xtensor, result, n, Umatrix, Utransp);
+    } else{
+      impl::ttm_impl_use_series_of_reductions(mpiRank, Xtensor, result, n, Umatrix, Utransp);
+    }
   }
   return result;
 }
