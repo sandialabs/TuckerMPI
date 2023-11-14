@@ -12,6 +12,7 @@ std::vector<std::string> read_file_as_strings(const std::string& fileToRead)
   std::vector<std::string> fileLines;
   std::ifstream myFile(fileToRead);
 
+  // Commenting this out so it isn't printed by every processor
   if (!myFile) {
     std::cerr << "Error opening parameter file: "
         << fileToRead << std::endl;
