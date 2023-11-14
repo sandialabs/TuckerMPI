@@ -16,6 +16,7 @@
 #endif
 
 #include "Tucker_SolverUtils.hpp"
+#include "Tucker_BlasWrapper.hpp"
 
 namespace Tucker{
 namespace impl{
@@ -251,22 +252,30 @@ void syrk_kokkos(const ExeSpace & exespace,
     throw std::runtime_error("syrk_kokkos: opA=T : A.extent(1) should equal C.extent(0)");
   }
 
-  if (opA[0] == 'N'){
-    // symmetric rank-k update: C := alpha*A*A' + beta*C
-    using alpha_t = typename AViewType::const_value_type;
-    using beta_t  = typename CViewType::const_value_type;
-    using func_t = impl::SyrkFunctor1<alpha_t, beta_t, AViewType, CViewType>;
-    Kokkos::parallel_for(C.extent(1),
-                         func_t(A, C, alpha, beta));
-  }
+  static_assert(std::is_same_v<typename AViewType::array_layout, Kokkos::LayoutLeft>);
+  static_assert(std::is_same_v<typename CViewType::array_layout, Kokkos::LayoutLeft>);
+  const int n = C.extent(0);
+  const int k = opA[0] == 'N' ? A.extent(1) : A.extent(0);
+  const int lda = A.stride(1);
+  const int ldc = C.stride(1);
+  Tucker::syrk(uplo, opA, &n, &k, &alpha, A.data(), &lda, &beta, C.data(), &ldc);
 
-  else if (opA[0] == 'T'){
-    using alpha_t = typename AViewType::const_value_type;
-    using beta_t  = typename CViewType::const_value_type;
-    using func_t = impl::SyrkFunctor2<alpha_t, beta_t, AViewType, CViewType>;
-    Kokkos::parallel_for(C.extent(1),
-                         func_t(A, C, alpha, beta));
-  }
+  // if (opA[0] == 'N'){
+  //   // symmetric rank-k update: C := alpha*A*A' + beta*C
+  //   using alpha_t = typename AViewType::const_value_type;
+  //   using beta_t  = typename CViewType::const_value_type;
+  //   using func_t = impl::SyrkFunctor1<alpha_t, beta_t, AViewType, CViewType>;
+  //   Kokkos::parallel_for(C.extent(1),
+  //                        func_t(A, C, alpha, beta));
+  // }
+
+  // else if (opA[0] == 'T'){
+  //   using alpha_t = typename AViewType::const_value_type;
+  //   using beta_t  = typename CViewType::const_value_type;
+  //   using func_t = impl::SyrkFunctor2<alpha_t, beta_t, AViewType, CViewType>;
+  //   Kokkos::parallel_for(C.extent(1),
+  //                        func_t(A, C, alpha, beta));
+  // }
 }
 
 template<class AViewType, class CViewType>
