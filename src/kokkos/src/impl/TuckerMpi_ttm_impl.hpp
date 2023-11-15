@@ -3,6 +3,7 @@
 
 #include "TuckerMpi_prod_impl.hpp"
 #include "TuckerOnNode_ttm.hpp"
+#include "Tucker_Timer.hpp"
 #include "Kokkos_StdAlgorithms.hpp"
 #include <cmath>
 #include <unistd.h>
@@ -12,12 +13,11 @@ namespace impl{
 
 template <class ScalarType, class ...TensorProperties>
 void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
-		int n,
-		const Map* map)
+                int n,
+                const Map* map)
 {
   using tensor_type = TuckerOnNode::Tensor<ScalarType, TensorProperties...>;
   using mem_space = typename tensor_type::traits::memory_space;
-  namespace KE = Kokkos::Experimental;
 
   if(Y.size() == 0){ return; }
 
@@ -27,7 +27,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
 
   // Create empty view
   size_t numEntries = Y.size();
-  Kokkos::View<ScalarType*, mem_space> tempMem("tempMem", numEntries);
+  Kokkos::View<ScalarType*, mem_space> tempMem(Kokkos::ViewAllocateWithoutInitializing("tempMem"), numEntries);
 
   const MPI_Comm& comm = map->getComm();
   int nprocs;
@@ -44,7 +44,6 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
 
   size_t stride = leadingDim*nGlobalRows;
   size_t tempMemOffset = 0;
-  const int inc = 1;
   for(int rank=0; rank<nprocs; rank++)
   {
     int nLocalRows = map->getNumEntries(rank);
@@ -54,31 +53,33 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
         tensorOffset < numEntries;
         tensorOffset += stride)
     {
-      int tbs = (int)blockSize;
-
-      auto it_first_from = KE::begin(y_data_view)+tensorOffset;
-      auto it_first_to = KE::begin(tempMem)+tempMemOffset;
-      Kokkos::parallel_for(tbs, KOKKOS_LAMBDA (const int i){
-        const int shift = inc*i;
-        *(it_first_to + shift) = *(it_first_from + shift);
-      });
+      auto y_sub = Kokkos::subview(
+        y_data_view, std::make_pair(tensorOffset, tensorOffset+blockSize));
+      auto t_sub = Kokkos::subview(
+        tempMem, std::make_pair(tempMemOffset, tempMemOffset+blockSize));
+      Kokkos::deep_copy(t_sub, y_sub);
 
       tempMemOffset += blockSize;
     }
   }
 
   // Copy data from temporary memory back to tensor
-  KE::copy(typename mem_space::execution_space(), tempMem, y_data_view);
+  Kokkos::deep_copy(y_data_view, tempMem);
 }
 
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
-void ttm_impl_use_single_reduce_scatter(const int mpiRank,
-                                       Tensor<ScalarType, TensorProperties...> & X,
-                                       Tensor<ScalarType, TensorProperties...> & Y,
-                                       int n,
-                                       Kokkos::View<ScalarType**, ViewProperties...> & U,
-                                       bool Utransp)
+void ttm_impl_use_single_reduce_scatter(
+  const int mpiRank,
+  Tensor<ScalarType, TensorProperties...> & X,
+  Tensor<ScalarType, TensorProperties...> & Y,
+  int n,
+  Kokkos::View<ScalarType**, ViewProperties...> & U,
+  bool Utransp,
+  Tucker::Timer* mult_timer = nullptr,
+  Tucker::Timer* pack_timer = nullptr,
+  Tucker::Timer* reducescatter_timer = nullptr,
+  Tucker::Timer* reduce_timer = nullptr)
 {
 #if defined(TUCKER_ENABLE_DEBUG_PRINTS)
   if (mpiRank == 0){ std::cout << "MPITTM: use single reduce scatter \n"; }
@@ -124,6 +125,7 @@ void ttm_impl_use_single_reduce_scatter(const int mpiRank,
   }
   else
   {
+    if(mult_timer) mult_timer->start();
     std::vector<int> I(localX.rank());
     for(int i=0; i<(int)I.size(); i++) {
       I[i] = (i != n) ? localX.extent(i) : uGlobalRows;
@@ -132,12 +134,16 @@ void ttm_impl_use_single_reduce_scatter(const int mpiRank,
 
     const std::size_t Unrows = (Utransp) ? localX.extent(n) : localResult.extent(n);
     const std::size_t Uncols = (Utransp) ? localResult.extent(n) : localX.extent(n);
+
     Kokkos::LayoutStride layout(Unrows, 1, Uncols, stride);
     umv_type Aum(Uptr, layout);
     TuckerOnNode::ttm(localX, n, Aum, localResult, Utransp);
+    if(mult_timer) mult_timer->stop();
   }
 
+  if(pack_timer) pack_timer->start();
   packForTTM(localResult, n, yMap);
+  if(pack_timer) pack_timer->stop();
 
   ScalarType *sendBuf = nullptr;
   if (localResult.size() > 0)
@@ -157,18 +163,25 @@ void ttm_impl_use_single_reduce_scatter(const int mpiRank,
     size_t temp = multiplier*(yMap->getNumEntries(i));
     recvCounts[i] = (int)temp;
   }
+  if(reducescatter_timer) reducescatter_timer->start();
   MPI_Reduce_scatter_(sendBuf, recvBuf, recvCounts, MPI_SUM, comm);
+  if(reducescatter_timer) reducescatter_timer->stop();
 }
 
 
 
 template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
-void ttm_impl_use_series_of_reductions(const int mpiRank,
-                                       Tensor<ScalarType, TensorProperties...> & X,
-                                       Tensor<ScalarType, TensorProperties...> & Y,
-                                       int n,
-                                       Kokkos::View<ScalarType**, ViewProperties...> & U,
-                                       bool Utransp)
+void ttm_impl_use_series_of_reductions(
+  const int mpiRank,
+  Tensor<ScalarType, TensorProperties...> & X,
+  Tensor<ScalarType, TensorProperties...> & Y,
+  int n,
+  Kokkos::View<ScalarType**, ViewProperties...> & U,
+  bool Utransp,
+  Tucker::Timer* mult_timer = nullptr,
+  Tucker::Timer* pack_timer = nullptr,
+  Tucker::Timer* reducescatter_timer = nullptr,
+  Tucker::Timer* reduce_timer = nullptr)
 {
 #if defined(TUCKER_ENABLE_DEBUG_PRINTS)
   if (mpiRank == 0){ std::cout << "MPITTM: use series of reductions \n"; }
@@ -201,7 +214,6 @@ void ttm_impl_use_series_of_reductions(const int mpiRank,
 
   auto localX = X.localTensor();
   auto localY = Y.localTensor();
-  auto localYview_h = Kokkos::create_mirror_view(localY.data());
   const Map* yMap = Y.getDistribution().getMap(n);
   const int Pn = Xdist.getProcessorGrid().getNumProcs(n);
   for(int root=0; root<Pn; root++)
@@ -219,7 +231,8 @@ void ttm_impl_use_series_of_reductions(const int mpiRank,
       localResult = local_tensor_type(sz);
     }
     else
-	  {
+    {
+      if(mult_timer) mult_timer->start();
       std::vector<int> I(localX.rank());
       for(int i=0; i<(int)I.size(); i++) {
         I[i] = (i != n) ? localX.extent(i) : uLocalRows;
@@ -231,28 +244,26 @@ void ttm_impl_use_series_of_reductions(const int mpiRank,
       Kokkos::LayoutStride layout(Unrows, 1, Uncols, stride);
       umv_type Aum(Uptr, layout);
       TuckerOnNode::ttm(localX, n, Aum, localResult, Utransp);
+      if(mult_timer) mult_timer->stop();
     }
 
     // Combine the local results with a reduce operation
-    Kokkos::View<ScalarType*, Kokkos::LayoutRight, Kokkos::HostSpace> sendBuf;
+    const ScalarType *sendBuf = nullptr;
     if(localResult.size() > 0){
-      Kokkos::realloc(sendBuf, localResult.size());
-      auto localResult_v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), localResult.data());
-      namespace KE = Kokkos::Experimental;
-      KE::copy(Kokkos::DefaultHostExecutionSpace(), localResult_v_h, sendBuf);
+      sendBuf = localResult.data().data();
     }
-    ScalarType* recvBuf = (localY.size() > 0) ? localYview_h.data() : nullptr;
+    ScalarType* recvBuf = (localY.size() > 0) ? localY.data().data() : nullptr;
     size_t count = localResult.size();
     assert(count <= std::numeric_limits<std::size_t>::max());
     if(count > 0) {
-      MPI_Reduce_(sendBuf.data(), recvBuf, (int)count, MPI_SUM, root, comm);
+      if(reduce_timer) reduce_timer->start();
+      MPI_Reduce_(sendBuf, recvBuf, (int)count, MPI_SUM, root, comm);
+      if(reduce_timer) reduce_timer->stop();
     }
 
     if(Utransp){ Uptr += (uLocalRows*stride);}
     else{ Uptr += uLocalRows; }
   } // end for root
-
-  Kokkos::deep_copy(localY.data(), localYview_h);
 }
 
 }} // end namespace TuckerMpi::impl

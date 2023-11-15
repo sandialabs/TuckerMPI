@@ -12,7 +12,11 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
                        Kokkos::View<ScalarType**, ViewProperties...> Umatrix,
                        bool Utransp,
                        const Distribution& resultDist,
-                       std::size_t nnz_limit = 0)
+                       std::size_t nnz_limit = 0,
+                       Tucker::Timer* mult_timer = nullptr,
+                       Tucker::Timer* pack_timer = nullptr,
+                       Tucker::Timer* reducescatter_timer = nullptr,
+                       Tucker::Timer* reduce_timer = nullptr)
 {
 
   // constraints
@@ -66,7 +70,9 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
     if(!Xtensor.getDistribution().ownNothing()) {
       auto localX = Xtensor.localTensor();
       auto localresult = result.localTensor();
+      if(mult_timer) mult_timer->start();
       TuckerOnNode::ttm(localX, n, Umatrix, localresult, Utransp);
+      if(mult_timer) mult_timer->stop();
     }
   }
   else
@@ -74,9 +80,13 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
     // FRIZZI: NOTE: reduce scatter has bad performance, needs to figure out why
     // so always calling the series of reduction
     if (preferSingleReduceScatter()){
-      impl::ttm_impl_use_single_reduce_scatter(mpiRank, Xtensor, result, n, Umatrix, Utransp);
+      impl::ttm_impl_use_single_reduce_scatter(
+        mpiRank, Xtensor, result, n, Umatrix, Utransp, mult_timer,
+        pack_timer, reducescatter_timer, reduce_timer);
     } else{
-      impl::ttm_impl_use_series_of_reductions(mpiRank, Xtensor, result, n, Umatrix, Utransp);
+      impl::ttm_impl_use_series_of_reductions(
+        mpiRank, Xtensor, result, n, Umatrix, Utransp, mult_timer,
+        pack_timer, reducescatter_timer, reduce_timer);
     }
   }
   return result;
@@ -87,7 +97,11 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
                        int n,
                        Kokkos::View<ScalarType**, ViewProperties...> Umatrix,
                        bool Utransp,
-                       std::size_t nnz_limit = 0)
+                       std::size_t nnz_limit = 0,
+                       Tucker::Timer* mult_timer = nullptr,
+                       Tucker::Timer* pack_timer = nullptr,
+                       Tucker::Timer* reducescatter_timer = nullptr,
+                       Tucker::Timer* reduce_timer = nullptr)
 {
   // Compute the number of rows for the resulting "matrix"
   const int nrows = Utransp ? Umatrix.extent(1) : Umatrix.extent(0);
@@ -97,7 +111,8 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
   Distribution resultDist =
     Xtensor.getDistribution().replaceModeWithGlobalSize(n, nrows);
 
-  return ttm(Xtensor, n, Umatrix, Utransp, resultDist, nnz_limit);
+  return ttm(Xtensor, n, Umatrix, Utransp, resultDist, nnz_limit, mult_timer,
+             pack_timer, reducescatter_timer, reduce_timer);
 }
 
 } // end namespace TuckerMpi

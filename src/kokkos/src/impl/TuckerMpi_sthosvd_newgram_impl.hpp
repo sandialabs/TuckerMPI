@@ -64,26 +64,26 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     /*
      * GRAM
      */
-    Tucker::Timer gram_timer, matmul_timer, pack_timer, alltoall_timer, unpack_timer, allreduce_timer;
+    Tucker::Timer gram_timer, gram_matmul_timer, gram_pack_timer, gram_alltoall_timer, gram_unpack_timer, gram_allreduce_timer;
     if(mpiRank == 0) {
       std::cout << "  AutoST-HOSVD::Starting Gram(" << mode << ") \n";
     }
     gram_timer.start();
     auto S = ::TuckerMpi::compute_gram(
-      Y, mode, &matmul_timer, &pack_timer, &alltoall_timer, &unpack_timer,
-      &allreduce_timer);
+      Y, mode, &gram_matmul_timer, &gram_pack_timer, &gram_alltoall_timer,
+      &gram_unpack_timer, &gram_allreduce_timer);
     gram_timer.stop();
     if(mpiRank == 0) {
       std::cout << "    Gram(" << mode << ")::Local Matmul time: "
-                << matmul_timer.duration() << "s\n";
+                << gram_matmul_timer.duration() << "s\n";
       std::cout << "    Gram(" << mode << ")::Pack time: "
-                << pack_timer.duration() << "s\n";
+                << gram_pack_timer.duration() << "s\n";
       std::cout << "    Gram(" << mode << ")::All-to-all time: "
-                << alltoall_timer.duration() << "s\n";
+                << gram_alltoall_timer.duration() << "s\n";
       std::cout << "    Gram(" << mode << ")::Unpack time: "
-                << unpack_timer.duration() << "s\n";
+                << gram_unpack_timer.duration() << "s\n";
       std::cout << "    Gram(" << mode << ")::All-reduce time: "
-                << allreduce_timer.duration() << "s\n";
+                << gram_allreduce_timer.duration() << "s\n";
       std::cout << "  AutoST-HOSVD::Gram(" << mode << ") time: "
                 << gram_timer.duration() << "s\n";
     }
@@ -148,14 +148,25 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     /*
      * TTM
      */
-    Tucker::Timer ttm_timer;
+    Tucker::Timer ttm_timer, ttm_matmul_timer, ttm_pack_timer,
+      ttm_reducescatter_timer, ttm_reduce_timer;
     if(mpiRank == 0) {
       std::cout << "  AutoST-HOSVD::Starting TTM(" << mode << ")...\n";
     }
     ttm_timer.start();
-    tensor_type temp = ::TuckerMpi::ttm(Y, mode, currEigVecs, true, max_lcl_nnz_x);
+    tensor_type temp = ::TuckerMpi::ttm(
+      Y, mode, currEigVecs, true, max_lcl_nnz_x, &ttm_matmul_timer,
+      &ttm_pack_timer, &ttm_reducescatter_timer, &ttm_reduce_timer);
     ttm_timer.stop();
     if(mpiRank == 0) {
+      std::cout << "    TTM(" << mode << ")::Local Matmul time: "
+                << ttm_matmul_timer.duration() << "s\n";
+      std::cout << "    TTM(" << mode << ")::Pack time: "
+                << ttm_pack_timer.duration() << "s\n";
+      std::cout << "    TTM(" << mode << ")::Reduce-scatter time: "
+                << ttm_reducescatter_timer.duration() << "s\n";
+      std::cout << "    TTM(" << mode << ")::Reduce time: "
+                << ttm_reduce_timer.duration() << "s\n";
       std::cout << "  AutoST-HOSVD::TTM(" << mode << ") time: "
                 << ttm_timer.duration() << "s\n";
     }
