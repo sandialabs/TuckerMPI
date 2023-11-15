@@ -32,7 +32,7 @@ public:
       localRows = nrows;
       localCols = map_.getLocalNumEntries();
     }
-    M_ = view_type("M_", localRows,localCols);
+    M_ = view_type(Kokkos::ViewAllocateWithoutInitializing("M_"), localRows,localCols);
   }
 
   Matrix() = default;

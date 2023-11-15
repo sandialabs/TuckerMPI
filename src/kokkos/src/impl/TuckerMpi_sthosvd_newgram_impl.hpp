@@ -3,7 +3,7 @@
 
 #include "TuckerMpi_compute_gram.hpp"
 #include "Tucker_TuckerTensor.hpp"
-#include <chrono>
+#include "Tucker_Timer.hpp"
 
 namespace TuckerMpi{
 namespace impl{
@@ -22,6 +22,9 @@ template <class ScalarType, class ...Properties, class TruncatorType>
 
   MPI_Comm myComm = MPI_COMM_WORLD;
 
+  Tucker::Timer sthosvd_timer;
+  sthosvd_timer.start();
+
   // ---------------------
   // prepare
   // ---------------------
@@ -37,8 +40,6 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   }
   MPI_Barrier(myComm);
 
-  auto outerStart = std::chrono::high_resolution_clock::now();
-
   // ---------------------
   // core loop
   // ---------------------
@@ -50,7 +51,6 @@ template <class ScalarType, class ...Properties, class TruncatorType>
   tensor_type Y = X;
   for (std::size_t n=0; n<(std::size_t)X.rank(); n++)
   {
-    auto innerStart = std::chrono::high_resolution_clock::now();
     const int mode = modeOrder.empty() ? n : modeOrder[n];
 
     if(mpiRank == 0) {
@@ -58,14 +58,36 @@ template <class ScalarType, class ...Properties, class TruncatorType>
       std::cout << "--- AutoST-HOSVD::Starting Mode(" << n << ") --- \n";
       std::cout << "---------------------------------------------\n";
     }
+    Tucker::Timer sthosvd_iter_timer;
+    sthosvd_iter_timer.start();
 
     /*
      * GRAM
      */
+    Tucker::Timer gram_timer, matmul_timer, pack_timer, alltoall_timer, unpack_timer, allreduce_timer;
     if(mpiRank == 0) {
-      std::cout << "  AutoST-HOSVD::Gram(" << mode << ") \n";
+      std::cout << "  AutoST-HOSVD::Starting Gram(" << mode << ") \n";
     }
-    auto S = ::TuckerMpi::compute_gram(Y, mode);
+    gram_timer.start();
+    auto S = ::TuckerMpi::compute_gram(
+      Y, mode, &matmul_timer, &pack_timer, &alltoall_timer, &unpack_timer,
+      &allreduce_timer);
+    gram_timer.stop();
+    if(mpiRank == 0) {
+      std::cout << "    Gram(" << mode << ")::Local Matmul time: "
+                << matmul_timer.duration() << "s\n";
+      std::cout << "    Gram(" << mode << ")::Pack time: "
+                << pack_timer.duration() << "s\n";
+      std::cout << "    Gram(" << mode << ")::All-to-all time: "
+                << alltoall_timer.duration() << "s\n";
+      std::cout << "    Gram(" << mode << ")::Unpack time: "
+                << unpack_timer.duration() << "s\n";
+      std::cout << "    Gram(" << mode << ")::All-reduce time: "
+                << allreduce_timer.duration() << "s\n";
+      std::cout << "  AutoST-HOSVD::Gram(" << mode << ") time: "
+                << gram_timer.duration() << "s\n";
+    }
+
 #if defined(TUCKER_ENABLE_DEBUG_PRINTS)
     if (mpiRank == 0){
       std::cout << "\n";
@@ -77,11 +99,19 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     /*
      * eigenvalues and eigenvectors
      */
+    Tucker::Timer eigen_timer;
     if(mpiRank == 0) {
-      std::cout << "  AutoST-HOSVD::Eigen{vals,vecs}(" << mode << ")...\n";
+      std::cout << "  AutoST-HOSVD::Starting Evecs(" << mode << ")...\n";
     }
+    eigen_timer.start();
     auto currEigvals = Tucker::impl::compute_and_sort_descending_eigvals_and_eigvecs_inplace(S, flipSign);
     appendEigenvaluesAndUpdateSliceInfo(mode, eigvals, currEigvals, perModeSlicingInfo_eigvals(mode));
+    eigen_timer.stop();
+    if(mpiRank == 0) {
+      std::cout << "  AutoST-HOSVD::Evecs(" << mode << ") time: "
+                << eigen_timer.duration() << "s\n";
+    }
+
 #if defined(TUCKER_ENABLE_DEBUG_PRINTS)
     if (mpiRank == 0){
       std::cout << "\n";
@@ -93,12 +123,20 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     /*
      * Truncation
      */
+    Tucker::Timer truncate_timer;
     if(mpiRank == 0) {
-      std::cout << "  AutoST-HOSVD::Truncating\n";
+      std::cout << "  AutoST-HOSVD::Starting Truncate(" << mode << ")...\n";
     }
+    truncate_timer.start();
     const std::size_t numEvecs = truncator(mode, currEigvals);
     auto currEigVecs = Kokkos::subview(S, Kokkos::ALL, std::pair<std::size_t,std::size_t>{0, numEvecs});
     appendFactorsAndUpdateSliceInfo(mode, factors, currEigVecs, perModeSlicingInfo_factors(mode));
+    truncate_timer.stop();
+    if(mpiRank == 0) {
+      std::cout << "  AutoST-HOSVD::Truncate(" << mode << ") time: "
+                << truncate_timer.duration() << "s\n";
+    }
+
 #if defined(TUCKER_ENABLE_DEBUG_PRINTS)
     if (mpiRank ==0){
       std::cout << "\n";
@@ -110,21 +148,16 @@ template <class ScalarType, class ...Properties, class TruncatorType>
     /*
      * TTM
      */
+    Tucker::Timer ttm_timer;
     if(mpiRank == 0) {
       std::cout << "  AutoST-HOSVD::Starting TTM(" << mode << ")...\n";
     }
-    auto ttmStart = std::chrono::high_resolution_clock::now();
-
+    ttm_timer.start();
     tensor_type temp = ::TuckerMpi::ttm(Y, mode, currEigVecs, true, max_lcl_nnz_x);
-
-    auto ttmStop = std::chrono::high_resolution_clock::now();
-    auto ttmDuration = std::chrono::duration_cast<std::chrono::nanoseconds>(ttmStop - ttmStart);
-    const double ttmDurationDbl = ttmDuration.count() * 1e-9;
-    double ttmGlobalMean = {};
-    MPI_Reduce(&ttmDurationDbl, &ttmGlobalMean, 1, MPI_DOUBLE, MPI_SUM, 0, myComm);
-    ttmGlobalMean /= (double) nprocs;
-    if (mpiRank == 0){
-      std::cout << "  TTM time (sec): " << std::setprecision(6) << ttmGlobalMean << std::endl;
+    ttm_timer.stop();
+    if(mpiRank == 0) {
+      std::cout << "  AutoST-HOSVD::TTM(" << mode << ") time: "
+                << ttm_timer.duration() << "s\n";
     }
 
     // need to do = {} first, otherwise Y=temp throws because Y = temp
@@ -148,26 +181,17 @@ template <class ScalarType, class ...Properties, class TruncatorType>
       Tucker::print_bytes_to_stream(std::cout, global_nnz*sizeof(ScalarType));
     }
 
-    auto innerStop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(innerStop - innerStart);
-    const double innerDurationDbl = duration.count() * 1e-9;
-    double innerGlobalMean = {};
-    MPI_Reduce(&innerDurationDbl, &innerGlobalMean, 1, MPI_DOUBLE, MPI_SUM, 0, myComm);
-    innerGlobalMean /= (double) nprocs;
+    sthosvd_iter_timer.stop();
     if (mpiRank == 0){
-      std::cout << "  STHOSVD time (sec): " << std::setprecision(6) << innerGlobalMean << std::endl;
+      std::cout << "  AutoST-HOSVD(" << mode << ") time: "
+                << sthosvd_iter_timer.duration() << "s\n";
     }
 
   }//end loop
 
-  auto outerStop = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(outerStop - outerStart);
-  const double outerDurationDbl = duration.count() * 1e-9;
-  double outerGlobalMean = {};
-  MPI_Reduce(&outerDurationDbl, &outerGlobalMean, 1, MPI_DOUBLE, MPI_SUM, 0, myComm);
-  outerGlobalMean /= (double) nprocs;
+  sthosvd_timer.stop();
   if (mpiRank == 0){
-    std::cout << "STHOSVD time (sec): " << std::setprecision(6) << outerGlobalMean << std::endl;
+    std::cout << "STHOSVD time: " << sthosvd_timer.duration()  << "s\n";
   }
 
   return std::pair( tucker_tensor_type(Y, factors, perModeSlicingInfo_factors),
