@@ -661,6 +661,10 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
   for(int n=0; n<ndims; n++)
   {
     int mode = modeOrder? modeOrder[n] : n;
+
+    Tucker::Timer sthosvd_iter_timer;
+    sthosvd_iter_timer.start();
+
     if(useLQ){
       if(rank == 0) std::cout << "\tAutoST-HOSVD::Starting LQ(" << mode << ")...\n";
       factorization->LQ_timer_[mode].start();
@@ -744,6 +748,12 @@ const TuckerTensor<scalar_t>* STHOSVD(const Tensor<scalar_t>* const X,
       Tucker::MemoryManager::safe_delete(Y);
     }
     Y = temp;
+
+    sthosvd_iter_timer.stop();
+    if (rank == 0){
+      std::cout << "\tAutoST-HOSVD(" << mode << ") time: "
+                << sthosvd_iter_timer.duration() << "s\n";
+    }
 
     if(rank == 0) {
       size_t local_nnz = Y->getLocalNumEntries();
