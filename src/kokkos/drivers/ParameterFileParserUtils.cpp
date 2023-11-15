@@ -13,10 +13,10 @@ std::vector<std::string> read_file_as_strings(const std::string& fileToRead)
   std::ifstream myFile(fileToRead);
 
   // Commenting this out so it isn't printed by every processor
-  if (!myFile) {
-    std::cerr << "Error opening parameter file: "
-        << fileToRead << std::endl;
-  }
+  // if (!myFile) {
+  //   std::cerr << "Error opening parameter file: "
+  //       << fileToRead << std::endl;
+  // }
 
   while (std::getline(myFile, line)) {
     // Lines starting with # are comments. The second part tests to see if the line is blank
