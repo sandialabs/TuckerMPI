@@ -3,6 +3,7 @@
 
 #include "TuckerMpi_prod_impl.hpp"
 #include "TuckerOnNode_ttm.hpp"
+#include "./impl/TuckerOnNode_ttm_using_host_blas_impl.hpp"
 #include "Tucker_Timer.hpp"
 #include "Kokkos_StdAlgorithms.hpp"
 #include <cmath>
@@ -136,12 +137,18 @@ void ttm_impl_use_single_reduce_scatter(
     }
     localResult = local_tensor_type(I);
 
-    const std::size_t Unrows = (Utransp) ? localX.extent(n) : localResult.extent(n);
-    const std::size_t Uncols = (Utransp) ? localResult.extent(n) : localX.extent(n);
+    if constexpr (std::is_same_v<typename local_tensor_type::traits::memory_space, Kokkos::HostSpace>) {
+      TuckerOnNode::impl::ttm_hostblas(localX, n, Uptr, stride, localResult, Utransp);
+    }
+    else {
 
-    Kokkos::LayoutStride layout(Unrows, 1, Uncols, stride);
-    umv_type Aum(Uptr, layout);
-    TuckerOnNode::ttm(localX, n, Aum, localResult, Utransp);
+      const std::size_t Unrows = (Utransp) ? localX.extent(n) : localResult.extent(n);
+      const std::size_t Uncols = (Utransp) ? localResult.extent(n) : localX.extent(n);
+
+      Kokkos::LayoutStride layout(Unrows, 1, Uncols, stride);
+      umv_type Aum(Uptr, layout);
+      TuckerOnNode::ttm(localX, n, Aum, localResult, Utransp);
+    }
     if(mult_timer) mult_timer->stop();
   }
 
