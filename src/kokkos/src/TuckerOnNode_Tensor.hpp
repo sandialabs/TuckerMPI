@@ -90,7 +90,7 @@ public:
     const std::size_t numEl = std::accumulate(dimsIn.cbegin(), dimsIn.cend(),
 					      init, std::multiplies<std::size_t>());
     // allocate for data
-    data_ = data_view_type(Kokkos::ViewAllocateWithoutInitializing("tensorData"), numEl);
+    data_ = data_view_type("tensorData", numEl);
   }
 
   template<class DataView>
@@ -123,7 +123,7 @@ public:
     const std::size_t init = 1;
     const std::size_t numEl = std::accumulate(KE::cbegin(dimsIn), KE::cend(dimsIn),
 					      init, std::multiplies<std::size_t>());
-    data_ = data_view_type(Kokkos::ViewAllocateWithoutInitializing("tensorData"), numEl);
+    data_ = data_view_type("tensorData", numEl);
   }
 
   template<class DataView>
