@@ -18,6 +18,8 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
 {
   using tensor_type = TuckerOnNode::Tensor<ScalarType, TensorProperties...>;
   using mem_space = typename tensor_type::traits::memory_space;
+  namespace KE = Kokkos::Experimental;
+
 
   if(Y.size() == 0){ return; }
 
@@ -53,18 +55,20 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
         tensorOffset < numEntries;
         tensorOffset += stride)
     {
-      auto y_sub = Kokkos::subview(
-        y_data_view, std::make_pair(tensorOffset, tensorOffset+blockSize));
-      auto t_sub = Kokkos::subview(
-        tempMem, std::make_pair(tempMemOffset, tempMemOffset+blockSize));
-      Kokkos::deep_copy(t_sub, y_sub);
+      int tbs = (int)blockSize;
+
+      const ScalarType *y_ptr = y_data_view.data()+tensorOffset;
+      ScalarType *t_ptr = tempMem.data()+tempMemOffset;
+      Kokkos::parallel_for(tbs, KOKKOS_LAMBDA(const int i) {
+        t_ptr[i] = y_ptr[i];
+      });
 
       tempMemOffset += blockSize;
     }
   }
 
   // Copy data from temporary memory back to tensor
-  Kokkos::deep_copy(y_data_view, tempMem);
+  KE::copy(typename mem_space::execution_space(), tempMem, y_data_view);
 }
 
 
