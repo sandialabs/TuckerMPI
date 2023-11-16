@@ -212,6 +212,15 @@ StreamingSTHOSVD(
 
     // Loop over non-streaming modes
     for(int n=0; n<ndims-1; n++) {
+#ifndef NDEBUG
+      // PRINT_DEBUG
+      printf("Y.globalSize(%d) = %d, Y.localSize(%d) = %d, Ynorm2 = %e, U[%d].extent(0) = %ld\n",
+             n, Y.getDistribution().getGlobalDims()[n],
+             n, Y.getDistribution().getLocalDims()[n],
+             Y.frobeniusNormSquared(),
+             n, U[n].extent(0));
+#endif
+
       // Line 2 of streaming STHOSVD update
       // compute projection of new slice onto existing basis
       // D = Y x_n U[n].T
@@ -223,10 +232,27 @@ StreamingSTHOSVD(
                                                  V_.localExtent(n));
       tensor_t D = ttm(Y, n, U[n], true, D_dist);
 
+#ifndef NDEBUG
+      // PRINT_DEBUG
+      printf("D.globalSize(%d) = %d, D.localSize(%d) = %d, Dnorm2 = %e, U[%d].extent(1) = %ld\n",
+             n, D.getDistribution().getGlobalDims()[n],
+             n, D.getDistribution().getLocalDims()[n],
+             D.frobeniusNormSquared(),
+             n, U[n].extent(1));
+#endif
+
       // Line 3 of streaming STHOSVD update
       // compute orthogonal complement of new slice w.r.t. existing basis
       // E = D x_n U[n]
       tensor_t E = ttm(D, n, U[n], false);
+
+#ifndef NDEBUG
+      // PRINT_DEBUG
+      printf("E.globalSize(%d) = %d, E.localSize(%d) = %d, Enorm2 = %e\n",
+             n, E.getDistribution().getGlobalDims()[n],
+             n, E.getDistribution().getLocalDims()[n],
+             E.frobeniusNormSquared());
+#endif
 
       // E = Y-E
       assert(E.getDistribution() == Y.getDistribution());
