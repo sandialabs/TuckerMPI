@@ -227,10 +227,7 @@ StreamingSTHOSVD(
       // D must have a compatible distribution with V_
       tensor_t V_ = factorization.isvd.getRightSingularVectors();
       assert(U[n].extent(1) == V_.globalExtent(n));
-      Distribution D_dist =
-        Y.getDistribution().replaceModeWithSizes(n, U[n].extent(1),
-                                                 V_.localExtent(n));
-      tensor_t D = ttm(Y, n, U[n], true, D_dist);
+      tensor_t D = ttm(Y, n, U[n], true);
 
 #ifndef NDEBUG
       // PRINT_DEBUG
@@ -277,20 +274,35 @@ StreamingSTHOSVD(
         int nev = Tucker::impl::count_eigvals_using_threshold(eigenvalues, thresh);
         matrix_t V = Kokkos::subview(gram, Kokkos::ALL, std::make_pair(0, nev));
 
+        // Figure out non-standard distribution of K
+        const int N = U[n].extent(0);
+
+        const int R = U[n].extent(1);
+        const int my_R = D.localExtent(n);
+
         const int R_new = V.extent(1);
         for (int i=R_new; i<V.extent(0); ++i) {
           factorization.squared_errors[n] += std::abs(eigenvalues[i]);
           tolerance -= std::abs(eigenvalues[i]);
         }
 
+        Distribution D_dist = D.getDistribution();
+        Distribution Y_dist = D_dist.replaceModeWithGlobalSize(n, R + R_new);
+
+        const int my_R_new = Y_dist.getLocalDims()[n] - D_dist.getLocalDims()[n];
+        assert(my_R_new >= 0);
+
+#ifndef NDEBUG
+        // PRINT_DEBUG
+        printf("R = %d, my_R = %d, R_new = %d, my_R_new = %d\n", R, my_R, R_new, my_R_new);
+#endif
+
+        Distribution K_dist = D_dist.replaceModeWithSizes(n, R_new, my_R_new);
+
         // Line 9 of streaming STHOSVD update
         // project orthgonal complement to new basis
         // K = E x_n V.T
-        tensor_t K = ttm(E, n, V, true);
-
-        // Number of rows to add on my proc
-        const int my_R = D.localExtent(n);
-        const int my_R_new = K.localExtent(n);
+        tensor_t K = ttm(E, n, V, true, K_dist);
 
         // Line 10 of streaming STHOSVD update
         // pad core with zeros
@@ -306,8 +318,6 @@ StreamingSTHOSVD(
 
         // Line 13 of streaming STHOSVD algorithm
         // update basis
-        const int N = U[n].extent(0);
-        const int R = U[n].extent(1);
         matrix_t U_new("U_new", N, R+R_new);
         const MPI_Comm& comm = slice_dist.getProcessorGrid().getColComm(n);
         const int num_proc = slice_dist.getProcessorGrid().getNumProcs(n);
