@@ -190,6 +190,7 @@ void ttm_impl_use_single_reduce_scatter(
     size_t temp = multiplier*(yMap->getNumEntries(i));
     recvCounts[i] = (int)temp;
   }
+  Kokkos::fence();
   if(reducescatter_timer) reducescatter_timer->start();
   MPI_Reduce_scatter_(sendBuf, recvBuf, recvCounts, MPI_SUM, comm);
   if(reducescatter_timer) reducescatter_timer->stop();
@@ -283,6 +284,7 @@ void ttm_impl_use_series_of_reductions(
     size_t count = localResult.size();
     assert(count <= std::numeric_limits<std::size_t>::max());
     if(count > 0) {
+      Kokkos::fence();
       if(reduce_timer) reduce_timer->start();
       MPI_Reduce_(sendBuf, recvBuf, (int)count, MPI_SUM, root, comm);
       if(reduce_timer) reduce_timer->stop();
