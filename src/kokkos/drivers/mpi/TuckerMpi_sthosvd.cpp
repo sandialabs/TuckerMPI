@@ -95,14 +95,14 @@ void run(const InputParametersSthosvdDriver<ScalarType> & inputs)
     }
   };
 
-  if(mpiRank == 0) {
-    std::cout << "Compute statistics" << std::endl;
-  }
-  auto metricsData = TuckerMpi::compute_slice_metrics(mpiRank, X, scaleMode, Tucker::defaultMetrics);
-  TuckerMpi::write_statistics(mpiRank, X.rank(), scaleMode, X.getDistribution(),
-                              metricsData, inputs.stats_file, inputs.stdThresh);
-
   if (inputs.scaling_type != "None"){
+    if(mpiRank == 0) {
+      std::cout << "Compute statistics" << std::endl;
+    }
+    auto metricsData = TuckerMpi::compute_slice_metrics(mpiRank, X, scaleMode, Tucker::defaultMetrics);
+    TuckerMpi::write_statistics(mpiRank, X.rank(), scaleMode, X.getDistribution(),
+                                metricsData, inputs.stats_file, inputs.stdThresh);
+
     if(mpiRank == 0) {
       std::cout << "Normalizing tensor" << std::endl;
     }
