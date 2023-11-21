@@ -37,6 +37,10 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
 
   auto preferSingleReduceScatter = [&]() -> bool
   {
+    // Don't do single reduce-scatter on the device (pack is very expensive)
+    if (!std::is_same_v<tensor_memory_space, Kokkos::HostSpace>)
+      return false;
+
     auto & Xdist = Xtensor.getDistribution();
     std::size_t max_lcl_nnz_x = 1;
     for (int i=0; i<Xtensor.rank(); i++) {
@@ -77,8 +81,6 @@ template <class ScalarType, class ...TensorProperties, class ...ViewProperties>
   }
   else
   {
-    // FRIZZI: NOTE: reduce scatter has bad performance, needs to figure out why
-    // so always calling the series of reduction
     if (preferSingleReduceScatter()){
       impl::ttm_impl_use_single_reduce_scatter(
         mpiRank, Xtensor, result, n, Umatrix, Utransp, mult_timer,
