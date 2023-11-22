@@ -201,6 +201,7 @@ StreamingSTHOSVD(
     scalar_t tolerance = 0;
     {
       for (int n = 0; n < ndims; ++n) {
+        assert(!std::isnan(factorization.squared_errors[n]));
         tolerance += factorization.squared_errors[n];
       }
 
@@ -263,6 +264,7 @@ StreamingSTHOSVD(
 
       if (Enorm2 <= thresh) {
         factorization.squared_errors[n] += Enorm2;
+        assert(!std::isnan(factorization.squared_errors[n]));
         tolerance -= Enorm2;
 
         Y = D;
@@ -280,6 +282,7 @@ StreamingSTHOSVD(
         const int R_new = V.extent(1);
         for (int i=R_new; i<V.extent(0); ++i) {
           factorization.squared_errors[n] += std::abs(eigenvalues[i]);
+          assert(!std::isnan(factorization.squared_errors[n]));
           tolerance -= std::abs(eigenvalues[i]);
         }
 
@@ -287,6 +290,7 @@ StreamingSTHOSVD(
         // project orthgonal complement to new basis
         // K = E x_n V.T
         tensor_t K = ttm(E, n, V, true);
+        assert(!K.localTensor().isNan());
 
         // Number of rows to add on my proc
         const int my_R = D.localExtent(n);
@@ -295,6 +299,7 @@ StreamingSTHOSVD(
         // Line 10 of streaming STHOSVD update
         // pad core with zeros
         G = factorization.isvd.padTensorAlongMode(G, n, my_R_new);
+        assert(!G.localTensor().isNan());
 
         // Line 11 of streaming STHOSVD update
         // pad ISVD right singular vectors with zeros
@@ -303,6 +308,7 @@ StreamingSTHOSVD(
         // Line 12 of streaming STHOSVD algorithm
         // prepare slice for next mode
         Y = factorization.isvd.concatenateTensorsAlongMode(D, K, n);
+        assert(!Y.localTensor().isNan());
 
         // Line 13 of streaming STHOSVD algorithm
         // update basis
@@ -350,6 +356,7 @@ StreamingSTHOSVD(
     factorization.isvd.updateFactorsWithNewSlice(Y, delta);
 
     factorization.squared_errors[ndims - 1] = std::pow(factorization.isvd.getErrorNorm(), 2);
+    assert(!std::isnan(factorization.squared_errors[ndims-1]));
 
     // Lines 17 of streaming STHOSVD update algorithm
     // Retrieve updated left singular vectors from ISVD factorization
@@ -405,6 +412,7 @@ StreamingSTHOSVD(
       }
       scalar_t Enorm2 = 0;
       for (int n = 0; n < ndims; ++n) {
+        assert(!std::isnan(factorization.squared_errors[n]));
         Enorm2 += factorization.squared_errors[n];
         log_stream << std::setw(12) << std::setprecision(6) << std::sqrt(factorization.squared_errors[n]) << " " << std::flush;
       }
