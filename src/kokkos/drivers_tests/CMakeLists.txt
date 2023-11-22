@@ -46,7 +46,7 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY OR TUCKER_IMPL_ENABLE_MPIKOKKOS)
     set(CMD "python3 ${CMAKE_CURRENT_SOURCE_DIR}/sine_wave/generate_conf.py \
                 --mode_sizes 10 10 50 \
                 --num_initial 10 \
-                --tolerance 1e-3 \
+                --tolerance 1e-4 \
                 --num_proc ${NUMPROCS} \
                 --data_dir ${TEST_RUN_DIR}/data \
                 --config_dir ${TEST_RUN_DIR}")
