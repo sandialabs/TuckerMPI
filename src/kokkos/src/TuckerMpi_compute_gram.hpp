@@ -53,6 +53,7 @@ template<class ScalarType, class ...Properties>
   const std::size_t count = nrows*ncols;
 
   // FIXME: why we must use MPI_COMM_WORLD or all tests fails?
+  Kokkos::fence(); // Need fence to ensure local gram is finished before reduce
   if (allreduce_timer) allreduce_timer->start();
   MPI_Allreduce_(localGram.data(), count, MPI_SUM, MPI_COMM_WORLD);
   if (allreduce_timer) allreduce_timer->stop();

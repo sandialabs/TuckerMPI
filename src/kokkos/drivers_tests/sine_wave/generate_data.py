@@ -6,21 +6,6 @@ import os
 import numpy as np
 
 
-def create_reversed_list(old_list):
-    """Create a list with reverse order of elements."""
-    len_list = len(old_list)
-    new_list = [None] * len_list
-    for i in range(len_list):
-        new_list[len_list - 1 - i] = old_list[i]
-    return new_list
-
-
-def test_create_reversed_list():
-    """Unit test."""
-    assert create_reversed_list([1, 2, 3]) == [3, 2, 1]
-    assert create_reversed_list([1, 3, 2]) == [2, 3, 1]
-
-
 def linear_to_centered_cartesian(linear_index, extent):
     """Convert linear index to centered cartesian index."""
     num_dim = len(extent)
@@ -90,6 +75,23 @@ def test_generate_clean_data():
     assert rank_2 == 9
 
 
+def generate_clean_data_with_rank_increase(mode_sizes, starting_frequencies, frequency_bumps, rng):
+    if frequency_bumps == []:
+        return generate_clean_data(mode_sizes, starting_frequencies, rng)
+        
+    halfway = mode_sizes[0] // 2
+    mode_sizes_1 = [halfway                 if j == 0 else mode_sizes[j] for j in range(len(mode_sizes))]
+    mode_sizes_2 = [mode_sizes[j] - halfway if j == 0 else mode_sizes[j] for j in range(len(mode_sizes))]
+
+    maximum_frequencies_1 = starting_frequencies
+    maximum_frequencies_2 = [f0 + f1 for (f0, f1) in zip(starting_frequencies, frequency_bumps)]
+    
+    data_1 = generate_clean_data(mode_sizes_1, maximum_frequencies_1, rng)
+    data_2 = generate_clean_data(mode_sizes_2, maximum_frequencies_2, rng)
+
+    return np.concatenate((data_1, data_2), axis=0)
+
+
 def compute_noise_scale_factor(data, noise, noise_to_signal_ratio):
     """Compute noise scale factor."""
     data_norm_2 = np.sum(data**2)
@@ -114,16 +116,17 @@ def test_compute_noise_scale_factor():
         assert abs(np.sqrt(np.sum(e**2)) / np.sqrt(np.sum(y**2)) - r) < 1.0e-12
 
 
-def main(mode_sizes, maximum_frequencies, noise_to_signal_ratio, data_dir, verbose):
+def main(mode_sizes, maximum_frequencies, frequency_bumps, noise_to_signal_ratio, data_dir, verbose):
     """Create data from noisy wave data source."""
     os.makedirs(data_dir, exist_ok=True)
 
-    mode_sizes = create_reversed_list(mode_sizes)
-    maximum_frequencies = create_reversed_list(maximum_frequencies)
+    mode_sizes.reverse()
+    maximum_frequencies.reverse()
+    frequency_bumps.reverse()
 
     rng = np.random.default_rng(0)
 
-    data = generate_clean_data(mode_sizes, maximum_frequencies, rng)
+    data = generate_clean_data_with_rank_increase(mode_sizes, maximum_frequencies, frequency_bumps, rng)
 
     noise = rng.standard_normal(size=data.shape)
 
@@ -152,6 +155,11 @@ if __name__ == '__main__':
                         nargs='+',
                         required=True,
                         help='Maximum frequencies along tensor modes')
+    parser.add_argument('--frequency_bumps',
+                        type=int,
+                        nargs='+',
+                        default=[],
+                        help='Added frequency halfway through along tensor modes')
     parser.add_argument('--noise_to_signal_ratio',
                         type=float,
                         required=True,
@@ -166,6 +174,7 @@ if __name__ == '__main__':
 
     main(args.mode_sizes,
          args.maximum_frequencies,
+         args.frequency_bumps,
          args.noise_to_signal_ratio,
          args.data_dir,
          args.verbose)

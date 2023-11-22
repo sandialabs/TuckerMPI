@@ -110,13 +110,6 @@ int main(int argc, char* argv[])
       }
     };
 
-    if(mpiRank == 0)
-      std::cout << "Compute statistics" << std::endl;
-    auto metricsData = TuckerMpi::compute_slice_metrics(mpiRank, X, scaleMode, Tucker::defaultMetrics);
-    TuckerMpi::write_statistics(
-      mpiRank, X.rank(), scaleMode, X.getDistribution(), metricsData,
-      inputs.stats_file, inputs.stdThresh);
-
     Kokkos::View<scalar_t*, memory_space> scales;
     Kokkos::View<scalar_t*, memory_space> shifts;
     if (inputs.scaling_type != "None"){
@@ -124,6 +117,14 @@ int main(int argc, char* argv[])
       // mode)
       if (inputs.scale_mode == X.rank()-1)
         throw std::logic_error("Scale mode must not be the streaming (i.e., last) mode");
+
+      if(mpiRank == 0)
+        std::cout << "Compute statistics" << std::endl;
+      auto metricsData = TuckerMpi::compute_slice_metrics(mpiRank, X, scaleMode, Tucker::defaultMetrics);
+      TuckerMpi::write_statistics(
+        mpiRank, X.rank(), scaleMode, X.getDistribution(), metricsData,
+        inputs.stats_file, inputs.stdThresh);
+
       if(mpiRank == 0)
         std::cout << "Normalizing tensor" << std::endl;
       std::tie(scales, shifts) = TuckerMpi::normalize_tensor(

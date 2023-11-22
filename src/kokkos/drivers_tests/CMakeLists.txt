@@ -34,6 +34,7 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY OR TUCKER_IMPL_ENABLE_MPIKOKKOS)
     set(CMD "python3 ${CMAKE_CURRENT_SOURCE_DIR}/sine_wave/generate_data.py \
                 --mode_sizes 10 10 50 \
                 --maximum_frequencies 1 1 1 \
+                --frequency_bumps 1 1 1 \
                 --noise_to_signal_ratio 0.0 \
                 --data_dir ${TEST_RUN_DIR}/data")
     execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
@@ -45,7 +46,7 @@ if(TUCKER_IMPL_ENABLE_KOKKOSONLY OR TUCKER_IMPL_ENABLE_MPIKOKKOS)
     set(CMD "python3 ${CMAKE_CURRENT_SOURCE_DIR}/sine_wave/generate_conf.py \
                 --mode_sizes 10 10 50 \
                 --num_initial 10 \
-                --tolerance 1e-3 \
+                --tolerance 1e-4 \
                 --num_proc ${NUMPROCS} \
                 --data_dir ${TEST_RUN_DIR}/data \
                 --config_dir ${TEST_RUN_DIR}")

@@ -3,13 +3,30 @@
 
 #include "TuckerMpi_prod_impl.hpp"
 #include "TuckerOnNode_ttm.hpp"
+#include "./impl/TuckerOnNode_ttm_using_host_blas_impl.hpp"
 #include "Tucker_Timer.hpp"
-#include "Kokkos_StdAlgorithms.hpp"
+#include "Tucker_BlasWrapper.hpp"
 #include <cmath>
 #include <unistd.h>
 
+
 namespace TuckerMpi{
 namespace impl{
+
+template <typename MemSpace, typename T>
+void pack_copy(const MemSpace& space, const T* src, T* dst, int sz, int inc)
+{
+  Kokkos::parallel_for(sz, KOKKOS_LAMBDA(const int i) {
+    dst[i*inc] = src[i*inc];
+  });
+}
+
+template <typename T>
+void pack_copy(Kokkos::HostSpace& space, const T* src, T* dst, int sz, int inc)
+{
+  Tucker::copy(&sz, src, &inc, dst, &inc);
+}
+
 
 template <class ScalarType, class ...TensorProperties>
 void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
@@ -18,6 +35,7 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
 {
   using tensor_type = TuckerOnNode::Tensor<ScalarType, TensorProperties...>;
   using mem_space = typename tensor_type::traits::memory_space;
+
 
   if(Y.size() == 0){ return; }
 
@@ -44,27 +62,30 @@ void packForTTM(TuckerOnNode::Tensor<ScalarType, TensorProperties...> Y,
 
   size_t stride = leadingDim*nGlobalRows;
   size_t tempMemOffset = 0;
+  const int inc = 1;
+  mem_space space;
   for(int rank=0; rank<nprocs; rank++)
   {
-    int nLocalRows = map->getNumEntries(rank);
-    size_t blockSize = leadingDim*nLocalRows;
-    int rowOffset = map->getOffset(rank);
+    const int nLocalRows = map->getNumEntries(rank);
+    const size_t blockSize = leadingDim*nLocalRows;
+    const int rowOffset = map->getOffset(rank);
+    const int tbs = blockSize;
     for(size_t tensorOffset = rowOffset*leadingDim;
         tensorOffset < numEntries;
         tensorOffset += stride)
     {
-      auto y_sub = Kokkos::subview(
-        y_data_view, std::make_pair(tensorOffset, tensorOffset+blockSize));
-      auto t_sub = Kokkos::subview(
-        tempMem, std::make_pair(tempMemOffset, tempMemOffset+blockSize));
-      Kokkos::deep_copy(t_sub, y_sub);
+
+      const ScalarType *y_ptr = y_data_view.data()+tensorOffset;
+      ScalarType *t_ptr = tempMem.data()+tempMemOffset;
+      pack_copy(space, y_ptr, t_ptr, tbs, inc);
 
       tempMemOffset += blockSize;
     }
   }
 
   // Copy data from temporary memory back to tensor
-  Kokkos::deep_copy(y_data_view, tempMem);
+  int temp = (int)numEntries;
+  pack_copy(space, tempMem.data(), y_data_view.data(), temp, inc);
 }
 
 
@@ -132,12 +153,18 @@ void ttm_impl_use_single_reduce_scatter(
     }
     localResult = local_tensor_type(I);
 
-    const std::size_t Unrows = (Utransp) ? localX.extent(n) : localResult.extent(n);
-    const std::size_t Uncols = (Utransp) ? localResult.extent(n) : localX.extent(n);
+    if constexpr (std::is_same_v<typename local_tensor_type::traits::memory_space, Kokkos::HostSpace>) {
+      TuckerOnNode::impl::ttm_hostblas(localX, n, Uptr, stride, localResult, Utransp);
+    }
+    else {
 
-    Kokkos::LayoutStride layout(Unrows, 1, Uncols, stride);
-    umv_type Aum(Uptr, layout);
-    TuckerOnNode::ttm(localX, n, Aum, localResult, Utransp);
+      const std::size_t Unrows = (Utransp) ? localX.extent(n) : localResult.extent(n);
+      const std::size_t Uncols = (Utransp) ? localResult.extent(n) : localX.extent(n);
+
+      Kokkos::LayoutStride layout(Unrows, 1, Uncols, stride);
+      umv_type Aum(Uptr, layout);
+      TuckerOnNode::ttm(localX, n, Aum, localResult, Utransp);
+    }
     if(mult_timer) mult_timer->stop();
   }
 
@@ -163,6 +190,7 @@ void ttm_impl_use_single_reduce_scatter(
     size_t temp = multiplier*(yMap->getNumEntries(i));
     recvCounts[i] = (int)temp;
   }
+  Kokkos::fence();
   if(reducescatter_timer) reducescatter_timer->start();
   MPI_Reduce_scatter_(sendBuf, recvBuf, recvCounts, MPI_SUM, comm);
   if(reducescatter_timer) reducescatter_timer->stop();
@@ -256,6 +284,7 @@ void ttm_impl_use_series_of_reductions(
     size_t count = localResult.size();
     assert(count <= std::numeric_limits<std::size_t>::max());
     if(count > 0) {
+      Kokkos::fence();
       if(reduce_timer) reduce_timer->start();
       MPI_Reduce_(sendBuf, recvBuf, (int)count, MPI_SUM, root, comm);
       if(reduce_timer) reduce_timer->stop();

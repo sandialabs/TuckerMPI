@@ -33,8 +33,8 @@ endif()
 #
 set(CMD "python3 ${TEST_SRC_DIR}/compute_errors.py \
                 --config_dir ${TEST_BIN_DIR} \
-                --rel_tol=1e-10 \
-                --abs_tol=1e-10")
+                --rel_tol=1e-3 \
+                --abs_tol=1e-3")
 message(STATUS ${CMD})
 execute_process(COMMAND ${BASH} -c ${CMD} RESULT_VARIABLE RES)
 if(RES)

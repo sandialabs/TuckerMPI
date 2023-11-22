@@ -90,7 +90,7 @@ public:
     const std::size_t numEl = std::accumulate(dimsIn.cbegin(), dimsIn.cend(),
 					      init, std::multiplies<std::size_t>());
     // allocate for data
-    data_ = data_view_type(Kokkos::ViewAllocateWithoutInitializing("tensorData"), numEl);
+    data_ = data_view_type("tensorData", numEl);
   }
 
   template<class DataView>
@@ -123,7 +123,7 @@ public:
     const std::size_t init = 1;
     const std::size_t numEl = std::accumulate(KE::cbegin(dimsIn), KE::cend(dimsIn),
 					      init, std::multiplies<std::size_t>());
-    data_ = data_view_type(Kokkos::ViewAllocateWithoutInitializing("tensorData"), numEl);
+    data_ = data_view_type("tensorData", numEl);
   }
 
   template<class DataView>
@@ -244,6 +244,19 @@ public:
   void fillRandom(ScalarType a, ScalarType b){
     Kokkos::Random_XorShift64_Pool<> pool(4543423);
     Kokkos::fill_random(data_, pool, a, b);
+  }
+
+  // Determine if the tensor contains any NaN's (useful for debugging)
+  bool isNan() const {
+    auto d = data_; // avoid implicit capture of *this
+    std::size_t num_nan = 0;
+    Kokkos::parallel_reduce(data_.size(),
+                            KOKKOS_LAMBDA(const std::size_t i, std::size_t& n)
+    {
+      if (d[i] != d[i])  // only true if d[i] is NaN
+        ++n;
+    }, num_nan);
+    return num_nan > 0;
   }
 
 private:

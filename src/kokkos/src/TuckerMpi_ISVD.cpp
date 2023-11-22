@@ -305,6 +305,7 @@ getRightSingularVectorsError() const
 {
   checkIsAllocated();
   const int ndim = V_.rank();
+  assert(!V_.localTensor().isNan());
   matrix_t E = compute_gram(V_, ndim-1);
   const int r = E.extent(0);
   scalar_t error = 0.0;
@@ -386,9 +387,11 @@ initializeFactors(const matrix_t& U,
 
   // V = X x_d U.T
   V_ = ttm(X, ndim - 1, U_, /* trans = */ true);
+  assert(!V_.localTensor().isNan());
 
   // Y = V x_d U
   auto Y = ttm(V_, ndim - 1, U_, /* trans = */ false);
+  assert(!V_.localTensor().isNan());
 
   // V = V x_d inv(diag(s))
   auto Vd = V_.localTensor().data();
@@ -461,6 +464,7 @@ initializeFactors(const ttensor_t& X, const eigval_t& eig)
     auto sub = Kokkos::subview(Vd, std::make_pair(j*ncol,j*ncol+ncol));
     KokkosBlas::scal(sub, scalar_t(1.0)/s_h[j], sub);
   }
+  assert(!V_.localTensor().isNan());
 
   squared_frobenius_norm_data_ = 0.0;
   squared_frobenius_norm_error_ = 0.0;
@@ -516,6 +520,7 @@ addSingleRowNaive(const vector_t& c, scalar_t tolerance)
   const int r = rank();
 
   auto Vl = V_.localTensor();
+  assert(!Vl.isNan());
   const MPI_Comm& comm = V_.getDistribution().getComm();
 
   // projection: j[r] = V[nxr].T * c[n]
@@ -567,6 +572,7 @@ addSingleRowNaive(const vector_t& c, scalar_t tolerance)
   auto V1d = V1.localTensor().data();
   Kokkos::deep_copy(Kokkos::subview(V1d, std::make_pair(0,n*r)), Vl.data());
   Kokkos::deep_copy(Kokkos::subview(V1d, std::make_pair(n*r,n*(r+1))), q);
+  assert(!V1.localTensor().isNan());
 
   // SVD: S1 = U2 * diag(s2) * V2
   scalar_t c_norm_l = KokkosBlas::nrm2(c);
@@ -595,10 +601,13 @@ addSingleRowNaive(const vector_t& c, scalar_t tolerance)
   // V = V1 x_d V2.T
   const int ndim = V_.rank();
   V_ = ttm(V1, ndim-1, V2, false);
+  assert(!V_.localTensor().isNan());
 
   // update norm estimates
   squared_frobenius_norm_data_ += c_norm * c_norm;
   squared_frobenius_norm_error_ += new_squared_frobenius_norm_error;
+  assert(!std::isnan(squared_frobenius_norm_data_));
+  assert(!std::isnan(squared_frobenius_norm_error_));
 }
 
 template <class scalar_t, class mem_space_t>
@@ -623,6 +632,7 @@ padTensorAlongMode(const Tensor<scalar_t,mem_space_t>& X, int n, int p)
   }
 
   auto Xl = X.localTensor();
+  assert(!Xl.isNan());
   const int nrow1 = Xl.prod(0, n);
   const int nrow2 = Xl.prod(0, n - 1, 1) * p;
   const int nrow = nrow1 + nrow2;
@@ -687,7 +697,7 @@ concatenateTensorsAlongMode(const Tensor<scalar_t,mem_space_t>& X,
   const int nrowx = Xl.prod(0, n);
   const int nrowy = Yl.prod(0, n);
   const int nrowz = nrowx + nrowy;
-  const int ncolz = Xl.prod(n + 1, d - 1);
+  const int ncolz = Xl.prod(n + 1, d - 1, 1);
 
   for (int j = 0; j < ncolz; ++j) {
     Kokkos::deep_copy(
