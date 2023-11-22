@@ -618,7 +618,7 @@ padTensorAlongMode(const Tensor<scalar_t,mem_space_t>& X, int n, int p)
   }
 
   const int nrow1 = X.prod(0, n);
-  const int nrow2 = X.prod(0, n - 1) * p;
+  const int nrow2 = X.prod(0, n - 1, 1) * p;
   const int nrow = nrow1 + nrow2;
   const int ncol = X.prod(n + 1, d - 1);
 
@@ -678,7 +678,7 @@ concatenateTensorsAlongMode(const Tensor<scalar_t,mem_space_t>& X,
   const int nrowx = X.prod(0, n);
   const int nrowy = Y.prod(0, n);
   const int nrowz = nrowx + nrowy;
-  const int ncolz = X.prod(n + 1, d - 1);
+  const int ncolz = X.prod(n + 1, d - 1, 1);
 
   for (int j = 0; j < ncolz; ++j) {
     Kokkos::deep_copy(
