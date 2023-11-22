@@ -69,12 +69,12 @@ TEST(tuckerkokkos_syrk, uplo_U_opA_N)
   using value_type = double;
 
   // create A
-  Kokkos::View<value_type**> A("A", n, k);
+  Kokkos::View<value_type**, Kokkos::LayoutLeft> A("A", n, k);
   Kokkos::Random_XorShift64_Pool<Kokkos::DefaultExecutionSpace> pool(45662333);
   Kokkos::fill_random(A, pool, -1.1, 5.2);
 
   // create C
-  Kokkos::View<value_type**> C("A", n, n);
+  Kokkos::View<value_type**, Kokkos::LayoutLeft> C("A", n, n);
   auto C_h = Kokkos::create_mirror(C);
   const auto a = static_cast<value_type>(-1.8);
   const auto b = static_cast<value_type>(2.3);
@@ -114,12 +114,12 @@ TEST(tuckerkokkos_syrk, uplo_U_opA_T)
   using value_type = double;
 
   // create A
-  Kokkos::View<value_type**> A("A", k, n);
+  Kokkos::View<value_type**, Kokkos::LayoutLeft> A("A", k, n);
   Kokkos::Random_XorShift64_Pool<Kokkos::DefaultExecutionSpace> pool(45662333);
   Kokkos::fill_random(A, pool, -1.1, 5.2);
 
   // create C
-  Kokkos::View<value_type**> C("A", n, n);
+  Kokkos::View<value_type**, Kokkos::LayoutLeft> C("A", n, n);
   auto C_h = Kokkos::create_mirror(C);
   const auto a = static_cast<value_type>(-1.8);
   const auto b = static_cast<value_type>(2.3);
