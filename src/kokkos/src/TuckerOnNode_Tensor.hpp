@@ -246,6 +246,19 @@ public:
     Kokkos::fill_random(data_, pool, a, b);
   }
 
+  // Determine if the tensor contains any NaN's (useful for debugging)
+  bool isNan() const {
+    auto d = data_; // avoid implicit capture of *this
+    std::size_t num_nan = 0;
+    Kokkos::parallel_reduce(data_.size(),
+                            KOKKOS_LAMBDA(const std::size_t i, std::size_t& n)
+    {
+      if (d[i] != d[i])  // only true if d[i] is NaN
+        ++n;
+    }, num_nan);
+    return num_nan > 0;
+  }
+
 private:
   template<class ST, class ... PS>
   void is_assignable_else_throw(const Tensor<ST,PS...> & o){
