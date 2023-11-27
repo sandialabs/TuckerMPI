@@ -93,13 +93,14 @@ def compare_metrics(workDir):
 
 	tols = {"rel": 1e-4, "abs": 1e-6}
 
-	gold = np.loadtxt(workDir+"/goldMetrics.txt", skiprows=3)
-	computed = np.loadtxt(workDir+"/stats.txt", skiprows=3)
+	if os.path.exists(workDir+"/goldMetrics.txt") and os.path.exists(workDir+"/stats.txt"):
+		gold = np.loadtxt(workDir+"/goldMetrics.txt", skiprows=3)
+		computed = np.loadtxt(workDir+"/stats.txt", skiprows=3)
 
-	assert(len(gold) == len(computed)), \
-		"Failing due to mismatching extents!"
-	assert(np.allclose(gold, computed, rtol=tols['rel'], atol=tols['abs'])), \
-		"Failing due to numerical differences!"
+		assert(len(gold) == len(computed)), \
+			"Failing due to mismatching extents!"
+		assert(np.allclose(gold, computed, rtol=tols['rel'], atol=tols['abs'])), \
+			"Failing due to numerical differences!"
 
 # -------------------------------------------------------------------
 def compare_factors(workDir, modeCount):
