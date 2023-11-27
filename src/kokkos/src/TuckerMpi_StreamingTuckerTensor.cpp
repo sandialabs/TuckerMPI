@@ -182,7 +182,7 @@ StreamingSTHOSVD(
   if (globalRank == 0) {
     std::cout << std::endl
               << "---------------------------------------------\n"
-              << "----- Streaming ST-HOSVD Starting" << " -----\n"
+              << "-------- Streaming ST-HOSVD Starting --------\n"
               << "---------------------------------------------\n"
               << std::flush;
   }
@@ -477,7 +477,7 @@ StreamingSTHOSVD(
 
   if (globalRank == 0) {
     std::cout << "---------------------------------------------\n"
-              << "----- Streaming ST-HOSVD Complete" << " -----\n"
+              << "-------- Streaming ST-HOSVD Complete --------\n"
               << "---------------------------------------------\n"
               << std::flush;
   }
