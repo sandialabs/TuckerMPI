@@ -179,14 +179,30 @@ StreamingSTHOSVD(
   std::ifstream inStream(filename);
   std::string snapshot_file;
 
+  if (globalRank == 0) {
+    std::cout << std::endl
+              << "---------------------------------------------\n"
+              << "----- Streaming ST-HOSVD Starting" << " -----\n"
+              << "---------------------------------------------\n"
+              << std::flush;
+  }
+
   while(inStream >> snapshot_file) {
+    Tucker::Timer sthosvd_timer, ttm_timer, gram_timer, eig_timer, pad_timer,
+      basis_update_timer, isvd_sv_update_timer, isvd_core_update_timer,
+      local_read_timer;
+
     // Read the new tensor slice
     if (globalRank == 0)
       std::cout<< "Reading snapshot " << snapshot_file << std::endl;
     readTimer.start();
+    local_read_timer.start();
     tensor_t Y(slice_dist);
     read_tensor_binary(globalRank, Y, snapshot_file);
+    local_read_timer.stop();
     readTimer.stop();
+
+    sthosvd_timer.start();
 
     // apply normalization if provided
     if (scales.extent(0) > 0 && shifts.extent(0) > 0)
@@ -231,7 +247,9 @@ StreamingSTHOSVD(
       Distribution D_dist =
         Y.getDistribution().replaceModeWithSizes(n, U[n].extent(1),
                                                  V_.localExtent(n));
+      ttm_timer.start();
       tensor_t D = ttm(Y, n, U[n], true, D_dist);
+      ttm_timer.stop();
 
 #ifndef NDEBUG
       // PRINT_DEBUG
@@ -245,7 +263,9 @@ StreamingSTHOSVD(
       // Line 3 of streaming STHOSVD update
       // compute orthogonal complement of new slice w.r.t. existing basis
       // E = D x_n U[n]
+      ttm_timer.start();
       tensor_t E = ttm(D, n, U[n], false);
+      ttm_timer.stop();
 
 #ifndef NDEBUG
       // PRINT_DEBUG
@@ -271,14 +291,18 @@ StreamingSTHOSVD(
       } else {
         // Line 4 of streaming STHOSVD update
         // compute Gram of orthogonal complement of new slice
+        gram_timer.start();
         matrix_t gram = compute_gram(E, n);
+        gram_timer.stop();
 
         // Lines 5-8 of streaming STHOSVD update
         // compute truncated eigendecomposition of Gram
+        eig_timer.start();
         auto eigenvalues_d = Tucker::impl::compute_and_sort_descending_eigvals_and_eigvecs_inplace(gram, false);
         auto eigenvalues = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigenvalues_d);
         int nev = Tucker::impl::count_eigvals_using_threshold(eigenvalues, thresh);
         matrix_t V = Kokkos::subview(gram, Kokkos::ALL, std::make_pair(0, nev));
+        eig_timer.stop();
 
         const int R_new = V.extent(1);
         for (int i=R_new; i<V.extent(0); ++i) {
@@ -290,8 +314,10 @@ StreamingSTHOSVD(
         // Line 9 of streaming STHOSVD update
         // project orthgonal complement to new basis
         // K = E x_n V.T
+        ttm_timer.start();
         tensor_t K = ttm(E, n, V, true);
         assert(!K.localTensor().isNan());
+        ttm_timer.stop();
 
         // Number of rows to add on my proc
         const int my_R = D.localExtent(n);
@@ -299,6 +325,7 @@ StreamingSTHOSVD(
 
         // Line 10 of streaming STHOSVD update
         // pad core with zeros
+        pad_timer.start();
         G = factorization.isvd.padTensorAlongMode(G, n, my_R_new);
         assert(!G.localTensor().isNan());
 
@@ -310,9 +337,11 @@ StreamingSTHOSVD(
         // prepare slice for next mode
         Y = factorization.isvd.concatenateTensorsAlongMode(D, K, n);
         assert(!Y.localTensor().isNan());
+        pad_timer.stop();
 
         // Line 13 of streaming STHOSVD algorithm
         // update basis
+        basis_update_timer.start();
         const int N = U[n].extent(0);
         const int R = U[n].extent(1);
         matrix_t U_new("U_new", N, R+R_new);
@@ -348,13 +377,16 @@ StreamingSTHOSVD(
         assert(offset_V == R_new);
         assert(offset_U_new == R+R_new);
         U[n] = U_new;
+        basis_update_timer.stop();
       }
     }
 
     // Line 16 of streaming STHOSVD update algorithm
     // Add new row to ISVD factorization
+    isvd_sv_update_timer.start();
     const scalar_t delta = std::sqrt(tolerance / Y.frobeniusNormSquared());
     factorization.isvd.updateFactorsWithNewSlice(Y, delta);
+    isvd_sv_update_timer.stop();
 
     factorization.squared_errors[ndims - 1] = std::pow(factorization.isvd.getErrorNorm(), 2);
     assert(!std::isnan(factorization.squared_errors[ndims-1]));
@@ -368,6 +400,7 @@ StreamingSTHOSVD(
     // Line 22 of StreamingTuckerUpdate algorithm
     // Split U_new into two submatrices
     // Use first submatrix to update core
+    isvd_core_update_timer.start();
     {
       const int m_new = U_new.extent(0);
       const int r_new = U_new.extent(1);
@@ -397,10 +430,30 @@ StreamingSTHOSVD(
           Gd[i+j*nrow] += Yd[i]*U_new(ncol-1,j);
       });
     }
+    isvd_core_update_timer.stop();
 
     // Line 25 of StreamingTuckerUpdate algorithm
     // Save new factor matrix
     U[ndims - 1] = U_new;
+
+    sthosvd_timer.stop();
+
+    if (globalRank == 0) {
+      std::cout << "  Updated Tucker ranks:  ";
+      for (int n = 0; n < ndims; ++n)
+        std::cout << U[n].extent(1) << " ";
+      std::cout << std::endl
+                << "  Read time: " << local_read_timer.duration() << "s\n"
+                << "  ST-HOSVD time: " << sthosvd_timer.duration() << "s\n"
+                << "    Total TTM time: " << ttm_timer.duration() << "s\n"
+                << "    Gram time: " << gram_timer.duration() << "s\n"
+                << "    Eigen time: " << eig_timer.duration() << "s\n"
+                << "    Tensor pad/concatenation time: " << pad_timer.duration() << "s\n"
+                << "    Non-temporal basis update time: " << basis_update_timer.duration() << "s\n"
+                << "    Temporal basis update time: " << isvd_sv_update_timer.duration() << "s\n"
+                << "    Core update time: " << isvd_core_update_timer.duration() << "s\n"
+                << std::flush;
+    }
 
     // print status after streaming ST-HOSVD update
     if (globalRank == 0) {
@@ -420,6 +473,13 @@ StreamingSTHOSVD(
       log_stream << std::setw(12) << std::setprecision(6) << std::sqrt(Enorm2) << " " << std::flush;
       log_stream << std::setw(12) << std::setprecision(6) << std::sqrt(Enorm2 / factorization.Xnorm2) << std::endl;
     }
+  }
+
+  if (globalRank == 0) {
+    std::cout << "---------------------------------------------\n"
+              << "----- Streaming ST-HOSVD Complete" << " -----\n"
+              << "---------------------------------------------\n"
+              << std::flush;
   }
 
   // Close the file containing snapshot filenames
