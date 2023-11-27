@@ -188,9 +188,9 @@ StreamingSTHOSVD(
   }
 
   while(inStream >> snapshot_file) {
-    Tucker::Timer sthosvd_timer, ttm_timer, gram_timer, eig_timer, pad_timer,
-      basis_update_timer, isvd_sv_update_timer, isvd_core_update_timer,
-      local_read_timer;
+    Tucker::Timer sthosvd_timer, D_ttm_timer, orthog_complement_timer,
+      K_ttm_timer, gram_timer, eig_timer, pad_timer, basis_update_timer,
+      isvd_sv_update_timer, isvd_core_update_timer, local_read_timer;
 
     // Read the new tensor slice
     if (globalRank == 0)
@@ -247,9 +247,9 @@ StreamingSTHOSVD(
       Distribution D_dist =
         Y.getDistribution().replaceModeWithSizes(n, U[n].extent(1),
                                                  V_.localExtent(n));
-      ttm_timer.start();
+      D_ttm_timer.start();
       tensor_t D = ttm(Y, n, U[n], true, D_dist);
-      ttm_timer.stop();
+      D_ttm_timer.stop();
 
 #ifndef NDEBUG
       // PRINT_DEBUG
@@ -263,9 +263,8 @@ StreamingSTHOSVD(
       // Line 3 of streaming STHOSVD update
       // compute orthogonal complement of new slice w.r.t. existing basis
       // E = D x_n U[n]
-      ttm_timer.start();
+      orthog_complement_timer.start();
       tensor_t E = ttm(D, n, U[n], false);
-      ttm_timer.stop();
 
 #ifndef NDEBUG
       // PRINT_DEBUG
@@ -279,6 +278,7 @@ StreamingSTHOSVD(
       assert(E.getDistribution() == Y.getDistribution());
       KokkosBlas::axpby(scalar_t(1.0), Y.localTensor().data(), scalar_t(-1.0),
                         E.localTensor().data());
+      orthog_complement_timer.stop();
 
       const scalar_t Enorm2 = E.frobeniusNormSquared();
 
@@ -314,10 +314,10 @@ StreamingSTHOSVD(
         // Line 9 of streaming STHOSVD update
         // project orthgonal complement to new basis
         // K = E x_n V.T
-        ttm_timer.start();
+        K_ttm_timer.start();
         tensor_t K = ttm(E, n, V, true);
         assert(!K.localTensor().isNan());
-        ttm_timer.stop();
+        K_ttm_timer.stop();
 
         // Number of rows to add on my proc
         const int my_R = D.localExtent(n);
@@ -445,9 +445,11 @@ StreamingSTHOSVD(
       std::cout << std::endl
                 << "  Read time: " << local_read_timer.duration() << "s\n"
                 << "  ST-HOSVD time: " << sthosvd_timer.duration() << "s\n"
-                << "    Total TTM time: " << ttm_timer.duration() << "s\n"
+                << "    Projection time: " << D_ttm_timer.duration() << "s\n"
+                << "    Orthogonal complement time: " << orthog_complement_timer.duration() << "s\n"
                 << "    Gram time: " << gram_timer.duration() << "s\n"
                 << "    Eigen time: " << eig_timer.duration() << "s\n"
+                << "    Orthogonal complement projection time: " << K_ttm_timer.duration() << "s\n"
                 << "    Tensor pad/concatenation time: " << pad_timer.duration() << "s\n"
                 << "    Non-temporal basis update time: " << basis_update_timer.duration() << "s\n"
                 << "    Temporal basis update time: " << isvd_sv_update_timer.duration() << "s\n"
