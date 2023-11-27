@@ -4,6 +4,7 @@
 #include "Kokkos_Core.hpp"
 #include <variant>
 #include <vector>
+#include <iostream>
 
 namespace Tucker{
 namespace impl{

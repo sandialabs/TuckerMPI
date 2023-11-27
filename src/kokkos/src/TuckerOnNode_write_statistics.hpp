@@ -5,6 +5,7 @@
 #include "Tucker_create_mirror.hpp"
 #include "Tucker_deep_copy.hpp"
 #include <fstream>
+#include <iostream>
 
 namespace TuckerOnNode{
 

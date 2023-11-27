@@ -8,6 +8,7 @@
 #include "Tucker_TuckerTensor.hpp"
 #include <Kokkos_Core.hpp>
 #include <chrono>
+#include <iostream>
 
 namespace TuckerOnNode{
 namespace impl{

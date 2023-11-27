@@ -3,6 +3,7 @@
 
 #include "Tucker_BlasWrapper.hpp"
 #include "Tucker_SolverUtils.hpp"
+#include <iostream>
 
 #include <Kokkos_Core.hpp>
 #include <Kokkos_StdAlgorithms.hpp>
