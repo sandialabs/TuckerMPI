@@ -275,7 +275,8 @@ StreamingSTHOSVD(
 
         // Lines 5-8 of streaming STHOSVD update
         // compute truncated eigendecomposition of Gram
-        auto eigenvalues = Tucker::impl::compute_and_sort_descending_eigvals_and_eigvecs_inplace(gram, false); // on host
+        auto eigenvalues_d = Tucker::impl::compute_and_sort_descending_eigvals_and_eigvecs_inplace(gram, false);
+        auto eigenvalues = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), eigenvalues_d);
         int nev = Tucker::impl::count_eigvals_using_threshold(eigenvalues, thresh);
         matrix_t V = Kokkos::subview(gram, Kokkos::ALL, std::make_pair(0, nev));
 
