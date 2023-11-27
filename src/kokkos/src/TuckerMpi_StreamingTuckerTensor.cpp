@@ -189,6 +189,7 @@ StreamingSTHOSVD(
 
   while(inStream >> snapshot_file) {
     Tucker::Timer sthosvd_timer, D_ttm_timer, orthog_complement_timer,
+      E_ttm_timer, E_axpy_timer,
       K_ttm_timer, gram_timer, eig_timer, pad_timer, basis_update_timer,
       isvd_sv_update_timer, isvd_core_update_timer, local_read_timer;
 
@@ -264,7 +265,9 @@ StreamingSTHOSVD(
       // compute orthogonal complement of new slice w.r.t. existing basis
       // E = D x_n U[n]
       orthog_complement_timer.start();
+      E_ttm_timer.start();
       tensor_t E = ttm(D, n, U[n], false);
+      E_ttm_timer.stop();
 
 #ifndef NDEBUG
       // PRINT_DEBUG
@@ -275,9 +278,11 @@ StreamingSTHOSVD(
 #endif
 
       // E = Y-E
+      E_axpy_timer.start();
       assert(E.getDistribution() == Y.getDistribution());
       KokkosBlas::axpby(scalar_t(1.0), Y.localTensor().data(), scalar_t(-1.0),
                         E.localTensor().data());
+      E_axpy_timer.stop();
       orthog_complement_timer.stop();
 
       const scalar_t Enorm2 = E.frobeniusNormSquared();
@@ -447,6 +452,8 @@ StreamingSTHOSVD(
                 << "  ST-HOSVD time: " << sthosvd_timer.duration() << "s\n"
                 << "    Projection time: " << D_ttm_timer.duration() << "s\n"
                 << "    Orthogonal complement time: " << orthog_complement_timer.duration() << "s\n"
+                << "      TTM time: " << E_ttm_timer.duration() << "s\n"
+                << "      AXPY time: " << E_axpy_timer.duration() << "s\n"
                 << "    Gram time: " << gram_timer.duration() << "s\n"
                 << "    Eigen time: " << eig_timer.duration() << "s\n"
                 << "    Orthogonal complement projection time: " << K_ttm_timer.duration() << "s\n"
