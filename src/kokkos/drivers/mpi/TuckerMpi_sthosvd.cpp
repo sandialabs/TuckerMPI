@@ -145,6 +145,35 @@ void run(const InputParametersSthosvdDriver<ScalarType> & inputs)
     }
   };
 
+  auto writeExtentsOfCoreTensor = [=](auto factorization)
+  {
+    if (mpiRank==0) {
+      const std::string dimFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_ranks.txt";
+      std::cout << "Writing core tensor extents to " << dimFilename << std::endl;
+      std::ofstream of(dimFilename);
+      assert(of.is_open());
+      auto global_dims = factorization.coreTensor().globalDimensionsOnHost();
+      for(int mode=0; mode<inputs.nd; mode++) {
+        of << global_dims(mode) << std::endl;
+      }
+      of.close();
+    }
+  };
+
+  auto writeExtentsOfGlobalTensor = [=](auto factorization)
+  {
+    if (mpiRank==0) {
+      const std::string sizeFilename = inputs.sthosvd_dir + "/" + inputs.sthosvd_fn + "_size.txt";
+      std::cout << "Writing global tensor extents to " << sizeFilename << std::endl;
+      std::ofstream of(sizeFilename);
+      assert(of.is_open());
+      for(int mode=0; mode<inputs.nd; mode++) {
+        of << factorization.factorMatrix(mode).extent(0) << std::endl;
+      }
+      of.close();
+    }
+  };
+
   auto printNorms = [=](auto factorization){
     auto xnorm2 = X.frobeniusNormSquared();
     auto xnorm  = std::sqrt(xnorm2);
@@ -189,6 +218,8 @@ void run(const InputParametersSthosvdDriver<ScalarType> & inputs)
 
     writeTimer.start();
     if(inputs.boolWriteResultsOfSTHOSVD){
+      writeExtentsOfCoreTensor(tt);
+      writeExtentsOfGlobalTensor(tt);
       writeCoreTensorToFile(tt);
       if (mpiRank==0){
         writeEachFactor(tt);
