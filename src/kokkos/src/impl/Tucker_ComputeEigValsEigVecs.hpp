@@ -127,6 +127,14 @@ struct better_off_calling_host_syev<Kokkos::Experimental::HPX> : std::true_type 
 };
 #endif
 
+#if defined KOKKOS_ENABLE_HIP
+// Always use host syev on hip due to bad performance in rocSolver dsyev
+template <>
+struct better_off_calling_host_syev<Kokkos::HIP> : std::true_type {
+};
+#endif
+
+
 template <class T>
 inline constexpr bool better_off_calling_host_syev_v =
     better_off_calling_host_syev<T>::value;
@@ -145,15 +153,16 @@ void compute_syev_use_host_lapack(Kokkos::View<ScalarType**, AProperties...> A,
   using ev_mem_space  = typename ev_view_type::memory_space;
   using ev_layout     = typename ev_view_type::array_layout;
 
-  static_assert(Kokkos::SpaceAccessibility<Kokkos::HostSpace, A_mem_space>::accessible
-		&& Kokkos::SpaceAccessibility<Kokkos::HostSpace, ev_mem_space>::accessible,
-		"do_syev_on_host: Views must be accessible on host");
   static_assert(std::is_same_v<A_layout, Kokkos::LayoutLeft>
 		&& std::is_same_v<ev_layout, Kokkos::LayoutLeft>,
 		"do_syev_on_host: Views must have LayoutLeft");
   static_assert(std::is_floating_point< typename A_view_type::value_type>::value
 		&& std::is_floating_point< typename ev_view_type::value_type>::value,
 		"do_syev_on_host: Views must have floating point value_type");
+
+  // Copy data to host (these are no-ops if already on the host)
+  auto A_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), A);
+  auto eigenvalues_h = Kokkos::create_mirror_view(eigenvalues);
 
   const int nrows = (int) A.extent(0);
 
@@ -163,11 +172,15 @@ void compute_syev_use_host_lapack(Kokkos::View<ScalarType**, AProperties...> A,
   int lwork = (int) 8*nrows;
   std::vector<ScalarType> work(lwork);
   int info;
-  Tucker::syev(&jobz, &uplo, &nrows, A.data(), &nrows,
-	       eigenvalues.data(), work.data(), &lwork, &info);
+  Tucker::syev(&jobz, &uplo, &nrows, A_h.data(), &nrows,
+	       eigenvalues_h.data(), work.data(), &lwork, &info);
   if(info != 0){
     std::cerr << "Error: invalid error code returned by dsyev (" << info << ")\n";
   }
+
+  // Copy eigenvalues and eigenvectors back to device
+  Kokkos::deep_copy(eigenvalues, eigenvalues_h);
+  Kokkos::deep_copy(A, A_h);
 }
 
 
@@ -350,6 +363,7 @@ auto compute_and_sort_descending_eigvals_and_eigvecs_inplace(Kokkos::View<Scalar
   if (flipSign){
 #if defined(TUCKER_ENABLE_FALLBACK_VIA_HOST)
     // left here for the time being as backup
+    auto G_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), G);
     flip_sign_eigenvecs_columns_on_host(G_h, G);
 #else
     flip_sign_eigenvecs_columns(exespace, G);
