@@ -1,8 +1,9 @@
-image: gcc:6.3
+image: owitzia/tucker
 
-before_script:
-- apt-get update && apt-get install -y cmake libopenmpi-dev openmpi-bin liblapack-dev libblas-dev liblapacke doxygen libjs-mathjax
-
+variables:
+  OMPI_ALLOW_RUN_AS_ROOT: 1
+  OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+  OMPI_MCA_rmaps_base_oversubscribe: 1
 
 build:
   stage: build
@@ -15,11 +16,11 @@ build:
     paths:
     - build/
        
+
 test:
   stage: test
   script:
   - cd build
-  - export OMP_NUM_THREADS=1
   - ctest --output-on-failure
   dependencies:
   - build
