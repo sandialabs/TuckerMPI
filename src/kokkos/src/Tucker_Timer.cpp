@@ -38,6 +38,7 @@
 
 #include "Tucker_Timer.hpp"
 #include <cassert>
+#include "Kokkos_Core.hpp"
 
 namespace Tucker {
 
@@ -54,6 +55,7 @@ Timer::~Timer()
 
 void Timer::start()
 {
+  Kokkos::fence();
   start_ = std::chrono::steady_clock::now();
   start_called_ = true;
 }
@@ -61,6 +63,7 @@ void Timer::start()
 void Timer::stop()
 {
   assert(start_called_);
+  Kokkos::fence();
   end_ = std::chrono::steady_clock::now();
   std::chrono::duration<double> time_span = end_ - start_;
   duration_ += time_span.count();
